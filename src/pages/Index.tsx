@@ -9,6 +9,7 @@ import { Header } from '@/components/Header';
 import { Navigation } from '@/components/Navigation';
 import { Dashboard } from '@/components/Dashboard';
 import { AgentGallery } from '@/components/AgentGallery';
+import { ChatInterface } from '@/components/ChatInterface';
 import { UserProfile, Agent, Squad, TabType } from '@/types';
 import { createDemoUser, allAgents } from '@/data/mockData';
 import { toast } from '@/hooks/use-toast';
@@ -248,34 +249,10 @@ const Index = () => {
       
       case 'chat':
         return (
-          <div className="space-y-6">
-            <div className="text-center">
-              <h2 className="text-2xl font-bold mb-2">Chat Interface</h2>
-              <p className="text-muted-foreground">
-                Collaborate with your AI squad (Coming Soon)
-              </p>
-            </div>
-            
-            <Card className="p-6">
-              <div className="text-center py-12">
-                <MessageCircle className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-lg font-semibold mb-2">Chat Interface Coming Soon!</h3>
-                <p className="text-muted-foreground mb-4">
-                  The multi-agent chat interface is being developed. Soon you'll be able to:
-                </p>
-                <ul className="text-sm text-muted-foreground space-y-1 mb-6">
-                  <li>• Chat with your entire squad or individual agents</li>
-                  <li>• Use @mentions to target specific agents</li>
-                  <li>• Upload documents for context</li>
-                  <li>• Generate meeting summaries</li>
-                </ul>
-                <Badge variant="secondary" className="flex items-center space-x-1 w-fit mx-auto">
-                  <Sparkles className="w-3 h-3" />
-                  <span>In Development</span>
-                </Badge>
-              </div>
-            </Card>
-          </div>
+          <ChatInterface
+            currentSquad={currentSquad}
+            onAddXP={addXP}
+          />
         );
       
       default:
