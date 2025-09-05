@@ -17,8 +17,8 @@ export const Header: React.FC<HeaderProps> = ({ user, onOpenProfile }) => {
     <header className="border-b bg-card/50 backdrop-blur-sm sticky top-0 z-50">
       <div className="container mx-auto px-4 h-16 flex items-center justify-between">
         <div className="flex items-center space-x-3">
-          <div className="bg-white rounded-lg p-2 shadow-sm">
-            <img src="/lovable-uploads/f6f66f99-324b-4170-90eb-ef514651f39f.png" alt="Devoteam" className="w-8 h-8" />
+          <div className="bg-white rounded-lg p-3 shadow-sm">
+            <img src="/lovable-uploads/f6f66f99-324b-4170-90eb-ef514651f39f.png" alt="Devoteam" className="w-12 h-12" />
           </div>
           <div>
             <h1 className="text-xl font-bold gradient-text">NextGEN AI Agents</h1>

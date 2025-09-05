@@ -76,21 +76,27 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ currentSquad, onAd
         body: {
           messages: conversationHistory,
           agents: currentSquad,
+          mentionedAgents: userMessage.mentionedAgents || [],
         },
       });
 
       if (error) throw error;
 
-      const assistantMessage: ChatMessage = {
-        id: `assistant-${Date.now()}`,
-        squadId: 'current',
-        content: data.message,
-        sender: currentSquad[0], // Use first agent as primary responder
-        timestamp: new Date(),
-      };
+      // Add multiple agent responses with staggered timing
+      data.responses.forEach((response: any, index: number) => {
+        setTimeout(() => {
+          const agentMessage: ChatMessage = {
+            id: `assistant-${Date.now()}-${index}`,
+            squadId: 'current',
+            content: response.message,
+            sender: response.agent,
+            timestamp: new Date(),
+          };
+          setMessages(prev => [...prev, agentMessage]);
+        }, (index + 1) * 1500); // Stagger responses by 1.5 seconds
+      });
 
-      setMessages(prev => [...prev, assistantMessage]);
-      onAddXP(10, 'chatting with AI squad');
+      onAddXP(15 * data.responses.length, 'chatting with AI squad');
 
     } catch (error) {
       console.error('Error sending message:', error);

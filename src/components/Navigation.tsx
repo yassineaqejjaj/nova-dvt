@@ -69,12 +69,12 @@ export const Navigation: React.FC<NavigationProps> = ({
                 onClick={() => onTabChange(tab.id)}
                 disabled={tab.disabled}
                 className={`
-                  flex items-center space-x-2 px-4 py-6 rounded-none border-b-2 transition-all
+                  flex items-center space-x-2 px-4 py-6 rounded-none border-b-2 transition-all duration-200 hover-scale
                   ${isActive 
-                    ? 'border-primary bg-primary/10 text-primary' 
-                    : 'border-transparent hover:border-muted-foreground/20 hover:bg-muted/50'
+                    ? 'border-primary bg-primary/20 text-primary shadow-sm' 
+                    : 'border-transparent hover:border-primary/60 hover:bg-primary/10 hover:text-primary/90 hover:shadow-sm'
                   }
-                  ${tab.disabled ? 'opacity-50 cursor-not-allowed' : ''}
+                  ${tab.disabled ? 'opacity-50 cursor-not-allowed hover:bg-transparent hover:border-transparent hover:text-muted-foreground' : ''}
                 `}
               >
                 <Icon className="w-4 h-4" />
