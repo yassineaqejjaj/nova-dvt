@@ -189,6 +189,50 @@ export const allAgents: Agent[] = [
     tags: ['Security', 'Compliance', 'Risk', 'Auditing'],
     xpRequired: 400,
     familyColor: 'purple'
+  },
+  {
+    id: 'victoria-pm',
+    name: 'Victoria Sterling',
+    specialty: 'Senior Product Manager',
+    avatar: '/api/placeholder/64/64?text=VS',
+    backstory: 'Executive-level product strategist with 12+ years leading product teams at Apple and Tesla. Expert in innovation frameworks and market disruption.',
+    capabilities: ['Strategic Planning', 'Innovation Management', 'Market Research', 'Executive Reporting'],
+    tags: ['Strategy', 'Innovation', 'Leadership', 'Enterprise'],
+    xpRequired: 600,
+    familyColor: 'blue'
+  },
+  {
+    id: 'gabriel-architect',
+    name: 'Gabriel Santos',
+    specialty: 'Solution Architect',
+    avatar: '/api/placeholder/64/64?text=GS',
+    backstory: 'Enterprise architecture specialist with expertise in system design and scalable solutions. Former principal architect at Amazon Web Services.',
+    capabilities: ['System Architecture', 'Scalability Design', 'Technology Strategy', 'Enterprise Integration'],
+    tags: ['Architecture', 'Scalability', 'Enterprise', 'Cloud'],
+    xpRequired: 800,
+    familyColor: 'purple'
+  },
+  {
+    id: 'isabella-data',
+    name: 'Isabella Rodriguez',
+    specialty: 'Chief Data Officer',
+    avatar: '/api/placeholder/64/64?text=IR',
+    backstory: 'Data science leader with experience building data platforms at Netflix and Spotify. Expert in AI strategy and data governance.',
+    capabilities: ['Data Strategy', 'AI Implementation', 'Data Governance', 'Advanced Analytics'],
+    tags: ['Data Science', 'AI Strategy', 'Analytics', 'Leadership'],
+    xpRequired: 1000,
+    familyColor: 'blue'
+  },
+  {
+    id: 'maximilian-cto',
+    name: 'Maximilian Weber',
+    specialty: 'Chief Technology Officer',
+    avatar: '/api/placeholder/64/64?text=MW',
+    backstory: 'Technology visionary with 15+ years leading engineering teams. Former CTO at unicorn startups, expert in scaling technology organizations.',
+    capabilities: ['Technology Leadership', 'Engineering Management', 'Innovation Strategy', 'Team Scaling'],
+    tags: ['CTO', 'Leadership', 'Innovation', 'Engineering'],
+    xpRequired: 1200,
+    familyColor: 'purple'
   }
 ];
 

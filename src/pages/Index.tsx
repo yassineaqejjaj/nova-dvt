@@ -1,41 +1,37 @@
 import React, { useState, useEffect } from 'react';
-import { Card } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Separator } from '@/components/ui/separator';
 import { Header } from '@/components/Header';
-import { Navigation } from '@/components/Navigation';
+import { SidebarNav } from '@/components/Sidebar';
 import { Dashboard } from '@/components/Dashboard';
 import { AgentGallery } from '@/components/AgentGallery';
 import { ChatInterface } from '@/components/ChatInterface';
-import { UserProfile, Agent, Squad, TabType } from '@/types';
-import { createDemoUser, allAgents } from '@/data/mockData';
-import { toast } from '@/hooks/use-toast';
+import { CreateAgentDialog } from '@/components/CreateAgentDialog';
+import { CanvasGenerator } from '@/components/CanvasGenerator';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Separator } from '@/components/ui/separator';
+import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
+import { Agent, Squad, UserProfile, TabType } from '@/types';
+import { allAgents, createDemoUser } from '@/data/mockData';
+import { Users, Star, Zap, Trophy, X, Plus, Menu } from 'lucide-react';
+import { toast } from 'sonner';
 import heroBackground from '@/assets/hero-background.jpg';
-import { 
-  Sparkles, 
-  Users, 
-  MessageCircle,
-  Star,
-  Zap,
-  X
-} from 'lucide-react';
 
 const Index = () => {
-  // State Management
   const [user, setUser] = useState<UserProfile>(createDemoUser());
   const [activeTab, setActiveTab] = useState<TabType>('dashboard');
   const [squads, setSquads] = useState<Squad[]>([]);
-  const [currentSquad, setCurrentSquad] = useState<Agent[]>([]);
+  const [currentSquad, setCurrentSquad] = useState<Squad | null>(null);
   const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null);
-  const [showAgentDetails, setShowAgentDetails] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
+  const [showCreateAgent, setShowCreateAgent] = useState(false);
+  const [showCanvasGenerator, setShowCanvasGenerator] = useState(false);
+  const [customAgents, setCustomAgents] = useState<Agent[]>([]);
 
   // Initialize demo data
   useEffect(() => {
-    // Create a demo squad for better demonstration
     const demoSquad: Squad = {
       id: 'demo-squad-1',
       name: 'Product Launch Team',
@@ -49,10 +45,9 @@ const Index = () => {
       createdAt: new Date()
     };
     setSquads([demoSquad]);
-    setCurrentSquad(demoSquad.agents);
+    setCurrentSquad(demoSquad);
   }, []);
 
-  // Helper Functions
   const addXP = (amount: number, reason: string) => {
     const newXP = user.xp + amount;
     const newLevel = Math.floor(newXP / 200) + 1;
@@ -65,15 +60,9 @@ const Index = () => {
     }));
 
     if (leveledUp) {
-      toast({
-        title: "🎉 Level Up!",
-        description: `Congratulations! You've reached Level ${newLevel}!`,
-      });
+      toast.success(`🎉 Level Up! You've reached Level ${newLevel}!`);
     } else {
-      toast({
-        title: "XP Earned!",
-        description: `+${amount} XP for ${reason}`,
-      });
+      toast.success(`+${amount} XP for ${reason}`);
     }
   };
 
@@ -83,72 +72,63 @@ const Index = () => {
         ...prev,
         unlockedAgents: [...prev.unlockedAgents, agent.id]
       }));
-      
-      toast({
-        title: "🎯 Agent Unlocked!",
-        description: `${agent.name} is now available in your gallery!`,
-      });
+      toast.success(`🎯 ${agent.name} unlocked!`);
     }
   };
 
   const handleAddToSquad = (agent: Agent) => {
-    // Check if squad is full (max 5 agents)
-    if (currentSquad.length >= 5) {
-      toast({
-        title: "Squad Full",
-        description: "You can only have 5 agents in a squad at a time.",
-        variant: "destructive"
-      });
+    if (!currentSquad) {
+      toast.error('Please create a squad first');
       return;
     }
 
-    // Check if agent is already in squad
-    if (currentSquad.some(a => a.id === agent.id)) {
-      toast({
-        title: "Agent Already in Squad",
-        description: `${agent.name} is already part of your current squad.`,
-        variant: "destructive"
-      });
+    if (currentSquad.agents.length >= 5) {
+      toast.error('Squad is full (max 5 agents)');
       return;
     }
 
-    // Unlock agent if user has enough XP
+    if (currentSquad.agents.some(a => a.id === agent.id)) {
+      toast.error(`${agent.name} is already in your squad`);
+      return;
+    }
+
     if (!user.unlockedAgents.includes(agent.id)) {
       if (user.xp >= agent.xpRequired) {
         unlockAgent(agent);
       } else {
-        toast({
-          title: "Insufficient XP",
-          description: `You need ${agent.xpRequired - user.xp} more XP to unlock ${agent.name}.`,
-          variant: "destructive"
-        });
+        toast.error(`Need ${agent.xpRequired - user.xp} more XP to unlock ${agent.name}`);
         return;
       }
     }
 
-    // Add agent to current squad
-    setCurrentSquad(prev => [...prev, agent]);
+    const updatedSquad = {
+      ...currentSquad,
+      agents: [...currentSquad.agents, agent]
+    };
+    setCurrentSquad(updatedSquad);
+    setSquads(prev => prev.map(s => s.id === currentSquad.id ? updatedSquad : s));
     addXP(25, 'adding agent to squad');
-    
-    toast({
-      title: "Agent Added!",
-      description: `${agent.name} has joined your squad!`,
-    });
+    toast.success(`${agent.name} added to squad!`);
   };
 
   const handleTabChange = (tab: TabType) => {
-    setActiveTab(tab);
-    if (tab === 'chat' && currentSquad.length === 0) {
-      toast({
-        title: "No Squad Available",
-        description: "Create a squad with agents first to start chatting.",
-        variant: "destructive"
-      });
-      setActiveTab('squads');
+    if (tab === 'chat' && !currentSquad) {
+      toast.error('Please create a squad first to start chatting');
+      return;
     }
+    setActiveTab(tab);
   };
 
-  // Render Current Tab Content
+  const handleCreateAgent = (newAgent: Agent) => {
+    setCustomAgents(prev => [...prev, newAgent]);
+    setUser(prev => ({
+      ...prev,
+      unlockedAgents: [...prev.unlockedAgents, newAgent.id]
+    }));
+  };
+
+  const getAllAgents = () => [...allAgents, ...customAgents];
+
   const renderTabContent = () => {
     switch (activeTab) {
       case 'dashboard':
@@ -163,13 +143,11 @@ const Index = () => {
       case 'agents':
         return (
           <AgentGallery
-            user={user}
-            currentSquadAgents={currentSquad}
+            allAgents={getAllAgents()}
+            userProfile={user}
+            currentSquadAgents={currentSquad?.agents || []}
             onAddToSquad={handleAddToSquad}
-            onViewAgentDetails={(agent) => {
-              setSelectedAgent(agent);
-              setShowAgentDetails(true);
-            }}
+            onViewDetails={setSelectedAgent}
           />
         );
       
@@ -183,29 +161,27 @@ const Index = () => {
               </p>
             </div>
             
-            {/* Current Squad */}
             <Card className="p-6">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-semibold flex items-center space-x-2">
                   <Users className="w-5 h-5" />
-                  <span>Current Squad ({currentSquad.length}/5)</span>
+                  <span>Current Squad ({currentSquad?.agents.length || 0}/5)</span>
                 </h3>
-                {currentSquad.length > 0 && (
+                {currentSquad && currentSquad.agents.length > 0 && (
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => setActiveTab('chat')}
                     className="flex items-center space-x-2"
                   >
-                    <MessageCircle className="w-4 h-4" />
                     <span>Start Chatting</span>
                   </Button>
                 )}
               </div>
               
-              {currentSquad.length > 0 ? (
+              {currentSquad && currentSquad.agents.length > 0 ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {currentSquad.map((agent) => (
+                  {currentSquad.agents.map((agent) => (
                     <div key={agent.id} className="flex items-center space-x-3 p-3 bg-muted/50 rounded-lg">
                       <Avatar className="w-10 h-10">
                         <AvatarImage src={agent.avatar} />
@@ -221,11 +197,15 @@ const Index = () => {
                         variant="ghost"
                         size="sm"
                         onClick={() => {
-                          setCurrentSquad(prev => prev.filter(a => a.id !== agent.id));
-                          toast({
-                            title: "Agent Removed",
-                            description: `${agent.name} has been removed from your squad.`,
-                          });
+                          if (currentSquad) {
+                            const updatedSquad = {
+                              ...currentSquad,
+                              agents: currentSquad.agents.filter(a => a.id !== agent.id)
+                            };
+                            setCurrentSquad(updatedSquad);
+                            setSquads(prev => prev.map(s => s.id === currentSquad.id ? updatedSquad : s));
+                            toast.success(`${agent.name} removed from squad`);
+                          }
                         }}
                         className="h-6 w-6 p-0 text-muted-foreground hover:text-destructive"
                       >
@@ -250,7 +230,7 @@ const Index = () => {
       case 'chat':
         return (
           <ChatInterface
-            currentSquad={currentSquad}
+            currentSquad={currentSquad?.agents || []}
             onAddXP={addXP}
           />
         );
@@ -261,38 +241,84 @@ const Index = () => {
   };
 
   return (
-    <div 
-      className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20"
-      style={{
-        backgroundImage: `linear-gradient(rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.95)), url(${heroBackground})`,
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        backgroundAttachment: 'fixed'
-      }}
-    >
-      {/* Header */}
-      <Header 
-        user={user} 
-        onOpenProfile={() => setShowProfile(true)} 
-      />
-      
-      {/* Navigation */}
-      <Navigation
-        activeTab={activeTab}
-        onTabChange={handleTabChange}
-        squadCount={squads.length}
-        hasActiveChat={currentSquad.length > 0}
-      />
-      
-      {/* Main Content */}
-      <main className="container mx-auto px-4 py-6">
-        <div className="animate-fade-in">
-          {renderTabContent()}
-        </div>
-      </main>
+    <SidebarProvider>
+      <div 
+        className="min-h-screen bg-cover bg-center bg-no-repeat relative flex w-full"
+        style={{ 
+          backgroundImage: `linear-gradient(135deg, rgba(225, 30, 60, 0.1) 0%, rgba(30, 136, 229, 0.1) 100%), url(${heroBackground})` 
+        }}
+      >
+        <div className="absolute inset-0 bg-background/80 backdrop-blur-sm" />
+        
+        <SidebarNav 
+          activeTab={activeTab} 
+          onTabChange={handleTabChange}
+          squadCount={squads.length}
+          hasActiveChat={!!currentSquad && currentSquad.agents.length > 0}
+          onCreateAgent={() => setShowCreateAgent(true)}
+          onCreateCanvas={() => setShowCanvasGenerator(true)}
+        />
+        
+        <div className="flex-1 flex flex-col relative z-10">
+          <header className="border-b bg-card/50 backdrop-blur-sm sticky top-0 z-50">
+            <div className="container mx-auto px-4 h-16 flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <SidebarTrigger className="lg:hidden" />
+                <div className="bg-white rounded-lg p-2 shadow-sm">
+                  <img src="/lovable-uploads/devoteam-logo.png" alt="Devoteam" className="w-10 h-10 object-contain" />
+                </div>
+                <div>
+                  <h1 className="text-xl font-bold gradient-text">NextGEN AI Agents</h1>
+                  <p className="text-xs text-muted-foreground">Powered by Devoteam</p>
+                </div>
+              </div>
 
-      {/* Agent Details Modal */}
-      <Dialog open={showAgentDetails} onOpenChange={setShowAgentDetails}>
+              <div className="flex items-center space-x-4">
+                {/* XP and Level Display */}
+                <div className="hidden sm:flex items-center space-x-3 bg-muted/50 rounded-lg px-3 py-2">
+                  <div className="flex items-center space-x-1">
+                    <Trophy className="w-4 h-4 text-agent-orange" />
+                    <span className="text-sm font-medium">Level {user.level}</span>
+                  </div>
+                  <div className="flex items-center space-x-1">
+                    <Zap className="w-4 h-4 text-primary" />
+                    <span className="text-sm font-medium">{user.xp} XP</span>
+                  </div>
+                  <div className="w-20 h-2 bg-muted rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-gradient-primary transition-all duration-300"
+                      style={{ width: `${((user.xp % 200) / 200) * 100}%` }}
+                    />
+                  </div>
+                </div>
+
+                {/* User Profile */}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowProfile(true)}
+                  className="flex items-center space-x-2 hover:bg-muted/50"
+                >
+                  <Avatar className="w-8 h-8">
+                    <AvatarFallback>{user.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
+                  </Avatar>
+                  <div className="hidden md:block text-left">
+                    <p className="text-sm font-medium">{user.name}</p>
+                    <p className="text-xs text-muted-foreground">{user.role}</p>
+                  </div>
+                </Button>
+              </div>
+            </div>
+          </header>
+          
+          <main className="container mx-auto px-4 py-8 flex-1">
+            {renderTabContent()}
+          </main>
+        </div>
+      </div>
+
+      {/* Agent Details Dialog */}
+      <Dialog open={!!selectedAgent} onOpenChange={() => setSelectedAgent(null)}>
         <DialogContent className="max-w-md">
           {selectedAgent && (
             <>
@@ -312,7 +338,6 @@ const Index = () => {
               </DialogHeader>
               
               <div className="space-y-4">
-                {/* XP Requirement */}
                 {selectedAgent.xpRequired > 0 && (
                   <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
                     <span className="text-sm font-medium">XP Required:</span>
@@ -323,13 +348,11 @@ const Index = () => {
                   </div>
                 )}
                 
-                {/* Backstory */}
                 <div>
                   <h4 className="font-medium mb-2">Background</h4>
                   <p className="text-sm text-muted-foreground">{selectedAgent.backstory}</p>
                 </div>
                 
-                {/* Capabilities */}
                 <div>
                   <h4 className="font-medium mb-2">Capabilities</h4>
                   <div className="flex flex-wrap gap-1">
@@ -341,7 +364,6 @@ const Index = () => {
                   </div>
                 </div>
                 
-                {/* Tags */}
                 <div>
                   <h4 className="font-medium mb-2">Expertise Tags</h4>
                   <div className="flex flex-wrap gap-1">
@@ -355,19 +377,18 @@ const Index = () => {
                 
                 <Separator />
                 
-                {/* Actions */}
                 <div className="flex gap-2">
                   {user.unlockedAgents.includes(selectedAgent.id) || user.xp >= selectedAgent.xpRequired ? (
                     <Button
                       onClick={() => {
                         handleAddToSquad(selectedAgent);
-                        setShowAgentDetails(false);
+                        setSelectedAgent(null);
                       }}
-                      disabled={currentSquad.some(a => a.id === selectedAgent.id)}
+                      disabled={currentSquad?.agents.some(a => a.id === selectedAgent.id)}
                       className="flex-1"
                     >
-                      {currentSquad.some(a => a.id === selectedAgent.id) ? (
-                        <>Already in Squad</>
+                      {currentSquad?.agents.some(a => a.id === selectedAgent.id) ? (
+                        'Already in Squad'
                       ) : (
                         <>
                           <Star className="w-4 h-4 mr-2" />
@@ -388,18 +409,36 @@ const Index = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Profile Modal Placeholder */}
+      {/* Create Agent Dialog */}
+      <CreateAgentDialog
+        open={showCreateAgent}
+        onClose={() => setShowCreateAgent(false)}
+        onAgentCreated={handleCreateAgent}
+      />
+
+      {/* Canvas Generator Dialog */}
+      <CanvasGenerator
+        open={showCanvasGenerator}
+        onClose={() => setShowCanvasGenerator(false)}
+      />
+
+      {/* User Profile Dialog */}
       <Dialog open={showProfile} onOpenChange={setShowProfile}>
-        <DialogContent>
+        <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>User Profile</DialogTitle>
+            <DialogDescription>
+              Your progress and achievements
+            </DialogDescription>
           </DialogHeader>
-          <div className="text-center py-8">
-            <p className="text-muted-foreground">Profile management coming soon!</p>
+          <div className="space-y-4 py-4">
+            <p className="text-center text-muted-foreground">
+              Profile management coming soon...
+            </p>
           </div>
         </DialogContent>
       </Dialog>
-    </div>
+    </SidebarProvider>
   );
 };
 
