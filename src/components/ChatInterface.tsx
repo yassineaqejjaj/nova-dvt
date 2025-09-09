@@ -6,10 +6,11 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import { Popover, PopoverContent } from '@/components/ui/popover';
 import { supabase } from '@/integrations/supabase/client';
 import { Agent, ChatMessage } from '@/types';
 import { toast } from '@/hooks/use-toast';
-import { Send, MessageCircle, Users, Loader2 } from 'lucide-react';
+import { Send, MessageCircle, Users, Loader2, AtSign } from 'lucide-react';
 
 interface ChatInterfaceProps {
   currentSquad: Agent[];
@@ -20,7 +21,12 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ currentSquad, onAd
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputMessage, setInputMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [showMentionDropdown, setShowMentionDropdown] = useState(false);
+  const [mentionSearch, setMentionSearch] = useState('');
+  const [selectedMentionIndex, setSelectedMentionIndex] = useState(0);
+  const [mentionStartPos, setMentionStartPos] = useState(0);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     // Add welcome message when squad changes
@@ -115,8 +121,76 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ currentSquad, onAd
     return mentions ? mentions.map(mention => mention.slice(1)) : [];
   };
 
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    const cursorPos = e.target.selectionStart || 0;
+    
+    setInputMessage(value);
+    
+    // Check for @ mention
+    const beforeCursor = value.slice(0, cursorPos);
+    const atIndex = beforeCursor.lastIndexOf('@');
+    
+    if (atIndex !== -1) {
+      const textAfterAt = beforeCursor.slice(atIndex + 1);
+      if (!textAfterAt.includes(' ') && textAfterAt.length >= 0) {
+        setMentionStartPos(atIndex);
+        setMentionSearch(textAfterAt.toLowerCase());
+        setShowMentionDropdown(true);
+        setSelectedMentionIndex(0);
+      } else {
+        setShowMentionDropdown(false);
+      }
+    } else {
+      setShowMentionDropdown(false);
+    }
+  };
+
+  const filteredAgents = currentSquad.filter(agent =>
+    agent.name.toLowerCase().includes(mentionSearch) ||
+    agent.specialty.toLowerCase().includes(mentionSearch)
+  );
+
+  const selectMention = (agent: Agent) => {
+    const beforeMention = inputMessage.slice(0, mentionStartPos);
+    const afterMention = inputMessage.slice(inputRef.current?.selectionStart || inputMessage.length);
+    const newValue = beforeMention + `@${agent.name} ` + afterMention;
+    
+    setInputMessage(newValue);
+    setShowMentionDropdown(false);
+    
+    // Focus input and set cursor after the mention
+    setTimeout(() => {
+      if (inputRef.current) {
+        inputRef.current.focus();
+        const newCursorPos = beforeMention.length + agent.name.length + 2;
+        inputRef.current.setSelectionRange(newCursorPos, newCursorPos);
+      }
+    }, 0);
+  };
+
   const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
+    if (showMentionDropdown) {
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        setSelectedMentionIndex(prev => 
+          prev < filteredAgents.length - 1 ? prev + 1 : 0
+        );
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        setSelectedMentionIndex(prev => 
+          prev > 0 ? prev - 1 : filteredAgents.length - 1
+        );
+      } else if (e.key === 'Enter') {
+        e.preventDefault();
+        if (filteredAgents[selectedMentionIndex]) {
+          selectMention(filteredAgents[selectedMentionIndex]);
+        }
+      } else if (e.key === 'Escape') {
+        e.preventDefault();
+        setShowMentionDropdown(false);
+      }
+    } else if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSendMessage();
     }
@@ -259,16 +333,62 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ currentSquad, onAd
         <Separator />
         
         {/* Message Input */}
-        <div className="p-4">
+        <div className="p-4 relative">
           <div className="flex space-x-2">
-            <Input
-              value={inputMessage}
-              onChange={(e) => setInputMessage(e.target.value)}
-              onKeyPress={handleKeyPress}
-              placeholder="Type your message... (use @AgentName to mention specific agents)"
-              disabled={isLoading}
-              className="flex-1"
-            />
+            <div className="relative flex-1">
+              <Input
+                ref={inputRef}
+                value={inputMessage}
+                onChange={handleInputChange}
+                onKeyDown={handleKeyPress}
+                placeholder="Type your message... (type @ to mention agents)"
+                disabled={isLoading}
+                className="flex-1"
+              />
+              
+              {/* Mention Dropdown */}
+              {showMentionDropdown && filteredAgents.length > 0 && (
+                <div className="absolute bottom-full left-0 mb-1 w-full max-w-xs bg-background border rounded-md shadow-lg z-50">
+                  <div className="p-2 border-b">
+                    <div className="flex items-center space-x-2 text-sm text-muted-foreground">
+                      <AtSign className="w-3 h-3" />
+                      <span>Mention an agent</span>
+                    </div>
+                  </div>
+                  <div className="max-h-48 overflow-y-auto">
+                    {filteredAgents.map((agent, index) => (
+                      <div
+                        key={agent.id}
+                        className={`flex items-center space-x-3 p-3 cursor-pointer transition-colors ${
+                          index === selectedMentionIndex 
+                            ? 'bg-accent text-accent-foreground' 
+                            : 'hover:bg-muted'
+                        }`}
+                        onClick={() => selectMention(agent)}
+                      >
+                        <Avatar className="w-6 h-6">
+                          <AvatarImage src={agent.avatar} />
+                          <AvatarFallback className="text-xs">
+                            {agent.name.split(' ').map(n => n[0]).join('')}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center space-x-2">
+                            <span className="text-sm font-medium truncate">
+                              {agent.name}
+                            </span>
+                            <Badge variant="secondary" className="text-xs">
+                              {agent.specialty}
+                            </Badge>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+            
             <Button
               onClick={handleSendMessage}
               disabled={isLoading || !inputMessage.trim()}
@@ -282,7 +402,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ currentSquad, onAd
             </Button>
           </div>
           <p className="text-xs text-muted-foreground mt-2">
-            Tip: Use @{currentSquad[0]?.name.split(' ')[0]} to mention specific agents in your message
+            Tip: Type @ to mention specific agents in your message
           </p>
         </div>
       </Card>
