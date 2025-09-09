@@ -241,13 +241,8 @@ const Index = () => {
 
   return (
     <SidebarProvider>
-      <div 
-        className="min-h-screen bg-cover bg-center bg-no-repeat relative flex w-full"
-        style={{ 
-          backgroundImage: `linear-gradient(135deg, rgba(225, 30, 60, 0.1) 0%, rgba(30, 136, 229, 0.1) 100%), url(${heroBackground})` 
-        }}
-      >
-        <div className="absolute inset-0 bg-background/80 backdrop-blur-sm" />
+      <div className="min-h-screen bg-background relative flex w-full">
+        <div className="absolute inset-0 bg-white" />
         
         <SidebarNav 
           activeTab={activeTab} 
