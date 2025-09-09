@@ -143,11 +143,10 @@ const Index = () => {
       case 'agents':
         return (
           <AgentGallery
-            allAgents={getAllAgents()}
-            userProfile={user}
+            user={user}
             currentSquadAgents={currentSquad?.agents || []}
             onAddToSquad={handleAddToSquad}
-            onViewDetails={setSelectedAgent}
+            onViewAgentDetails={setSelectedAgent}
           />
         );
       
