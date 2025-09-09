@@ -3,6 +3,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { AgentCard } from './AgentCard';
+import { CreateAgentDialog } from './CreateAgentDialog';
 import { Agent, UserProfile } from '@/types';
 import { allAgents } from '@/data/mockData';
 import { 
@@ -12,7 +13,8 @@ import {
   Palette, 
   Code, 
   TrendingUp,
-  X
+  X,
+  Plus
 } from 'lucide-react';
 
 interface AgentGalleryProps {
@@ -20,6 +22,8 @@ interface AgentGalleryProps {
   currentSquadAgents: Agent[];
   onAddToSquad: (agent: Agent) => void;
   onViewAgentDetails: (agent: Agent) => void;
+  onAgentCreated: (agent: Agent) => void;
+  customAgents: Agent[];
 }
 
 const familyCategories = [
@@ -34,14 +38,19 @@ export const AgentGallery: React.FC<AgentGalleryProps> = ({
   user,
   currentSquadAgents,
   onAddToSquad,
-  onViewAgentDetails
+  onViewAgentDetails,
+  onAgentCreated,
+  customAgents
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [showUnlockedOnly, setShowUnlockedOnly] = useState(false);
+  const [showCreateAgent, setShowCreateAgent] = useState(false);
+
+  const allAvailableAgents = [...allAgents, ...customAgents];
 
   const filteredAgents = useMemo(() => {
-    return allAgents.filter(agent => {
+    return allAvailableAgents.filter(agent => {
       // Search filter
       const matchesSearch = searchTerm === '' || 
         agent.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -58,9 +67,9 @@ export const AgentGallery: React.FC<AgentGalleryProps> = ({
 
       return matchesSearch && matchesCategory && matchesUnlocked;
     });
-  }, [searchTerm, selectedCategory, showUnlockedOnly, user.unlockedAgents, user.xp]);
+  }, [searchTerm, selectedCategory, showUnlockedOnly, user.unlockedAgents, user.xp, allAvailableAgents]);
 
-  const unlockedCount = allAgents.filter(agent => 
+  const unlockedCount = allAvailableAgents.filter(agent => 
     user.unlockedAgents.includes(agent.id) || user.xp >= agent.xpRequired
   ).length;
 
@@ -75,9 +84,16 @@ export const AgentGallery: React.FC<AgentGalleryProps> = ({
           </p>
         </div>
         <div className="flex items-center space-x-2">
+          <Button 
+            onClick={() => setShowCreateAgent(true)}
+            className="flex items-center space-x-2"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Create Agent</span>
+          </Button>
           <Badge variant="secondary" className="flex items-center space-x-1">
             <Users className="w-3 h-3" />
-            <span>{unlockedCount}/{allAgents.length} Unlocked</span>
+            <span>{unlockedCount}/{allAvailableAgents.length} Unlocked</span>
           </Badge>
         </div>
       </div>
@@ -126,8 +142,8 @@ export const AgentGallery: React.FC<AgentGalleryProps> = ({
                 <span>{category.label}</span>
                 <Badge variant="secondary" className="text-xs">
                   {category.id === 'all' 
-                    ? allAgents.length 
-                    : allAgents.filter(a => a.familyColor === category.id).length
+                    ? allAvailableAgents.length 
+                    : allAvailableAgents.filter(a => a.familyColor === category.id).length
                   }
                 </Badge>
               </Button>
@@ -196,6 +212,13 @@ export const AgentGallery: React.FC<AgentGalleryProps> = ({
           </p>
         </div>
       )}
+
+      {/* Create Agent Dialog */}
+      <CreateAgentDialog
+        open={showCreateAgent}
+        onClose={() => setShowCreateAgent(false)}
+        onAgentCreated={onAgentCreated}
+      />
     </div>
   );
 };

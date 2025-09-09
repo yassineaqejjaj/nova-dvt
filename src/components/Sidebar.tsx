@@ -28,7 +28,6 @@ interface SidebarNavProps {
   onTabChange: (tab: TabType) => void;
   squadCount: number;
   hasActiveChat: boolean;
-  onCreateAgent: () => void;
   onCreateCanvas: () => void;
 }
 
@@ -37,7 +36,6 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
   onTabChange, 
   squadCount,
   hasActiveChat,
-  onCreateAgent,
   onCreateCanvas
 }) => {
 
@@ -72,13 +70,6 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
   ];
 
   const creativeTools = [
-    {
-      id: 'create-agent',
-      label: 'Create Agent',
-      icon: Plus,
-      description: 'Generate Custom Agent',
-      onClick: onCreateAgent
-    },
     {
       id: 'canvas-generator',
       label: 'Canvas Generator',

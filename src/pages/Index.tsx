@@ -4,7 +4,7 @@ import { SidebarNav } from '@/components/Sidebar';
 import { Dashboard } from '@/components/Dashboard';
 import { AgentGallery } from '@/components/AgentGallery';
 import { ChatInterface } from '@/components/ChatInterface';
-import { CreateAgentDialog } from '@/components/CreateAgentDialog';
+
 import { CanvasGenerator } from '@/components/CanvasGenerator';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -26,7 +26,7 @@ const Index = () => {
   const [currentSquad, setCurrentSquad] = useState<Squad | null>(null);
   const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null);
   const [showProfile, setShowProfile] = useState(false);
-  const [showCreateAgent, setShowCreateAgent] = useState(false);
+  
   const [showCanvasGenerator, setShowCanvasGenerator] = useState(false);
   const [customAgents, setCustomAgents] = useState<Agent[]>([]);
 
@@ -140,15 +140,17 @@ const Index = () => {
           />
         );
       
-      case 'agents':
-        return (
-          <AgentGallery
-            user={user}
-            currentSquadAgents={currentSquad?.agents || []}
-            onAddToSquad={handleAddToSquad}
-            onViewAgentDetails={setSelectedAgent}
-          />
-        );
+        case 'agents':
+          return (
+            <AgentGallery
+              user={user}
+              currentSquadAgents={currentSquad?.agents || []}
+              onAddToSquad={handleAddToSquad}
+              onViewAgentDetails={setSelectedAgent}
+              onAgentCreated={handleCreateAgent}
+              customAgents={customAgents}
+            />
+          );
       
       case 'squads':
         return (
@@ -249,7 +251,6 @@ const Index = () => {
           onTabChange={handleTabChange}
           squadCount={squads.length}
           hasActiveChat={!!currentSquad && currentSquad.agents.length > 0}
-          onCreateAgent={() => setShowCreateAgent(true)}
           onCreateCanvas={() => setShowCanvasGenerator(true)}
         />
         
@@ -403,12 +404,6 @@ const Index = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Create Agent Dialog */}
-      <CreateAgentDialog
-        open={showCreateAgent}
-        onClose={() => setShowCreateAgent(false)}
-        onAgentCreated={handleCreateAgent}
-      />
 
       {/* Canvas Generator Dialog */}
       <CanvasGenerator
