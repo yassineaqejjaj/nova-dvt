@@ -86,9 +86,16 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
       : 'hover:bg-primary/10 hover:text-primary/90';
   };
 
+  const { open } = useSidebar();
+
   return (
-    <Sidebar className="w-64">
-      <SidebarContent>
+    <Sidebar 
+      className={`transition-all duration-300 ease-in-out ${
+        !open ? 'w-14 hover:w-64' : 'w-64'
+      }`}
+      collapsible="icon"
+    >
+      <SidebarContent className="overflow-hidden">
         {/* Main Navigation */}
         <SidebarGroup>
           <SidebarGroupLabel>Navigation</SidebarGroupLabel>
@@ -107,10 +114,10 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
                         disabled={tab.disabled}
                         className={`w-full justify-start h-12 px-3 ${getNavClass(isActive, tab.disabled)}`}
                       >
-                        <Icon className="w-5 h-5 mr-3" />
-                        <div className="flex-1 text-left">
+                        <Icon className="w-5 h-5 mr-3 flex-shrink-0" />
+                        <div className={`flex-1 text-left transition-opacity duration-200 overflow-hidden ${!open ? 'opacity-0 w-0' : 'opacity-100'}`}>
                           <div className="flex items-center space-x-2">
-                            <span className="font-medium">{tab.label}</span>
+                            <span className="font-medium whitespace-nowrap">{tab.label}</span>
                             {tab.badge && (
                               <Badge 
                                 variant={tab.badge === 'active' ? 'default' : 'secondary'} 
@@ -124,7 +131,7 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
                               </Badge>
                             )}
                           </div>
-                          <p className="text-xs text-muted-foreground">{tab.description}</p>
+                          <p className="text-xs text-muted-foreground whitespace-nowrap">{tab.description}</p>
                         </div>
                       </Button>
                     </SidebarMenuButton>
@@ -151,10 +158,10 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
                         onClick={tool.onClick}
                         className="w-full justify-start h-12 px-3 hover:bg-accent/50 hover:text-accent-foreground"
                       >
-                        <Icon className="w-5 h-5 mr-3" />
-                        <div className="flex-1 text-left">
-                          <span className="font-medium">{tool.label}</span>
-                          <p className="text-xs text-muted-foreground">{tool.description}</p>
+                        <Icon className="w-5 h-5 mr-3 flex-shrink-0" />
+                        <div className={`flex-1 text-left transition-opacity duration-200 overflow-hidden ${!open ? 'opacity-0 w-0' : 'opacity-100'}`}>
+                          <span className="font-medium whitespace-nowrap">{tool.label}</span>
+                          <p className="text-xs text-muted-foreground whitespace-nowrap">{tool.description}</p>
                         </div>
                       </Button>
                     </SidebarMenuButton>

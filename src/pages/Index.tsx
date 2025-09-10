@@ -242,7 +242,7 @@ const Index = () => {
   };
 
   return (
-    <SidebarProvider>
+    <SidebarProvider defaultOpen={false}>
       <div className="min-h-screen bg-background relative flex w-full">
         <div className="absolute inset-0 bg-white" />
         
