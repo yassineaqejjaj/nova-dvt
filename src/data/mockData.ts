@@ -262,7 +262,7 @@ export const badges: Badge[] = [
 
 export const createDemoUser = (): UserProfile => ({
   id: 'demo-user',
-  name: 'Alex Demo',
+  name: 'Yassine AQEJJAJ',
   role: 'Product Manager',
   level: 5,
   xp: 750,
