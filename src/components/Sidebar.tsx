@@ -86,14 +86,26 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
       : 'hover:bg-primary/10 hover:text-primary/90';
   };
 
-  const { open } = useSidebar();
+  const { open, setOpen } = useSidebar();
+
+  const handleMouseEnter = () => {
+    if (!open) {
+      setOpen(true);
+    }
+  };
+
+  const handleMouseLeave = () => {
+    setOpen(false);
+  };
 
   return (
     <Sidebar 
       className={`transition-all duration-300 ease-in-out ${
-        !open ? 'w-14 hover:w-64' : 'w-64'
+        open ? 'w-64' : 'w-14'
       }`}
       collapsible="icon"
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
     >
       <SidebarContent className="overflow-hidden">
         {/* Main Navigation */}
