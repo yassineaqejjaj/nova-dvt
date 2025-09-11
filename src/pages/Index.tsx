@@ -260,10 +260,10 @@ const Index = () => {
               <div className="flex items-center space-x-3">
                 <SidebarTrigger className="lg:hidden" />
                 <div className="bg-white rounded-lg p-2 shadow-sm">
-                  <img src="/lovable-uploads/devoteam-logo.png" alt="Devoteam" className="w-10 h-10 object-contain" />
+                  <img src="/lovable-uploads/420dfc65-a110-4707-9eb4-3ffc08d33dd3.png" alt="Squad Mate" className="w-10 h-10 object-contain" />
                 </div>
                 <div>
-                  <h1 className="text-xl font-bold gradient-text">NextGEN AI Agents</h1>
+                  <h1 className="text-xl font-bold gradient-text">Squad Mate</h1>
                   <p className="text-xs text-muted-foreground">Powered by Devoteam</p>
                 </div>
               </div>
