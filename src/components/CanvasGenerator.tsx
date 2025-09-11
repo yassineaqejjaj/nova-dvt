@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -14,7 +14,10 @@ import {
   Grid3X3,
   Download,
   Copy,
-  CheckCircle
+  CheckCircle,
+  Upload,
+  FileText,
+  X
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -32,6 +35,20 @@ interface CanvasTemplate {
   sections: string[];
   prompts: Record<string, string>;
   color: string;
+  formFields?: Array<{
+    name: string;
+    label: string;
+    type: 'input' | 'textarea' | 'select';
+    placeholder?: string;
+    required?: boolean;
+    options?: string[];
+  }>;
+}
+
+interface UploadedDocument {
+  name: string;
+  content: string;
+  size: number;
 }
 
 const canvasTemplates: CanvasTemplate[] = [
@@ -47,7 +64,12 @@ const canvasTemplates: CanvasTemplate[] = [
       'Could Have': 'What would be nice to have if time permits?',
       'Won\'t Have': 'What are we explicitly not doing this time?'
     },
-    color: 'bg-agent-blue'
+    color: 'bg-agent-blue',
+    formFields: [
+      { name: 'timeline', label: 'Project Timeline', type: 'input', placeholder: 'e.g., 3 months', required: true },
+      { name: 'budget', label: 'Budget Constraints', type: 'input', placeholder: 'Budget limitations' },
+      { name: 'stakeholders', label: 'Key Stakeholders', type: 'textarea', placeholder: 'List key stakeholders and their priorities' }
+    ]
   },
   {
     id: 'swot',
@@ -61,7 +83,12 @@ const canvasTemplates: CanvasTemplate[] = [
       'Opportunities': 'What market opportunities exist?',
       'Threats': 'What external threats should we consider?'
     },
-    color: 'bg-agent-green'
+    color: 'bg-agent-green',
+    formFields: [
+      { name: 'industry', label: 'Industry/Market', type: 'input', placeholder: 'e.g., SaaS, E-commerce', required: true },
+      { name: 'company_size', label: 'Company Size', type: 'select', options: ['Startup', 'Small (1-50)', 'Medium (51-500)', 'Large (500+)'] },
+      { name: 'competitors', label: 'Main Competitors', type: 'textarea', placeholder: 'List 3-5 main competitors' }
+    ]
   },
   {
     id: 'business-model',
@@ -83,7 +110,12 @@ const canvasTemplates: CanvasTemplate[] = [
       'Cost Structure': 'What are the most important costs in our business?',
       'Revenue Streams': 'For what value are customers willing to pay?'
     },
-    color: 'bg-agent-purple'
+    color: 'bg-agent-purple',
+    formFields: [
+      { name: 'business_type', label: 'Business Type', type: 'select', options: ['B2B', 'B2C', 'B2B2C', 'Marketplace'], required: true },
+      { name: 'revenue_model', label: 'Revenue Model', type: 'select', options: ['Subscription', 'One-time', 'Freemium', 'Commission', 'Advertising'] },
+      { name: 'target_market', label: 'Target Market Size', type: 'input', placeholder: 'Estimated market size' }
+    ]
   },
   {
     id: 'rice',
@@ -99,7 +131,12 @@ const canvasTemplates: CanvasTemplate[] = [
       'Effort': 'How much effort is required? (person-months)',
       'RICE Score': 'Calculated automatically: (Reach × Impact × Confidence) / Effort'
     },
-    color: 'bg-agent-orange'
+    color: 'bg-agent-orange',
+    formFields: [
+      { name: 'initiatives', label: 'Initiatives to Evaluate', type: 'textarea', placeholder: 'List initiatives separated by lines', required: true },
+      { name: 'team_size', label: 'Team Size', type: 'input', placeholder: 'Number of team members' },
+      { name: 'timeframe', label: 'Evaluation Timeframe', type: 'select', options: ['Quarter', 'Half-year', 'Year'] }
+    ]
   }
 ];
 
@@ -109,8 +146,56 @@ export const CanvasGenerator: React.FC<CanvasGeneratorProps> = ({
 }) => {
   const [selectedTemplate, setSelectedTemplate] = useState<CanvasTemplate | null>(null);
   const [projectContext, setProjectContext] = useState('');
+  const [formData, setFormData] = useState<Record<string, string>>({});
+  const [documents, setDocuments] = useState<UploadedDocument[]>([]);
   const [generatedCanvas, setGeneratedCanvas] = useState<Record<string, string>>({});
   const [isGenerating, setIsGenerating] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (!files) return;
+
+    const uploadPromises = Array.from(files).map(async (file) => {
+      if (file.size > 5 * 1024 * 1024) { // 5MB limit
+        toast.error(`File ${file.name} is too large (max 5MB)`);
+        return null;
+      }
+
+      try {
+        const text = await file.text();
+        return {
+          name: file.name,
+          content: text.substring(0, 10000), // Limit content to prevent token overflow
+          size: file.size
+        } as UploadedDocument;
+      } catch (error) {
+        toast.error(`Failed to read file ${file.name}`);
+        return null;
+      }
+    });
+
+    const uploadedDocs = (await Promise.all(uploadPromises)).filter(Boolean) as UploadedDocument[];
+    setDocuments(prev => [...prev, ...uploadedDocs]);
+    
+    if (uploadedDocs.length > 0) {
+      toast.success(`Uploaded ${uploadedDocs.length} document(s)`);
+    }
+    
+    // Reset file input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  const removeDocument = (index: number) => {
+    setDocuments(prev => prev.filter((_, i) => i !== index));
+    toast.success('Document removed');
+  };
+
+  const updateFormData = (field: string, value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
 
   const generateCanvas = async () => {
     if (!selectedTemplate || !projectContext.trim()) {
@@ -120,48 +205,23 @@ export const CanvasGenerator: React.FC<CanvasGeneratorProps> = ({
 
     setIsGenerating(true);
     try {
-      const { data, error } = await supabase.functions.invoke('chat-ai', {
+      const { data, error } = await supabase.functions.invoke('canvas-generator', {
         body: {
-          prompt: `Generate a ${selectedTemplate.name} for the following project context:
-
-PROJECT CONTEXT: ${projectContext}
-
-Please provide structured content for each section of the ${selectedTemplate.name}:
-${selectedTemplate.sections.map(section => `- ${section}: ${selectedTemplate.prompts[section] || 'Provide relevant content for this section'}`).join('\n')}
-
-Respond with a JSON object where each key is a section name and the value is the generated content for that section. Keep each section concise but actionable (2-4 bullet points or short paragraphs).
-
-Example format:
-{
-  "Section 1": "• Point 1\n• Point 2\n• Point 3",
-  "Section 2": "Content for section 2..."
-}`,
-          messages: []
+          template: selectedTemplate,
+          projectContext,
+          formData,
+          documents
         }
       });
 
       if (error) throw error;
 
-      let generatedData;
-      try {
-        const responseText = data.response || data.generatedText || '';
-        const jsonMatch = responseText.match(/\{[\s\S]*\}/);
-        if (jsonMatch) {
-          generatedData = JSON.parse(jsonMatch[0]);
-        } else {
-          throw new Error('No JSON found in response');
-        }
-      } catch (parseError) {
-        console.error('JSON parsing error:', parseError);
-        // Fallback generation
-        generatedData = selectedTemplate.sections.reduce((acc, section) => {
-          acc[section] = `Generated content for ${section} based on: ${projectContext}`;
-          return acc;
-        }, {} as Record<string, string>);
+      if (data.canvas) {
+        setGeneratedCanvas(data.canvas);
+        toast.success(`${selectedTemplate.name} generated successfully!`);
+      } else {
+        throw new Error('No canvas data received');
       }
-
-      setGeneratedCanvas(generatedData);
-      toast.success(`${selectedTemplate.name} generated successfully!`);
     } catch (error) {
       console.error('Error generating canvas:', error);
       toast.error('Failed to generate canvas. Please try again.');
@@ -269,7 +329,7 @@ Example format:
             </div>
 
             {Object.keys(generatedCanvas).length === 0 ? (
-              <div className="space-y-4">
+              <div className="space-y-6">
                 <div className="space-y-2">
                   <Label htmlFor="context">Project Context</Label>
                   <Textarea
@@ -279,6 +339,104 @@ Example format:
                     onChange={(e) => setProjectContext(e.target.value)}
                     rows={4}
                   />
+                </div>
+
+                {/* Custom form fields for selected template */}
+                {selectedTemplate.formFields && selectedTemplate.formFields.length > 0 && (
+                  <div className="space-y-4">
+                    <h4 className="text-md font-semibold">Additional Information</h4>
+                    {selectedTemplate.formFields.map((field) => (
+                      <div key={field.name} className="space-y-2">
+                        <Label htmlFor={field.name}>
+                          {field.label}
+                          {field.required && <span className="text-red-500 ml-1">*</span>}
+                        </Label>
+                        {field.type === 'input' && (
+                          <Input
+                            id={field.name}
+                            placeholder={field.placeholder}
+                            value={formData[field.name] || ''}
+                            onChange={(e) => updateFormData(field.name, e.target.value)}
+                          />
+                        )}
+                        {field.type === 'textarea' && (
+                          <Textarea
+                            id={field.name}
+                            placeholder={field.placeholder}
+                            value={formData[field.name] || ''}
+                            onChange={(e) => updateFormData(field.name, e.target.value)}
+                            rows={3}
+                          />
+                        )}
+                        {field.type === 'select' && field.options && (
+                          <select
+                            id={field.name}
+                            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                            value={formData[field.name] || ''}
+                            onChange={(e) => updateFormData(field.name, e.target.value)}
+                          >
+                            <option value="">Select an option...</option>
+                            {field.options.map((option) => (
+                              <option key={option} value={option}>{option}</option>
+                            ))}
+                          </select>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Document upload section */}
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-md font-semibold">Supporting Documents</h4>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => fileInputRef.current?.click()}
+                      type="button"
+                    >
+                      <Upload className="w-4 h-4 mr-2" />
+                      Upload Files
+                    </Button>
+                  </div>
+                  
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    multiple
+                    accept=".txt,.md,.csv,.json,.pdf"
+                    onChange={handleFileUpload}
+                    className="hidden"
+                  />
+
+                  {documents.length > 0 && (
+                    <div className="space-y-2">
+                      <p className="text-sm text-muted-foreground">
+                        Uploaded documents will be analyzed to enhance canvas generation
+                      </p>
+                      <div className="grid grid-cols-1 gap-2">
+                        {documents.map((doc, index) => (
+                          <div key={index} className="flex items-center justify-between p-3 bg-muted rounded-lg">
+                            <div className="flex items-center space-x-2">
+                              <FileText className="w-4 h-4 text-muted-foreground" />
+                              <span className="text-sm font-medium">{doc.name}</span>
+                              <span className="text-xs text-muted-foreground">
+                                ({(doc.size / 1024).toFixed(1)} KB)
+                              </span>
+                            </div>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => removeDocument(index)}
+                            >
+                              <X className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 <Button 
@@ -336,6 +494,8 @@ Example format:
                   onClick={() => {
                     setGeneratedCanvas({});
                     setProjectContext('');
+                    setFormData({});
+                    setDocuments([]);
                   }}
                   className="w-full"
                 >
