@@ -31,6 +31,7 @@ export interface UserProfile {
   streak: number;
   unlockedAgents: string[];
   badges: Badge[];
+  avatar_url?: string;
 }
 
 export interface Badge {

@@ -14,10 +14,11 @@ import { Send, MessageCircle, Users, Loader2, AtSign } from 'lucide-react';
 
 interface ChatInterfaceProps {
   currentSquad: Agent[];
+  squadId?: string;
   onAddXP: (amount: number, reason: string) => void;
 }
 
-export const ChatInterface: React.FC<ChatInterfaceProps> = ({ currentSquad, onAddXP }) => {
+export const ChatInterface: React.FC<ChatInterfaceProps> = ({ currentSquad, squadId, onAddXP }) => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputMessage, setInputMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -29,8 +30,11 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ currentSquad, onAd
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    // Add welcome message when squad changes
-    if (currentSquad.length > 0) {
+    // Load existing messages when squad changes
+    if (squadId && currentSquad.length > 0) {
+      loadChatMessages();
+    } else if (currentSquad.length > 0) {
+      // Add welcome message for squads without database ID
       const welcomeMessage: ChatMessage = {
         id: `welcome-${Date.now()}`,
         squadId: 'current',
@@ -40,7 +44,71 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ currentSquad, onAd
       };
       setMessages([welcomeMessage]);
     }
-  }, [currentSquad]);
+  }, [currentSquad, squadId]);
+
+  const loadChatMessages = async () => {
+    if (!squadId) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('chat_messages')
+        .select('*')
+        .eq('squad_id', squadId)
+        .order('created_at', { ascending: true });
+
+      if (error) throw error;
+
+      const transformedMessages: ChatMessage[] = data?.map(msg => ({
+        id: msg.id,
+        squadId: msg.squad_id,
+        content: msg.content,
+        sender: msg.sender_type === 'user' ? 'user' : {
+          id: msg.sender_agent_id || '',
+          name: msg.sender_agent_name || '',
+          specialty: '',
+          avatar: '',
+          backstory: '',
+          capabilities: [],
+          tags: [],
+          xpRequired: 0,
+          familyColor: 'blue' as const
+        },
+        timestamp: new Date(msg.created_at),
+        mentionedAgents: msg.mentioned_agents || []
+      })) || [];
+
+      if (transformedMessages.length === 0 && currentSquad.length > 0) {
+        // Add welcome message if no messages exist
+        const welcomeMessage: ChatMessage = {
+          id: `welcome-${Date.now()}`,
+          squadId: squadId,
+          content: `Hello! I'm your AI squad consisting of ${currentSquad.map(agent => agent.name).join(', ')}. How can we help you today?`,
+          sender: currentSquad[0],
+          timestamp: new Date(),
+        };
+        
+        // Save welcome message to database
+        const { data: userData } = await supabase.auth.getUser();
+        if (userData.user) {
+          await supabase.from('chat_messages').insert({
+            squad_id: squadId,
+            user_id: userData.user.id,
+            content: welcomeMessage.content,
+            sender_type: 'agent',
+            sender_agent_id: currentSquad[0].id,
+            sender_agent_name: currentSquad[0].name,
+            mentioned_agents: []
+          });
+        }
+
+        setMessages([welcomeMessage]);
+      } else {
+        setMessages(transformedMessages);
+      }
+    } catch (error) {
+      console.error('Error loading chat messages:', error);
+    }
+  };
 
   useEffect(() => {
     // Scroll to bottom when new messages arrive
@@ -54,7 +122,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ currentSquad, onAd
 
     const userMessage: ChatMessage = {
       id: `user-${Date.now()}`,
-      squadId: 'current',
+      squadId: squadId || 'current',
       content: inputMessage,
       sender: 'user',
       timestamp: new Date(),
@@ -66,6 +134,20 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ currentSquad, onAd
     setIsLoading(true);
 
     try {
+      // Save user message to database if we have a squad ID
+      if (squadId) {
+        const { data: userData } = await supabase.auth.getUser();
+        if (userData.user) {
+          await supabase.from('chat_messages').insert({
+            squad_id: squadId,
+            user_id: userData.user.id,
+            content: inputMessage,
+            sender_type: 'user',
+            mentioned_agents: userMessage.mentionedAgents || []
+          });
+        }
+      }
+
       // Prepare conversation history for OpenAI
       const conversationHistory = messages.slice(-10).map(msg => ({
         role: msg.sender === 'user' ? 'user' : 'assistant',
@@ -90,15 +172,30 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ currentSquad, onAd
 
       // Add multiple agent responses with staggered timing
       data.responses.forEach((response: any, index: number) => {
-        setTimeout(() => {
+        setTimeout(async () => {
           const agentMessage: ChatMessage = {
             id: `assistant-${Date.now()}-${index}`,
-            squadId: 'current',
+            squadId: squadId || 'current',
             content: response.message,
             sender: response.agent,
             timestamp: new Date(),
           };
           setMessages(prev => [...prev, agentMessage]);
+
+          // Save agent message to database if we have a squad ID
+          if (squadId) {
+            const { data: userData } = await supabase.auth.getUser();
+            if (userData.user) {
+              await supabase.from('chat_messages').insert({
+                squad_id: squadId,
+                user_id: userData.user.id,
+                content: response.message,
+                sender_type: 'agent',
+                sender_agent_id: response.agent.id,
+                sender_agent_name: response.agent.name
+              });
+            }
+          }
         }, (index + 1) * 1500); // Stagger responses by 1.5 seconds
       });
 
