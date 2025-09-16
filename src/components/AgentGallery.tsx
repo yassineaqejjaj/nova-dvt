@@ -29,9 +29,9 @@ interface AgentGalleryProps {
 const familyCategories = [
   { id: 'all', label: 'All Agents', icon: Users, color: 'default' },
   { id: 'blue', label: 'Product Management', icon: Users, color: 'agent-blue' },
-  { id: 'green', label: 'Design', icon: Palette, color: 'agent-green' },
+  { id: 'green', label: 'Design & Workflow', icon: Palette, color: 'agent-green' },
   { id: 'purple', label: 'Development', icon: Code, color: 'agent-purple' },
-  { id: 'orange', label: 'Marketing', icon: TrendingUp, color: 'agent-orange' }
+  { id: 'orange', label: 'Growth & Analytics', icon: TrendingUp, color: 'agent-orange' }
 ];
 
 export const AgentGallery: React.FC<AgentGalleryProps> = ({
