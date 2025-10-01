@@ -4,6 +4,7 @@ import { Dashboard } from '@/components/Dashboard';
 import { AgentGallery } from '@/components/AgentGallery';
 import { ChatInterface } from '@/components/ChatInterface';
 import { CanvasGenerator } from '@/components/CanvasGenerator';
+import { Workflows } from '@/components/Workflows';
 import { AuthDialog } from '@/components/AuthDialog';
 import { SquadManager } from '@/components/SquadManager';
 import { UserProfile } from '@/components/UserProfile';
@@ -202,6 +203,9 @@ const Index = () => {
             }}
           />
         );
+      
+      case 'workflows':
+        return <Workflows />;
       
       default:
         return null;

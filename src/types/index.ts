@@ -52,4 +52,4 @@ export interface ChatMessage {
   attachments?: File[];
 }
 
-export type TabType = 'dashboard' | 'agents' | 'squads' | 'chat';
+export type TabType = 'dashboard' | 'agents' | 'squads' | 'chat' | 'workflows';

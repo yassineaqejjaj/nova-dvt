@@ -9,7 +9,8 @@ import {
   MessageCircle,
   Grid3X3,
   Plus,
-  Sparkles 
+  Sparkles,
+  Workflow
 } from 'lucide-react';
 import {
   Sidebar,
@@ -58,6 +59,12 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
       icon: UserPlus,
       description: 'Create AI Teams',
       badge: squadCount > 0 ? squadCount.toString() : undefined
+    },
+    {
+      id: 'workflows' as TabType,
+      label: 'PM Workflows',
+      icon: Workflow,
+      description: 'Guided PM Processes'
     },
     {
       id: 'chat' as TabType,
