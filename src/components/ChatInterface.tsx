@@ -10,7 +10,10 @@ import { Popover, PopoverContent } from '@/components/ui/popover';
 import { supabase } from '@/integrations/supabase/client';
 import { Agent, ChatMessage } from '@/types';
 import { toast } from '@/hooks/use-toast';
-import { Send, MessageCircle, Users, Loader2, AtSign } from 'lucide-react';
+import { Send, MessageCircle, Users, Loader2, AtSign, Grid3X3, FileText, TrendingUp } from 'lucide-react';
+import { CanvasGenerator } from './CanvasGenerator';
+import { StoryWriter } from './StoryWriter';
+import { ImpactPlotter } from './ImpactPlotter';
 
 interface ChatInterfaceProps {
   currentSquad: Agent[];
@@ -26,6 +29,9 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ currentSquad, squa
   const [mentionSearch, setMentionSearch] = useState('');
   const [selectedMentionIndex, setSelectedMentionIndex] = useState(0);
   const [mentionStartPos, setMentionStartPos] = useState(0);
+  const [showCanvasGenerator, setShowCanvasGenerator] = useState(false);
+  const [showStoryWriter, setShowStoryWriter] = useState(false);
+  const [showImpactPlotter, setShowImpactPlotter] = useState(false);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -119,6 +125,21 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ currentSquad, squa
 
   const handleSendMessage = async () => {
     if (!inputMessage.trim() || currentSquad.length === 0) return;
+
+    // Check for tool triggers
+    const lowerMessage = inputMessage.toLowerCase();
+    if (lowerMessage.includes('canvas') || lowerMessage.includes('moscow') || lowerMessage.includes('swot')) {
+      setShowCanvasGenerator(true);
+      return;
+    }
+    if (lowerMessage.includes('user story') || lowerMessage.includes('story writer')) {
+      setShowStoryWriter(true);
+      return;
+    }
+    if (lowerMessage.includes('impact') && lowerMessage.includes('effort')) {
+      setShowImpactPlotter(true);
+      return;
+    }
 
     const userMessage: ChatMessage = {
       id: `user-${Date.now()}`,
@@ -431,6 +452,35 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ currentSquad, squa
         
         {/* Message Input */}
         <div className="p-4 relative">
+          <div className="flex items-center space-x-2 mb-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowCanvasGenerator(true)}
+              className="flex items-center space-x-1"
+            >
+              <Grid3X3 className="w-4 h-4" />
+              <span>Canvas</span>
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowStoryWriter(true)}
+              className="flex items-center space-x-1"
+            >
+              <FileText className="w-4 h-4" />
+              <span>Story</span>
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowImpactPlotter(true)}
+              className="flex items-center space-x-1"
+            >
+              <TrendingUp className="w-4 h-4" />
+              <span>Impact Plot</span>
+            </Button>
+          </div>
           <div className="flex space-x-2">
             <div className="relative flex-1">
               <Input
@@ -503,6 +553,11 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ currentSquad, squa
           </p>
         </div>
       </Card>
+
+      {/* Tool Dialogs */}
+      <CanvasGenerator open={showCanvasGenerator} onClose={() => setShowCanvasGenerator(false)} />
+      <StoryWriter open={showStoryWriter} onClose={() => setShowStoryWriter(false)} />
+      <ImpactPlotter open={showImpactPlotter} onClose={() => setShowImpactPlotter(false)} />
     </div>
   );
 };
