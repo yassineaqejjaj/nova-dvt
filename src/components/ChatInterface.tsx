@@ -217,6 +217,18 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ currentSquad, squa
               });
             }
           }
+          
+          // Handle tool suggestions from specialized agents
+          if (response.toolSuggestion) {
+            const toolType = response.toolSuggestion.type;
+            if (toolType === 'story') {
+              setTimeout(() => setShowStoryWriter(true), 500);
+            } else if (toolType === 'impact') {
+              setTimeout(() => setShowImpactPlotter(true), 500);
+            } else if (toolType === 'canvas') {
+              setTimeout(() => setShowCanvasGenerator(true), 500);
+            }
+          }
         }, (index + 1) * 1500); // Stagger responses by 1.5 seconds
       });
 

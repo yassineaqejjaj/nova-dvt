@@ -32,12 +32,17 @@ serve(async (req) => {
 
     // Generate response for each responding agent
     for (const agent of respondingAgents) {
+      // Check if this agent has special tool capabilities
+      const toolInstructions = getToolInstructions(agent);
+      
       const systemMessage = {
         role: 'system',
         content: `You are ${agent.name}, a ${agent.specialty} specialist. Your background: ${agent.backstory}
 
 Your key capabilities: ${agent.capabilities.join(', ')}
 Your expertise tags: ${agent.tags.join(', ')}
+
+${toolInstructions}
 
 Respond as this specific agent with your unique perspective and expertise. Keep responses concise (2-3 sentences), professional, and focused on your specialty. If other agents are mentioned, acknowledge their expertise but maintain your unique viewpoint.`
       };
@@ -62,10 +67,64 @@ Respond as this specific agent with your unique perspective and expertise. Keep 
       }
 
       const data = await response.json();
-      responses.push({
+      const responseData: any = {
         agent: agent,
         message: data.choices[0].message.content
-      });
+      };
+      
+      // Add tool suggestion if agent has special capabilities
+      const toolSuggestion = getToolSuggestion(agent, messages);
+      if (toolSuggestion) {
+        responseData.toolSuggestion = toolSuggestion;
+      }
+      
+      responses.push(responseData);
+    }
+
+    function getToolInstructions(agent: any): string {
+      const agentId = agent.id.toLowerCase();
+      
+      if (agentId.includes('story-writer') || agent.specialty.toLowerCase().includes('user story')) {
+        return 'When discussing features or requirements, suggest creating user stories. Mention that you can help generate detailed user stories with acceptance criteria.';
+      }
+      
+      if (agentId.includes('impact-effort') || agentId.includes('plotter') || agent.specialty.toLowerCase().includes('priority matrix')) {
+        return 'When discussing prioritization or feature planning, suggest using an impact vs effort analysis. Offer to help plot items on a priority matrix.';
+      }
+      
+      if (agentId.includes('canvas') || agent.specialty.toLowerCase().includes('strategy') || agent.name.toLowerCase().includes('sarah')) {
+        return 'When discussing product strategy, planning, or frameworks, suggest using strategic canvases like SWOT, Business Model Canvas, or MoSCoW prioritization.';
+      }
+      
+      return '';
+    }
+
+    function getToolSuggestion(agent: any, messages: any[]): any {
+      const agentId = agent.id.toLowerCase();
+      const lastMessage = messages[messages.length - 1]?.content?.toLowerCase() || '';
+      
+      // Story Writer agent
+      if (agentId.includes('story-writer') || agent.specialty.toLowerCase().includes('user story')) {
+        if (lastMessage.includes('feature') || lastMessage.includes('requirement') || lastMessage.includes('story')) {
+          return { type: 'story', label: 'Generate User Story' };
+        }
+      }
+      
+      // Impact Effort Plotter agent
+      if (agentId.includes('impact-effort') || agentId.includes('plotter')) {
+        if (lastMessage.includes('priorit') || lastMessage.includes('feature') || lastMessage.includes('backlog')) {
+          return { type: 'impact', label: 'Create Impact Plot' };
+        }
+      }
+      
+      // Canvas/Strategy agents
+      if (agentId.includes('sarah') || agent.specialty.toLowerCase().includes('strategy')) {
+        if (lastMessage.includes('strategy') || lastMessage.includes('plan') || lastMessage.includes('canvas')) {
+          return { type: 'canvas', label: 'Generate Canvas' };
+        }
+      }
+      
+      return null;
     }
 
     return new Response(JSON.stringify({ responses }), {
