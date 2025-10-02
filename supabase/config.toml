@@ -2,3 +2,9 @@ project_id = "pwjuvfclcltphuuwlsdr"
 
 [functions.chat-ai]
 verify_jwt = false
+
+[functions.canvas-generator]
+verify_jwt = true
+
+[functions.suggest-squad]
+verify_jwt = true

@@ -19,8 +19,11 @@ import {
   Calendar,
   Trash2,
   Edit,
-  CheckCircle
+  CheckCircle,
+  Sparkles,
+  Loader2
 } from 'lucide-react';
+import { allAgents } from '@/data/mockData';
 
 interface SquadManagerProps {
   squads: Squad[];
@@ -40,10 +43,17 @@ export const SquadManager: React.FC<SquadManagerProps> = ({
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [editingSquad, setEditingSquad] = useState<Squad | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isGettingSuggestions, setIsGettingSuggestions] = useState(false);
+  const [recommendations, setRecommendations] = useState<{
+    recommendedAgents: string[];
+    reasoning: string;
+    squadName: string;
+  } | null>(null);
   
   const [newSquadData, setNewSquadData] = useState({
     name: '',
-    purpose: ''
+    purpose: '',
+    context: ''
   });
 
   const handleCreateSquad = async (e: React.FormEvent) => {
@@ -51,7 +61,7 @@ export const SquadManager: React.FC<SquadManagerProps> = ({
     setIsLoading(true);
 
     try {
-      const { data, error } = await supabase
+      const { data: squadData, error: squadError } = await supabase
         .from('squads')
         .insert({
           user_id: userId,
@@ -62,14 +72,43 @@ export const SquadManager: React.FC<SquadManagerProps> = ({
         .select()
         .single();
 
-      if (error) throw error;
+      if (squadError) throw squadError;
+
+      // If we have recommendations, add the recommended agents to the squad
+      if (recommendations && recommendations.recommendedAgents.length > 0) {
+        const agentsToAdd = recommendations.recommendedAgents
+          .map(agentId => allAgents.find(a => a.id === agentId))
+          .filter(Boolean);
+
+        const squadAgentsData = agentsToAdd.map(agent => ({
+          squad_id: squadData.id,
+          agent_id: agent!.id,
+          agent_name: agent!.name,
+          agent_specialty: agent!.specialty,
+          agent_avatar: agent!.avatar,
+          agent_backstory: agent!.backstory,
+          agent_capabilities: agent!.capabilities,
+          agent_tags: agent!.tags,
+          agent_xp_required: agent!.xpRequired,
+          agent_family_color: agent!.familyColor
+        }));
+
+        const { error: agentsError } = await supabase
+          .from('squad_agents')
+          .insert(squadAgentsData);
+
+        if (agentsError) throw agentsError;
+      }
 
       toast({
         title: "Squad created!",
-        description: `${newSquadData.name} is ready for action.`,
+        description: recommendations 
+          ? `${newSquadData.name} is ready with ${recommendations.recommendedAgents.length} AI-recommended agents.`
+          : `${newSquadData.name} is ready for action.`,
       });
 
-      setNewSquadData({ name: '', purpose: '' });
+      setNewSquadData({ name: '', purpose: '', context: '' });
+      setRecommendations(null);
       setShowCreateDialog(false);
       onSquadUpdate();
     } catch (error: any) {
@@ -154,6 +193,50 @@ export const SquadManager: React.FC<SquadManagerProps> = ({
     }
   };
 
+  const handleGetSuggestions = async () => {
+    if (!newSquadData.context.trim()) {
+      toast({
+        title: "Context required",
+        description: "Please describe your project context to get AI recommendations.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsGettingSuggestions(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('suggest-squad', {
+        body: {
+          context: newSquadData.context,
+          availableAgents: allAgents
+        }
+      });
+
+      if (error) throw error;
+
+      setRecommendations(data);
+      
+      // Auto-fill squad name if not already set
+      if (!newSquadData.name && data.squadName) {
+        setNewSquadData(prev => ({ ...prev, name: data.squadName }));
+      }
+
+      toast({
+        title: "Recommendations ready!",
+        description: `Found ${data.recommendedAgents.length} optimal agents for your squad.`,
+      });
+    } catch (error: any) {
+      console.error('Error getting suggestions:', error);
+      toast({
+        title: "Failed to get suggestions",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsGettingSuggestions(false);
+    }
+  };
+
   const handleSetActiveSquad = async (squad: Squad) => {
     try {
       // Set all squads to inactive first
@@ -201,41 +284,129 @@ export const SquadManager: React.FC<SquadManagerProps> = ({
               <span>Create Squad</span>
             </Button>
           </DialogTrigger>
-          <DialogContent>
+          <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>Create New Squad</DialogTitle>
+              <DialogTitle className="flex items-center space-x-2">
+                <Users className="w-5 h-5" />
+                <span>Create New Squad</span>
+              </DialogTitle>
             </DialogHeader>
-            <form onSubmit={handleCreateSquad} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="squad-name">Squad Name</Label>
-                <Input
-                  id="squad-name"
-                  placeholder="e.g., Product Launch Team"
-                  value={newSquadData.name}
-                  onChange={(e) => setNewSquadData(prev => ({ ...prev, name: e.target.value }))}
-                  required
-                />
+            <form onSubmit={handleCreateSquad} className="space-y-6">
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="squad-context">Project Context</Label>
+                  <Textarea
+                    id="squad-context"
+                    placeholder="Describe your project... e.g., 'Building a SaaS app for project management with real-time collaboration features'"
+                    value={newSquadData.context}
+                    onChange={(e) => setNewSquadData(prev => ({ ...prev, context: e.target.value }))}
+                    rows={4}
+                    className="resize-none"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    AI will analyze this to recommend the best agents for your needs
+                  </p>
+                </div>
+
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleGetSuggestions}
+                  disabled={isGettingSuggestions || !newSquadData.context.trim()}
+                  className="w-full flex items-center justify-center space-x-2"
+                >
+                  {isGettingSuggestions ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span>Analyzing...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="w-4 h-4" />
+                      <span>Get AI Squad Recommendations</span>
+                    </>
+                  )}
+                </Button>
+              </div>
+
+              {recommendations && (
+                <div className="space-y-4 p-4 bg-muted/50 rounded-lg border">
+                  <div className="flex items-start space-x-2">
+                    <Sparkles className="w-5 h-5 text-primary mt-1 flex-shrink-0" />
+                    <div className="space-y-2 flex-1">
+                      <h4 className="font-semibold text-sm">AI Recommendations</h4>
+                      <p className="text-sm text-muted-foreground">{recommendations.reasoning}</p>
+                      
+                      <div className="space-y-2 mt-3">
+                        <Label className="text-xs">Recommended Agents ({recommendations.recommendedAgents.length})</Label>
+                        <div className="grid grid-cols-1 gap-2">
+                          {recommendations.recommendedAgents.map((agentId) => {
+                            const agent = allAgents.find(a => a.id === agentId);
+                            if (!agent) return null;
+                            
+                            return (
+                              <div key={agent.id} className="flex items-center space-x-3 p-2 bg-background rounded border">
+                                <Avatar className="w-10 h-10">
+                                  <AvatarImage src={agent.avatar} />
+                                  <AvatarFallback className="text-xs">
+                                    {agent.name.split(' ').map(n => n[0]).join('')}
+                                  </AvatarFallback>
+                                </Avatar>
+                                <div className="flex-1 min-w-0">
+                                  <p className="font-medium text-sm truncate">{agent.name}</p>
+                                  <p className="text-xs text-muted-foreground truncate">{agent.specialty}</p>
+                                </div>
+                                <Badge variant="secondary" className="text-xs">
+                                  {agent.familyColor}
+                                </Badge>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <Separator />
+              
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="squad-name">Squad Name</Label>
+                  <Input
+                    id="squad-name"
+                    placeholder="e.g., Product Launch Team"
+                    value={newSquadData.name}
+                    onChange={(e) => setNewSquadData(prev => ({ ...prev, name: e.target.value }))}
+                    required
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="squad-purpose">Purpose (Optional)</Label>
+                  <Textarea
+                    id="squad-purpose"
+                    placeholder="Describe what this squad will work on..."
+                    value={newSquadData.purpose}
+                    onChange={(e) => setNewSquadData(prev => ({ ...prev, purpose: e.target.value }))}
+                    rows={2}
+                  />
+                </div>
               </div>
               
-              <div className="space-y-2">
-                <Label htmlFor="squad-purpose">Purpose</Label>
-                <Textarea
-                  id="squad-purpose"
-                  placeholder="Describe what this squad will work on..."
-                  value={newSquadData.purpose}
-                  onChange={(e) => setNewSquadData(prev => ({ ...prev, purpose: e.target.value }))}
-                  rows={3}
-                />
-              </div>
-              
-              <div className="flex space-x-2">
+              <div className="flex space-x-2 pt-4">
                 <Button type="submit" disabled={isLoading} className="flex-1">
                   {isLoading ? 'Creating...' : 'Create Squad'}
                 </Button>
                 <Button 
                   type="button" 
                   variant="outline" 
-                  onClick={() => setShowCreateDialog(false)}
+                  onClick={() => {
+                    setShowCreateDialog(false);
+                    setRecommendations(null);
+                    setNewSquadData({ name: '', purpose: '', context: '' });
+                  }}
                   disabled={isLoading}
                 >
                   Cancel
