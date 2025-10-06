@@ -8,3 +8,9 @@ verify_jwt = true
 
 [functions.suggest-squad]
 verify_jwt = true
+
+[functions.analytics-track]
+verify_jwt = true
+
+[functions.integration-sync]
+verify_jwt = true

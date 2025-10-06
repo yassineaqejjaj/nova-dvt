@@ -218,6 +218,26 @@ export const CanvasGenerator: React.FC<CanvasGeneratorProps> = ({
 
       if (data.canvas) {
         setGeneratedCanvas(data.canvas);
+        
+        // Save artifact to database
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          await supabase.from('artifacts').insert([{
+            user_id: user.id,
+            artifact_type: 'canvas',
+            title: `${selectedTemplate.name} - ${new Date().toLocaleDateString()}`,
+            content: data.canvas as any,
+            metadata: { template: selectedTemplate.id, formData } as any
+          }]);
+
+          // Track analytics
+          await supabase.from('analytics_events').insert([{
+            user_id: user.id,
+            event_type: 'canvas_generated',
+            event_data: { template: selectedTemplate.name } as any
+          }]);
+        }
+        
         toast.success(`${selectedTemplate.name} generated successfully!`);
       } else {
         throw new Error('No canvas data received');

@@ -71,6 +71,26 @@ export const StoryWriter: React.FC<StoryWriterProps> = ({ open, onClose }) => {
       };
 
       setGeneratedStory(story);
+      
+      // Save artifact to database
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        await supabase.from('artifacts').insert([{
+          user_id: user.id,
+          artifact_type: 'story',
+          title: story.title,
+          content: story as any,
+          metadata: { userType, featureDescription } as any
+        }]);
+
+        // Track analytics
+        await supabase.from('analytics_events').insert([{
+          user_id: user.id,
+          event_type: 'story_generated',
+          event_data: { title: story.title } as any
+        }]);
+      }
+      
       toast.success('User story generated successfully!');
     } catch (error) {
       console.error('Error generating user story:', error);

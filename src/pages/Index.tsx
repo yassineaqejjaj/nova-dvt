@@ -5,6 +5,9 @@ import { AgentGallery } from '@/components/AgentGallery';
 import { ChatInterface } from '@/components/ChatInterface';
 import { CanvasGenerator } from '@/components/CanvasGenerator';
 import { Workflows } from '@/components/Workflows';
+import { Artifacts } from '@/components/Artifacts';
+import { WorkspaceManager } from '@/components/WorkspaceManager';
+import { AnalyticsDashboard } from '@/components/AnalyticsDashboard';
 import { AuthDialog } from '@/components/AuthDialog';
 import { SquadManager } from '@/components/SquadManager';
 import { UserProfile } from '@/components/UserProfile';
@@ -206,6 +209,15 @@ const Index = () => {
       
       case 'workflows':
         return <Workflows />;
+      
+      case 'artifacts':
+        return <Artifacts userId={user!.id} />;
+      
+      case 'workspaces':
+        return <WorkspaceManager userId={user!.id} />;
+      
+      case 'analytics':
+        return <AnalyticsDashboard userId={user!.id} />;
       
       default:
         return null;

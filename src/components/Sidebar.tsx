@@ -10,7 +10,10 @@ import {
   Grid3X3,
   Plus,
   Sparkles,
-  Workflow
+  Workflow,
+  FileText,
+  Building2,
+  BarChart3
 } from 'lucide-react';
 import {
   Sidebar,
@@ -73,6 +76,24 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
       description: 'Collaborate with Agents',
       disabled: !hasActiveChat,
       badge: hasActiveChat ? 'active' : undefined
+    },
+    {
+      id: 'artifacts' as TabType,
+      label: 'Artifacts',
+      icon: FileText,
+      description: 'View All Generated Content'
+    },
+    {
+      id: 'workspaces' as TabType,
+      label: 'Workspaces',
+      icon: Building2,
+      description: 'Team Collaboration'
+    },
+    {
+      id: 'analytics' as TabType,
+      label: 'Analytics',
+      icon: BarChart3,
+      description: 'Usage & Insights'
     }
   ];
 

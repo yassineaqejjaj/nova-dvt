@@ -75,9 +75,13 @@ export const ImpactPlotter: React.FC<ImpactPlotterProps> = ({ open, onClose }) =
 
       if (error) throw error;
 
-      if (data.content.items) {
+      setShowChart(true);
+      
+      // Save artifact to database
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
         const updatedItems = items.map(item => {
-          const analyzed = data.content.items.find((i: any) => i.name === item.name);
+          const analyzed = data.content.items?.find((i: any) => i.name === item.name);
           return analyzed ? {
             ...item,
             impact: analyzed.impact || item.impact,
@@ -85,9 +89,36 @@ export const ImpactPlotter: React.FC<ImpactPlotterProps> = ({ open, onClose }) =
           } : item;
         });
         setItems(updatedItems);
-      }
+        
+        await supabase.from('artifacts').insert([{
+          user_id: user.id,
+          artifact_type: 'impact_analysis',
+          title: `Impact Analysis - ${new Date().toLocaleDateString()}`,
+          content: { items: updatedItems } as any,
+          metadata: { itemCount: updatedItems.length } as any
+        }]);
 
-      setShowChart(true);
+        // Track analytics
+        await supabase.from('analytics_events').insert([{
+          user_id: user.id,
+          event_type: 'impact_analysis_generated',
+          event_data: { itemCount: updatedItems.length } as any
+        }]);
+      } else {
+        if (data.content.items) {
+          const updatedItems = items.map(item => {
+            const analyzed = data.content.items.find((i: any) => i.name === item.name);
+            return analyzed ? {
+              ...item,
+              impact: analyzed.impact || item.impact,
+              effort: analyzed.effort || item.effort
+            } : item;
+          });
+          setItems(updatedItems);
+        }
+        setShowChart(true);
+      }
+      
       toast.success('Items analyzed and plotted!');
     } catch (error) {
       console.error('Error analyzing items:', error);
