@@ -6,6 +6,7 @@ import { WorkflowSteps } from './WorkflowSteps';
 import { CanvasGenerator } from './CanvasGenerator';
 import { StoryWriter } from './StoryWriter';
 import { ImpactPlotter } from './ImpactPlotter';
+import { MarketResearch } from './MarketResearch';
 import {
   Rocket,
   Target,
@@ -29,7 +30,7 @@ interface Workflow {
     id: string;
     title: string;
     description: string;
-    tool?: 'canvas' | 'story' | 'impact';
+    tool?: 'canvas' | 'story' | 'impact' | 'research';
     completed?: boolean;
   }>;
 }
@@ -47,6 +48,7 @@ const workflows: Workflow[] = [
         id: 'research',
         title: 'Market & User Research',
         description: 'Gather competitive insights and user feedback to validate the feature idea',
+        tool: 'research',
         completed: false,
       },
       {
@@ -258,6 +260,7 @@ export const Workflows: React.FC = () => {
   const [showCanvasGenerator, setShowCanvasGenerator] = useState(false);
   const [showStoryWriter, setShowStoryWriter] = useState(false);
   const [showImpactPlotter, setShowImpactPlotter] = useState(false);
+  const [showMarketResearch, setShowMarketResearch] = useState(false);
 
   const handleWorkflowSelect = (workflow: Workflow) => {
     setSelectedWorkflow(workflow);
@@ -279,6 +282,9 @@ export const Workflows: React.FC = () => {
         break;
       case 'impact':
         setShowImpactPlotter(true);
+        break;
+      case 'research':
+        setShowMarketResearch(true);
         break;
     }
   };
@@ -348,6 +354,20 @@ export const Workflows: React.FC = () => {
         <CanvasGenerator open={showCanvasGenerator} onClose={() => setShowCanvasGenerator(false)} />
         <StoryWriter open={showStoryWriter} onClose={() => setShowStoryWriter(false)} />
         <ImpactPlotter open={showImpactPlotter} onClose={() => setShowImpactPlotter(false)} />
+        {showMarketResearch && (
+          <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm">
+            <div className="fixed inset-4 z-50 overflow-auto bg-background rounded-lg border shadow-lg p-6">
+              <Button
+                variant="ghost"
+                className="absolute right-4 top-4"
+                onClick={() => setShowMarketResearch(false)}
+              >
+                ✕
+              </Button>
+              <MarketResearch />
+            </div>
+          </div>
+        )}
       </div>
     );
   }

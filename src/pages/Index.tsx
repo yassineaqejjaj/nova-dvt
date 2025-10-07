@@ -8,6 +8,7 @@ import { Workflows } from '@/components/Workflows';
 import { Artifacts } from '@/components/Artifacts';
 import { WorkspaceManager } from '@/components/WorkspaceManager';
 import { AnalyticsDashboard } from '@/components/AnalyticsDashboard';
+import { AdminPanel } from '@/components/AdminPanel';
 import { AuthDialog } from '@/components/AuthDialog';
 import { SquadManager } from '@/components/SquadManager';
 import { UserProfile } from '@/components/UserProfile';
@@ -218,6 +219,10 @@ const Index = () => {
       
       case 'analytics':
         return <AnalyticsDashboard userId={user!.id} />;
+
+      case 'admin':
+        return <AdminPanel />;
+        return <AnalyticsDashboard userId={user!.id} />;
       
       default:
         return null;
@@ -402,11 +407,12 @@ const Index = () => {
       {/* User Profile Dialog */}
       {userProfile && (
         <UserProfile
-          user={userProfile}
-          open={showProfile}
-          onClose={() => setShowProfile(false)}
-          onUserUpdate={refreshUserData}
-        />
+            user={userProfile}
+            open={showProfile}
+            onClose={() => setShowProfile(false)}
+            onUserUpdate={refreshUserData}
+            onAdminSwitch={() => setActiveTab('admin')}
+          />
       )}
     </SidebarProvider>
   );

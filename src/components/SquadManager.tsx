@@ -8,6 +8,18 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { 
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { AgentSelector } from './AgentSelector';
 import { supabase } from '@/integrations/supabase/client';
 import { Squad, Agent } from '@/types';
 import { toast } from '@/hooks/use-toast';
@@ -44,6 +56,10 @@ export const SquadManager: React.FC<SquadManagerProps> = ({
   const [editingSquad, setEditingSquad] = useState<Squad | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isGettingSuggestions, setIsGettingSuggestions] = useState(false);
+  const [showAgentSelector, setShowAgentSelector] = useState(false);
+  const [managingSquad, setManagingSquad] = useState<Squad | null>(null);
+  const [userProfile, setUserProfile] = useState<{ xp: number; unlockedAgents: string[] }>({ xp: 0, unlockedAgents: [] });
+  const [removeAgentId, setRemoveAgentId] = useState<string | null>(null);
   const [recommendations, setRecommendations] = useState<{
     recommendedAgents: string[];
     reasoning: string;
@@ -55,6 +71,31 @@ export const SquadManager: React.FC<SquadManagerProps> = ({
     purpose: '',
     context: ''
   });
+
+  React.useEffect(() => {
+    loadUserProfile();
+  }, []);
+
+  const loadUserProfile = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const [profileResult, unlockedResult] = await Promise.all([
+        supabase.from('profiles').select('xp').eq('user_id', user.id).single(),
+        supabase.from('unlocked_agents').select('agent_id').eq('user_id', user.id)
+      ]);
+
+      if (profileResult.data && unlockedResult.data) {
+        setUserProfile({
+          xp: profileResult.data.xp,
+          unlockedAgents: unlockedResult.data.map((a: any) => a.agent_id)
+        });
+      }
+    } catch (error) {
+      console.error('Error loading user profile:', error);
+    }
+  };
 
   const handleCreateSquad = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -261,6 +302,77 @@ export const SquadManager: React.FC<SquadManagerProps> = ({
     } catch (error: any) {
       toast({
         title: "Failed to switch squad",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleAddAgent = async (agent: Agent) => {
+    if (!managingSquad) return;
+
+    try {
+      const { error } = await supabase.from('squad_agents').insert({
+        squad_id: managingSquad.id,
+        agent_id: agent.id,
+        agent_name: agent.name,
+        agent_specialty: agent.specialty,
+        agent_avatar: agent.avatar,
+        agent_backstory: agent.backstory,
+        agent_capabilities: agent.capabilities,
+        agent_tags: agent.tags,
+        agent_xp_required: agent.xpRequired,
+        agent_family_color: agent.familyColor
+      });
+
+      if (error) throw error;
+
+      // Unlock agent if not already unlocked
+      if (!userProfile.unlockedAgents.includes(agent.id)) {
+        await supabase.from('unlocked_agents').insert({
+          user_id: userId,
+          agent_id: agent.id
+        });
+      }
+
+      toast({
+        title: "Agent added",
+        description: `${agent.name} has been added to ${managingSquad.name}`,
+      });
+
+      await onSquadUpdate();
+      await loadUserProfile();
+    } catch (error: any) {
+      toast({
+        title: "Failed to add agent",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleRemoveAgent = async () => {
+    if (!removeAgentId || !managingSquad) return;
+
+    try {
+      const { error} = await supabase
+        .from('squad_agents')
+        .delete()
+        .eq('squad_id', managingSquad.id)
+        .eq('agent_id', removeAgentId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Agent removed",
+        description: "Agent has been removed from the squad",
+      });
+
+      setRemoveAgentId(null);
+      await onSquadUpdate();
+    } catch (error: any) {
+      toast({
+        title: "Failed to remove agent",
         description: error.message,
         variant: "destructive",
       });
@@ -525,6 +637,18 @@ export const SquadManager: React.FC<SquadManagerProps> = ({
                     <Button
                       variant="outline"
                       size="sm"
+                      onClick={() => {
+                        setManagingSquad(squad);
+                        setShowAgentSelector(true);
+                      }}
+                      className="flex-1 text-xs"
+                    >
+                      <Plus className="w-3 h-3 mr-1" />
+                      Manage
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
                       onClick={() => onSquadChange(squad)}
                       disabled={!squad.agents || squad.agents.length === 0}
                       className="flex-1 text-xs"
@@ -539,6 +663,35 @@ export const SquadManager: React.FC<SquadManagerProps> = ({
           ))}
         </div>
       )}
+
+      {/* Agent Selector Dialog */}
+      <AgentSelector
+        open={showAgentSelector}
+        onClose={() => {
+          setShowAgentSelector(false);
+          setManagingSquad(null);
+        }}
+        currentAgents={managingSquad?.agents || []}
+        onAddAgent={handleAddAgent}
+        userXP={userProfile.xp}
+        unlockedAgents={userProfile.unlockedAgents}
+      />
+
+      {/* Remove Agent Confirmation Dialog */}
+      <AlertDialog open={!!removeAgentId} onOpenChange={() => setRemoveAgentId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remove Agent?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will remove the agent from the squad. You can add them back later.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleRemoveAgent}>Remove</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Edit Squad Dialog */}
       <Dialog open={!!editingSquad} onOpenChange={() => setEditingSquad(null)}>

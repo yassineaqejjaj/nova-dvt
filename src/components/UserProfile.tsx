@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -20,7 +20,8 @@ import {
   Edit, 
   LogOut,
   Calendar,
-  Settings
+  Settings,
+  Shield
 } from 'lucide-react';
 
 interface UserProfileProps {
@@ -28,20 +29,46 @@ interface UserProfileProps {
   open: boolean;
   onClose: () => void;
   onUserUpdate: () => void;
+  onAdminSwitch?: () => void;
 }
 
 export const UserProfile: React.FC<UserProfileProps> = ({
   user,
   open,
   onClose,
-  onUserUpdate
+  onUserUpdate,
+  onAdminSwitch
 }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [editData, setEditData] = useState({
     display_name: user.name,
     role: user.role
   });
+
+  useEffect(() => {
+    checkAdminStatus();
+  }, []);
+
+  const checkAdminStatus = async () => {
+    try {
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      if (!authUser) return;
+
+      const { data, error } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', authUser.id)
+        .eq('role', 'admin')
+        .maybeSingle();
+
+      if (error) throw error;
+      setIsAdmin(!!data);
+    } catch (error) {
+      console.error('Error checking admin status:', error);
+    }
+  };
 
   const progressToNextLevel = ((user.xp % 200) / 200) * 100;
   const nextLevelXP = Math.ceil(user.xp / 200) * 200;
@@ -258,6 +285,19 @@ export const UserProfile: React.FC<UserProfileProps> = ({
 
           {/* Actions */}
           <div className="flex space-x-3">
+            {isAdmin && onAdminSwitch && (
+              <Button
+                variant="default"
+                onClick={() => {
+                  onAdminSwitch();
+                  onClose();
+                }}
+                className="flex items-center space-x-2"
+              >
+                <Shield className="w-4 h-4" />
+                <span>Switch to Admin</span>
+              </Button>
+            )}
             <Button
               variant="outline"
               onClick={handleSignOut}

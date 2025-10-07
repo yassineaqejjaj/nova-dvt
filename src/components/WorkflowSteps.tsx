@@ -8,7 +8,7 @@ interface WorkflowStep {
   id: string;
   title: string;
   description: string;
-  tool?: 'canvas' | 'story' | 'impact';
+  tool?: 'canvas' | 'story' | 'impact' | 'research';
   completed?: boolean;
 }
 

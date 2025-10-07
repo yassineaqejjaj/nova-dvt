@@ -14,3 +14,6 @@ verify_jwt = true
 
 [functions.integration-sync]
 verify_jwt = true
+
+[functions.market-research]
+verify_jwt = false
