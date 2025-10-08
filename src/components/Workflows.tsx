@@ -7,6 +7,8 @@ import { CanvasGenerator } from './CanvasGenerator';
 import { StoryWriter } from './StoryWriter';
 import { ImpactPlotter } from './ImpactPlotter';
 import { MarketResearch } from './MarketResearch';
+import { DesignTool } from './DesignTool';
+import { CodeGenerator } from './CodeGenerator';
 import {
   Rocket,
   Target,
@@ -16,6 +18,8 @@ import {
   FileText,
   ArrowLeft,
   CheckCircle,
+  Palette,
+  Code2,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -30,12 +34,86 @@ interface Workflow {
     id: string;
     title: string;
     description: string;
-    tool?: 'canvas' | 'story' | 'impact' | 'research';
+    tool?: 'canvas' | 'story' | 'impact' | 'research' | 'design' | 'code';
     completed?: boolean;
   }>;
 }
 
 const workflows: Workflow[] = [
+  {
+    id: 'design-system',
+    name: 'Design System Creation',
+    description: 'Build a complete design system with colors, typography, and components',
+    icon: <Palette className="w-6 h-6" />,
+    category: 'Design',
+    estimatedTime: '60-90 min',
+    steps: [
+      {
+        id: 'brand',
+        title: 'Brand Identity',
+        description: 'Define brand colors, logo, and visual identity',
+        tool: 'design',
+        completed: false,
+      },
+      {
+        id: 'typography',
+        title: 'Typography System',
+        description: 'Choose fonts and create text hierarchy',
+        tool: 'design',
+        completed: false,
+      },
+      {
+        id: 'components',
+        title: 'UI Components',
+        description: 'Design reusable component library',
+        tool: 'design',
+        completed: false,
+      },
+      {
+        id: 'documentation',
+        title: 'Documentation',
+        description: 'Create design system documentation',
+        completed: false,
+      },
+    ],
+  },
+  {
+    id: 'component-development',
+    name: 'Component Development',
+    description: 'Build and test reusable UI components from designs to production',
+    icon: <Code2 className="w-6 h-6" />,
+    category: 'Development',
+    estimatedTime: '45-60 min',
+    steps: [
+      {
+        id: 'requirements',
+        title: 'Component Requirements',
+        description: 'Define props, variants, and component API',
+        completed: false,
+      },
+      {
+        id: 'code',
+        title: 'Code Implementation',
+        description: 'Write component code with TypeScript',
+        tool: 'code',
+        completed: false,
+      },
+      {
+        id: 'styling',
+        title: 'Styling',
+        description: 'Apply design system tokens and responsive styles',
+        tool: 'design',
+        completed: false,
+      },
+      {
+        id: 'testing',
+        title: 'Testing & Documentation',
+        description: 'Write tests and document usage',
+        tool: 'code',
+        completed: false,
+      },
+    ],
+  },
   {
     id: 'feature-discovery',
     name: 'Feature Discovery',
@@ -261,6 +339,8 @@ export const Workflows: React.FC = () => {
   const [showStoryWriter, setShowStoryWriter] = useState(false);
   const [showImpactPlotter, setShowImpactPlotter] = useState(false);
   const [showMarketResearch, setShowMarketResearch] = useState(false);
+  const [showDesignTool, setShowDesignTool] = useState(false);
+  const [showCodeGenerator, setShowCodeGenerator] = useState(false);
 
   const handleWorkflowSelect = (workflow: Workflow) => {
     setSelectedWorkflow(workflow);
@@ -285,6 +365,12 @@ export const Workflows: React.FC = () => {
         break;
       case 'research':
         setShowMarketResearch(true);
+        break;
+      case 'design':
+        setShowDesignTool(true);
+        break;
+      case 'code':
+        setShowCodeGenerator(true);
         break;
     }
   };
@@ -365,6 +451,34 @@ export const Workflows: React.FC = () => {
                 ✕
               </Button>
               <MarketResearch />
+            </div>
+          </div>
+        )}
+        {showDesignTool && (
+          <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm">
+            <div className="fixed inset-4 z-50 overflow-auto bg-background rounded-lg border shadow-lg p-6">
+              <Button
+                variant="ghost"
+                className="absolute right-4 top-4"
+                onClick={() => setShowDesignTool(false)}
+              >
+                ✕
+              </Button>
+              <DesignTool />
+            </div>
+          </div>
+        )}
+        {showCodeGenerator && (
+          <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm">
+            <div className="fixed inset-4 z-50 overflow-auto bg-background rounded-lg border shadow-lg p-6">
+              <Button
+                variant="ghost"
+                className="absolute right-4 top-4"
+                onClick={() => setShowCodeGenerator(false)}
+              >
+                ✕
+              </Button>
+              <CodeGenerator />
             </div>
           </div>
         )}

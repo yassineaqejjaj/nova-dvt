@@ -20,6 +20,7 @@ export interface Squad {
     links: string[];
   };
   createdAt: Date;
+  workspace_id?: string | null;
 }
 
 export interface UserProfile {

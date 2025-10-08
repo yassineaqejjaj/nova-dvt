@@ -4,11 +4,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
-import { Workspace, WorkspaceMember } from '@/types';
+import { Workspace, WorkspaceMember, Squad } from '@/types';
 import { Users, Plus, Settings, UserPlus, Trash2, Loader2, Crown } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 
@@ -19,10 +20,14 @@ interface WorkspaceManagerProps {
 export const WorkspaceManager: React.FC<WorkspaceManagerProps> = ({ userId }) => {
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
   const [members, setMembers] = useState<Record<string, WorkspaceMember[]>>({});
+  const [squads, setSquads] = useState<Squad[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [newWorkspace, setNewWorkspace] = useState({ name: '', description: '' });
   const [creating, setCreating] = useState(false);
+  const [showAddSquadDialog, setShowAddSquadDialog] = useState(false);
+  const [selectedWorkspaceId, setSelectedWorkspaceId] = useState<string | null>(null);
+  const [selectedSquadId, setSelectedSquadId] = useState<string>('');
 
   useEffect(() => {
     loadWorkspaces();
@@ -31,18 +36,31 @@ export const WorkspaceManager: React.FC<WorkspaceManagerProps> = ({ userId }) =>
   const loadWorkspaces = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
-        .from('workspaces')
-        .select('*')
-        .order('created_at', { ascending: false });
+      
+      // Load workspaces, members, and squads in parallel
+      const [workspacesResponse, squadsResponse] = await Promise.all([
+        supabase.from('workspaces').select('*').order('created_at', { ascending: false }),
+        supabase.from('squads').select('*').eq('user_id', userId),
+      ]);
 
-      if (error) throw error;
-      setWorkspaces(data || []);
+      if (workspacesResponse.error) throw workspacesResponse.error;
+      if (squadsResponse.error) throw squadsResponse.error;
+
+      const workspacesData = workspacesResponse.data || [];
+      setWorkspaces(workspacesData);
+      
+      // Map squads data to match Squad interface
+      const squadsData = (squadsResponse.data || []).map(squad => ({
+        ...squad,
+        agents: [],
+        createdAt: new Date(squad.created_at),
+      }));
+      setSquads(squadsData);
 
       // Load members for each workspace
-      if (data) {
+      if (workspacesData.length > 0) {
         const membersData: Record<string, WorkspaceMember[]> = {};
-        for (const workspace of data) {
+        for (const workspace of workspacesData) {
           const { data: workspaceMembers } = await supabase
             .from('workspace_members')
             .select('*')
@@ -114,6 +132,36 @@ export const WorkspaceManager: React.FC<WorkspaceManagerProps> = ({ userId }) =>
     }
   };
 
+  const handleAddSquadToWorkspace = async () => {
+    if (!selectedWorkspaceId || !selectedSquadId) return;
+
+    try {
+      const { error } = await supabase
+        .from('squads')
+        .update({ workspace_id: selectedWorkspaceId })
+        .eq('id', selectedSquadId);
+
+      if (error) throw error;
+
+      toast({
+        title: 'Success',
+        description: 'Squad added to workspace!',
+      });
+      
+      setShowAddSquadDialog(false);
+      setSelectedWorkspaceId(null);
+      setSelectedSquadId('');
+      loadWorkspaces();
+    } catch (error: any) {
+      console.error('Error adding squad to workspace:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to add squad to workspace',
+        variant: 'destructive',
+      });
+    }
+  };
+
   const handleDeleteWorkspace = async (workspaceId: string) => {
     try {
       const { error } = await supabase
@@ -146,13 +194,15 @@ export const WorkspaceManager: React.FC<WorkspaceManagerProps> = ({ userId }) =>
     );
   }
 
+  const availableSquads = squads.filter(s => !s.workspace_id);
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-3xl font-bold tracking-tight">Workspaces</h2>
           <p className="text-muted-foreground">
-            Collaborate with your team across different projects
+            Collaborate with your team and agents across different projects
           </p>
         </div>
         <Button onClick={() => setShowCreateDialog(true)}>
@@ -177,53 +227,86 @@ export const WorkspaceManager: React.FC<WorkspaceManagerProps> = ({ userId }) =>
         </Card>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {workspaces.map(workspace => (
-            <Card key={workspace.id} className="hover:shadow-md transition-shadow">
-              <CardHeader>
-                <div className="flex items-start justify-between">
-                  <div>
-                    <CardTitle className="flex items-center space-x-2">
-                      <span>{workspace.name}</span>
-                      {workspace.owner_id === userId && (
-                        <Crown className="w-4 h-4 text-yellow-500" />
-                      )}
-                    </CardTitle>
-                    <CardDescription className="line-clamp-2">
-                      {workspace.description || 'No description'}
-                    </CardDescription>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-2">
-                      <Users className="w-4 h-4 text-muted-foreground" />
-                      <span className="text-sm text-muted-foreground">
-                        {members[workspace.id]?.length || 0} members
-                      </span>
+          {workspaces.map(workspace => {
+            const workspaceSquads = squads.filter(s => s.workspace_id === workspace.id);
+            
+            return (
+              <Card key={workspace.id} className="hover:shadow-md transition-shadow">
+                <CardHeader>
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <CardTitle className="flex items-center space-x-2">
+                        <span>{workspace.name}</span>
+                        {workspace.owner_id === userId && (
+                          <Crown className="w-4 h-4 text-yellow-500" />
+                        )}
+                      </CardTitle>
+                      <CardDescription className="line-clamp-2 mt-1">
+                        {workspace.description || 'No description'}
+                      </CardDescription>
                     </div>
-                    {workspace.owner_id === userId && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleDeleteWorkspace(workspace.id)}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    )}
                   </div>
-                  <Button variant="outline" className="w-full" size="sm">
-                    <Settings className="w-4 h-4 mr-2" />
-                    Manage
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <Users className="w-4 h-4 text-muted-foreground" />
+                        <span className="text-sm text-muted-foreground">
+                          {members[workspace.id]?.length || 0} members
+                        </span>
+                      </div>
+                      <Badge variant="outline">
+                        {workspaceSquads.length} squads
+                      </Badge>
+                    </div>
+
+                    {/* Display squads in workspace */}
+                    {workspaceSquads.length > 0 && (
+                      <div className="border-t pt-3">
+                        <p className="text-xs text-muted-foreground mb-2">Squads:</p>
+                        <div className="flex flex-wrap gap-1">
+                          {workspaceSquads.map(squad => (
+                            <Badge key={squad.id} variant="secondary" className="text-xs">
+                              {squad.name}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="flex space-x-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="flex-1"
+                        onClick={() => {
+                          setSelectedWorkspaceId(workspace.id);
+                          setShowAddSquadDialog(true);
+                        }}
+                      >
+                        <UserPlus className="w-4 h-4 mr-2" />
+                        Add Squad
+                      </Button>
+                      {workspace.owner_id === userId && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDeleteWorkspace(workspace.id)}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
       )}
 
+      {/* Create Workspace Dialog */}
       <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
         <DialogContent>
           <DialogHeader>
@@ -265,6 +348,52 @@ export const WorkspaceManager: React.FC<WorkspaceManagerProps> = ({ userId }) =>
               </Button>
             </div>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Add Squad to Workspace Dialog */}
+      <Dialog open={showAddSquadDialog} onOpenChange={setShowAddSquadDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add Squad to Workspace</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            {availableSquads.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-4">
+                No available squads. All your squads are already assigned to workspaces.
+              </p>
+            ) : (
+              <div className="space-y-2">
+                <Label>Select Squad</Label>
+                <Select value={selectedSquadId} onValueChange={setSelectedSquadId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Choose a squad..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {availableSquads.map(squad => (
+                      <SelectItem key={squad.id} value={squad.id}>
+                        {squad.name} {squad.purpose && `- ${squad.purpose}`}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => {
+              setShowAddSquadDialog(false);
+              setSelectedSquadId('');
+            }}>
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleAddSquadToWorkspace} 
+              disabled={!selectedSquadId || availableSquads.length === 0}
+            >
+              Add Squad
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

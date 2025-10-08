@@ -411,7 +411,7 @@ const Index = () => {
             open={showProfile}
             onClose={() => setShowProfile(false)}
             onUserUpdate={refreshUserData}
-            onAdminSwitch={() => setActiveTab('admin')}
+            onAdminSwitch={() => window.location.href = '/admin'}
           />
       )}
     </SidebarProvider>
