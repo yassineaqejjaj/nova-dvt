@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Label } from '@/components/ui/label';
 import { WorkflowSteps } from './WorkflowSteps';
 import { CanvasGenerator } from './CanvasGenerator';
 import { StoryWriter } from './StoryWriter';
@@ -23,6 +24,7 @@ import {
   CheckCircle,
   Palette,
   Code2,
+  Filter,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -32,7 +34,9 @@ interface Workflow {
   description: string;
   icon: React.ReactNode;
   category: string;
+  tags: string[];
   estimatedTime: string;
+  difficulty: 'Beginner' | 'Intermediate' | 'Advanced';
   steps: Array<{
     id: string;
     title: string;
@@ -43,12 +47,15 @@ interface Workflow {
 }
 
 const workflows: Workflow[] = [
+  // PRODUCT STRATEGY
   {
     id: 'roadmap-planning',
     name: 'Strategic Roadmap Planning',
-    description: 'Create a comprehensive product roadmap with quarterly milestones',
+    description: 'Create a comprehensive product roadmap with quarterly milestones and strategic themes',
     icon: <TrendingUp className="w-6 h-6" />,
-    category: 'Product Management',
+    category: 'Product Strategy',
+    tags: ['Strategy', 'Roadmap', 'Planning', 'Long-term'],
+    difficulty: 'Advanced',
     estimatedTime: '60-90 min',
     steps: [
       {
@@ -80,66 +87,73 @@ const workflows: Workflow[] = [
     ],
   },
   {
-    id: 'product-launch-planning',
-    name: 'Product Launch Execution',
-    description: 'Plan and execute a successful product launch with comprehensive checklist',
-    icon: <Rocket className="w-6 h-6" />,
-    category: 'Product Management',
-    estimatedTime: '60-90 min',
+    id: 'feature-discovery',
+    name: 'Feature Discovery & Validation',
+    description: 'Research, validate, and define a new feature from idea to user story',
+    icon: <Target className="w-6 h-6" />,
+    category: 'Product Strategy',
+    tags: ['Discovery', 'Research', 'Validation', 'Features'],
+    difficulty: 'Intermediate',
+    estimatedTime: '45-60 min',
     steps: [
       {
-        id: 'strategy',
-        title: 'Launch Strategy',
-        description: 'Define goals, audience, and positioning',
-        tool: 'canvas',
-        completed: false,
-      },
-      {
-        id: 'checklist',
-        title: 'Launch Checklist',
-        description: 'Create comprehensive launch task checklist',
-        tool: 'launch',
-        completed: false,
-      },
-      {
         id: 'research',
-        title: 'Market Research',
-        description: 'Analyze market and competitive landscape',
+        title: 'Market & User Research',
+        description: 'Gather competitive insights and user feedback',
         tool: 'research',
         completed: false,
       },
       {
-        id: 'timeline',
-        title: 'Execute Launch',
-        description: 'Track progress and complete launch tasks',
+        id: 'swot',
+        title: 'SWOT Analysis',
+        description: 'Analyze strengths, weaknesses, opportunities, threats',
+        tool: 'canvas',
+        completed: false,
+      },
+      {
+        id: 'prioritize',
+        title: 'Impact vs Effort',
+        description: 'Evaluate feature against other priorities',
+        tool: 'impact',
+        completed: false,
+      },
+      {
+        id: 'story',
+        title: 'Write User Story',
+        description: 'Create user story with acceptance criteria',
+        tool: 'story',
         completed: false,
       },
     ],
   },
+  
+  // AGILE & EXECUTION
   {
-    id: 'sprint-management',
+    id: 'sprint-planning',
     name: 'Agile Sprint Planning',
-    description: 'Plan and manage sprint backlog with capacity planning',
+    description: 'Plan and manage sprint backlog with capacity planning and kanban board',
     icon: <Calendar className="w-6 h-6" />,
-    category: 'Product Management',
+    category: 'Agile & Execution',
+    tags: ['Agile', 'Sprint', 'Scrum', 'Planning', 'Kanban'],
+    difficulty: 'Beginner',
     estimatedTime: '45-60 min',
     steps: [
       {
         id: 'backlog',
         title: 'Review Backlog',
-        description: 'Review and groom product backlog',
+        description: 'Review and groom product backlog items',
         completed: false,
       },
       {
         id: 'sprint',
-        title: 'Sprint Planning',
-        description: 'Use sprint planner to organize stories',
+        title: 'Sprint Planning Board',
+        description: 'Use sprint planner with kanban visualization',
         tool: 'sprint',
         completed: false,
       },
       {
         id: 'stories',
-        title: 'Refine Stories',
+        title: 'Refine User Stories',
         description: 'Ensure stories have clear acceptance criteria',
         tool: 'story',
         completed: false,
@@ -153,17 +167,139 @@ const workflows: Workflow[] = [
     ],
   },
   {
+    id: 'requirements-gathering',
+    name: 'Requirements Gathering',
+    description: 'Collect and document comprehensive product requirements with stakeholder input',
+    icon: <FileText className="w-6 h-6" />,
+    category: 'Agile & Execution',
+    tags: ['Requirements', 'Documentation', 'Planning', 'Stakeholders'],
+    difficulty: 'Intermediate',
+    estimatedTime: '45-60 min',
+    steps: [
+      {
+        id: 'stakeholders',
+        title: 'Identify Stakeholders',
+        description: 'List all stakeholders and their needs',
+        completed: false,
+      },
+      {
+        id: 'gather',
+        title: 'Gather Requirements',
+        description: 'Conduct interviews and collect requirements',
+        completed: false,
+      },
+      {
+        id: 'moscow',
+        title: 'Prioritize Requirements',
+        description: 'Use MoSCoW framework to prioritize',
+        tool: 'canvas',
+        completed: false,
+      },
+      {
+        id: 'document',
+        title: 'Document Stories',
+        description: 'Convert requirements into user stories',
+        tool: 'story',
+        completed: false,
+      },
+    ],
+  },
+
+  // PRODUCT LAUNCH
+  {
+    id: 'product-launch',
+    name: 'Product Launch Execution',
+    description: 'Plan and execute successful product launch with comprehensive task checklist',
+    icon: <Rocket className="w-6 h-6" />,
+    category: 'Product Launch',
+    tags: ['Launch', 'GTM', 'Marketing', 'Execution', 'Checklist'],
+    difficulty: 'Advanced',
+    estimatedTime: '60-90 min',
+    steps: [
+      {
+        id: 'strategy',
+        title: 'Launch Strategy',
+        description: 'Define goals, audience, and positioning',
+        tool: 'canvas',
+        completed: false,
+      },
+      {
+        id: 'checklist',
+        title: 'Launch Checklist',
+        description: 'Create comprehensive cross-team task list',
+        tool: 'launch',
+        completed: false,
+      },
+      {
+        id: 'research',
+        title: 'Market Research',
+        description: 'Analyze market and competitive landscape',
+        tool: 'research',
+        completed: false,
+      },
+      {
+        id: 'timeline',
+        title: 'Execute Launch',
+        description: 'Track progress and complete all tasks',
+        completed: false,
+      },
+    ],
+  },
+
+  // USER RESEARCH
+  {
+    id: 'user-research',
+    name: 'User Research & Insights',
+    description: 'Plan, conduct, and synthesize user research to generate actionable insights',
+    icon: <Users className="w-6 h-6" />,
+    category: 'User Research',
+    tags: ['Research', 'Users', 'Interviews', 'Insights', 'UX'],
+    difficulty: 'Intermediate',
+    estimatedTime: '45-60 min',
+    steps: [
+      {
+        id: 'objectives',
+        title: 'Define Research Objectives',
+        description: 'Set clear research questions and goals',
+        completed: false,
+      },
+      {
+        id: 'plan',
+        title: 'Research Plan',
+        description: 'Design methodology and recruit participants',
+        completed: false,
+      },
+      {
+        id: 'conduct',
+        title: 'Conduct Research',
+        description: 'Execute interviews, surveys, usability tests',
+        completed: false,
+      },
+      {
+        id: 'synthesize',
+        title: 'Synthesize Findings',
+        description: 'Analyze data and create actionable insights',
+        tool: 'canvas',
+        completed: false,
+      },
+    ],
+  },
+
+  // DESIGN
+  {
     id: 'design-system',
     name: 'Design System Creation',
-    description: 'Build a complete design system with colors, typography, and components',
+    description: 'Build complete design system with brand identity, components, and documentation',
     icon: <Palette className="w-6 h-6" />,
     category: 'Design',
+    tags: ['Design', 'UI', 'Brand', 'Components', 'System'],
+    difficulty: 'Advanced',
     estimatedTime: '60-90 min',
     steps: [
       {
         id: 'brand',
         title: 'Brand Identity',
-        description: 'Define brand colors, logo, and visual identity',
+        description: 'Define brand colors, logo, visual identity',
         tool: 'design',
         completed: false,
       },
@@ -189,12 +325,16 @@ const workflows: Workflow[] = [
       },
     ],
   },
+
+  // DEVELOPMENT
   {
     id: 'component-development',
     name: 'Component Development',
-    description: 'Build and test reusable UI components from designs to production',
+    description: 'Build and test reusable UI components from designs to production-ready code',
     icon: <Code2 className="w-6 h-6" />,
     category: 'Development',
+    tags: ['Development', 'Code', 'Components', 'Testing', 'TypeScript'],
+    difficulty: 'Intermediate',
     estimatedTime: '45-60 min',
     steps: [
       {
@@ -213,7 +353,7 @@ const workflows: Workflow[] = [
       {
         id: 'styling',
         title: 'Styling',
-        description: 'Apply design system tokens and responsive styles',
+        description: 'Apply design tokens and responsive styles',
         tool: 'design',
         completed: false,
       },
@@ -226,227 +366,14 @@ const workflows: Workflow[] = [
       },
     ],
   },
-  {
-    id: 'feature-discovery',
-    name: 'Feature Discovery',
-    description: 'Research, prioritize, and define a new feature from idea to user story',
-    icon: <Target className="w-6 h-6" />,
-    category: 'Discovery',
-    estimatedTime: '45-60 min',
-    steps: [
-      {
-        id: 'research',
-        title: 'Market & User Research',
-        description: 'Gather competitive insights and user feedback to validate the feature idea',
-        tool: 'research',
-        completed: false,
-      },
-      {
-        id: 'swot',
-        title: 'SWOT Analysis',
-        description: 'Analyze strengths, weaknesses, opportunities, and threats',
-        tool: 'canvas',
-        completed: false,
-      },
-      {
-        id: 'prioritize',
-        title: 'Impact vs Effort Analysis',
-        description: 'Evaluate the feature against other priorities',
-        tool: 'impact',
-        completed: false,
-      },
-      {
-        id: 'story',
-        title: 'Write User Story',
-        description: 'Create a comprehensive user story with acceptance criteria',
-        tool: 'story',
-        completed: false,
-      },
-    ],
-  },
-  {
-    id: 'sprint-planning',
-    name: 'Sprint Planning',
-    description: 'Prepare and organize work for an upcoming sprint cycle',
-    icon: <Calendar className="w-6 h-6" />,
-    category: 'Planning',
-    estimatedTime: '30-45 min',
-    steps: [
-      {
-        id: 'review',
-        title: 'Backlog Review',
-        description: 'Review and groom the product backlog items',
-        completed: false,
-      },
-      {
-        id: 'prioritize',
-        title: 'Prioritize Items',
-        description: 'Use MoSCoW or Impact/Effort to prioritize backlog',
-        tool: 'canvas',
-        completed: false,
-      },
-      {
-        id: 'refine',
-        title: 'Refine User Stories',
-        description: 'Ensure stories are ready with clear acceptance criteria',
-        tool: 'story',
-        completed: false,
-      },
-      {
-        id: 'capacity',
-        title: 'Capacity Planning',
-        description: 'Allocate stories based on team capacity and velocity',
-        completed: false,
-      },
-    ],
-  },
-  {
-    id: 'product-launch',
-    name: 'Product Launch',
-    description: 'Plan and execute a successful product or feature launch',
-    icon: <Rocket className="w-6 h-6" />,
-    category: 'Execution',
-    estimatedTime: '60-90 min',
-    steps: [
-      {
-        id: 'strategy',
-        title: 'Launch Strategy',
-        description: 'Define launch goals, target audience, and positioning',
-        tool: 'canvas',
-        completed: false,
-      },
-      {
-        id: 'gtm',
-        title: 'Go-to-Market Plan',
-        description: 'Create marketing, sales, and distribution strategies',
-        completed: false,
-      },
-      {
-        id: 'metrics',
-        title: 'Success Metrics',
-        description: 'Define KPIs and measurement framework',
-        completed: false,
-      },
-      {
-        id: 'timeline',
-        title: 'Launch Timeline',
-        description: 'Create detailed timeline with milestones and dependencies',
-        completed: false,
-      },
-    ],
-  },
-  {
-    id: 'user-research',
-    name: 'User Research',
-    description: 'Plan, conduct, and synthesize user research findings',
-    icon: <Users className="w-6 h-6" />,
-    category: 'Discovery',
-    estimatedTime: '45-60 min',
-    steps: [
-      {
-        id: 'objectives',
-        title: 'Define Research Objectives',
-        description: 'Set clear research questions and goals',
-        completed: false,
-      },
-      {
-        id: 'plan',
-        title: 'Research Plan',
-        description: 'Design methodology, recruit participants, prepare materials',
-        completed: false,
-      },
-      {
-        id: 'conduct',
-        title: 'Conduct Research',
-        description: 'Execute interviews, surveys, or usability tests',
-        completed: false,
-      },
-      {
-        id: 'synthesize',
-        title: 'Synthesize Findings',
-        description: 'Analyze data and create actionable insights',
-        tool: 'canvas',
-        completed: false,
-      },
-    ],
-  },
-  {
-    id: 'roadmap-planning',
-    name: 'Roadmap Planning',
-    description: 'Create a strategic product roadmap aligned with company goals',
-    icon: <TrendingUp className="w-6 h-6" />,
-    category: 'Strategy',
-    estimatedTime: '60-90 min',
-    steps: [
-      {
-        id: 'vision',
-        title: 'Product Vision',
-        description: 'Define long-term vision and strategic objectives',
-        completed: false,
-      },
-      {
-        id: 'initiatives',
-        title: 'Identify Initiatives',
-        description: 'Gather and list all potential initiatives and features',
-        completed: false,
-      },
-      {
-        id: 'prioritize',
-        title: 'Prioritization',
-        description: 'Evaluate and prioritize initiatives using impact/effort',
-        tool: 'impact',
-        completed: false,
-      },
-      {
-        id: 'timeline',
-        title: 'Timeline & Themes',
-        description: 'Organize initiatives into quarters with strategic themes',
-        tool: 'canvas',
-        completed: false,
-      },
-    ],
-  },
-  {
-    id: 'requirements-gathering',
-    name: 'Requirements Gathering',
-    description: 'Collect and document comprehensive product requirements',
-    icon: <FileText className="w-6 h-6" />,
-    category: 'Planning',
-    estimatedTime: '45-60 min',
-    steps: [
-      {
-        id: 'stakeholders',
-        title: 'Identify Stakeholders',
-        description: 'List all stakeholders and their needs',
-        completed: false,
-      },
-      {
-        id: 'gather',
-        title: 'Gather Requirements',
-        description: 'Conduct interviews and collect functional/non-functional requirements',
-        completed: false,
-      },
-      {
-        id: 'moscow',
-        title: 'Prioritize Requirements',
-        description: 'Use MoSCoW framework to prioritize requirements',
-        tool: 'canvas',
-        completed: false,
-      },
-      {
-        id: 'document',
-        title: 'Document Stories',
-        description: 'Convert requirements into detailed user stories',
-        tool: 'story',
-        completed: false,
-      },
-    ],
-  },
 ];
 
 export const Workflows: React.FC = () => {
   const [selectedWorkflow, setSelectedWorkflow] = useState<Workflow | null>(null);
   const [currentStep, setCurrentStep] = useState(0);
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [selectedTag, setSelectedTag] = useState<string>('all');
+  
   const [showCanvasGenerator, setShowCanvasGenerator] = useState(false);
   const [showStoryWriter, setShowStoryWriter] = useState(false);
   const [showImpactPlotter, setShowImpactPlotter] = useState(false);
@@ -501,12 +428,19 @@ export const Workflows: React.FC = () => {
 
   const handleCompleteWorkflow = () => {
     toast.success(`Completed ${selectedWorkflow?.name} workflow!`, {
-      description: 'Great work! Your PM workflow is complete.',
+      description: 'Great work! Your workflow is complete.',
     });
     handleBackToWorkflows();
   };
 
   const categories = Array.from(new Set(workflows.map(w => w.category)));
+  const allTags = Array.from(new Set(workflows.flatMap(w => w.tags)));
+
+  const filteredWorkflows = workflows.filter(w => {
+    const categoryMatch = selectedCategory === 'all' || w.category === selectedCategory;
+    const tagMatch = selectedTag === 'all' || w.tags.includes(selectedTag);
+    return categoryMatch && tagMatch;
+  });
 
   if (selectedWorkflow) {
     return (
@@ -516,7 +450,10 @@ export const Workflows: React.FC = () => {
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back to Workflows
           </Button>
-          <Badge variant="outline">{selectedWorkflow.estimatedTime}</Badge>
+          <div className="flex items-center space-x-2">
+            <Badge variant="outline">{selectedWorkflow.estimatedTime}</Badge>
+            <Badge variant="secondary">{selectedWorkflow.difficulty}</Badge>
+          </div>
         </div>
 
         <div>
@@ -524,7 +461,12 @@ export const Workflows: React.FC = () => {
             {selectedWorkflow.icon}
             <h2 className="text-3xl font-bold">{selectedWorkflow.name}</h2>
           </div>
-          <p className="text-muted-foreground">{selectedWorkflow.description}</p>
+          <p className="text-muted-foreground mb-3">{selectedWorkflow.description}</p>
+          <div className="flex flex-wrap gap-1">
+            {selectedWorkflow.tags.map(tag => (
+              <Badge key={tag} variant="outline" className="text-xs">{tag}</Badge>
+            ))}
+          </div>
         </div>
 
         <Card className="bg-primary/5 border-primary/20">
@@ -657,21 +599,78 @@ export const Workflows: React.FC = () => {
       <div>
         <h2 className="text-3xl font-bold mb-2">PM Workflows</h2>
         <p className="text-muted-foreground">
-          Guided step-by-step workflows for common product management tasks
+          Guided step-by-step workflows for product management, design, and development
         </p>
       </div>
 
-      {categories.map(category => (
+      {/* Filters */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center space-x-2 text-base">
+            <Filter className="w-4 h-4" />
+            <span>Filter Workflows</span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label className="text-sm font-medium">Category</Label>
+            <div className="flex flex-wrap gap-2">
+              <Badge
+                variant={selectedCategory === 'all' ? 'default' : 'outline'}
+                className="cursor-pointer"
+                onClick={() => setSelectedCategory('all')}
+              >
+                All
+              </Badge>
+              {categories.map(category => (
+                <Badge
+                  key={category}
+                  variant={selectedCategory === category ? 'default' : 'outline'}
+                  className="cursor-pointer"
+                  onClick={() => setSelectedCategory(category)}
+                >
+                  {category}
+                </Badge>
+              ))}
+            </div>
+          </div>
+          <div className="space-y-2">
+            <Label className="text-sm font-medium">Tags</Label>
+            <div className="flex flex-wrap gap-2">
+              <Badge
+                variant={selectedTag === 'all' ? 'default' : 'outline'}
+                className="cursor-pointer text-xs"
+                onClick={() => setSelectedTag('all')}
+              >
+                All
+              </Badge>
+              {allTags.map(tag => (
+                <Badge
+                  key={tag}
+                  variant={selectedTag === tag ? 'default' : 'outline'}
+                  className="cursor-pointer text-xs"
+                  onClick={() => setSelectedTag(tag)}
+                >
+                  {tag}
+                </Badge>
+              ))}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Workflows by Category */}
+      {categories.filter(cat => filteredWorkflows.some(w => w.category === cat)).map(category => (
         <div key={category} className="space-y-4">
           <h3 className="text-xl font-semibold flex items-center space-x-2">
             <span>{category}</span>
             <Badge variant="secondary">
-              {workflows.filter(w => w.category === category).length}
+              {filteredWorkflows.filter(w => w.category === category).length}
             </Badge>
           </h3>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {workflows
+            {filteredWorkflows
               .filter(workflow => workflow.category === category)
               .map(workflow => (
                 <Card
@@ -686,17 +685,34 @@ export const Workflows: React.FC = () => {
                           {workflow.icon}
                         </div>
                         <div className="flex-1">
-                          <CardTitle className="text-lg">{workflow.name}</CardTitle>
-                          <Badge variant="outline" className="mt-2 text-xs">
-                            {workflow.estimatedTime}
-                          </Badge>
+                          <CardTitle className="text-base">{workflow.name}</CardTitle>
+                          <div className="flex items-center space-x-2 mt-2">
+                            <Badge variant="outline" className="text-xs">
+                              {workflow.estimatedTime}
+                            </Badge>
+                            <Badge variant="secondary" className="text-xs">
+                              {workflow.difficulty}
+                            </Badge>
+                          </div>
                         </div>
                       </div>
                     </div>
                   </CardHeader>
-                  <CardContent>
-                    <CardDescription className="mb-4">{workflow.description}</CardDescription>
-                    <div className="flex items-center justify-between text-sm text-muted-foreground">
+                  <CardContent className="space-y-3">
+                    <CardDescription>{workflow.description}</CardDescription>
+                    <div className="flex flex-wrap gap-1">
+                      {workflow.tags.slice(0, 3).map(tag => (
+                        <Badge key={tag} variant="outline" className="text-xs">
+                          {tag}
+                        </Badge>
+                      ))}
+                      {workflow.tags.length > 3 && (
+                        <Badge variant="outline" className="text-xs">
+                          +{workflow.tags.length - 3}
+                        </Badge>
+                      )}
+                    </div>
+                    <div className="flex items-center justify-between text-sm text-muted-foreground pt-2 border-t">
                       <span>{workflow.steps.length} steps</span>
                       <Button variant="ghost" size="sm">
                         Start Workflow →
@@ -728,11 +744,11 @@ export const Workflows: React.FC = () => {
             </li>
             <li className="flex items-start space-x-2">
               <span className="text-green-500 mt-0.5">✓</span>
-              <span>Save time with structured templates and frameworks</span>
+              <span>Track progress and maintain consistency across initiatives</span>
             </li>
             <li className="flex items-start space-x-2">
               <span className="text-green-500 mt-0.5">✓</span>
-              <span>Ensure nothing important gets missed in complex processes</span>
+              <span>Learn best practices while getting work done</span>
             </li>
           </ul>
         </CardContent>
