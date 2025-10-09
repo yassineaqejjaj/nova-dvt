@@ -9,6 +9,9 @@ import { ImpactPlotter } from './ImpactPlotter';
 import { MarketResearch } from './MarketResearch';
 import { DesignTool } from './DesignTool';
 import { CodeGenerator } from './CodeGenerator';
+import { RoadmapPlanner } from './RoadmapPlanner';
+import { ProductLaunch } from './ProductLaunch';
+import { SprintPlanner } from './SprintPlanner';
 import {
   Rocket,
   Target,
@@ -34,12 +37,121 @@ interface Workflow {
     id: string;
     title: string;
     description: string;
-    tool?: 'canvas' | 'story' | 'impact' | 'research' | 'design' | 'code';
+    tool?: 'canvas' | 'story' | 'impact' | 'research' | 'design' | 'code' | 'roadmap' | 'launch' | 'sprint';
     completed?: boolean;
   }>;
 }
 
 const workflows: Workflow[] = [
+  {
+    id: 'roadmap-planning',
+    name: 'Strategic Roadmap Planning',
+    description: 'Create a comprehensive product roadmap with quarterly milestones',
+    icon: <TrendingUp className="w-6 h-6" />,
+    category: 'Product Management',
+    estimatedTime: '60-90 min',
+    steps: [
+      {
+        id: 'vision',
+        title: 'Define Product Vision',
+        description: 'Establish long-term vision and strategic objectives',
+        completed: false,
+      },
+      {
+        id: 'milestones',
+        title: 'Plan Milestones',
+        description: 'Use roadmap planner to create quarterly milestones',
+        tool: 'roadmap',
+        completed: false,
+      },
+      {
+        id: 'impact',
+        title: 'Prioritize Initiatives',
+        description: 'Evaluate initiatives using impact/effort analysis',
+        tool: 'impact',
+        completed: false,
+      },
+      {
+        id: 'stakeholders',
+        title: 'Stakeholder Alignment',
+        description: 'Present and gather feedback on roadmap',
+        completed: false,
+      },
+    ],
+  },
+  {
+    id: 'product-launch-planning',
+    name: 'Product Launch Execution',
+    description: 'Plan and execute a successful product launch with comprehensive checklist',
+    icon: <Rocket className="w-6 h-6" />,
+    category: 'Product Management',
+    estimatedTime: '60-90 min',
+    steps: [
+      {
+        id: 'strategy',
+        title: 'Launch Strategy',
+        description: 'Define goals, audience, and positioning',
+        tool: 'canvas',
+        completed: false,
+      },
+      {
+        id: 'checklist',
+        title: 'Launch Checklist',
+        description: 'Create comprehensive launch task checklist',
+        tool: 'launch',
+        completed: false,
+      },
+      {
+        id: 'research',
+        title: 'Market Research',
+        description: 'Analyze market and competitive landscape',
+        tool: 'research',
+        completed: false,
+      },
+      {
+        id: 'timeline',
+        title: 'Execute Launch',
+        description: 'Track progress and complete launch tasks',
+        completed: false,
+      },
+    ],
+  },
+  {
+    id: 'sprint-management',
+    name: 'Agile Sprint Planning',
+    description: 'Plan and manage sprint backlog with capacity planning',
+    icon: <Calendar className="w-6 h-6" />,
+    category: 'Product Management',
+    estimatedTime: '45-60 min',
+    steps: [
+      {
+        id: 'backlog',
+        title: 'Review Backlog',
+        description: 'Review and groom product backlog',
+        completed: false,
+      },
+      {
+        id: 'sprint',
+        title: 'Sprint Planning',
+        description: 'Use sprint planner to organize stories',
+        tool: 'sprint',
+        completed: false,
+      },
+      {
+        id: 'stories',
+        title: 'Refine Stories',
+        description: 'Ensure stories have clear acceptance criteria',
+        tool: 'story',
+        completed: false,
+      },
+      {
+        id: 'capacity',
+        title: 'Capacity Planning',
+        description: 'Allocate work based on team velocity',
+        completed: false,
+      },
+    ],
+  },
   {
     id: 'design-system',
     name: 'Design System Creation',
@@ -341,6 +453,9 @@ export const Workflows: React.FC = () => {
   const [showMarketResearch, setShowMarketResearch] = useState(false);
   const [showDesignTool, setShowDesignTool] = useState(false);
   const [showCodeGenerator, setShowCodeGenerator] = useState(false);
+  const [showRoadmapPlanner, setShowRoadmapPlanner] = useState(false);
+  const [showProductLaunch, setShowProductLaunch] = useState(false);
+  const [showSprintPlanner, setShowSprintPlanner] = useState(false);
 
   const handleWorkflowSelect = (workflow: Workflow) => {
     setSelectedWorkflow(workflow);
@@ -371,6 +486,15 @@ export const Workflows: React.FC = () => {
         break;
       case 'code':
         setShowCodeGenerator(true);
+        break;
+      case 'roadmap':
+        setShowRoadmapPlanner(true);
+        break;
+      case 'launch':
+        setShowProductLaunch(true);
+        break;
+      case 'sprint':
+        setShowSprintPlanner(true);
         break;
     }
   };
@@ -479,6 +603,48 @@ export const Workflows: React.FC = () => {
                 ✕
               </Button>
               <CodeGenerator />
+            </div>
+          </div>
+        )}
+        {showRoadmapPlanner && (
+          <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm">
+            <div className="fixed inset-4 z-50 overflow-auto bg-background rounded-lg border shadow-lg p-6">
+              <Button
+                variant="ghost"
+                className="absolute right-4 top-4"
+                onClick={() => setShowRoadmapPlanner(false)}
+              >
+                ✕
+              </Button>
+              <RoadmapPlanner />
+            </div>
+          </div>
+        )}
+        {showProductLaunch && (
+          <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm">
+            <div className="fixed inset-4 z-50 overflow-auto bg-background rounded-lg border shadow-lg p-6">
+              <Button
+                variant="ghost"
+                className="absolute right-4 top-4"
+                onClick={() => setShowProductLaunch(false)}
+              >
+                ✕
+              </Button>
+              <ProductLaunch />
+            </div>
+          </div>
+        )}
+        {showSprintPlanner && (
+          <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm">
+            <div className="fixed inset-4 z-50 overflow-auto bg-background rounded-lg border shadow-lg p-6">
+              <Button
+                variant="ghost"
+                className="absolute right-4 top-4"
+                onClick={() => setShowSprintPlanner(false)}
+              >
+                ✕
+              </Button>
+              <SprintPlanner />
             </div>
           </div>
         )}
