@@ -13,6 +13,7 @@ import { CodeGenerator } from './CodeGenerator';
 import { RoadmapPlanner } from './RoadmapPlanner';
 import { ProductLaunch } from './ProductLaunch';
 import { SprintPlanner } from './SprintPlanner';
+import { KPIGenerator } from './KPIGenerator';
 import {
   Rocket,
   Target,
@@ -41,7 +42,7 @@ interface Workflow {
     id: string;
     title: string;
     description: string;
-    tool?: 'canvas' | 'story' | 'impact' | 'research' | 'design' | 'code' | 'roadmap' | 'launch' | 'sprint';
+    tool?: 'canvas' | 'story' | 'impact' | 'research' | 'design' | 'code' | 'roadmap' | 'launch' | 'sprint' | 'kpi';
     completed?: boolean;
   }>;
 }
@@ -76,6 +77,13 @@ const workflows: Workflow[] = [
         title: 'Prioritize Initiatives',
         description: 'Evaluate initiatives using impact/effort analysis',
         tool: 'impact',
+        completed: false,
+      },
+      {
+        id: 'kpi-alignment',
+        title: 'Metrics Alignment',
+        description: 'Generate KPIs aligned with strategic objectives',
+        tool: 'kpi',
         completed: false,
       },
       {
@@ -118,6 +126,13 @@ const workflows: Workflow[] = [
         completed: false,
       },
       {
+        id: 'validation-kpi',
+        title: 'Validation Planning',
+        description: 'Define KPIs to validate feature success',
+        tool: 'kpi',
+        completed: false,
+      },
+      {
         id: 'story',
         title: 'Write User Story',
         description: 'Create user story with acceptance criteria',
@@ -156,6 +171,13 @@ const workflows: Workflow[] = [
         title: 'Refine User Stories',
         description: 'Ensure stories have clear acceptance criteria',
         tool: 'story',
+        completed: false,
+      },
+      {
+        id: 'sprint-kpi',
+        title: 'Sprint Metrics (Optional)',
+        description: 'Define sprint success metrics and KPIs',
+        tool: 'kpi',
         completed: false,
       },
       {
@@ -383,6 +405,7 @@ export const Workflows: React.FC = () => {
   const [showRoadmapPlanner, setShowRoadmapPlanner] = useState(false);
   const [showProductLaunch, setShowProductLaunch] = useState(false);
   const [showSprintPlanner, setShowSprintPlanner] = useState(false);
+  const [showKPIGenerator, setShowKPIGenerator] = useState(false);
 
   const handleWorkflowSelect = (workflow: Workflow) => {
     setSelectedWorkflow(workflow);
@@ -422,6 +445,9 @@ export const Workflows: React.FC = () => {
         break;
       case 'sprint':
         setShowSprintPlanner(true);
+        break;
+      case 'kpi':
+        setShowKPIGenerator(true);
         break;
     }
   };
@@ -590,6 +616,7 @@ export const Workflows: React.FC = () => {
             </div>
           </div>
         )}
+        <KPIGenerator open={showKPIGenerator} onOpenChange={setShowKPIGenerator} />
       </div>
     );
   }
