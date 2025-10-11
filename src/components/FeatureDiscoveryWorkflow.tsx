@@ -203,18 +203,45 @@ Return the response in JSON format with this structure:
         },
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase function error:', error);
+        throw error;
+      }
+
+      console.log('Raw response from chat-ai:', data);
 
       let generatedEpic;
-      if (typeof data === 'string') {
-        const jsonMatch = data.match(/\{[\s\S]*\}/);
-        if (jsonMatch) {
-          generatedEpic = JSON.parse(jsonMatch[0]);
+      
+      // Handle the response structure: data.response contains the AI response
+      const responseText = data?.response || data;
+      
+      if (typeof responseText === 'string') {
+        // Extract JSON from markdown code blocks if present
+        const codeBlockMatch = responseText.match(/```(?:json)?\s*(\{[\s\S]*?\})\s*```/);
+        if (codeBlockMatch) {
+          generatedEpic = JSON.parse(codeBlockMatch[1]);
         } else {
-          throw new Error('No valid JSON found in response');
+          // Try to find JSON object in the text
+          const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+          if (jsonMatch) {
+            generatedEpic = JSON.parse(jsonMatch[0]);
+          } else {
+            console.error('No JSON found in response:', responseText);
+            throw new Error('La réponse de l\'IA n\'est pas au format JSON valide');
+          }
         }
+      } else if (typeof responseText === 'object') {
+        generatedEpic = responseText;
       } else {
-        generatedEpic = data;
+        throw new Error('Format de réponse inattendu');
+      }
+
+      console.log('Parsed epic data:', generatedEpic);
+
+      // Validate the structure
+      if (!generatedEpic.title || !generatedEpic.userStories || !Array.isArray(generatedEpic.userStories)) {
+        console.error('Invalid epic structure:', generatedEpic);
+        throw new Error('Structure de l\'Epic invalide');
       }
 
       setEpicData(generatedEpic);

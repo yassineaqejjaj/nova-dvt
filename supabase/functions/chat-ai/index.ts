@@ -1,7 +1,7 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
-const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
+const lovableApiKey = Deno.env.get('LOVABLE_API_KEY');
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -15,41 +15,54 @@ serve(async (req) => {
   }
 
   try {
-    if (!openAIApiKey) {
-      throw new Error('OpenAI API key not configured');
+    if (!lovableApiKey) {
+      throw new Error('Lovable API key not configured');
     }
 
     const body = await req.json();
     const { messages, agents, mentionedAgents, message, systemPrompt } = body;
 
-    // Simple mode: single message with system prompt (for tools like KPI Generator)
+    // Simple mode: single message with system prompt (for tools like KPI Generator, Epic Generator)
     if (message && systemPrompt && !agents) {
-      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      console.log('Simple mode: generating response with Lovable AI');
+      
+      const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${openAIApiKey}`,
+          'Authorization': `Bearer ${lovableApiKey}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          model: 'gpt-4o-mini',
+          model: 'google/gemini-2.5-flash',
           messages: [
             { role: 'system', content: systemPrompt },
             { role: 'user', content: message }
           ],
-          max_tokens: 2000,
+          max_tokens: 4000,
           temperature: 0.7,
         }),
       });
 
       if (!response.ok) {
-        const error = await response.text();
-        console.error('OpenAI API error:', error);
-        throw new Error(`OpenAI API error: ${error}`);
+        const errorText = await response.text();
+        console.error('Lovable AI API error:', response.status, errorText);
+        
+        if (response.status === 429) {
+          throw new Error('Rate limit exceeded. Please try again in a moment.');
+        }
+        if (response.status === 402) {
+          throw new Error('AI credits exhausted. Please add funds to your workspace.');
+        }
+        throw new Error(`AI gateway error: ${response.status}`);
       }
 
       const data = await response.json();
+      const content = data.choices[0].message.content;
+      
+      console.log('AI Response received:', content.substring(0, 100) + '...');
+      
       return new Response(JSON.stringify({ 
-        response: data.choices[0].message.content 
+        response: content 
       }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
@@ -86,14 +99,14 @@ ${toolInstructions}
 Respond as this specific agent with your unique perspective and expertise. Keep responses concise (2-3 sentences), professional, and focused on your specialty. If other agents are mentioned, acknowledge their expertise but maintain your unique viewpoint.`
       };
 
-      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${openAIApiKey}`,
+          'Authorization': `Bearer ${lovableApiKey}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          model: 'gpt-4o-mini',
+          model: 'google/gemini-2.5-flash',
           messages: [systemMessage, ...messages],
           max_tokens: 200,
           temperature: 0.8,
@@ -101,8 +114,16 @@ Respond as this specific agent with your unique perspective and expertise. Keep 
       });
 
       if (!response.ok) {
-        const error = await response.text();
-        throw new Error(`OpenAI API error for ${agent.name}: ${error}`);
+        const errorText = await response.text();
+        console.error(`Lovable AI API error for ${agent.name}:`, response.status, errorText);
+        
+        if (response.status === 429) {
+          throw new Error('Rate limit exceeded. Please try again in a moment.');
+        }
+        if (response.status === 402) {
+          throw new Error('AI credits exhausted. Please add funds to your workspace.');
+        }
+        throw new Error(`AI gateway error for ${agent.name}: ${response.status}`);
       }
 
       const data = await response.json();
