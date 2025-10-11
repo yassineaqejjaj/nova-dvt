@@ -54,6 +54,15 @@ export const useAuth = () => {
         throw profileError;
       }
 
+      // Load gamification data (for coins)
+      const { data: gamification, error: gamificationError } = await supabase
+        .from('user_gamification')
+        .select('coins')
+        .eq('user_id', userId)
+        .maybeSingle();
+
+      if (gamificationError) throw gamificationError;
+
       // Load badges
       const { data: badges, error: badgesError } = await supabase
         .from('user_badges')
@@ -77,6 +86,7 @@ export const useAuth = () => {
         level: profile?.level || 1,
         xp: profile?.xp || 0,
         streak: profile?.streak || 0,
+        coins: gamification?.coins || 0,
         avatar_url: profile?.avatar_url,
         unlockedAgents: unlockedAgents?.map(ua => ua.agent_id) || [],
         badges: badges?.map(b => ({

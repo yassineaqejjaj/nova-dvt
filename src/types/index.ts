@@ -30,6 +30,7 @@ export interface UserProfile {
   level: number;
   xp: number;
   streak: number;
+  coins: number;
   unlockedAgents: string[];
   badges: Badge[];
   avatar_url?: string;

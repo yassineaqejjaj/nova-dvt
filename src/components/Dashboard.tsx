@@ -154,7 +154,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
           </div>
           <div className="flex items-center gap-2">
             <Star className="w-5 h-5 text-amber-500" />
-            <span className="font-semibold">{(user as any).coins?.toLocaleString() || '0'} Coins</span>
+            <span className="font-semibold">{user.coins.toLocaleString()} Coins</span>
           </div>
         </div>
       </div>
@@ -255,7 +255,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 </div>
                 <Badge variant="outline" className="flex items-center gap-1">
                   <Star className="w-3 h-3 text-amber-500" />
-                  <span>{(user as any).coins || 0}</span>
+                  <span>{user.coins}</span>
                 </Badge>
               </div>
               <div className="space-y-1">

@@ -433,6 +433,7 @@ export const createDemoUser = (): UserProfile => ({
   level: 8,
   xp: 1200,
   streak: 12,
+  coins: 560,
   unlockedAgents: [
     'sarah-pm', 'alex-ux', 'david-fullstack', 'zoe-frontend', 'emma-growth', 'maya-ui', 'carlos-content',
     'market-scanner', 'user-insight', 'story-writer', 'auto-kpi-dashboard', 'brief-generator', 'experiment-tracker',
