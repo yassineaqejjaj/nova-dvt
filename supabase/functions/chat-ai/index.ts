@@ -22,9 +22,12 @@ serve(async (req) => {
     const body = await req.json();
     const { messages, agents, mentionedAgents, message, systemPrompt } = body;
 
-    // Simple mode: single message with system prompt (for tools like KPI Generator, Epic Generator)
-    if (message && systemPrompt && !agents) {
+    // Simple mode: single message with optional system prompt (for tools like KPI Generator, Epic Generator, Tech Spec)
+    if (message && !agents) {
       console.log('Simple mode: generating response with Lovable AI');
+      
+      const defaultSystemPrompt = 'You are a helpful AI assistant specialized in product management and technical specifications. Provide clear, structured, and actionable responses.';
+      const finalSystemPrompt = systemPrompt || defaultSystemPrompt;
       
       const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
         method: 'POST',
@@ -35,7 +38,7 @@ serve(async (req) => {
         body: JSON.stringify({
           model: 'google/gemini-2.5-flash',
           messages: [
-            { role: 'system', content: systemPrompt },
+            { role: 'system', content: finalSystemPrompt },
             { role: 'user', content: message }
           ],
           max_tokens: 4000,
