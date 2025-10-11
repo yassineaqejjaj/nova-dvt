@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      agent_personalities: {
+        Row: {
+          agent_id: string
+          created_at: string
+          custom_traits: Json | null
+          id: string
+          personality_type: string
+          updated_at: string
+          user_id: string
+          visual_style: Json | null
+        }
+        Insert: {
+          agent_id: string
+          created_at?: string
+          custom_traits?: Json | null
+          id?: string
+          personality_type?: string
+          updated_at?: string
+          user_id: string
+          visual_style?: Json | null
+        }
+        Update: {
+          agent_id?: string
+          created_at?: string
+          custom_traits?: Json | null
+          id?: string
+          personality_type?: string
+          updated_at?: string
+          user_id?: string
+          visual_style?: Json | null
+        }
+        Relationships: []
+      }
       analytics_events: {
         Row: {
           created_at: string | null
@@ -269,6 +302,42 @@ export type Database = {
         }
         Relationships: []
       }
+      insights: {
+        Row: {
+          created_at: string
+          data: Json | null
+          description: string
+          dismissed: boolean | null
+          expires_at: string | null
+          id: string
+          insight_type: string
+          title: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          data?: Json | null
+          description: string
+          dismissed?: boolean | null
+          expires_at?: string | null
+          id?: string
+          insight_type: string
+          title: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          data?: Json | null
+          description?: string
+          dismissed?: boolean | null
+          expires_at?: string | null
+          id?: string
+          insight_type?: string
+          title?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       integrations: {
         Row: {
           config: Json
@@ -355,6 +424,36 @@ export type Database = {
         }
         Relationships: []
       }
+      pinned_items: {
+        Row: {
+          created_at: string
+          id: string
+          item_data: Json | null
+          item_id: string
+          item_type: string
+          position: number | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          item_data?: Json | null
+          item_id: string
+          item_type: string
+          position?: number | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          item_data?: Json | null
+          item_id?: string
+          item_type?: string
+          position?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       product_contexts: {
         Row: {
           constraints: string | null
@@ -436,6 +535,42 @@ export type Database = {
           updated_at?: string
           user_id?: string
           xp?: number
+        }
+        Relationships: []
+      }
+      shareable_moments: {
+        Row: {
+          created_at: string
+          description: string
+          id: string
+          image_url: string | null
+          moment_type: string
+          share_data: Json | null
+          shared: boolean | null
+          title: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description: string
+          id?: string
+          image_url?: string | null
+          moment_type: string
+          share_data?: Json | null
+          shared?: boolean | null
+          title: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          id?: string
+          image_url?: string | null
+          moment_type?: string
+          share_data?: Json | null
+          shared?: boolean | null
+          title?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -724,6 +859,45 @@ export type Database = {
           created_at?: string | null
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_sessions: {
+        Row: {
+          created_at: string
+          id: string
+          last_active_at: string
+          last_context_id: string | null
+          last_squad_id: string | null
+          last_tab: string | null
+          last_workflow_type: string | null
+          session_data: Json | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          last_active_at?: string
+          last_context_id?: string | null
+          last_squad_id?: string | null
+          last_tab?: string | null
+          last_workflow_type?: string | null
+          session_data?: Json | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          last_active_at?: string
+          last_context_id?: string | null
+          last_squad_id?: string | null
+          last_tab?: string | null
+          last_workflow_type?: string | null
+          session_data?: Json | null
+          updated_at?: string
           user_id?: string
         }
         Relationships: []

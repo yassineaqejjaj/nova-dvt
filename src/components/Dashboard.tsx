@@ -1,10 +1,10 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { UserProfile, Squad } from '@/types';
+import { UserProfile, Squad, TabType } from '@/types';
 import { allAgents } from '@/data/mockData';
 import { 
   Trophy, 
@@ -19,11 +19,18 @@ import {
   ChevronRight,
   Sparkles
 } from 'lucide-react';
+import { useSessionMemory } from '@/hooks/useSessionMemory';
+import { useInsights } from '@/hooks/useInsights';
+import { usePinnedItems } from '@/hooks/usePinnedItems';
+import { ContinueFlow } from './ContinueFlow';
+import { InsightsPanel } from './InsightsPanel';
+import { QuickDeck } from './QuickDeck';
+import { DynamicStatsPanel } from './DynamicStatsPanel';
 
 interface DashboardProps {
   user: UserProfile;
   squads: Squad[];
-  onNavigate: (tab: 'agents' | 'squads' | 'chat') => void;
+  onNavigate: (tab: TabType) => void;
 }
 
 export const Dashboard: React.FC<DashboardProps> = ({
@@ -31,6 +38,34 @@ export const Dashboard: React.FC<DashboardProps> = ({
   squads,
   onNavigate
 }) => {
+  const { session, updateSession } = useSessionMemory(user.id);
+  const { insights, dismissInsight, generateInsights } = useInsights(user.id);
+  const { pinnedItems, unpinItem } = usePinnedItems(user.id);
+
+  useEffect(() => {
+    // Generate insights on mount
+    generateInsights();
+  }, []);
+
+  const handleContinueFlow = (tab: TabType, squadId?: string) => {
+    onNavigate(tab as any);
+  };
+
+  const handlePinnedItemClick = (item: any) => {
+    switch (item.itemType) {
+      case 'squad':
+        onNavigate('squads' as any);
+        break;
+      case 'agent':
+        onNavigate('agents' as any);
+        break;
+      case 'artifact':
+        onNavigate('artifacts' as any);
+        break;
+      default:
+        onNavigate('dashboard' as any);
+    }
+  };
   const progressToNextLevel = ((user.xp % 200) / 200) * 100;
   const nextLevelXP = Math.ceil(user.xp / 200) * 200;
   const xpToNextLevel = nextLevelXP - user.xp;
@@ -48,6 +83,15 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
   return (
     <div className="space-y-6">
+      {/* Continue Flow Card */}
+      {session && (
+        <ContinueFlow
+          session={session}
+          userName={user.name}
+          onContinue={handleContinueFlow}
+        />
+      )}
+
       {/* Welcome Header */}
       <div className="text-center space-y-2">
         <h1 className="text-3xl font-bold gradient-text">
@@ -211,6 +255,39 @@ export const Dashboard: React.FC<DashboardProps> = ({
             </div>
           </CardContent>
         </Card>
+      </div>
+
+      {/* Insights Panel */}
+      {insights.length > 0 && (
+        <div>
+          <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
+            <Zap className="h-6 w-6 text-primary" />
+            Instant Insights
+          </h2>
+          <InsightsPanel insights={insights} onDismiss={dismissInsight} />
+        </div>
+      )}
+
+      {/* Dynamic Stats Panel */}
+      <div>
+        <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
+          <TrendingUp className="h-6 w-6 text-primary" />
+          Your Squad Universe
+        </h2>
+        <DynamicStatsPanel userId={user.id} />
+      </div>
+
+      {/* Quick Deck */}
+      <div>
+        <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
+          <Star className="h-6 w-6 text-primary" />
+          Quick Deck
+        </h2>
+        <QuickDeck
+          pinnedItems={pinnedItems}
+          onUnpin={unpinItem}
+          onItemClick={handlePinnedItemClick}
+        />
       </div>
 
       {/* Quick Actions */}

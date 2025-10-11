@@ -15,6 +15,9 @@ import { SquadManager } from '@/components/SquadManager';
 import { UserProfile } from '@/components/UserProfile';
 import { OnboardingModal } from '@/components/OnboardingModal';
 import { InteractiveTutorial } from '@/components/InteractiveTutorial';
+import { MagicBar } from '@/components/MagicBar';
+import { ShareableMomentCard } from '@/components/ShareableMomentCard';
+import { useSessionMemory } from '@/hooks/useSessionMemory';
 import { ProductContextManager } from '@/components/ProductContextManager';
 import { InstantPRD } from '@/components/InstantPRD';
 import { RealityMode } from '@/components/RealityMode';
@@ -42,6 +45,20 @@ const Index = () => {
   const [showAuth, setShowAuth] = useState(false);
   const [showCanvasGenerator, setShowCanvasGenerator] = useState(false);
   const [showTutorial, setShowTutorial] = useState(false);
+  const [shareableMoment, setShareableMoment] = useState<{
+    open: boolean;
+    type: 'level_up' | 'agent_unlock' | 'workflow_complete';
+    title: string;
+    description: string;
+    shareData?: any;
+  }>({
+    open: false,
+    type: 'level_up',
+    title: '',
+    description: '',
+  });
+
+  const { updateSession } = useSessionMemory(user?.id);
   const [showContextManager, setShowContextManager] = useState(false);
   const [customAgents, setCustomAgents] = useState<Agent[]>([]);
 
@@ -118,6 +135,58 @@ const Index = () => {
 
   const handleTabChange = (tab: TabType) => {
     setActiveTab(tab);
+    // Update session memory
+    if (user?.id) {
+      updateSession({ lastTab: tab });
+    }
+  };
+
+  // Listen for milestone events to trigger shareable moments
+  useEffect(() => {
+    if (!user?.id) return;
+
+    const channel = supabase
+      .channel('milestone-events')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'user_badges',
+          filter: `user_id=eq.${user.id}`,
+        },
+        (payload) => {
+          setShareableMoment({
+            open: true,
+            type: 'agent_unlock',
+            title: 'New Badge Unlocked!',
+            description: payload.new.badge_name,
+            shareData: { badge: payload.new },
+          });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user?.id]);
+
+  const handleMagicBarAction = (action: string, data?: any) => {
+    switch (action) {
+      case 'create_canvas':
+        setShowCanvasGenerator(true);
+        break;
+      case 'generate_prd':
+        setActiveTab('instant-prd');
+        break;
+      case 'generate_summary':
+        // Handle summary generation
+        console.log('Generate summary');
+        break;
+      default:
+        console.log('Unknown action:', action);
+    }
   };
 
   const handleCreateAgent = (newAgent: Agent) => {
