@@ -128,7 +128,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center space-x-2">
             <User className="w-5 h-5" />
@@ -136,7 +136,13 @@ export const UserProfile: React.FC<UserProfileProps> = ({
           </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-6">
+        <Tabs defaultValue="profile" className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="profile">Profil</TabsTrigger>
+            <TabsTrigger value="theme">Thème</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="profile" className="space-y-6 mt-6">
           {/* Profile Header */}
           <Card>
             <CardHeader>
@@ -309,51 +315,56 @@ export const UserProfile: React.FC<UserProfileProps> = ({
               <span>Sign Out</span>
             </Button>
           </div>
-        </div>
 
-        {/* Edit Profile Dialog */}
-        <Dialog open={isEditing} onOpenChange={setIsEditing}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Edit Profile</DialogTitle>
-            </DialogHeader>
-            <form onSubmit={handleUpdateProfile} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="edit-name">Display Name</Label>
-                <Input
-                  id="edit-name"
-                  value={editData.display_name}
-                  onChange={(e) => setEditData(prev => ({ ...prev, display_name: e.target.value }))}
-                  required
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="edit-role">Role</Label>
-                <Input
-                  id="edit-role"
-                  value={editData.role}
-                  onChange={(e) => setEditData(prev => ({ ...prev, role: e.target.value }))}
-                  required
-                />
-              </div>
-              
-              <div className="flex space-x-2">
-                <Button type="submit" disabled={isLoading} className="flex-1">
-                  {isLoading ? 'Saving...' : 'Save Changes'}
-                </Button>
-                <Button 
-                  type="button" 
-                  variant="outline" 
-                  onClick={() => setIsEditing(false)}
-                  disabled={isLoading}
-                >
-                  Cancel
-                </Button>
-              </div>
-            </form>
-          </DialogContent>
-        </Dialog>
+          {/* Edit Profile Dialog */}
+          <Dialog open={isEditing} onOpenChange={setIsEditing}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Edit Profile</DialogTitle>
+              </DialogHeader>
+              <form onSubmit={handleUpdateProfile} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="edit-name">Display Name</Label>
+                  <Input
+                    id="edit-name"
+                    value={editData.display_name}
+                    onChange={(e) => setEditData(prev => ({ ...prev, display_name: e.target.value }))}
+                    required
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="edit-role">Role</Label>
+                  <Input
+                    id="edit-role"
+                    value={editData.role}
+                    onChange={(e) => setEditData(prev => ({ ...prev, role: e.target.value }))}
+                    required
+                  />
+                </div>
+                
+                <div className="flex space-x-2">
+                  <Button type="submit" disabled={isLoading} className="flex-1">
+                    {isLoading ? 'Saving...' : 'Save Changes'}
+                  </Button>
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    onClick={() => setIsEditing(false)}
+                    disabled={isLoading}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </form>
+            </DialogContent>
+          </Dialog>
+          </TabsContent>
+
+          <TabsContent value="theme" className="mt-6">
+            <ThemeCustomization />
+          </TabsContent>
+        </Tabs>
       </DialogContent>
     </Dialog>
   );
