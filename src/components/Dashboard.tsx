@@ -141,6 +141,22 @@ export const Dashboard: React.FC<DashboardProps> = ({
         <p className="text-muted-foreground text-lg">
           Ready to collaborate with your AI squad? Here's your progress overview.
         </p>
+        
+        {/* Quick Stats Bar */}
+        <div className="flex items-center justify-center gap-6 pt-2">
+          <div className="flex items-center gap-2">
+            <Trophy className="w-5 h-5 text-agent-orange" />
+            <span className="font-semibold">Level {user.level}</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <Zap className="w-5 h-5 text-primary" />
+            <span className="font-semibold">{user.xp.toLocaleString()} XP</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <Star className="w-5 h-5 text-amber-500" />
+            <span className="font-semibold">{(user as any).coins?.toLocaleString() || '0'} Coins</span>
+          </div>
+        </div>
       </div>
 
       {/* Instant PRD CTA - Hero Feature with Rotating Highlights */}
@@ -220,20 +236,26 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
       {/* Stats Overview */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Level & XP */}
+        {/* Level, XP & Coins */}
         <Card className="card-glow">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium flex items-center space-x-2">
               <Trophy className="w-4 h-4 text-agent-orange" />
-              <span>Level & Experience</span>
+              <span>Progress & Rewards</span>
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              <div className="flex items-end space-x-2">
-                <span className="text-2xl font-bold">Level {user.level}</span>
-                <Badge variant="secondary" className="text-xs">
-                  {user.xp} XP
+              <div className="flex items-center justify-between">
+                <div className="flex items-end space-x-2">
+                  <span className="text-2xl font-bold">Level {user.level}</span>
+                  <Badge variant="secondary" className="text-xs">
+                    {user.xp} XP
+                  </Badge>
+                </div>
+                <Badge variant="outline" className="flex items-center gap-1">
+                  <Star className="w-3 h-3 text-amber-500" />
+                  <span>{(user as any).coins || 0}</span>
                 </Badge>
               </div>
               <div className="space-y-1">
