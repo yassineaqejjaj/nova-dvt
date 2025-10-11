@@ -53,7 +53,84 @@ export const useGamification = (userId: string | undefined) => {
   useEffect(() => {
     if (!userId) return;
     loadGamificationData();
+    // Auto-generate missions if none exist for today
+    generateMissionsIfNeeded();
   }, [userId]);
+
+  const generateMissionsIfNeeded = async () => {
+    if (!userId) return;
+
+    const today = new Date().toISOString().split('T')[0];
+    const { data: existing } = await supabase
+      .from('daily_missions')
+      .select('id')
+      .eq('user_id', userId)
+      .eq('mission_date', today)
+      .limit(1);
+
+    if (!existing || existing.length === 0) {
+      // Generate default missions for today
+      const defaultMissions = [
+        {
+          user_id: userId,
+          mission_date: today,
+          title: "Morning Kickstart",
+          description: "Ouvre Nova pour commencer ta journée",
+          mission_type: "open_app",
+          xp_reward: 10,
+          coins_reward: 2,
+          difficulty: "easy",
+          estimated_time: "30 sec"
+        },
+        {
+          user_id: userId,
+          mission_date: today,
+          title: "Quick PRD",
+          description: "Génère 1 PRD via Instant PRD",
+          mission_type: "create_prd",
+          xp_reward: 50,
+          coins_reward: 10,
+          difficulty: "easy",
+          estimated_time: "2 min"
+        },
+        {
+          user_id: userId,
+          mission_date: today,
+          title: "Context Master",
+          description: "Mets à jour ton contexte projet",
+          mission_type: "update_context",
+          xp_reward: 25,
+          coins_reward: 5,
+          difficulty: "easy",
+          estimated_time: "2 min"
+        },
+        {
+          user_id: userId,
+          mission_date: today,
+          title: "Workflow Warrior",
+          description: "Complète 1 workflow complet",
+          mission_type: "complete_workflow",
+          xp_reward: 100,
+          coins_reward: 20,
+          difficulty: "medium",
+          estimated_time: "20 min"
+        },
+        {
+          user_id: userId,
+          mission_date: today,
+          title: "Quality Craftsman",
+          description: "Obtiens un Quality Score ≥90 sur 1 artefact",
+          mission_type: "quality_score",
+          xp_reward: 75,
+          coins_reward: 15,
+          difficulty: "medium",
+          estimated_time: "15 min"
+        }
+      ];
+
+      await supabase.from('daily_missions').insert(defaultMissions);
+    }
+  };
 
   const loadGamificationData = async () => {
     if (!userId) return;
@@ -61,12 +138,35 @@ export const useGamification = (userId: string | undefined) => {
     try {
       setLoading(true);
 
-      // Load user stats
-      const { data: gamificationData } = await supabase
+      // Load or create user_gamification record
+      let { data: gamificationData, error: gamificationError } = await supabase
         .from('user_gamification')
         .select('*')
         .eq('user_id', userId)
-        .single();
+        .maybeSingle();
+
+      // If no gamification record exists, create one
+      if (!gamificationData) {
+        const { data: newRecord, error: insertError } = await supabase
+          .from('user_gamification')
+          .insert({
+            user_id: userId,
+            level: 1,
+            xp: 0,
+            coins: 0,
+            current_streak: 0,
+            longest_streak: 0,
+            streak_freezes_available: 0
+          })
+          .select()
+          .single();
+
+        if (insertError) {
+          console.error('Error creating gamification record:', insertError);
+        } else {
+          gamificationData = newRecord;
+        }
+      }
 
       if (gamificationData) {
         setStats({

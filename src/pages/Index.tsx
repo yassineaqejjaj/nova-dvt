@@ -285,7 +285,10 @@ const Index = () => {
                 {userProfile && (
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <div className="hidden sm:flex items-center space-x-3 bg-muted/50 rounded-lg px-3 py-2 cursor-help">
+                      <button 
+                        onClick={() => setActiveTab('gamification')}
+                        className="hidden sm:flex items-center space-x-3 bg-muted/50 rounded-lg px-3 py-2 cursor-pointer hover:bg-muted transition-all"
+                      >
                         <div className="flex items-center space-x-1">
                           <Trophy className="w-4 h-4 text-agent-orange" />
                           <span className="text-sm font-medium">Level {userProfile.level}</span>
@@ -300,10 +303,11 @@ const Index = () => {
                             style={{ width: `${((userProfile.xp % 200) / 200) * 100}%` }}
                           />
                         </div>
-                      </div>
+                      </button>
                     </TooltipTrigger>
                     <TooltipContent>
-                      <p>Prochain niveau: {200 - (userProfile.xp % 200)} XP</p>
+                      <p>Cliquez pour voir votre progression</p>
+                      <p className="text-xs text-muted-foreground">Prochain niveau: {200 - (userProfile.xp % 200)} XP</p>
                     </TooltipContent>
                   </Tooltip>
                 )}
