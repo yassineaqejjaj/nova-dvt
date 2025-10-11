@@ -16,6 +16,7 @@ import { UserProfile } from '@/components/UserProfile';
 import { OnboardingModal } from '@/components/OnboardingModal';
 import { InteractiveTutorial } from '@/components/InteractiveTutorial';
 import { ProductContextManager } from '@/components/ProductContextManager';
+import { InstantPRD } from '@/components/InstantPRD';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -217,6 +218,9 @@ const Index = () => {
       
       case 'workflows':
         return <Workflows />;
+      
+      case 'instant-prd':
+        return <InstantPRD />;
       
       case 'artifacts':
         return <Artifacts userId={user!.id} />;

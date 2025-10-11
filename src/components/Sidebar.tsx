@@ -16,8 +16,7 @@ import {
   Database,
   Bot,
   ChevronDown,
-  Shield,
-  Trophy
+  Shield
 } from 'lucide-react';
 import {
   Sidebar,
@@ -67,12 +66,6 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
       description: 'Vue d\'ensemble'
     },
     {
-      id: 'gamification' as TabType,
-      label: 'Gamification',
-      icon: Trophy,
-      description: 'Progression & Récompenses'
-    },
-    {
       id: 'artifacts' as TabType,
       label: 'Artifacts',
       icon: FileText,
@@ -109,6 +102,12 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
       label: 'All Workflows',
       icon: Workflow,
       description: 'Processus guidés IA'
+    },
+    {
+      id: 'instant-prd' as TabType,
+      label: 'Instant PRD',
+      icon: Sparkles,
+      description: 'Générer un PRD rapidement'
     }
   ];
 
@@ -307,6 +306,18 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
                     >
                       <Grid3X3 className="w-4 h-4 mr-3" />
                       <span className="text-sm">Canvas Generator</span>
+                    </Button>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild>
+                    <Button
+                      variant="ghost"
+                      onClick={() => onTabChange('instant-prd')}
+                      className="w-full justify-start h-10 px-3 hover:bg-accent/50"
+                    >
+                      <Sparkles className="w-4 h-4 mr-3" />
+                      <span className="text-sm">Instant PRD</span>
                     </Button>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
