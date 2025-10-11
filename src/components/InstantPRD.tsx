@@ -89,6 +89,35 @@ export const InstantPRD = () => {
     setSections(prev => prev.map(s => s.id === sectionId ? { ...s, status } : s));
   };
 
+  // Helper function to parse AI responses that may be wrapped in markdown code blocks
+  const parseAIResponse = (data: any): any => {
+    try {
+      // First extract the response field from the edge function return
+      let content = data?.response || data;
+      
+      // If it's still an object, stringify it
+      if (typeof content === 'object') {
+        content = JSON.stringify(content);
+      }
+      
+      // Remove markdown code blocks if present
+      let jsonString = content.replace(/```json\s*/g, '').replace(/```\s*/g, '');
+      
+      // Try to find JSON object in the string
+      const jsonMatch = jsonString.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        jsonString = jsonMatch[0];
+      }
+      
+      const parsed = JSON.parse(jsonString);
+      console.log('Parsed AI response:', parsed);
+      return parsed;
+    } catch (error) {
+      console.error('Error parsing AI response:', error, 'Raw data:', data);
+      throw new Error('Failed to parse AI response. Please try again.');
+    }
+  };
+
   const generatePersonaImage = async (persona: Persona): Promise<string> => {
     try {
       const { data, error } = await supabase.functions.invoke('generate-persona-image', {
@@ -127,6 +156,8 @@ export const InstantPRD = () => {
         body: {
           message: `Based on this product idea: "${idea}"
 
+IMPORTANT: Return ONLY valid JSON without any markdown formatting or code blocks. Do not wrap in backticks.
+
 Generate a compelling product vision in JSON format:
 {
   "vision": "A clear, inspiring 2-3 sentence product vision that captures the essence and impact"
@@ -136,7 +167,10 @@ Generate a compelling product vision in JSON format:
       });
 
       if (visionError) throw visionError;
-      const visionResult = typeof visionData === 'string' ? JSON.parse(visionData) : visionData;
+      const visionResult = parseAIResponse(visionData);
+      if (!visionResult || !visionResult.vision) {
+        throw new Error('Invalid vision response from AI');
+      }
       updateSectionStatus('vision', 'complete');
 
       // Step 2: Generate Personas (25%)
@@ -147,6 +181,8 @@ Generate a compelling product vision in JSON format:
       const { data: personasData, error: personasError } = await supabase.functions.invoke('chat-ai', {
         body: {
           message: `Based on this product idea: "${idea}"
+
+IMPORTANT: Return ONLY valid JSON without any markdown formatting or code blocks. Do not wrap in backticks.
 
 Generate 3 detailed personas in JSON format:
 {
@@ -165,15 +201,16 @@ Generate 3 detailed personas in JSON format:
       });
 
       if (personasError) throw personasError;
-      const personasResult = typeof personasData === 'string' ? JSON.parse(personasData) : personasData;
+      const personasResult = parseAIResponse(personasData);
+      if (!personasResult || !personasResult.personas || !Array.isArray(personasResult.personas)) {
+        throw new Error('Invalid personas response from AI');
+      }
       
-      // Generate persona images in parallel
-      const personasWithImages = await Promise.all(
-        personasResult.personas.map(async (persona: Persona) => ({
-          ...persona,
-          imageUrl: await generatePersonaImage(persona)
-        }))
-      );
+      // Generate persona images in parallel (skip images to speed up for now)
+      const personasWithImages = personasResult.personas.map((persona: Persona) => ({
+        ...persona,
+        imageUrl: '' // We'll skip image generation for speed
+      }));
       
       updateSectionStatus('personas', 'complete');
 
@@ -185,6 +222,8 @@ Generate 3 detailed personas in JSON format:
       const { data: storiesData, error: storiesError } = await supabase.functions.invoke('chat-ai', {
         body: {
           message: `Based on this product idea: "${idea}" and these personas: ${JSON.stringify(personasWithImages)}
+
+IMPORTANT: Return ONLY valid JSON without any markdown formatting or code blocks. Do not wrap in backticks.
 
 Generate 12 user stories in JSON format:
 {
@@ -204,7 +243,10 @@ Generate 12 user stories in JSON format:
       });
 
       if (storiesError) throw storiesError;
-      const storiesResult = typeof storiesData === 'string' ? JSON.parse(storiesData) : storiesData;
+      const storiesResult = parseAIResponse(storiesData);
+      if (!storiesResult || !storiesResult.userStories || !Array.isArray(storiesResult.userStories)) {
+        throw new Error('Invalid user stories response from AI');
+      }
       updateSectionStatus('stories', 'complete');
 
       // Step 4: Generate Wireframes descriptions (55%)
@@ -215,6 +257,8 @@ Generate 12 user stories in JSON format:
       const { data: wireframesData, error: wireframesError } = await supabase.functions.invoke('chat-ai', {
         body: {
           message: `Based on this product idea: "${idea}"
+
+IMPORTANT: Return ONLY valid JSON without any markdown formatting or code blocks. Do not wrap in backticks.
 
 Generate 3 wireframe descriptions in JSON format:
 {
@@ -229,7 +273,10 @@ Generate 3 wireframe descriptions in JSON format:
       });
 
       if (wireframesError) throw wireframesError;
-      const wireframesResult = typeof wireframesData === 'string' ? JSON.parse(wireframesData) : wireframesData;
+      const wireframesResult = parseAIResponse(wireframesData);
+      if (!wireframesResult || !wireframesResult.wireframes || !Array.isArray(wireframesResult.wireframes)) {
+        throw new Error('Invalid wireframes response from AI');
+      }
       updateSectionStatus('wireframes', 'complete');
 
       // Step 5: Generate Architecture (70%)
@@ -241,6 +288,8 @@ Generate 3 wireframe descriptions in JSON format:
         body: {
           message: `Based on this product idea: "${idea}"
 
+IMPORTANT: Return ONLY valid JSON without any markdown formatting or code blocks. Do not wrap in backticks.
+
 Generate a technical architecture as a Mermaid diagram in JSON format:
 {
   "architecture": "graph TD\\n    A[Frontend] --> B[API Gateway]\\n    B --> C[Backend Services]\\n    C --> D[Database]"
@@ -250,7 +299,10 @@ Generate a technical architecture as a Mermaid diagram in JSON format:
       });
 
       if (archError) throw archError;
-      const archResult = typeof archData === 'string' ? JSON.parse(archData) : archData;
+      const archResult = parseAIResponse(archData);
+      if (!archResult || !archResult.architecture) {
+        throw new Error('Invalid architecture response from AI');
+      }
       updateSectionStatus('architecture', 'complete');
 
       // Step 6: Generate KPIs (80%)
@@ -261,6 +313,8 @@ Generate a technical architecture as a Mermaid diagram in JSON format:
       const { data: kpisData, error: kpisError } = await supabase.functions.invoke('chat-ai', {
         body: {
           message: `Based on this product idea: "${idea}"
+
+IMPORTANT: Return ONLY valid JSON without any markdown formatting or code blocks. Do not wrap in backticks.
 
 Generate 5 SMART KPIs in JSON format:
 {
@@ -277,7 +331,10 @@ Generate 5 SMART KPIs in JSON format:
       });
 
       if (kpisError) throw kpisError;
-      const kpisResult = typeof kpisData === 'string' ? JSON.parse(kpisData) : kpisData;
+      const kpisResult = parseAIResponse(kpisData);
+      if (!kpisResult || !kpisResult.kpis || !Array.isArray(kpisResult.kpis)) {
+        throw new Error('Invalid KPIs response from AI');
+      }
       updateSectionStatus('kpis', 'complete');
 
       // Step 7: Generate Roadmap (90%)
@@ -288,6 +345,8 @@ Generate 5 SMART KPIs in JSON format:
       const { data: roadmapData, error: roadmapError } = await supabase.functions.invoke('chat-ai', {
         body: {
           message: `Based on this product idea: "${idea}"
+
+IMPORTANT: Return ONLY valid JSON without any markdown formatting or code blocks. Do not wrap in backticks.
 
 Generate a 3-phase roadmap in JSON format:
 {
@@ -304,7 +363,10 @@ Generate a 3-phase roadmap in JSON format:
       });
 
       if (roadmapError) throw roadmapError;
-      const roadmapResult = typeof roadmapData === 'string' ? JSON.parse(roadmapData) : roadmapData;
+      const roadmapResult = parseAIResponse(roadmapData);
+      if (!roadmapResult || !roadmapResult.roadmap || !Array.isArray(roadmapResult.roadmap)) {
+        throw new Error('Invalid roadmap response from AI');
+      }
       updateSectionStatus('roadmap', 'complete');
 
       // Step 8: Generate Risks (95%)
@@ -315,6 +377,8 @@ Generate a 3-phase roadmap in JSON format:
       const { data: risksData, error: risksError } = await supabase.functions.invoke('chat-ai', {
         body: {
           message: `Based on this product idea: "${idea}"
+
+IMPORTANT: Return ONLY valid JSON without any markdown formatting or code blocks. Do not wrap in backticks.
 
 Generate risk analysis in JSON format:
 {
@@ -330,7 +394,10 @@ Generate risk analysis in JSON format:
       });
 
       if (risksError) throw risksError;
-      const risksResult = typeof risksData === 'string' ? JSON.parse(risksData) : risksData;
+      const risksResult = parseAIResponse(risksData);
+      if (!risksResult || !risksResult.risks || !Array.isArray(risksResult.risks)) {
+        throw new Error('Invalid risks response from AI');
+      }
       updateSectionStatus('risks', 'complete');
 
       // Complete!
@@ -361,7 +428,14 @@ Generate risk analysis in JSON format:
 
     } catch (error) {
       console.error('Error generating PRD:', error);
-      toast.error("Erreur lors de la génération du PRD");
+      const errorMessage = error instanceof Error ? error.message : 'Erreur inconnue';
+      toast.error("Erreur lors de la génération du PRD", {
+        description: errorMessage
+      });
+      
+      // Reset all sections to pending
+      setSections(prev => prev.map(s => ({ ...s, status: 'pending' })));
+      setProgress(0);
     } finally {
       setIsGenerating(false);
     }
