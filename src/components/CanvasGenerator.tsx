@@ -44,6 +44,7 @@ interface CanvasTemplate {
   sections: string[];
   prompts: Record<string, string>;
   color: string;
+  role: 'product-manager' | 'designer' | 'developer';
   formFields?: Array<{
     name: string;
     label: string;
@@ -75,6 +76,7 @@ const canvasTemplates: CanvasTemplate[] = [
       'Won\'t Have': 'What are we explicitly not doing this time?'
     },
     color: 'bg-agent-blue',
+    role: 'product-manager',
     formFields: [
       { name: 'timeline', label: 'Project Timeline', type: 'input', placeholder: 'e.g., 3 months', required: true },
       { name: 'budget', label: 'Budget Constraints', type: 'input', placeholder: 'Budget limitations' },
@@ -94,6 +96,7 @@ const canvasTemplates: CanvasTemplate[] = [
       'Threats': 'What external threats should we consider?'
     },
     color: 'bg-agent-green',
+    role: 'product-manager',
     formFields: [
       { name: 'industry', label: 'Industry/Market', type: 'input', placeholder: 'e.g., SaaS, E-commerce', required: true },
       { name: 'company_size', label: 'Company Size', type: 'select', options: ['Startup', 'Small (1-50)', 'Medium (51-500)', 'Large (500+)'] },
@@ -121,6 +124,7 @@ const canvasTemplates: CanvasTemplate[] = [
       'Revenue Streams': 'For what value are customers willing to pay?'
     },
     color: 'bg-agent-purple',
+    role: 'product-manager',
     formFields: [
       { name: 'business_type', label: 'Business Type', type: 'select', options: ['B2B', 'B2C', 'B2B2C', 'Marketplace'], required: true },
       { name: 'revenue_model', label: 'Revenue Model', type: 'select', options: ['Subscription', 'One-time', 'Freemium', 'Commission', 'Advertising'] },
@@ -142,6 +146,7 @@ const canvasTemplates: CanvasTemplate[] = [
       'RICE Score': 'Calculated automatically: (Reach × Impact × Confidence) / Effort'
     },
     color: 'bg-agent-orange',
+    role: 'product-manager',
     formFields: [
       { name: 'initiatives', label: 'Initiatives to Evaluate', type: 'textarea', placeholder: 'List initiatives separated by lines', required: true },
       { name: 'team_size', label: 'Team Size', type: 'input', placeholder: 'Number of team members' },
@@ -163,6 +168,7 @@ const canvasTemplates: CanvasTemplate[] = [
       'Success Metrics': 'How will you measure success at each stage?'
     },
     color: 'bg-agent-blue',
+    role: 'product-manager',
     formFields: [
       { name: 'product_stage', label: 'Product Stage', type: 'select', options: ['Pre-launch', 'MVP', 'Growth', 'Mature'], required: true },
       { name: 'team_capacity', label: 'Team Capacity', type: 'input', placeholder: 'Development team size' },
@@ -185,6 +191,7 @@ const canvasTemplates: CanvasTemplate[] = [
       'Alignment & Dependencies': 'How do these OKRs align with company goals? What dependencies exist?'
     },
     color: 'bg-agent-green',
+    role: 'product-manager',
     formFields: [
       { name: 'timeframe', label: 'OKR Timeframe', type: 'select', options: ['Quarter', 'Half-year', 'Year'], required: true },
       { name: 'team', label: 'Team/Department', type: 'input', placeholder: 'e.g., Product, Engineering' },
@@ -207,6 +214,7 @@ const canvasTemplates: CanvasTemplate[] = [
       'Success Metrics': 'What KPIs will measure launch success?'
     },
     color: 'bg-agent-purple',
+    role: 'product-manager',
     formFields: [
       { name: 'product_type', label: 'Product Type', type: 'select', options: ['New Product', 'Feature Launch', 'Market Expansion', 'Relaunch'], required: true },
       { name: 'launch_date', label: 'Target Launch Date', type: 'input', placeholder: 'MM/YYYY' },
@@ -230,6 +238,7 @@ const canvasTemplates: CanvasTemplate[] = [
       'Accessibility Standards': 'What accessibility standards will you follow? (WCAG level, contrast ratios)'
     },
     color: 'bg-agent-purple',
+    role: 'designer',
     formFields: [
       { name: 'platform', label: 'Platform', type: 'select', options: ['Web', 'Mobile', 'Cross-platform'], required: true },
       { name: 'design_maturity', label: 'Design System Maturity', type: 'select', options: ['Starting', 'Growing', 'Established', 'Mature'] },
@@ -253,6 +262,7 @@ const canvasTemplates: CanvasTemplate[] = [
       'Opportunities': 'Where can we improve the experience?'
     },
     color: 'bg-agent-blue',
+    role: 'designer',
     formFields: [
       { name: 'user_type', label: 'Primary User Type', type: 'input', placeholder: 'e.g., First-time buyer', required: true },
       { name: 'journey_scope', label: 'Journey Scope', type: 'select', options: ['Single feature', 'Product onboarding', 'Full lifecycle', 'Specific task'] },
@@ -274,6 +284,7 @@ const canvasTemplates: CanvasTemplate[] = [
       'Responsive Considerations': 'How will layout adapt across devices?'
     },
     color: 'bg-agent-green',
+    role: 'designer',
     formFields: [
       { name: 'page_type', label: 'Page/Screen Type', type: 'select', options: ['Landing page', 'Dashboard', 'Form', 'Detail page', 'List view'], required: true },
       { name: 'viewport', label: 'Primary Viewport', type: 'select', options: ['Desktop', 'Mobile', 'Tablet', 'All'] },
@@ -296,6 +307,7 @@ const canvasTemplates: CanvasTemplate[] = [
       'Implementation Notes': 'What technical or design considerations exist?'
     },
     color: 'bg-agent-orange',
+    role: 'designer',
     formFields: [
       { name: 'test_type', label: 'Test Type', type: 'select', options: ['UI/UX', 'Copy/Messaging', 'Feature', 'Pricing', 'Workflow'], required: true },
       { name: 'traffic_allocation', label: 'Traffic Split', type: 'select', options: ['50/50', '80/20', '70/30', 'Custom'] },
@@ -321,6 +333,7 @@ const canvasTemplates: CanvasTemplate[] = [
       'Scalability Plan': 'How will the system scale with growth?'
     },
     color: 'bg-agent-blue',
+    role: 'developer',
     formFields: [
       { name: 'project_scale', label: 'Project Scale', type: 'select', options: ['Small (MVP)', 'Medium (Growth)', 'Large (Enterprise)'], required: true },
       { name: 'team_size', label: 'Dev Team Size', type: 'input', placeholder: 'Number of developers' },
@@ -344,6 +357,7 @@ const canvasTemplates: CanvasTemplate[] = [
       'Documentation Plan': 'What documentation tools and standards? (OpenAPI, Swagger)'
     },
     color: 'bg-agent-green',
+    role: 'developer',
     formFields: [
       { name: 'api_type', label: 'API Type', type: 'select', options: ['REST', 'GraphQL', 'gRPC', 'WebSocket'], required: true },
       { name: 'consumers', label: 'API Consumers', type: 'select', options: ['Internal only', 'Partner APIs', 'Public API'] },
@@ -367,6 +381,7 @@ const canvasTemplates: CanvasTemplate[] = [
       'Risks': 'What risks or blockers might impact delivery?'
     },
     color: 'bg-agent-purple',
+    role: 'developer',
     formFields: [
       { name: 'sprint_length', label: 'Sprint Length', type: 'select', options: ['1 week', '2 weeks', '3 weeks', '4 weeks'], required: true },
       { name: 'team_velocity', label: 'Team Velocity', type: 'input', placeholder: 'Average story points per sprint' },
@@ -390,6 +405,7 @@ const canvasTemplates: CanvasTemplate[] = [
       'Action Items': 'What changes are required before merge?'
     },
     color: 'bg-agent-orange',
+    role: 'developer',
     formFields: [
       { name: 'review_type', label: 'Review Type', type: 'select', options: ['Feature', 'Bug fix', 'Refactoring', 'Hotfix'], required: true },
       { name: 'pr_size', label: 'PR Size', type: 'select', options: ['Small (<200 lines)', 'Medium (200-500)', 'Large (>500)'] },
@@ -408,6 +424,7 @@ export const CanvasGenerator: React.FC<CanvasGeneratorProps> = ({
   const [documents, setDocuments] = useState<UploadedDocument[]>([]);
   const [generatedCanvas, setGeneratedCanvas] = useState<Record<string, string>>({});
   const [isGenerating, setIsGenerating] = useState(false);
+  const [roleFilter, setRoleFilter] = useState<'all' | 'product-manager' | 'designer' | 'developer'>('all');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -556,42 +573,43 @@ export const CanvasGenerator: React.FC<CanvasGeneratorProps> = ({
             {/* Category filters */}
             <div className="flex flex-wrap gap-2 pb-4 border-b">
               <Badge 
-                variant="default" 
-                className="cursor-pointer px-4 py-2 text-sm bg-agent-blue hover:opacity-80"
+                variant={roleFilter === 'all' ? 'default' : 'outline'}
+                className="cursor-pointer px-4 py-2 text-sm hover:opacity-80"
+                onClick={() => setRoleFilter('all')}
               >
                 All Frameworks
               </Badge>
               <Badge 
-                variant="outline" 
-                className="cursor-pointer px-4 py-2 text-sm hover:bg-accent"
+                variant={roleFilter === 'product-manager' ? 'default' : 'outline'}
+                className="cursor-pointer px-4 py-2 text-sm hover:opacity-80"
+                onClick={() => setRoleFilter('product-manager')}
               >
                 <Target className="w-3 h-3 mr-1" />
                 Product Manager
               </Badge>
               <Badge 
-                variant="outline" 
-                className="cursor-pointer px-4 py-2 text-sm hover:bg-accent"
+                variant={roleFilter === 'designer' ? 'default' : 'outline'}
+                className="cursor-pointer px-4 py-2 text-sm hover:opacity-80"
+                onClick={() => setRoleFilter('designer')}
               >
                 <Palette className="w-3 h-3 mr-1" />
                 Designer
               </Badge>
               <Badge 
-                variant="outline" 
-                className="cursor-pointer px-4 py-2 text-sm hover:bg-accent"
+                variant={roleFilter === 'developer' ? 'default' : 'outline'}
+                className="cursor-pointer px-4 py-2 text-sm hover:opacity-80"
+                onClick={() => setRoleFilter('developer')}
               >
                 <Code className="w-3 h-3 mr-1" />
                 Developer
               </Badge>
             </div>
 
-            {/* Product Manager Frameworks */}
-            <div>
-              <h4 className="text-md font-semibold mb-3 flex items-center gap-2">
-                <Target className="w-5 h-5 text-agent-blue" />
-                Product Manager Frameworks
-              </h4>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                {canvasTemplates.slice(0, 7).map((template) => (
+            {/* Filtered Frameworks */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {canvasTemplates
+                .filter(template => roleFilter === 'all' || template.role === roleFilter)
+                .map((template) => (
                   <Card 
                     key={template.id} 
                     className="cursor-pointer hover:shadow-md transition-all duration-200 hover:scale-105"
@@ -624,93 +642,6 @@ export const CanvasGenerator: React.FC<CanvasGeneratorProps> = ({
                     </CardContent>
                   </Card>
                 ))}
-              </div>
-            </div>
-
-            {/* Designer Frameworks */}
-            <div>
-              <h4 className="text-md font-semibold mb-3 flex items-center gap-2">
-                <Palette className="w-5 h-5 text-agent-purple" />
-                Designer Frameworks
-              </h4>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                {canvasTemplates.slice(7, 11).map((template) => (
-                  <Card 
-                    key={template.id} 
-                    className="cursor-pointer hover:shadow-md transition-all duration-200 hover:scale-105"
-                    onClick={() => setSelectedTemplate(template)}
-                  >
-                    <CardHeader>
-                      <div className="flex items-center space-x-3">
-                        <div className={`p-2 rounded-lg ${template.color} text-white`}>
-                          {template.icon}
-                        </div>
-                        <div>
-                          <CardTitle className="text-lg">{template.name}</CardTitle>
-                          <CardDescription>{template.description}</CardDescription>
-                        </div>
-                      </div>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="flex flex-wrap gap-1">
-                        {template.sections.slice(0, 4).map((section) => (
-                          <Badge key={section} variant="outline" className="text-xs">
-                            {section}
-                          </Badge>
-                        ))}
-                        {template.sections.length > 4 && (
-                          <Badge variant="outline" className="text-xs">
-                            +{template.sections.length - 4} more
-                          </Badge>
-                        )}
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            </div>
-
-            {/* Developer Frameworks */}
-            <div>
-              <h4 className="text-md font-semibold mb-3 flex items-center gap-2">
-                <Code className="w-5 h-5 text-agent-green" />
-                Developer Frameworks
-              </h4>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {canvasTemplates.slice(11, 15).map((template) => (
-                  <Card 
-                    key={template.id} 
-                    className="cursor-pointer hover:shadow-md transition-all duration-200 hover:scale-105"
-                    onClick={() => setSelectedTemplate(template)}
-                  >
-                    <CardHeader>
-                      <div className="flex items-center space-x-3">
-                        <div className={`p-2 rounded-lg ${template.color} text-white`}>
-                          {template.icon}
-                        </div>
-                        <div>
-                          <CardTitle className="text-lg">{template.name}</CardTitle>
-                          <CardDescription>{template.description}</CardDescription>
-                        </div>
-                      </div>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="flex flex-wrap gap-1">
-                        {template.sections.slice(0, 4).map((section) => (
-                          <Badge key={section} variant="outline" className="text-xs">
-                            {section}
-                          </Badge>
-                        ))}
-                        {template.sections.length > 4 && (
-                          <Badge variant="outline" className="text-xs">
-                            +{template.sections.length - 4} more
-                          </Badge>
-                        )}
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
             </div>
           </div>
         ) : (
