@@ -106,6 +106,7 @@ export const Artifacts: React.FC<ArtifactsProps> = ({ userId }) => {
       case 'story': return <FileText className="w-4 h-4" />;
       case 'impact_analysis': return <TrendingUp className="w-4 h-4" />;
       case 'epic': return <FileText className="w-4 h-4" />;
+      case 'tech_spec': return <FileText className="w-4 h-4" />;
       default: return <FileText className="w-4 h-4" />;
     }
   };
@@ -116,6 +117,7 @@ export const Artifacts: React.FC<ArtifactsProps> = ({ userId }) => {
     story: artifacts.filter(a => a.artifact_type === 'story').length,
     impact_analysis: artifacts.filter(a => a.artifact_type === 'impact_analysis').length,
     epic: artifacts.filter(a => a.artifact_type === 'epic').length,
+    tech_spec: artifacts.filter(a => a.artifact_type === 'tech_spec').length,
   };
 
   if (loading) {
@@ -143,7 +145,7 @@ export const Artifacts: React.FC<ArtifactsProps> = ({ userId }) => {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Artifacts</CardTitle>
@@ -182,6 +184,15 @@ export const Artifacts: React.FC<ArtifactsProps> = ({ userId }) => {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Tech Specs</CardTitle>
+            <FileText className="w-4 h-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.tech_spec}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Impact Analyses</CardTitle>
             <TrendingUp className="w-4 h-4 text-muted-foreground" />
           </CardHeader>
@@ -208,6 +219,7 @@ export const Artifacts: React.FC<ArtifactsProps> = ({ userId }) => {
             <TabsTrigger value="canvas">Canvases</TabsTrigger>
             <TabsTrigger value="story">Stories</TabsTrigger>
             <TabsTrigger value="epic">Epics</TabsTrigger>
+            <TabsTrigger value="tech_spec">Tech Specs</TabsTrigger>
             <TabsTrigger value="impact_analysis">Analyses</TabsTrigger>
           </TabsList>
         </Tabs>

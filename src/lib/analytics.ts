@@ -15,7 +15,7 @@ export type EventType =
 export interface EventData {
   status?: 'started' | 'completed' | 'abandoned';
   latency?: number;
-  artifact_type?: 'epic' | 'story' | 'canvas' | 'impact_analysis';
+  artifact_type?: 'epic' | 'story' | 'canvas' | 'impact_analysis' | 'tech_spec';
   role?: 'PM' | 'Designer' | 'Dev';
   [key: string]: any;
 }
@@ -63,7 +63,7 @@ export async function trackWorkflowComplete(
 // Helper to track artifact creation
 export async function trackArtifactCreated(
   userId: string,
-  artifactType: 'epic' | 'story' | 'canvas' | 'impact_analysis'
+  artifactType: 'epic' | 'story' | 'canvas' | 'impact_analysis' | 'tech_spec'
 ) {
   return trackEvent(userId, 'artifact_created', {
     artifact_type: artifactType

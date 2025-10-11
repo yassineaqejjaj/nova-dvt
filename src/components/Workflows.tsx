@@ -16,6 +16,7 @@ import { SprintPlanner } from './SprintPlanner';
 import { KPIGenerator } from './KPIGenerator';
 import { ProductContextManager } from './ProductContextManager';
 import { FeatureDiscoveryWorkflow } from './FeatureDiscoveryWorkflow';
+import { TechnicalSpecification } from './TechnicalSpecification';
 import {
   Rocket,
   Target,
@@ -29,6 +30,7 @@ import {
   Code2,
   Filter,
   Settings2,
+  FileCode,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
@@ -383,6 +385,42 @@ const workflows: Workflow[] = [
       },
     ],
   },
+  {
+    id: 'technical-spec',
+    name: 'Technical Specification',
+    description: 'Traduire User Story en spécification technique détaillée avec architecture, tests et DoD',
+    icon: <FileCode className="w-6 h-6" />,
+    category: 'Development',
+    tags: ['Development', 'Technical', 'Architecture', 'Testing', 'Specification'],
+    difficulty: 'Advanced',
+    estimatedTime: '45-60 min',
+    steps: [
+      {
+        id: 'story',
+        title: 'Story Input',
+        description: 'Sélectionner User Story et définir contexte technique',
+        completed: false,
+      },
+      {
+        id: 'tech',
+        title: 'Tech Requirements',
+        description: 'Architecture, APIs, composants et modèle de données',
+        completed: false,
+      },
+      {
+        id: 'tests',
+        title: 'Test Cases',
+        description: 'Unit tests, integration tests et edge cases',
+        completed: false,
+      },
+      {
+        id: 'dod',
+        title: 'Definition of Done',
+        description: 'Checklist technique de validation',
+        completed: false,
+      },
+    ],
+  },
 ];
 
 export const Workflows: React.FC = () => {
@@ -403,6 +441,7 @@ export const Workflows: React.FC = () => {
   const [showKPIGenerator, setShowKPIGenerator] = useState(false);
   const [showContextManager, setShowContextManager] = useState(false);
   const [showFeatureDiscovery, setShowFeatureDiscovery] = useState(false);
+  const [showTechnicalSpec, setShowTechnicalSpec] = useState(false);
 
   const [activeContext, setActiveContext] = useState<{
     name: string;
@@ -469,9 +508,13 @@ export const Workflows: React.FC = () => {
   }, []);
 
   const handleWorkflowSelect = (workflow: Workflow) => {
-    // Special case for Feature Discovery - use dedicated component
+    // Special cases for dedicated components
     if (workflow.id === 'feature-discovery') {
       setShowFeatureDiscovery(true);
+      return;
+    }
+    if (workflow.id === 'technical-spec') {
+      setShowTechnicalSpec(true);
       return;
     }
     
@@ -883,6 +926,11 @@ export const Workflows: React.FC = () => {
         open={showFeatureDiscovery}
         onOpenChange={setShowFeatureDiscovery}
         activeContext={activeContext}
+      />
+      
+      <TechnicalSpecification
+        open={showTechnicalSpec}
+        onClose={() => setShowTechnicalSpec(false)}
       />
     </div>
   );
