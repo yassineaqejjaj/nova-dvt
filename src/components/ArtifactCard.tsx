@@ -59,6 +59,8 @@ export const ArtifactCard: React.FC<ArtifactCardProps> = ({ artifact, onDelete, 
         return <Badge variant="default" className="bg-agent-purple">Canvas</Badge>;
       case 'story':
         return <Badge variant="default" className="bg-agent-blue">User Story</Badge>;
+      case 'epic':
+        return <Badge variant="default" className="bg-agent-orange">Epic</Badge>;
       case 'impact_analysis':
         return <Badge variant="default" className="bg-agent-green">Impact Analysis</Badge>;
       default:

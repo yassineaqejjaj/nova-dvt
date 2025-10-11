@@ -565,7 +565,7 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "moderator" | "user"
-      artifact_type: "canvas" | "story" | "impact_analysis"
+      artifact_type: "canvas" | "story" | "impact_analysis" | "epic"
       feature_status: "enabled" | "disabled" | "beta"
       integration_type: "jira" | "slack" | "figma"
     }
@@ -696,7 +696,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "moderator", "user"],
-      artifact_type: ["canvas", "story", "impact_analysis"],
+      artifact_type: ["canvas", "story", "impact_analysis", "epic"],
       feature_status: ["enabled", "disabled", "beta"],
       integration_type: ["jira", "slack", "figma"],
     },

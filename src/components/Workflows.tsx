@@ -15,6 +15,7 @@ import { ProductLaunch } from './ProductLaunch';
 import { SprintPlanner } from './SprintPlanner';
 import { KPIGenerator } from './KPIGenerator';
 import { ProductContextManager } from './ProductContextManager';
+import { FeatureDiscoveryWorkflow } from './FeatureDiscoveryWorkflow';
 import {
   Rocket,
   Target,
@@ -101,46 +102,36 @@ const workflows: Workflow[] = [
   {
     id: 'feature-discovery',
     name: 'Feature Discovery & Validation',
-    description: 'Research, validate, and define a new feature from idea to user story',
+    description: 'Transform une idée en Epic structuré avec User Stories via 4 étapes guidées',
     icon: <Target className="w-6 h-6" />,
     category: 'Product Strategy',
-    tags: ['Discovery', 'Research', 'Validation', 'Features'],
+    tags: ['Discovery', 'Validation', 'Epic', 'User Stories'],
     difficulty: 'Intermediate',
     estimatedTime: '45-60 min',
     steps: [
       {
-        id: 'research',
-        title: 'Market & User Research',
-        description: 'Gather competitive insights and user feedback',
-        tool: 'research',
+        id: 'problem',
+        title: 'Problem Definition',
+        description: 'Définir le problème, utilisateurs cibles et points de douleur',
         completed: false,
       },
       {
-        id: 'swot',
-        title: 'SWOT Analysis',
-        description: 'Analyze strengths, weaknesses, opportunities, threats',
-        tool: 'canvas',
+        id: 'hypothesis',
+        title: 'Hypothesis Formulation',
+        description: 'Formuler hypothèse de solution et bénéfices attendus',
         completed: false,
       },
       {
-        id: 'prioritize',
-        title: 'Impact vs Effort',
-        description: 'Evaluate feature against other priorities',
-        tool: 'impact',
-        completed: false,
-      },
-      {
-        id: 'validation-kpi',
+        id: 'validation',
         title: 'Validation Planning',
-        description: 'Define KPIs to validate feature success',
+        description: 'Planifier la validation avec KPIs et méthode',
         tool: 'kpi',
         completed: false,
       },
       {
-        id: 'story',
-        title: 'Write User Story',
-        description: 'Create user story with acceptance criteria',
-        tool: 'story',
+        id: 'epic',
+        title: 'Epic Generation',
+        description: 'Générer Epic complet avec User Stories',
         completed: false,
       },
     ],
@@ -411,6 +402,7 @@ export const Workflows: React.FC = () => {
   const [showSprintPlanner, setShowSprintPlanner] = useState(false);
   const [showKPIGenerator, setShowKPIGenerator] = useState(false);
   const [showContextManager, setShowContextManager] = useState(false);
+  const [showFeatureDiscovery, setShowFeatureDiscovery] = useState(false);
 
   const [activeContext, setActiveContext] = useState<{
     name: string;
@@ -477,6 +469,12 @@ export const Workflows: React.FC = () => {
   }, []);
 
   const handleWorkflowSelect = (workflow: Workflow) => {
+    // Special case for Feature Discovery - use dedicated component
+    if (workflow.id === 'feature-discovery') {
+      setShowFeatureDiscovery(true);
+      return;
+    }
+    
     setSelectedWorkflow(workflow);
     setCurrentStep(0);
   };
@@ -879,6 +877,12 @@ export const Workflows: React.FC = () => {
       <ProductContextManager 
         open={showContextManager} 
         onOpenChange={setShowContextManager}
+      />
+      
+      <FeatureDiscoveryWorkflow
+        open={showFeatureDiscovery}
+        onOpenChange={setShowFeatureDiscovery}
+        activeContext={activeContext}
       />
     </div>
   );

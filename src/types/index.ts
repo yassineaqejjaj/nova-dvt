@@ -59,7 +59,7 @@ export interface Artifact {
   id: string;
   user_id: string;
   squad_id?: string;
-  artifact_type: 'canvas' | 'story' | 'impact_analysis';
+  artifact_type: 'canvas' | 'story' | 'impact_analysis' | 'epic';
   title: string;
   content: any;
   metadata?: any;
