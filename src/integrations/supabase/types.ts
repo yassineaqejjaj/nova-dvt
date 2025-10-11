@@ -129,6 +129,38 @@ export type Database = {
           },
         ]
       }
+      context_history: {
+        Row: {
+          context_id: string
+          created_at: string
+          id: string
+          snapshot: Json
+          version: number
+        }
+        Insert: {
+          context_id: string
+          created_at?: string
+          id?: string
+          snapshot: Json
+          version: number
+        }
+        Update: {
+          context_id?: string
+          created_at?: string
+          id?: string
+          snapshot?: Json
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "context_history_context_id_fkey"
+            columns: ["context_id"]
+            isOneToOne: false
+            referencedRelation: "product_contexts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       feature_flags: {
         Row: {
           created_at: string | null
@@ -206,6 +238,51 @@ export type Database = {
         Update: {
           key?: string
           value?: Json
+        }
+        Relationships: []
+      }
+      product_contexts: {
+        Row: {
+          constraints: string | null
+          created_at: string
+          id: string
+          is_active: boolean
+          is_deleted: boolean
+          name: string
+          objectives: Json | null
+          target_audience: string | null
+          target_kpis: Json | null
+          updated_at: string
+          user_id: string
+          vision: string | null
+        }
+        Insert: {
+          constraints?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          is_deleted?: boolean
+          name: string
+          objectives?: Json | null
+          target_audience?: string | null
+          target_kpis?: Json | null
+          updated_at?: string
+          user_id: string
+          vision?: string | null
+        }
+        Update: {
+          constraints?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          is_deleted?: boolean
+          name?: string
+          objectives?: Json | null
+          target_audience?: string | null
+          target_kpis?: Json | null
+          updated_at?: string
+          user_id?: string
+          vision?: string | null
         }
         Relationships: []
       }

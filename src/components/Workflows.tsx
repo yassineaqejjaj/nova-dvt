@@ -14,6 +14,7 @@ import { RoadmapPlanner } from './RoadmapPlanner';
 import { ProductLaunch } from './ProductLaunch';
 import { SprintPlanner } from './SprintPlanner';
 import { KPIGenerator } from './KPIGenerator';
+import { ProductContextManager } from './ProductContextManager';
 import {
   Rocket,
   Target,
@@ -26,8 +27,11 @@ import {
   Palette,
   Code2,
   Filter,
+  Settings2,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
+import { useEffect } from 'react';
 
 interface Workflow {
   id: string;
@@ -406,6 +410,71 @@ export const Workflows: React.FC = () => {
   const [showProductLaunch, setShowProductLaunch] = useState(false);
   const [showSprintPlanner, setShowSprintPlanner] = useState(false);
   const [showKPIGenerator, setShowKPIGenerator] = useState(false);
+  const [showContextManager, setShowContextManager] = useState(false);
+
+  const [activeContext, setActiveContext] = useState<{
+    name: string;
+    vision: string | null;
+    objectives: string[];
+    target_kpis: string[];
+    constraints: string | null;
+    target_audience: string | null;
+  } | null>(null);
+
+  // Load active context on mount
+  useEffect(() => {
+    const loadActiveContext = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        const { data, error } = await supabase
+          .from('product_contexts')
+          .select('*')
+          .eq('user_id', user.id)
+          .eq('is_active', true)
+          .eq('is_deleted', false)
+          .single();
+
+        if (error || !data) {
+          // If no active context, get the most recent one
+          const { data: recentData } = await supabase
+            .from('product_contexts')
+            .select('*')
+            .eq('user_id', user.id)
+            .eq('is_deleted', false)
+            .order('updated_at', { ascending: false })
+            .limit(1)
+            .single();
+
+          if (recentData) {
+            setActiveContext({
+              name: recentData.name,
+              vision: recentData.vision,
+              objectives: Array.isArray(recentData.objectives) ? recentData.objectives as string[] : [],
+              target_kpis: Array.isArray(recentData.target_kpis) ? recentData.target_kpis as string[] : [],
+              constraints: recentData.constraints,
+              target_audience: recentData.target_audience
+            });
+          }
+          return;
+        }
+
+        setActiveContext({
+          name: data.name,
+          vision: data.vision,
+          objectives: Array.isArray(data.objectives) ? data.objectives as string[] : [],
+          target_kpis: Array.isArray(data.target_kpis) ? data.target_kpis as string[] : [],
+          constraints: data.constraints,
+          target_audience: data.target_audience
+        });
+      } catch (error) {
+        console.error('Error loading active context:', error);
+      }
+    };
+
+    loadActiveContext();
+  }, []);
 
   const handleWorkflowSelect = (workflow: Workflow) => {
     setSelectedWorkflow(workflow);
@@ -616,18 +685,44 @@ export const Workflows: React.FC = () => {
             </div>
           </div>
         )}
-        <KPIGenerator open={showKPIGenerator} onOpenChange={setShowKPIGenerator} />
+        <KPIGenerator 
+          open={showKPIGenerator} 
+          onOpenChange={setShowKPIGenerator}
+          activeContext={activeContext}
+        />
+        <ProductContextManager 
+          open={showContextManager} 
+          onOpenChange={setShowContextManager}
+        />
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-3xl font-bold mb-2">PM Workflows</h2>
-        <p className="text-muted-foreground">
-          Guided step-by-step workflows for product management, design, and development
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-3xl font-bold mb-2">PM Workflows</h2>
+          <p className="text-muted-foreground">
+            Guided step-by-step workflows for product management, design, and development
+          </p>
+        </div>
+        <div className="flex gap-2 items-center">
+          {activeContext && (
+            <Badge variant="secondary" className="text-xs">
+              <CheckCircle className="w-3 h-3 mr-1" />
+              Contexte: {activeContext.name}
+            </Badge>
+          )}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowContextManager(true)}
+          >
+            <Settings2 className="w-4 h-4 mr-2" />
+            Gérer Contextes
+          </Button>
+        </div>
       </div>
 
       {/* Filters */}
@@ -780,6 +875,11 @@ export const Workflows: React.FC = () => {
           </ul>
         </CardContent>
       </Card>
+      
+      <ProductContextManager 
+        open={showContextManager} 
+        onOpenChange={setShowContextManager}
+      />
     </div>
   );
 };

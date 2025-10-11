@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -26,20 +26,41 @@ interface KPIGeneratorProps {
     projectContext?: string;
     featureDescription?: string;
     objective?: string;
+    existingOKRs?: string;
   };
+  activeContext?: {
+    name: string;
+    vision: string | null;
+    objectives: string[];
+    target_kpis: string[];
+    constraints: string | null;
+    target_audience: string | null;
+  } | null;
 }
 
-export const KPIGenerator = ({ open, onOpenChange, context }: KPIGeneratorProps) => {
+export const KPIGenerator = ({ open, onOpenChange, context, activeContext }: KPIGeneratorProps) => {
   const { toast } = useToast();
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedKPIs, setGeneratedKPIs] = useState<KPI[]>([]);
   
   const [formData, setFormData] = useState({
-    projectContext: context?.projectContext || '',
+    projectContext: context?.projectContext || activeContext?.name || '',
     featureDescription: context?.featureDescription || '',
-    objective: context?.objective || '',
-    existingOKRs: ''
+    objective: context?.objective || activeContext?.vision || '',
+    existingOKRs: context?.existingOKRs || activeContext?.target_kpis?.join(', ') || ''
   });
+
+  // Update form when activeContext changes
+  useEffect(() => {
+    if (activeContext) {
+      setFormData(prev => ({
+        ...prev,
+        projectContext: prev.projectContext || activeContext.name,
+        objective: prev.objective || activeContext.vision || '',
+        existingOKRs: prev.existingOKRs || activeContext.target_kpis?.join(', ') || ''
+      }));
+    }
+  }, [activeContext]);
 
   const getCategoryColor = (category: KPI['category']): "default" | "destructive" | "outline" | "secondary" => {
     const colors: Record<KPI['category'], "default" | "destructive" | "outline" | "secondary"> = {
