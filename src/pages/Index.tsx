@@ -12,6 +12,8 @@ import { AdminPanel } from '@/components/AdminPanel';
 import { AuthDialog } from '@/components/AuthDialog';
 import { SquadManager } from '@/components/SquadManager';
 import { UserProfile } from '@/components/UserProfile';
+import { OnboardingModal } from '@/components/OnboardingModal';
+import { InteractiveTutorial } from '@/components/InteractiveTutorial';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -19,21 +21,23 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Agent, Squad, UserProfile as UserProfileType, TabType } from '@/types';
 import { allAgents } from '@/data/mockData';
-import { Users, Star, Zap, Trophy, X, Plus, Menu, Loader2 } from 'lucide-react';
+import { Users, Star, Zap, Trophy, X, Plus, Menu, Loader2, HelpCircle, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
 
 const Index = () => {
-  const { user, userProfile, squads, loading, refreshUserData, addXP } = useAuth();
+  const { user, userProfile, squads, loading, needsOnboarding, refreshUserData, addXP, completeOnboarding } = useAuth();
   const [activeTab, setActiveTab] = useState<TabType>('dashboard');
   const [currentSquad, setCurrentSquad] = useState<Squad | null>(null);
   const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null);
   const [showProfile, setShowProfile] = useState(false);
   const [showAuth, setShowAuth] = useState(false);
   const [showCanvasGenerator, setShowCanvasGenerator] = useState(false);
+  const [showTutorial, setShowTutorial] = useState(false);
   const [customAgents, setCustomAgents] = useState<Agent[]>([]);
 
   useEffect(() => {
@@ -253,24 +257,48 @@ const Index = () => {
               </div>
 
               <div className="flex items-center space-x-4">
+                {/* Tutorial Button */}
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => setShowTutorial(true)}
+                      className="relative"
+                    >
+                      <Sparkles className="w-5 h-5" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Revoir le tutoriel</p>
+                  </TooltipContent>
+                </Tooltip>
+
                 {/* XP and Level Display */}
                 {userProfile && (
-                  <div className="hidden sm:flex items-center space-x-3 bg-muted/50 rounded-lg px-3 py-2">
-                    <div className="flex items-center space-x-1">
-                      <Trophy className="w-4 h-4 text-agent-orange" />
-                      <span className="text-sm font-medium">Level {userProfile.level}</span>
-                    </div>
-                    <div className="flex items-center space-x-1">
-                      <Zap className="w-4 h-4 text-primary" />
-                      <span className="text-sm font-medium">{userProfile.xp} XP</span>
-                    </div>
-                    <div className="w-20 h-2 bg-muted rounded-full overflow-hidden">
-                      <div 
-                        className="h-full bg-gradient-primary transition-all duration-300"
-                        style={{ width: `${((userProfile.xp % 200) / 200) * 100}%` }}
-                      />
-                    </div>
-                  </div>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="hidden sm:flex items-center space-x-3 bg-muted/50 rounded-lg px-3 py-2 cursor-help">
+                        <div className="flex items-center space-x-1">
+                          <Trophy className="w-4 h-4 text-agent-orange" />
+                          <span className="text-sm font-medium">Level {userProfile.level}</span>
+                        </div>
+                        <div className="flex items-center space-x-1">
+                          <Zap className="w-4 h-4 text-primary" />
+                          <span className="text-sm font-medium">{userProfile.xp} XP</span>
+                        </div>
+                        <div className="w-20 h-2 bg-muted rounded-full overflow-hidden">
+                          <div 
+                            className="h-full bg-gradient-primary transition-all duration-300"
+                            style={{ width: `${((userProfile.xp % 200) / 200) * 100}%` }}
+                          />
+                        </div>
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Prochain niveau: {200 - (userProfile.xp % 200)} XP</p>
+                    </TooltipContent>
+                  </Tooltip>
                 )}
 
                 {/* User Profile */}
@@ -410,6 +438,26 @@ const Index = () => {
             onAdminSwitch={() => window.location.href = '/admin'}
           />
       )}
+
+      {/* Onboarding Modal */}
+      {needsOnboarding && user && (
+        <OnboardingModal
+          open={needsOnboarding}
+          userId={user.id}
+          onComplete={() => {
+            completeOnboarding();
+            refreshUserData();
+            setShowTutorial(true);
+          }}
+        />
+      )}
+
+      {/* Interactive Tutorial */}
+      <InteractiveTutorial
+        open={showTutorial}
+        onClose={() => setShowTutorial(false)}
+        onNavigate={(tab) => setActiveTab(tab as TabType)}
+      />
     </SidebarProvider>
   );
 };

@@ -8,6 +8,7 @@ export const useAuth = () => {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [squads, setSquads] = useState<Squad[]>([]);
   const [loading, setLoading] = useState(true);
+  const [needsOnboarding, setNeedsOnboarding] = useState(false);
 
   useEffect(() => {
     // Get initial session
@@ -87,6 +88,11 @@ export const useAuth = () => {
       };
 
       setUserProfile(userProfile);
+      
+      // Check if user needs onboarding (no display_name set yet)
+      if (!profile || !profile.display_name) {
+        setNeedsOnboarding(true);
+      }
     } catch (error) {
       console.error('Error loading user profile:', error);
     } finally {
@@ -179,12 +185,18 @@ export const useAuth = () => {
     }
   };
 
+  const completeOnboarding = () => {
+    setNeedsOnboarding(false);
+  };
+
   return {
     user,
     userProfile,
     squads,
     loading,
+    needsOnboarding,
     refreshUserData,
-    addXP
+    addXP,
+    completeOnboarding
   };
 };
