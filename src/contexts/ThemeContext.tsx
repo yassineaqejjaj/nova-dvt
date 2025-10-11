@@ -150,10 +150,10 @@ interface ThemeContextType {
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [currentTheme, setCurrentTheme] = useState<string>('dark');
+  const [currentTheme, setCurrentTheme] = useState<string>('nova-light');
 
   useEffect(() => {
-    const savedTheme = localStorage.getItem('nova-theme') || 'dark';
+    const savedTheme = localStorage.getItem('nova-theme') || 'nova-light';
     applyTheme(savedTheme);
   }, []);
 
