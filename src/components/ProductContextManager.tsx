@@ -243,30 +243,40 @@ export const ProductContextManager = ({ open, onOpenChange, onContextSelected }:
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('User not authenticated');
 
-      // Deactivate all
-      await supabase
+      // First, deactivate all contexts
+      const { error: deactivateError } = await supabase
         .from('product_contexts')
         .update({ is_active: false })
-        .eq('user_id', user.id);
+        .eq('user_id', user.id)
+        .eq('is_deleted', false);
 
-      // Activate selected
-      const { error } = await supabase
+      if (deactivateError) {
+        console.error('Error deactivating contexts:', deactivateError);
+        throw deactivateError;
+      }
+
+      // Then activate the selected one
+      const { error: activateError } = await supabase
         .from('product_contexts')
         .update({ is_active: true })
-        .eq('id', contextId);
+        .eq('id', contextId)
+        .eq('user_id', user.id);
 
-      if (error) throw error;
+      if (activateError) {
+        console.error('Error activating context:', activateError);
+        throw activateError;
+      }
 
       await loadContexts();
       toast({
         title: "Contexte activé",
         description: "Ce contexte sera utilisé par défaut dans les workflows"
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error setting active context:', error);
       toast({
         title: "Erreur",
-        description: "Impossible d'activer le contexte",
+        description: error.message || "Impossible d'activer le contexte",
         variant: "destructive"
       });
     }
@@ -276,18 +286,27 @@ export const ProductContextManager = ({ open, onOpenChange, onContextSelected }:
     if (!deleteContextId) return;
 
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('User not authenticated');
+
+      // Mark as deleted (soft delete)
       const { error } = await supabase
         .from('product_contexts')
-        .update({ is_deleted: true })
-        .eq('id', deleteContextId);
+        .update({ is_deleted: true, is_active: false })
+        .eq('id', deleteContextId)
+        .eq('user_id', user.id);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Delete error:', error);
+        throw error;
+      }
 
       toast({
         title: "Contexte supprimé",
         description: "Le contexte a été supprimé avec succès"
       });
 
+      // Clear form if deleting current context
       if (selectedContext?.id === deleteContextId) {
         setSelectedContext(null);
         setFormData({
@@ -300,12 +319,13 @@ export const ProductContextManager = ({ open, onOpenChange, onContextSelected }:
         });
       }
 
+      // Reload contexts
       await loadContexts();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error deleting context:', error);
       toast({
         title: "Erreur",
-        description: "Impossible de supprimer le contexte",
+        description: error.message || "Impossible de supprimer le contexte",
         variant: "destructive"
       });
     } finally {
