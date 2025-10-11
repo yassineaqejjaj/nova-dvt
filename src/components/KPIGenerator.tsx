@@ -72,7 +72,40 @@ export const KPIGenerator = ({ open, onOpenChange, context }: KPIGeneratorProps)
     }
 
     setIsGenerating(true);
-    
+
+    // Tente d'extraire un JSON valide même si la réponse contient des balises ```json
+    const sanitizeAndParse = (raw: unknown) => {
+      if (typeof raw !== 'string') return raw as any;
+      let text = raw.trim();
+
+      // 1) Tentative directe
+      try { return JSON.parse(text); } catch {}
+
+      // 2) Bloc de code markdown ```json ... ```
+      const fence = text.match(/```(?:json)?\s*([\s\S]*?)```/i);
+      if (fence?.[1]) {
+        const inner = fence[1].trim();
+        try { return JSON.parse(inner); } catch {}
+        text = inner; // continue avec inner
+      }
+
+      // 3) Sous-chaîne entre le premier { et le dernier }
+      const start = text.indexOf('{');
+      const end = text.lastIndexOf('}');
+      if (start !== -1 && end !== -1 && end > start) {
+        const sliced = text.slice(start, end + 1);
+        try { return JSON.parse(sliced); } catch {}
+      }
+
+      // 4) Normalisation des guillemets typographiques
+      const normalized = text
+        .replace(/[“”]/g, '"')
+        .replace(/[‘’]/g, "'");
+      try { return JSON.parse(normalized); } catch {}
+
+      throw new Error('Réponse IA non JSON');
+    };
+
     try {
       const prompt = `En tant qu'expert en Product Management, génère 3 à 5 KPIs pertinents pour l'initiative suivante :
 
@@ -104,26 +137,33 @@ Format ta réponse en JSON :
 }`;
 
       const { data, error } = await supabase.functions.invoke('chat-ai', {
-        body: { 
+        body: {
           message: prompt,
-          systemPrompt: "Tu es un expert en Product Management et en définition de KPIs. Réponds toujours en JSON valide."
+          systemPrompt: "Tu es un expert en Product Management et en définition de KPIs. Réponds uniquement avec du JSON valide, sans texte additionnel ni balises de code."
         }
       });
 
       if (error) throw error;
 
-      const response = typeof data.response === 'string' ? JSON.parse(data.response) : data.response;
-      setGeneratedKPIs(response.kpis || []);
-      
+      const parsed = sanitizeAndParse((data as any)?.response ?? data);
+      const kpis = Array.isArray(parsed?.kpis) ? parsed.kpis as KPI[] : [];
+      setGeneratedKPIs(kpis);
+
       toast({
         title: "KPIs générés",
-        description: `${response.kpis?.length || 0} KPIs ont été générés avec succès.`
+        description: `${kpis.length} KPIs ont été générés avec succès.`
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error generating KPIs:', error);
+      const msg: string | undefined = error?.message;
+      const friendly = msg?.includes('429')
+        ? 'Limite de requêtes atteinte. Réessayez dans un instant.'
+        : msg?.includes('402')
+          ? 'Crédits Lovable AI épuisés. Ajoutez des crédits puis réessayez.'
+          : "Impossible de générer les KPIs. Veuillez réessayer.";
       toast({
         title: "Erreur",
-        description: "Impossible de générer les KPIs. Veuillez réessayer.",
+        description: friendly,
         variant: "destructive"
       });
     } finally {
