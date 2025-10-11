@@ -215,14 +215,24 @@ export function OnboardingModal({ open, userId, onComplete }: OnboardingModalPro
           />
         </div>
 
-        <Button
-          onClick={() => setStep('role')}
-          className="w-full"
-          size="lg"
-        >
-          Commencer
-          <ArrowRight className="w-4 h-4 ml-2" />
-        </Button>
+        <div className="flex gap-3">
+          <Button
+            variant="outline"
+            onClick={onComplete}
+            className="flex-1"
+            size="lg"
+          >
+            Passer
+          </Button>
+          <Button
+            onClick={() => setStep('role')}
+            className="flex-1"
+            size="lg"
+          >
+            Commencer
+            <ArrowRight className="w-4 h-4 ml-2" />
+          </Button>
+        </div>
       </div>
     </DialogContent>
   );
@@ -348,7 +358,7 @@ export function OnboardingModal({ open, userId, onComplete }: OnboardingModalPro
   );
 
   return (
-    <Dialog open={open} onOpenChange={() => {}}>
+    <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onComplete()}>
       {step === 'welcome' && renderWelcome()}
       {step === 'role' && renderRoleSelection()}
       {step === 'context' && renderContextCreation()}
