@@ -129,6 +129,13 @@ export function TechnicalSpecification({ open, onClose }: TechnicalSpecification
 
       const { data, error } = await supabase.functions.invoke('chat-ai', {
         body: {
+          systemPrompt: `Tu es un architecte logiciel expert. Tu dois UNIQUEMENT répondre avec un objet JSON valide, sans texte avant ou après. Le JSON doit strictement suivre ce format:
+{
+  "architecture": "string décrivant l'approche architecturale",
+  "apis": ["api1", "api2"],
+  "components": ["component1", "component2"],
+  "dataModel": "string décrivant les changements du modèle de données"
+}`,
           message: `Basé sur cette User Story et le contexte technique, suggère une approche architecturale.
 
 User Story: ${story.title}
@@ -137,13 +144,7 @@ Description: ${JSON.stringify(story.content)}
 Stack technique: ${techContext.stack || 'Non spécifié'}
 Contraintes: ${techContext.constraints || 'Aucune'}
 
-Suggère:
-1. Une approche architecturale (patterns, principes)
-2. Les APIs/endpoints nécessaires
-3. Les composants principaux
-4. Les changements du modèle de données
-
-Réponds en JSON avec: { architecture, apis, components, dataModel }`,
+Génère les suggestions techniques en respectant exactement le format JSON demandé.`,
           type: 'simple'
         }
       });
@@ -151,9 +152,30 @@ Réponds en JSON avec: { architecture, apis, components, dataModel }`,
       if (error) throw error;
 
       try {
-        const suggestions = typeof data.response === 'string' 
-          ? JSON.parse(data.response.replace(/```json\n?|\n?```/g, ''))
-          : data.response;
+        console.log('Raw AI response:', data.response);
+        
+        // Nettoyer la réponse en enlevant les markdown code blocks et tout texte avant/après
+        let cleanResponse = data.response;
+        if (typeof cleanResponse === 'string') {
+          // Enlever les code blocks markdown
+          cleanResponse = cleanResponse.replace(/```json\n?/g, '').replace(/```\n?/g, '');
+          
+          // Trouver le premier { et le dernier }
+          const firstBrace = cleanResponse.indexOf('{');
+          const lastBrace = cleanResponse.lastIndexOf('}');
+          
+          if (firstBrace !== -1 && lastBrace !== -1) {
+            cleanResponse = cleanResponse.substring(firstBrace, lastBrace + 1);
+          }
+          
+          console.log('Cleaned response:', cleanResponse);
+        }
+
+        const suggestions = typeof cleanResponse === 'string' 
+          ? JSON.parse(cleanResponse)
+          : cleanResponse;
+
+        console.log('Parsed suggestions:', suggestions);
 
         setTechRequirements({
           architecture: suggestions.architecture || '',
@@ -165,7 +187,8 @@ Réponds en JSON avec: { architecture, apis, components, dataModel }`,
         toast.success('Suggestions générées avec succès');
       } catch (parseError) {
         console.error('Error parsing suggestions:', parseError);
-        toast.error('Erreur lors du parsing des suggestions');
+        console.error('Failed to parse response:', data.response);
+        toast.error('Erreur lors du parsing des suggestions. Vérifiez la console pour plus de détails.');
       }
     } catch (error) {
       console.error('Error suggesting architecture:', error);
@@ -180,6 +203,14 @@ Réponds en JSON avec: { architecture, apis, components, dataModel }`,
     try {
       const { data, error } = await supabase.functions.invoke('chat-ai', {
         body: {
+          systemPrompt: `Tu es un expert QA. Tu dois UNIQUEMENT répondre avec un tableau JSON valide, sans texte avant ou après. Le JSON doit strictement suivre ce format:
+[
+  {
+    "type": "unit" | "integration" | "edge",
+    "description": "string",
+    "scenarios": ["scenario1", "scenario2"]
+  }
+]`,
           message: `Génère des test cases basés sur ces requirements techniques:
 
 Architecture: ${techRequirements.architecture}
@@ -187,12 +218,12 @@ APIs: ${techRequirements.apis.join(', ')}
 Components: ${techRequirements.components.join(', ')}
 Data Model: ${techRequirements.dataModel}
 
-Génère 3 types de tests:
-1. Unit tests (2-3 scénarios)
-2. Integration tests (2-3 scénarios)
-3. Edge cases (2-3 scénarios)
+Génère 3 types de tests avec 2-3 scénarios chacun:
+1. Unit tests
+2. Integration tests
+3. Edge cases
 
-Réponds en JSON avec un tableau: [{ type: "unit"|"integration"|"edge", description: "...", scenarios: ["...", "..."] }]`,
+Génère les test cases en respectant exactement le format JSON demandé.`,
           type: 'simple'
         }
       });
@@ -200,15 +231,35 @@ Réponds en JSON avec un tableau: [{ type: "unit"|"integration"|"edge", descript
       if (error) throw error;
 
       try {
-        const tests = typeof data.response === 'string'
-          ? JSON.parse(data.response.replace(/```json\n?|\n?```/g, ''))
-          : data.response;
+        console.log('Raw AI test cases response:', data.response);
+        
+        // Nettoyer la réponse
+        let cleanResponse = data.response;
+        if (typeof cleanResponse === 'string') {
+          cleanResponse = cleanResponse.replace(/```json\n?/g, '').replace(/```\n?/g, '');
+          
+          const firstBracket = cleanResponse.indexOf('[');
+          const lastBracket = cleanResponse.lastIndexOf(']');
+          
+          if (firstBracket !== -1 && lastBracket !== -1) {
+            cleanResponse = cleanResponse.substring(firstBracket, lastBracket + 1);
+          }
+          
+          console.log('Cleaned test cases response:', cleanResponse);
+        }
+
+        const tests = typeof cleanResponse === 'string'
+          ? JSON.parse(cleanResponse)
+          : cleanResponse;
+
+        console.log('Parsed test cases:', tests);
 
         setTestCases(Array.isArray(tests) ? tests : []);
         toast.success('Test cases générés avec succès');
       } catch (parseError) {
         console.error('Error parsing test cases:', parseError);
-        toast.error('Erreur lors du parsing des test cases');
+        console.error('Failed to parse response:', data.response);
+        toast.error('Erreur lors du parsing des test cases. Vérifiez la console pour plus de détails.');
       }
     } catch (error) {
       console.error('Error generating test cases:', error);
