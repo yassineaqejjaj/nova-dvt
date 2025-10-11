@@ -17,6 +17,7 @@ import { KPIGenerator } from './KPIGenerator';
 import { ProductContextManager } from './ProductContextManager';
 import { FeatureDiscoveryWorkflow } from './FeatureDiscoveryWorkflow';
 import { TechnicalSpecification } from './TechnicalSpecification';
+import { SmartDiscoveryCanvas } from './SmartDiscoveryCanvas';
 import {
   Rocket,
   Target,
@@ -31,6 +32,7 @@ import {
   Filter,
   Settings2,
   FileCode,
+  Sparkles,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
@@ -55,6 +57,24 @@ interface Workflow {
 }
 
 const workflows: Workflow[] = [
+  {
+    id: 'smart-discovery',
+    name: 'Smart Discovery Canvas',
+    description: 'Transformez une idée floue en feature validée en 30 minutes avec Nova AI',
+    icon: <Sparkles className="w-6 h-6" />,
+    category: 'Product Strategy',
+    tags: ['AI', 'Discovery', 'Validation', 'Fast'],
+    difficulty: 'Beginner',
+    estimatedTime: '30 min',
+    steps: [
+      {
+        id: 'input',
+        title: 'Input Initial',
+        description: 'Collez le message du stakeholder ou décrivez l\'idée',
+        completed: false,
+      }
+    ]
+  },
   // PRODUCT STRATEGY
   {
     id: 'roadmap-planning',
@@ -442,6 +462,7 @@ export const Workflows: React.FC = () => {
   const [showContextManager, setShowContextManager] = useState(false);
   const [showFeatureDiscovery, setShowFeatureDiscovery] = useState(false);
   const [showTechnicalSpec, setShowTechnicalSpec] = useState(false);
+  const [showSmartDiscovery, setShowSmartDiscovery] = useState(false);
 
   const [activeContext, setActiveContext] = useState<{
     name: string;
@@ -515,6 +536,10 @@ export const Workflows: React.FC = () => {
     }
     if (workflow.id === 'technical-spec') {
       setShowTechnicalSpec(true);
+      return;
+    }
+    if (workflow.id === 'smart-discovery') {
+      setShowSmartDiscovery(true);
       return;
     }
     
@@ -932,6 +957,20 @@ export const Workflows: React.FC = () => {
         open={showTechnicalSpec}
         onClose={() => setShowTechnicalSpec(false)}
       />
+      
+      {showSmartDiscovery && (
+        <div className="fixed inset-0 z-50 bg-background">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="absolute top-4 right-4 z-50"
+            onClick={() => setShowSmartDiscovery(false)}
+          >
+            ✕ Fermer
+          </Button>
+          <SmartDiscoveryCanvas />
+        </div>
+      )}
     </div>
   );
 };
