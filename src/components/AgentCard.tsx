@@ -1,16 +1,18 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Agent } from '@/types';
+import { AgentPersonalityCustomizer } from './AgentPersonalityCustomizer';
 import { 
   Plus, 
   Lock, 
   Info, 
   Zap,
   CheckCircle,
-  Star
+  Star,
+  Settings
 } from 'lucide-react';
 
 interface AgentCardProps {
@@ -18,6 +20,7 @@ interface AgentCardProps {
   isUnlocked: boolean;
   isInSquad: boolean;
   userXP: number;
+  userId?: string;
   onAddToSquad: (agent: Agent) => void;
   onViewDetails: (agent: Agent) => void;
 }
@@ -37,9 +40,11 @@ export const AgentCard: React.FC<AgentCardProps> = ({
   isUnlocked,
   isInSquad,
   userXP,
+  userId,
   onAddToSquad,
   onViewDetails
 }) => {
+  const [showPersonalityCustomizer, setShowPersonalityCustomizer] = useState(false);
   const canUnlock = userXP >= agent.xpRequired;
   const xpNeeded = agent.xpRequired - userXP;
 
@@ -122,16 +127,29 @@ export const AgentCard: React.FC<AgentCardProps> = ({
             </p>
 
             {/* Actions */}
-            <div className="flex items-center justify-between">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => onViewDetails(agent)}
-                className="text-xs flex items-center space-x-1 h-7 px-2"
-              >
-                <Info className="w-3 h-3" />
-                <span>Details</span>
-              </Button>
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex gap-1">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => onViewDetails(agent)}
+                  className="text-xs flex items-center space-x-1 h-7 px-2"
+                >
+                  <Info className="w-3 h-3" />
+                  <span>Details</span>
+                </Button>
+                
+                {isUnlocked && userId && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setShowPersonalityCustomizer(true)}
+                    className="text-xs flex items-center space-x-1 h-7 px-2"
+                  >
+                    <Settings className="w-3 h-3" />
+                  </Button>
+                )}
+              </div>
 
               {isUnlocked ? (
                 <Button
@@ -171,6 +189,16 @@ export const AgentCard: React.FC<AgentCardProps> = ({
           </div>
         </div>
       </CardContent>
+
+      {/* Agent Personality Customizer */}
+      {isUnlocked && userId && (
+        <AgentPersonalityCustomizer
+          open={showPersonalityCustomizer}
+          onOpenChange={setShowPersonalityCustomizer}
+          agent={agent}
+          userId={userId}
+        />
+      )}
     </Card>
   );
 };

@@ -196,6 +196,7 @@ export const AgentGallery: React.FC<AgentGalleryProps> = ({
             isUnlocked={user.unlockedAgents.includes(agent.id)}
             isInSquad={currentSquadAgents.some(a => a.id === agent.id)}
             userXP={user.xp}
+            userId={user.id}
             onAddToSquad={onAddToSquad}
             onViewDetails={onViewAgentDetails}
           />

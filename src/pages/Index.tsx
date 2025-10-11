@@ -568,6 +568,19 @@ const Index = () => {
         onClose={() => setShowTutorial(false)}
         onNavigate={(tab) => setActiveTab(tab as TabType)}
       />
+
+      {/* Magic Bar - AI Command Palette */}
+      <MagicBar onNavigate={handleTabChange} onAction={handleMagicBarAction} />
+
+      {/* Shareable Moment Card */}
+      <ShareableMomentCard
+        open={shareableMoment.open}
+        onOpenChange={(open) => setShareableMoment({ ...shareableMoment, open })}
+        momentType={shareableMoment.type}
+        title={shareableMoment.title}
+        description={shareableMoment.description}
+        shareData={shareableMoment.shareData}
+      />
     </SidebarProvider>
   );
 };
