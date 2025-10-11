@@ -16,7 +16,8 @@ import {
   Target,
   Calendar,
   Award,
-  ChevronRight
+  ChevronRight,
+  Sparkles
 } from 'lucide-react';
 
 interface DashboardProps {
@@ -56,6 +57,55 @@ export const Dashboard: React.FC<DashboardProps> = ({
           Ready to collaborate with your AI squad? Here's your progress overview.
         </p>
       </div>
+
+      {/* Instant PRD CTA - Hero Feature */}
+      <Card className="relative overflow-hidden border-2 border-primary/50 bg-gradient-to-br from-primary/10 via-background to-accent/10">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl" />
+        <CardContent className="relative pt-6">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+            <div className="flex items-start gap-4 flex-1">
+              <div className="p-4 rounded-2xl bg-primary/20 backdrop-blur">
+                <Sparkles className="w-10 h-10 text-primary" />
+              </div>
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <h3 className="text-2xl font-bold">Instant PRD</h3>
+                  <Badge variant="default" className="animate-pulse">
+                    ✨ NEW
+                  </Badge>
+                </div>
+                <p className="text-muted-foreground">
+                  Transformez une simple phrase en PRD complet avec personas, user stories, wireframes et plus en <span className="font-bold text-primary">15 secondes</span>
+                </p>
+                <div className="flex flex-wrap gap-2 pt-2">
+                  <Badge variant="secondary" className="text-xs">📝 12 User Stories</Badge>
+                  <Badge variant="secondary" className="text-xs">👥 3 Personas + Images</Badge>
+                  <Badge variant="secondary" className="text-xs">🎨 Wireframes</Badge>
+                  <Badge variant="secondary" className="text-xs">🏗️ Architecture</Badge>
+                  <Badge variant="secondary" className="text-xs">📊 KPIs</Badge>
+                </div>
+              </div>
+            </div>
+            <div className="flex flex-col gap-3">
+              <Button 
+                size="lg" 
+                className="group relative overflow-hidden"
+                onClick={() => window.location.href = '/instant-prd'}
+              >
+                <span className="relative z-10 flex items-center gap-2">
+                  <Zap className="w-5 h-5" />
+                  Essayer Maintenant
+                  <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                </span>
+                <div className="absolute inset-0 bg-gradient-to-r from-primary to-accent opacity-0 group-hover:opacity-100 transition-opacity" />
+              </Button>
+              <p className="text-xs text-center text-muted-foreground">
+                2 semaines → 15 secondes ⚡
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Stats Overview */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">

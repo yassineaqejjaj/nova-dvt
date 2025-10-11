@@ -17,3 +17,6 @@ verify_jwt = true
 
 [functions.market-research]
 verify_jwt = false
+
+[functions.generate-persona-image]
+verify_jwt = false
