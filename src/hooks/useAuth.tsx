@@ -9,6 +9,7 @@ export const useAuth = () => {
   const [squads, setSquads] = useState<Squad[]>([]);
   const [loading, setLoading] = useState(true);
   const [needsOnboarding, setNeedsOnboarding] = useState(false);
+  const [onboardingCompleted, setOnboardingCompleted] = useState(false);
 
   useEffect(() => {
     // Get initial session
@@ -90,7 +91,8 @@ export const useAuth = () => {
       setUserProfile(userProfile);
       
       // Check if user needs onboarding (no display_name set yet)
-      if (!profile || !profile.display_name) {
+      // Only set to true if onboarding hasn't been manually completed
+      if ((!profile || !profile.display_name) && !onboardingCompleted) {
         setNeedsOnboarding(true);
       }
     } catch (error) {
@@ -187,6 +189,7 @@ export const useAuth = () => {
 
   const completeOnboarding = () => {
     setNeedsOnboarding(false);
+    setOnboardingCompleted(true);
   };
 
   return {
