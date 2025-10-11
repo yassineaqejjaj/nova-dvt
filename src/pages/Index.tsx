@@ -17,6 +17,7 @@ import { OnboardingModal } from '@/components/OnboardingModal';
 import { InteractiveTutorial } from '@/components/InteractiveTutorial';
 import { ProductContextManager } from '@/components/ProductContextManager';
 import { InstantPRD } from '@/components/InstantPRD';
+import { RealityMode } from '@/components/RealityMode';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -196,6 +197,23 @@ const Index = () => {
           />
         );
       
+      case 'reality-mode':
+        return (
+          <RealityMode
+            currentSquad={currentSquad?.agents || []}
+            squadId={currentSquad?.id}
+            userId={user!.id}
+            onAddXP={async (amount: number, reason: string) => {
+              const result = await addXP(amount, reason);
+              if (result?.leveledUp) {
+                toast.success(`🎉 Level Up! You've reached Level ${result.newLevel}!`);
+              } else {
+                toast.success(`+${amount} XP for ${reason}`);
+              }
+            }}
+          />
+        );
+
       case 'chat':
         return (
           <ChatInterface

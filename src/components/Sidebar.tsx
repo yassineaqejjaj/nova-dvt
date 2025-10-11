@@ -114,6 +114,14 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
   // NOVA AGENT Module
   const agentItems = [
     {
+      id: 'reality-mode' as TabType,
+      label: 'Reality Mode',
+      icon: Sparkles,
+      description: 'Live squad simulation',
+      disabled: !hasActiveChat,
+      badge: hasActiveChat ? '✨' : undefined
+    },
+    {
       id: 'chat' as TabType,
       label: 'Multi-Agent Chat',
       icon: MessageCircle,
