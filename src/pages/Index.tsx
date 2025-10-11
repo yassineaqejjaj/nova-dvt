@@ -14,6 +14,7 @@ import { SquadManager } from '@/components/SquadManager';
 import { UserProfile } from '@/components/UserProfile';
 import { OnboardingModal } from '@/components/OnboardingModal';
 import { InteractiveTutorial } from '@/components/InteractiveTutorial';
+import { ProductContextManager } from '@/components/ProductContextManager';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -38,6 +39,7 @@ const Index = () => {
   const [showAuth, setShowAuth] = useState(false);
   const [showCanvasGenerator, setShowCanvasGenerator] = useState(false);
   const [showTutorial, setShowTutorial] = useState(false);
+  const [showContextManager, setShowContextManager] = useState(false);
   const [customAgents, setCustomAgents] = useState<Agent[]>([]);
 
   useEffect(() => {
@@ -240,6 +242,7 @@ const Index = () => {
           squadCount={squads.length}
           hasActiveChat={!!currentSquad && currentSquad.agents.length > 0}
           onCreateCanvas={() => setShowCanvasGenerator(true)}
+          onManageContexts={() => setShowContextManager(true)}
         />
         
         <div className="flex-1 flex flex-col relative z-10">
@@ -427,6 +430,18 @@ const Index = () => {
         open={showCanvasGenerator}
         onClose={() => setShowCanvasGenerator(false)}
       />
+
+      {/* Product Context Manager */}
+      {user && (
+        <ProductContextManager
+          open={showContextManager}
+          onOpenChange={setShowContextManager}
+          onContextSelected={(context) => {
+            console.log('Context selected:', context);
+            toast.success(`Contexte "${context.name}" activé`);
+          }}
+        />
+      )}
 
       {/* User Profile Dialog */}
       {userProfile && (

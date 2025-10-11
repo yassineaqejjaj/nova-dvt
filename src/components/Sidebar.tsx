@@ -36,6 +36,7 @@ interface SidebarNavProps {
   squadCount: number;
   hasActiveChat: boolean;
   onCreateCanvas: () => void;
+  onManageContexts: () => void;
 }
 
 export const SidebarNav: React.FC<SidebarNavProps> = ({ 
@@ -43,7 +44,8 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
   onTabChange, 
   squadCount,
   hasActiveChat,
-  onCreateCanvas
+  onCreateCanvas,
+  onManageContexts
 }) => {
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({
     core: true,
@@ -80,6 +82,16 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
       label: 'Admin Panel',
       icon: Shield,
       description: 'Gouvernance'
+    }
+  ];
+
+  // NOVA CORE Actions (non-tab actions)
+  const coreActions = [
+    {
+      label: 'Product Contexts',
+      icon: Database,
+      description: 'Gérer vos contextes',
+      onClick: onManageContexts
     }
   ];
 
@@ -236,6 +248,36 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
       <SidebarContent className="overflow-hidden">
         {/* NOVA CORE Module */}
         {renderModuleGroup('NOVA CORE', 'core', coreItems, Database)}
+        
+        {/* NOVA CORE Actions */}
+        {expandedGroups.core && open && (
+          <SidebarGroup className="-mt-2">
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {coreActions.map((action) => {
+                  const Icon = action.icon;
+                  return (
+                    <SidebarMenuItem key={action.label}>
+                      <SidebarMenuButton asChild>
+                        <Button
+                          variant="ghost"
+                          onClick={action.onClick}
+                          className="w-full justify-start h-11 px-3 hover:bg-primary/10 hover:text-primary/90"
+                        >
+                          <Icon className="w-4 h-4 mr-3 flex-shrink-0" />
+                          <div className="flex-1 text-left">
+                            <span className="text-sm font-medium whitespace-nowrap">{action.label}</span>
+                            <p className="text-xs text-muted-foreground whitespace-nowrap">{action.description}</p>
+                          </div>
+                        </Button>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  );
+                })}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
         
         {/* NOVA WORKFLOWS Module */}
         {renderModuleGroup('NOVA WORKFLOWS', 'workflows', workflowItems, Workflow)}
