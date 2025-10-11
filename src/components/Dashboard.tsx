@@ -19,10 +19,8 @@ import {
   ChevronRight,
   Sparkles
 } from 'lucide-react';
-import { useSessionMemory } from '@/hooks/useSessionMemory';
 import { useInsights } from '@/hooks/useInsights';
 import { usePinnedItems } from '@/hooks/usePinnedItems';
-import { ContinueFlow } from './ContinueFlow';
 import { InsightsPanel } from './InsightsPanel';
 import { QuickDeck } from './QuickDeck';
 import { DynamicStatsPanel } from './DynamicStatsPanel';
@@ -38,7 +36,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
   squads,
   onNavigate
 }) => {
-  const { session, updateSession } = useSessionMemory(user.id);
   const { insights, dismissInsight, generateInsights } = useInsights(user.id);
   const { pinnedItems, unpinItem } = usePinnedItems(user.id);
 
@@ -46,10 +43,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
     // Generate insights on mount
     generateInsights();
   }, []);
-
-  const handleContinueFlow = (tab: TabType, squadId?: string) => {
-    onNavigate(tab as any);
-  };
 
   const handlePinnedItemClick = (item: any) => {
     switch (item.itemType) {
@@ -149,15 +142,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
           Ready to collaborate with your AI squad? Here's your progress overview.
         </p>
       </div>
-
-      {/* Continue Flow Card */}
-      {session && (
-        <ContinueFlow
-          session={session}
-          userName={user.name}
-          onContinue={handleContinueFlow}
-        />
-      )}
 
       {/* Instant PRD CTA - Hero Feature with Rotating Highlights */}
       <Card className="relative overflow-hidden border-2 border-primary/50 bg-gradient-to-br from-primary/10 via-background to-accent/10">
