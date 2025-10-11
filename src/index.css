@@ -2,9 +2,8 @@
 @tailwind components;
 @tailwind utilities;
 
-/* NextGEN AI Agents Design System - Devoteam Branding */
-
 @layer base {
+  /* Nova Default Theme (Light) */
   :root {
     --background: 0 0% 100%;
     --foreground: 0 0% 17%;
@@ -45,24 +44,199 @@
     --border: 214 32% 91%;
     --input: 214 32% 91%;
     --ring: 351 85% 47%;
+    
+    --agent-blue: 217 91% 60%;
+    --agent-green: 142 71% 45%;
+    --agent-purple: 271 81% 56%;
+    --agent-orange: 29 78% 56%;
 
-    --radius: 0.625rem; /* 10px */
+    --radius: 0.5rem;
     
-    /* Gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary-glow)));
-    --gradient-hero: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--agent-blue)) 100%);
-    --gradient-card: linear-gradient(145deg, hsl(0 0% 100%) 0%, hsl(210 17% 98%) 100%);
+    --gradient-primary: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary) / 0.8));
+    --gradient-agent-blue: linear-gradient(135deg, hsl(var(--agent-blue)), hsl(var(--agent-blue) / 0.7));
+    --gradient-agent-green: linear-gradient(135deg, hsl(var(--agent-green)), hsl(var(--agent-green) / 0.7));
+    --gradient-agent-purple: linear-gradient(135deg, hsl(var(--agent-purple)), hsl(var(--agent-purple) / 0.7));
+    --gradient-agent-orange: linear-gradient(135deg, hsl(var(--agent-orange)), hsl(var(--agent-orange) / 0.7));
     
-    /* Shadows */
-    --shadow-sm: 0 1px 2px 0 hsl(0 0% 0% / 0.05);
-    --shadow: 0 4px 6px -1px hsl(0 0% 0% / 0.1), 0 2px 4px -2px hsl(0 0% 0% / 0.1);
-    --shadow-md: 0 10px 15px -3px hsl(0 0% 0% / 0.1), 0 4px 6px -4px hsl(0 0% 0% / 0.1);
-    --shadow-lg: 0 20px 25px -5px hsl(0 0% 0% / 0.1), 0 8px 10px -6px hsl(0 0% 0% / 0.1);
-    --shadow-glow: 0 0 20px hsl(var(--primary) / 0.3);
+    --shadow-elegant: 0 10px 30px -10px hsl(var(--primary) / 0.3);
+    --shadow-glow: 0 0 40px hsl(220 98% 61% / 0.4);
     
-    /* Transitions */
-    --transition-all: all 150ms cubic-bezier(0.4, 0, 0.2, 1);
-    --transition-colors: color, background-color, border-color, text-decoration-color, fill, stroke 150ms cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  /* Dark Mode */
+  [data-theme="dark"] {
+    --background: 222 47% 6%;
+    --foreground: 210 40% 98%;
+    --card: 220 39% 11%;
+    --card-foreground: 210 40% 98%;
+    --popover: 220 39% 11%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 4 84% 60%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 217 33% 17%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217 33% 17%;
+    --muted-foreground: 215 20% 65%;
+    --accent: 217 33% 17%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 63% 31%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217 33% 17%;
+    --input: 217 33% 17%;
+    --ring: 4 84% 60%;
+  }
+
+  /* Cardinal Theme (Banking Heritage) */
+  [data-theme="cardinal"] {
+    --primary: 349 73% 45%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 0 0% 10%;
+    --accent: 45 85% 53%;
+    --background: 0 0% 98%;
+    --card: 0 0% 100%;
+  }
+
+  [data-theme="cardinal-dark"] {
+    --primary: 354 75% 58%;
+    --secondary: 0 0% 18%;
+    --accent: 51 100% 50%;
+    --background: 0 0% 4%;
+    --card: 0 0% 11%;
+    --foreground: 210 40% 98%;
+  }
+
+  /* Atlantic Theme (Financial Innovation) */
+  [data-theme="atlantic"] {
+    --primary: 211 100% 40%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 17 100% 60%;
+    --accent: 169 100% 42%;
+    --background: 210 17% 98%;
+    --card: 0 0% 100%;
+  }
+
+  [data-theme="atlantic-dark"] {
+    --primary: 211 100% 60%;
+    --secondary: 17 100% 67%;
+    --accent: 163 98% 55%;
+    --background: 208 63% 11%;
+    --card: 208 48% 17%;
+    --foreground: 210 40% 98%;
+  }
+
+  /* Forest Theme (Sports & Outdoor) */
+  [data-theme="forest"] {
+    --primary: 198 100% 38%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 135 44% 33%;
+    --accent: 45 100% 48%;
+    --background: 0 0% 98%;
+    --card: 0 0% 100%;
+  }
+
+  [data-theme="forest-dark"] {
+    --primary: 199 86% 56%;
+    --secondary: 134 41% 57%;
+    --accent: 48 98% 64%;
+    --background: 186 35% 8%;
+    --card: 187 29% 13%;
+    --foreground: 210 40% 98%;
+  }
+
+  /* Crimson Theme (Media & Culture) */
+  [data-theme="crimson"] {
+    --primary: 356 100% 44%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 0 0% 17%;
+    --accent: 0 0% 100%;
+    --background: 0 0% 96%;
+    --card: 0 0% 100%;
+  }
+
+  [data-theme="crimson-dark"] {
+    --primary: 355 100% 55%;
+    --secondary: 0 0% 10%;
+    --accent: 0 0% 96%;
+    --background: 0 0% 6%;
+    --card: 0 0% 12%;
+    --foreground: 210 40% 98%;
+  }
+
+  /* Indigo Theme (Energy & Innovation) */
+  [data-theme="indigo"] {
+    --primary: 266 51% 46%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 188 100% 38%;
+    --accent: 88 50% 55%;
+    --background: 0 0% 98%;
+    --card: 0 0% 100%;
+  }
+
+  [data-theme="indigo-dark"] {
+    --primary: 262 47% 58%;
+    --secondary: 188 84% 51%;
+    --accent: 88 46% 66%;
+    --background: 254 32% 9%;
+    --card: 254 27% 13%;
+    --foreground: 210 40% 98%;
+  }
+
+  /* Ember Theme (Tech & Startups) */
+  [data-theme="ember"] {
+    --primary: 14 100% 57%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 199 18% 46%;
+    --accent: 187 100% 42%;
+    --background: 0 0% 98%;
+    --card: 0 0% 100%;
+  }
+
+  [data-theme="ember-dark"] {
+    --primary: 14 100% 63%;
+    --secondary: 199 14% 54%;
+    --accent: 187 89% 51%;
+    --background: 0 0% 7%;
+    --card: 0 0% 12%;
+    --foreground: 210 40% 98%;
+  }
+
+  /* Sage Theme (Sustainability Focus) */
+  [data-theme="sage"] {
+    --primary: 94 54% 36%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 16 25% 50%;
+    --accent: 48 97% 60%;
+    --background: 60 29% 92%;
+    --card: 0 0% 100%;
+  }
+
+  [data-theme="sage-dark"] {
+    --primary: 93 43% 58%;
+    --secondary: 16 18% 58%;
+    --accent: 54 98% 67%;
+    --background: 90 14% 11%;
+    --card: 90 12% 15%;
+    --foreground: 210 40% 98%;
+  }
+
+  /* Midnight Theme (Premium Dark First) */
+  [data-theme="midnight"] {
+    --primary: 231 68% 31%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 42 37% 61%;
+    --accent: 231 44% 94%;
+    --background: 0 0% 98%;
+    --card: 0 0% 100%;
+  }
+
+  [data-theme="midnight-dark"] {
+    --primary: 231 48% 48%;
+    --secondary: 48 98% 65%;
+    --accent: 231 44% 63%;
+    --background: 226 74% 10%;
+    --card: 228 49% 16%;
+    --foreground: 210 40% 98%;
   }
 
   .dark {

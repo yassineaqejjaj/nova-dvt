@@ -16,7 +16,8 @@ import {
   Database,
   Bot,
   ChevronDown,
-  Shield
+  Shield,
+  Trophy
 } from 'lucide-react';
 import {
   Sidebar,
@@ -64,6 +65,12 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
       label: 'Dashboard',
       icon: LayoutDashboard,
       description: 'Vue d\'ensemble'
+    },
+    {
+      id: 'gamification' as TabType,
+      label: 'Gamification',
+      icon: Trophy,
+      description: 'Progression & Récompenses'
     },
     {
       id: 'artifacts' as TabType,

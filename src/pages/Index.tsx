@@ -10,6 +10,7 @@ import { WorkspaceManager } from '@/components/WorkspaceManager';
 import { AnalyticsDashboard } from '@/components/AnalyticsDashboard';
 import { AdminPanel } from '@/components/AdminPanel';
 import { AuthDialog } from '@/components/AuthDialog';
+import { GamificationDashboard } from '@/components/gamification/GamificationDashboard';
 import { SquadManager } from '@/components/SquadManager';
 import { UserProfile } from '@/components/UserProfile';
 import { OnboardingModal } from '@/components/OnboardingModal';
@@ -222,6 +223,9 @@ const Index = () => {
       
       case 'analytics':
         return <AnalyticsDashboard userId={user!.id} />;
+
+      case 'gamification':
+        return <GamificationDashboard />;
 
       case 'admin':
         return <AdminPanel />;
