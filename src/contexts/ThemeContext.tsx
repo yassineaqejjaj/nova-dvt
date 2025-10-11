@@ -153,7 +153,9 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [currentTheme, setCurrentTheme] = useState<string>('nova-light');
 
   useEffect(() => {
-    const savedTheme = localStorage.getItem('nova-theme') || 'nova-light';
+    // Always default to nova-light on first load
+    const savedTheme = 'nova-light';
+    localStorage.setItem('nova-theme', savedTheme);
     applyTheme(savedTheme);
   }, []);
 
