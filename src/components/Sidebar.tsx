@@ -115,10 +115,10 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
   const agentItems = [
     {
       id: 'chat' as TabType,
-      label: 'Chat with Agent',
+      label: 'Multi-Agent Chat',
       icon: MessageCircle,
-      description: 'Assistant IA',
-      disabled: !hasActiveChat,
+      description: 'Collaborate with AI squad',
+      disabled: false,
       badge: hasActiveChat ? 'active' : undefined
     },
     {

@@ -10,7 +10,7 @@ import { Popover, PopoverContent } from '@/components/ui/popover';
 import { supabase } from '@/integrations/supabase/client';
 import { Agent, ChatMessage } from '@/types';
 import { toast } from '@/hooks/use-toast';
-import { Send, MessageCircle, Users, Loader2, AtSign, Grid3X3, FileText, TrendingUp } from 'lucide-react';
+import { Send, MessageCircle, Users, Loader2, AtSign, Grid3X3, FileText, TrendingUp, Sparkles } from 'lucide-react';
 import { CanvasGenerator } from './CanvasGenerator';
 import { StoryWriter } from './StoryWriter';
 import { ImpactPlotter } from './ImpactPlotter';
@@ -330,24 +330,77 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ currentSquad, squa
     return (
       <div className="space-y-6">
         <div className="text-center">
-          <h2 className="text-2xl font-bold mb-2">Chat Interface</h2>
+          <h2 className="text-2xl font-bold mb-2">Multi-Agent Chat</h2>
           <p className="text-muted-foreground">
-            Create a squad first to start chatting with AI agents
+            Build a squad to start collaborating with multiple AI agents
           </p>
         </div>
         
-        <Card className="p-8">
-          <div className="text-center">
-            <Users className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-lg font-semibold mb-2">No Squad Available</h3>
-            <p className="text-muted-foreground mb-4">
-              You need to create a squad with AI agents before you can start chatting.
-            </p>
-            <Button onClick={() => window.location.hash = '#squads'}>
-              Go to Squad Builder
-            </Button>
+        <Card className="p-8 border-2 border-dashed">
+          <div className="text-center space-y-6">
+            <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-primary/10">
+              <Users className="w-10 h-10 text-primary" />
+            </div>
+            <div className="space-y-2">
+              <h3 className="text-xl font-semibold">Ready to Collaborate?</h3>
+              <p className="text-muted-foreground max-w-md mx-auto">
+                Create a squad with specialized AI agents to get multi-perspective insights, 
+                brainstorm ideas, and solve complex problems together.
+              </p>
+            </div>
+            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+              <Button size="lg" onClick={() => window.location.hash = '#squads'}>
+                <Users className="w-4 h-4 mr-2" />
+                Build Your Squad
+              </Button>
+              <Button size="lg" variant="outline" onClick={() => window.location.hash = '#agents'}>
+                Browse Agents
+              </Button>
+            </div>
           </div>
         </Card>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8">
+          <Card className="p-4">
+            <div className="flex items-start space-x-3">
+              <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                <MessageCircle className="w-5 h-5 text-primary" />
+              </div>
+              <div>
+                <h4 className="font-semibold mb-1">Multi-Agent Responses</h4>
+                <p className="text-sm text-muted-foreground">
+                  Get diverse perspectives from multiple specialized agents in one conversation
+                </p>
+              </div>
+            </div>
+          </Card>
+          <Card className="p-4">
+            <div className="flex items-start space-x-3">
+              <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                <Sparkles className="w-5 h-5 text-primary" />
+              </div>
+              <div>
+                <h4 className="font-semibold mb-1">Smart Mentions</h4>
+                <p className="text-sm text-muted-foreground">
+                  Use @mentions to direct questions to specific agents for targeted expertise
+                </p>
+              </div>
+            </div>
+          </Card>
+          <Card className="p-4">
+            <div className="flex items-start space-x-3">
+              <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                <Users className="w-5 h-5 text-primary" />
+              </div>
+              <div>
+                <h4 className="font-semibold mb-1">Context Aware</h4>
+                <p className="text-sm text-muted-foreground">
+                  All agents share conversation context for coherent team collaboration
+                </p>
+              </div>
+            </div>
+          </Card>
+        </div>
       </div>
     );
   }
@@ -355,9 +408,9 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ currentSquad, squa
   return (
     <div className="space-y-6">
       <div className="text-center">
-        <h2 className="text-2xl font-bold mb-2">Chat with Your AI Squad</h2>
+        <h2 className="text-2xl font-bold mb-2">Multi-Agent Chat</h2>
         <p className="text-muted-foreground">
-          Collaborate with {currentSquad.map(agent => agent.name).join(', ')}
+          Collaborate with {currentSquad.length} AI agent{currentSquad.length !== 1 ? 's' : ''}: {currentSquad.map(agent => agent.name).join(', ')}
         </p>
       </div>
 

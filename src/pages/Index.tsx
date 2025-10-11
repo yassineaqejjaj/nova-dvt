@@ -116,10 +116,6 @@ const Index = () => {
   };
 
   const handleTabChange = (tab: TabType) => {
-    if (tab === 'chat' && (!currentSquad || currentSquad.agents.length === 0)) {
-      toast.error('Please add agents to your squad first');
-      return;
-    }
     setActiveTab(tab);
   };
 
