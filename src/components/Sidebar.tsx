@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { TabType } from '@/types';
@@ -8,12 +8,15 @@ import {
   UserPlus, 
   MessageCircle,
   Grid3X3,
-  Plus,
   Sparkles,
   Workflow,
   FileText,
-  Building2,
-  BarChart3
+  BarChart3,
+  Settings,
+  Database,
+  Bot,
+  ChevronDown,
+  Shield
 } from 'lucide-react';
 import {
   Sidebar,
@@ -42,68 +45,76 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
   hasActiveChat,
   onCreateCanvas
 }) => {
+  const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({
+    core: true,
+    workflows: true,
+    agent: true,
+  });
 
-  const mainTabs = [
+  const toggleGroup = (groupId: string) => {
+    setExpandedGroups(prev => ({ ...prev, [groupId]: !prev[groupId] }));
+  };
+
+  // NOVA CORE Module
+  const coreItems = [
     {
       id: 'dashboard' as TabType,
       label: 'Dashboard',
       icon: LayoutDashboard,
-      description: 'Overview & Progress'
-    },
-    {
-      id: 'agents' as TabType,
-      label: 'Agent Gallery',
-      icon: Users,
-      description: 'Browse & Unlock Agents'
-    },
-    {
-      id: 'squads' as TabType,
-      label: 'Squad Builder',
-      icon: UserPlus,
-      description: 'Create AI Teams',
-      badge: squadCount > 0 ? squadCount.toString() : undefined
-    },
-    {
-      id: 'workflows' as TabType,
-      label: 'PM Workflows',
-      icon: Workflow,
-      description: 'Guided PM Processes'
-    },
-    {
-      id: 'chat' as TabType,
-      label: 'Chat Interface',
-      icon: MessageCircle,
-      description: 'Collaborate with Agents',
-      disabled: !hasActiveChat,
-      badge: hasActiveChat ? 'active' : undefined
+      description: 'Vue d\'ensemble'
     },
     {
       id: 'artifacts' as TabType,
       label: 'Artifacts',
       icon: FileText,
-      description: 'View All Generated Content'
-    },
-    {
-      id: 'workspaces' as TabType,
-      label: 'Workspaces',
-      icon: Building2,
-      description: 'Team Collaboration'
+      description: 'Gestion des livrables'
     },
     {
       id: 'analytics' as TabType,
       label: 'Analytics',
       icon: BarChart3,
-      description: 'Usage & Insights'
+      description: 'Suivi & Performance'
+    },
+    {
+      id: 'admin' as TabType,
+      label: 'Admin Panel',
+      icon: Shield,
+      description: 'Gouvernance'
     }
   ];
 
-  const creativeTools = [
+  // NOVA WORKFLOWS Module
+  const workflowItems = [
     {
-      id: 'canvas-generator',
-      label: 'Canvas Generator',
-      icon: Grid3X3,
-      description: 'PM Framework Templates',
-      onClick: onCreateCanvas
+      id: 'workflows' as TabType,
+      label: 'All Workflows',
+      icon: Workflow,
+      description: 'Processus guidés IA'
+    }
+  ];
+
+  // NOVA AGENT Module
+  const agentItems = [
+    {
+      id: 'chat' as TabType,
+      label: 'Chat with Agent',
+      icon: MessageCircle,
+      description: 'Assistant IA',
+      disabled: !hasActiveChat,
+      badge: hasActiveChat ? 'active' : undefined
+    },
+    {
+      id: 'agents' as TabType,
+      label: 'Agent Gallery',
+      icon: Users,
+      description: 'Multi-rôle adaptatif'
+    },
+    {
+      id: 'squads' as TabType,
+      label: 'Squads',
+      icon: UserPlus,
+      description: 'Collaboration',
+      badge: squadCount > 0 ? squadCount.toString() : undefined
     }
   ];
 
@@ -126,6 +137,93 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
     setOpen(false);
   };
 
+  const renderModuleGroup = (
+    title: string,
+    groupId: string,
+    items: Array<{
+      id: TabType;
+      label: string;
+      icon: any;
+      description: string;
+      disabled?: boolean;
+      badge?: string;
+    }>,
+    moduleIcon: any
+  ) => {
+    const ModuleIcon = moduleIcon;
+    const isExpanded = expandedGroups[groupId];
+
+    return (
+      <SidebarGroup key={groupId}>
+        <div className="mb-2">
+          <Button
+            variant="ghost"
+            onClick={() => toggleGroup(groupId)}
+            className="w-full justify-start px-2 h-8 hover:bg-primary/5"
+          >
+            <ModuleIcon className="w-4 h-4 mr-2 text-primary" />
+            {open && (
+              <>
+                <SidebarGroupLabel className="flex-1 text-left font-semibold text-primary">
+                  {title}
+                </SidebarGroupLabel>
+                <ChevronDown
+                  className={`w-4 h-4 transition-transform ${
+                    isExpanded ? 'transform rotate-180' : ''
+                  }`}
+                />
+              </>
+            )}
+          </Button>
+        </div>
+        
+        {isExpanded && (
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {items.map((item) => {
+                const Icon = item.icon;
+                const isActive = activeTab === item.id;
+                
+                return (
+                  <SidebarMenuItem key={item.id}>
+                    <SidebarMenuButton asChild>
+                      <Button
+                        variant="ghost"
+                        onClick={() => !item.disabled && onTabChange(item.id)}
+                        disabled={item.disabled}
+                        className={`w-full justify-start h-11 px-3 ${getNavClass(isActive, item.disabled)}`}
+                      >
+                        <Icon className="w-4 h-4 mr-3 flex-shrink-0" />
+                        <div className={`flex-1 text-left transition-opacity duration-200 overflow-hidden ${!open ? 'opacity-0 w-0' : 'opacity-100'}`}>
+                          <div className="flex items-center space-x-2">
+                            <span className="text-sm font-medium whitespace-nowrap">{item.label}</span>
+                            {item.badge && (
+                              <Badge 
+                                variant={item.badge === 'active' ? 'default' : 'secondary'} 
+                                className="text-xs px-1.5 py-0.5"
+                              >
+                                {item.badge === 'active' ? (
+                                  <Sparkles className="w-3 h-3" />
+                                ) : (
+                                  item.badge
+                                )}
+                              </Badge>
+                            )}
+                          </div>
+                          <p className="text-xs text-muted-foreground whitespace-nowrap">{item.description}</p>
+                        </div>
+                      </Button>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                );
+              })}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        )}
+      </SidebarGroup>
+    );
+  };
+
   return (
     <Sidebar 
       className={`transition-all duration-300 ease-in-out ${
@@ -136,81 +234,37 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
       onMouseLeave={handleMouseLeave}
     >
       <SidebarContent className="overflow-hidden">
-        {/* Main Navigation */}
-        <SidebarGroup>
-          <SidebarGroupLabel>Navigation</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {mainTabs.map((tab) => {
-                const Icon = tab.icon;
-                const isActive = activeTab === tab.id;
-                
-                return (
-                  <SidebarMenuItem key={tab.id}>
-                    <SidebarMenuButton asChild>
-                      <Button
-                        variant="ghost"
-                        onClick={() => onTabChange(tab.id)}
-                        disabled={tab.disabled}
-                        className={`w-full justify-start h-12 px-3 ${getNavClass(isActive, tab.disabled)}`}
-                      >
-                        <Icon className="w-5 h-5 mr-3 flex-shrink-0" />
-                        <div className={`flex-1 text-left transition-opacity duration-200 overflow-hidden ${!open ? 'opacity-0 w-0' : 'opacity-100'}`}>
-                          <div className="flex items-center space-x-2">
-                            <span className="font-medium whitespace-nowrap">{tab.label}</span>
-                            {tab.badge && (
-                              <Badge 
-                                variant={tab.badge === 'active' ? 'default' : 'secondary'} 
-                                className="text-xs px-1.5 py-0.5"
-                              >
-                                {tab.badge === 'active' ? (
-                                  <Sparkles className="w-3 h-3" />
-                                ) : (
-                                  tab.badge
-                                )}
-                              </Badge>
-                            )}
-                          </div>
-                          <p className="text-xs text-muted-foreground whitespace-nowrap">{tab.description}</p>
-                        </div>
-                      </Button>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                );
-              })}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+        {/* NOVA CORE Module */}
+        {renderModuleGroup('NOVA CORE', 'core', coreItems, Database)}
+        
+        {/* NOVA WORKFLOWS Module */}
+        {renderModuleGroup('NOVA WORKFLOWS', 'workflows', workflowItems, Workflow)}
+        
+        {/* NOVA AGENT Module */}
+        {renderModuleGroup('NOVA AGENT', 'agent', agentItems, Bot)}
 
-        {/* Creative Tools */}
-        <SidebarGroup>
-          <SidebarGroupLabel>Creative Tools</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {creativeTools.map((tool) => {
-                const Icon = tool.icon;
-                
-                return (
-                  <SidebarMenuItem key={tool.id}>
-                    <SidebarMenuButton asChild>
-                      <Button
-                        variant="ghost"
-                        onClick={tool.onClick}
-                        className="w-full justify-start h-12 px-3 hover:bg-accent/50 hover:text-accent-foreground"
-                      >
-                        <Icon className="w-5 h-5 mr-3 flex-shrink-0" />
-                        <div className={`flex-1 text-left transition-opacity duration-200 overflow-hidden ${!open ? 'opacity-0 w-0' : 'opacity-100'}`}>
-                          <span className="font-medium whitespace-nowrap">{tool.label}</span>
-                          <p className="text-xs text-muted-foreground whitespace-nowrap">{tool.description}</p>
-                        </div>
-                      </Button>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                );
-              })}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+        {/* Quick Actions */}
+        {open && (
+          <SidebarGroup>
+            <SidebarGroupLabel>Quick Actions</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild>
+                    <Button
+                      variant="ghost"
+                      onClick={onCreateCanvas}
+                      className="w-full justify-start h-10 px-3 hover:bg-accent/50"
+                    >
+                      <Grid3X3 className="w-4 h-4 mr-3" />
+                      <span className="text-sm">Canvas Generator</span>
+                    </Button>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
       </SidebarContent>
     </Sidebar>
   );

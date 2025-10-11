@@ -214,15 +214,11 @@ const Index = () => {
       case 'artifacts':
         return <Artifacts userId={user!.id} />;
       
-      case 'workspaces':
-        return <WorkspaceManager userId={user!.id} />;
-      
       case 'analytics':
         return <AnalyticsDashboard userId={user!.id} />;
 
       case 'admin':
         return <AdminPanel />;
-        return <AnalyticsDashboard userId={user!.id} />;
       
       default:
         return null;
