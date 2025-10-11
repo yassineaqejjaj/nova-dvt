@@ -129,6 +129,36 @@ export type Database = {
           },
         ]
       }
+      coins_transactions: {
+        Row: {
+          amount: number
+          created_at: string
+          description: string | null
+          id: string
+          source: string
+          transaction_type: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          source: string
+          transaction_type: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          source?: string
+          transaction_type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       context_history: {
         Row: {
           context_id: string
@@ -160,6 +190,57 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      daily_missions: {
+        Row: {
+          bonus_multiplier: number | null
+          coins_reward: number
+          completed: boolean
+          completed_at: string | null
+          created_at: string
+          description: string
+          difficulty: string
+          estimated_time: string
+          id: string
+          mission_date: string
+          mission_type: string
+          title: string
+          user_id: string
+          xp_reward: number
+        }
+        Insert: {
+          bonus_multiplier?: number | null
+          coins_reward: number
+          completed?: boolean
+          completed_at?: string | null
+          created_at?: string
+          description: string
+          difficulty: string
+          estimated_time: string
+          id?: string
+          mission_date?: string
+          mission_type: string
+          title: string
+          user_id: string
+          xp_reward: number
+        }
+        Update: {
+          bonus_multiplier?: number | null
+          coins_reward?: number
+          completed?: boolean
+          completed_at?: string | null
+          created_at?: string
+          description?: string
+          difficulty?: string
+          estimated_time?: string
+          id?: string
+          mission_date?: string
+          mission_type?: string
+          title?: string
+          user_id?: string
+          xp_reward?: number
+        }
+        Relationships: []
       }
       feature_flags: {
         Row: {
@@ -238,6 +319,39 @@ export type Database = {
         Update: {
           key?: string
           value?: Json
+        }
+        Relationships: []
+      }
+      mystery_boxes: {
+        Row: {
+          box_type: string
+          created_at: string
+          expires_at: string | null
+          id: string
+          opened: boolean
+          opened_at: string | null
+          rewards: Json | null
+          user_id: string
+        }
+        Insert: {
+          box_type: string
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          opened?: boolean
+          opened_at?: string | null
+          rewards?: Json | null
+          user_id: string
+        }
+        Update: {
+          box_type?: string
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          opened?: boolean
+          opened_at?: string | null
+          rewards?: Json | null
+          user_id?: string
         }
         Relationships: []
       }
@@ -440,6 +554,42 @@ export type Database = {
         }
         Relationships: []
       }
+      user_achievements: {
+        Row: {
+          achievement_key: string
+          completed: boolean
+          completed_at: string | null
+          created_at: string
+          id: string
+          progress: number
+          target: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          achievement_key: string
+          completed?: boolean
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          progress?: number
+          target: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          achievement_key?: string
+          completed?: boolean
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          progress?: number
+          target?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_badges: {
         Row: {
           badge_description: string
@@ -470,6 +620,93 @@ export type Database = {
         }
         Relationships: []
       }
+      user_gamification: {
+        Row: {
+          average_quality_score: number | null
+          coins: number
+          created_at: string
+          current_streak: number
+          id: string
+          last_active_date: string | null
+          level: number
+          longest_streak: number
+          streak_freezes_available: number
+          total_artefacts_created: number
+          total_missions_completed: number
+          updated_at: string
+          user_id: string
+          xp: number
+        }
+        Insert: {
+          average_quality_score?: number | null
+          coins?: number
+          created_at?: string
+          current_streak?: number
+          id?: string
+          last_active_date?: string | null
+          level?: number
+          longest_streak?: number
+          streak_freezes_available?: number
+          total_artefacts_created?: number
+          total_missions_completed?: number
+          updated_at?: string
+          user_id: string
+          xp?: number
+        }
+        Update: {
+          average_quality_score?: number | null
+          coins?: number
+          created_at?: string
+          current_streak?: number
+          id?: string
+          last_active_date?: string | null
+          level?: number
+          longest_streak?: number
+          streak_freezes_available?: number
+          total_artefacts_created?: number
+          total_missions_completed?: number
+          updated_at?: string
+          user_id?: string
+          xp?: number
+        }
+        Relationships: []
+      }
+      user_gamification_badges: {
+        Row: {
+          badge_category: string
+          badge_description: string
+          badge_icon: string
+          badge_id: string
+          badge_name: string
+          id: string
+          rarity: string
+          unlocked_at: string
+          user_id: string
+        }
+        Insert: {
+          badge_category: string
+          badge_description: string
+          badge_icon: string
+          badge_id: string
+          badge_name: string
+          id?: string
+          rarity: string
+          unlocked_at?: string
+          user_id: string
+        }
+        Update: {
+          badge_category?: string
+          badge_description?: string
+          badge_icon?: string
+          badge_id?: string
+          badge_name?: string
+          id?: string
+          rarity?: string
+          unlocked_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string | null
@@ -488,6 +725,92 @@ export type Database = {
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
           user_id?: string
+        }
+        Relationships: []
+      }
+      user_weekly_challenges: {
+        Row: {
+          challenge_id: string
+          completed: boolean
+          completed_at: string | null
+          created_at: string
+          id: string
+          progress: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          challenge_id: string
+          completed?: boolean
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          progress?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          challenge_id?: string
+          completed?: boolean
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          progress?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_weekly_challenges_challenge_id_fkey"
+            columns: ["challenge_id"]
+            isOneToOne: false
+            referencedRelation: "weekly_challenges"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      weekly_challenges: {
+        Row: {
+          badge_reward: string | null
+          challenge_id: string
+          coins_reward: number
+          created_at: string
+          description: string
+          icon: string
+          id: string
+          target: number
+          title: string
+          week_end: string
+          week_start: string
+          xp_reward: number
+        }
+        Insert: {
+          badge_reward?: string | null
+          challenge_id: string
+          coins_reward: number
+          created_at?: string
+          description: string
+          icon: string
+          id?: string
+          target: number
+          title: string
+          week_end: string
+          week_start: string
+          xp_reward: number
+        }
+        Update: {
+          badge_reward?: string | null
+          challenge_id?: string
+          coins_reward?: number
+          created_at?: string
+          description?: string
+          icon?: string
+          id?: string
+          target?: number
+          title?: string
+          week_end?: string
+          week_start?: string
+          xp_reward?: number
         }
         Relationships: []
       }
@@ -547,6 +870,33 @@ export type Database = {
           name?: string
           owner_id?: string
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      xp_transactions: {
+        Row: {
+          amount: number
+          created_at: string
+          description: string | null
+          id: string
+          source: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          source: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          source?: string
+          user_id?: string
         }
         Relationships: []
       }
