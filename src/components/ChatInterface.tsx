@@ -126,21 +126,6 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ currentSquad, squa
   const handleSendMessage = async () => {
     if (!inputMessage.trim() || currentSquad.length === 0) return;
 
-    // Check for tool triggers
-    const lowerMessage = inputMessage.toLowerCase();
-    if (lowerMessage.includes('canvas') || lowerMessage.includes('moscow') || lowerMessage.includes('swot')) {
-      setShowCanvasGenerator(true);
-      return;
-    }
-    if (lowerMessage.includes('user story') || lowerMessage.includes('story writer')) {
-      setShowStoryWriter(true);
-      return;
-    }
-    if (lowerMessage.includes('impact') && lowerMessage.includes('effort')) {
-      setShowImpactPlotter(true);
-      return;
-    }
-
     const userMessage: ChatMessage = {
       id: `user-${Date.now()}`,
       squadId: squadId || 'current',
@@ -151,6 +136,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ currentSquad, squa
     };
 
     setMessages(prev => [...prev, userMessage]);
+    const messageToSend = inputMessage;
     setInputMessage('');
     setIsLoading(true);
 
@@ -162,28 +148,59 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ currentSquad, squa
           await supabase.from('chat_messages').insert({
             squad_id: squadId,
             user_id: userData.user.id,
-            content: inputMessage,
+            content: messageToSend,
             sender_type: 'user',
             mentioned_agents: userMessage.mentionedAgents || []
           });
         }
       }
 
-      // Prepare conversation history for OpenAI
-      const conversationHistory = messages.slice(-10).map(msg => ({
+      // Detect tool intent using AI
+      const conversationHistory = messages.slice(-3).map(msg => ({
+        role: msg.sender === 'user' ? 'user' : 'assistant',
+        content: msg.content,
+      }));
+
+      const { data: intentData } = await supabase.functions.invoke('detect-tool-intent', {
+        body: {
+          message: messageToSend,
+          conversationHistory
+        }
+      });
+
+      // Handle tool intents
+      if (intentData?.detectedIntent === 'canvas_generator') {
+        setShowCanvasGenerator(true);
+        setIsLoading(false);
+        return;
+      } else if (intentData?.detectedIntent === 'instant_prd') {
+        // Navigate to Instant PRD or trigger it
+        toast({
+          title: "Opening Instant PRD",
+          description: "Redirecting you to create a PRD...",
+        });
+        setTimeout(() => {
+          window.location.href = '/?tab=instant-prd';
+        }, 1000);
+        setIsLoading(false);
+        return;
+      }
+
+      // Continue with normal chat flow if no tool intent detected
+      const fullConversationHistory = messages.slice(-10).map(msg => ({
         role: msg.sender === 'user' ? 'user' : 'assistant',
         content: msg.content,
       }));
 
       // Add current user message
-      conversationHistory.push({
+      fullConversationHistory.push({
         role: 'user',
-        content: inputMessage,
+        content: messageToSend,
       });
 
       const { data, error } = await supabase.functions.invoke('chat-ai', {
         body: {
-          messages: conversationHistory,
+          messages: fullConversationHistory,
           agents: currentSquad,
           mentionedAgents: userMessage.mentionedAgents || [],
         },

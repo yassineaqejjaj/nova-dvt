@@ -49,6 +49,7 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
 }) => {
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({
     core: true,
+    tools: true,
     workflows: true,
     agent: true,
   });
@@ -95,6 +96,25 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
     }
   ];
 
+  // NOVA TOOLS Module - AI-accessible tools
+  const toolsItems = [
+    {
+      id: 'canvas-generator' as const,
+      label: 'Canvas Generator',
+      icon: Grid3X3,
+      description: 'Multi-canvas frameworks',
+      isAction: true,
+      onClick: onCreateCanvas
+    },
+    {
+      id: 'instant-prd' as TabType,
+      label: 'Instant PRD',
+      icon: Sparkles,
+      description: 'Generate PRD in 15s',
+      isAction: false
+    }
+  ];
+
   // NOVA WORKFLOWS Module
   const workflowItems = [
     {
@@ -102,12 +122,6 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
       label: 'All Workflows',
       icon: Workflow,
       description: 'Processus guidés IA'
-    },
-    {
-      id: 'instant-prd' as TabType,
-      label: 'Instant PRD',
-      icon: Sparkles,
-      description: 'Générer un PRD rapidement'
     }
   ];
 
@@ -250,6 +264,68 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
     );
   };
 
+  const renderToolsGroup = () => {
+    const isExpanded = expandedGroups.tools;
+    
+    return (
+      <SidebarGroup key="tools">
+        <div className="mb-2">
+          <Button
+            variant="ghost"
+            onClick={() => toggleGroup('tools')}
+            className="w-full justify-start px-2 h-8 hover:bg-primary/5"
+          >
+            <Sparkles className="w-4 h-4 mr-2 text-primary" />
+            {open && (
+              <>
+                <SidebarGroupLabel className="flex-1 text-left font-semibold text-primary">
+                  NOVA TOOLS
+                </SidebarGroupLabel>
+                <Badge variant="secondary" className="text-xs">AI</Badge>
+                <ChevronDown
+                  className={`w-4 h-4 ml-2 transition-transform ${
+                    isExpanded ? 'transform rotate-180' : ''
+                  }`}
+                />
+              </>
+            )}
+          </Button>
+        </div>
+        
+        {isExpanded && (
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {toolsItems.map((item) => {
+                const Icon = item.icon;
+                const isActive = !item.isAction && activeTab === item.id;
+                
+                return (
+                  <SidebarMenuItem key={item.label}>
+                    <SidebarMenuButton asChild>
+                      <Button
+                        variant="ghost"
+                        onClick={() => item.isAction ? item.onClick?.() : onTabChange(item.id as TabType)}
+                        className={`w-full justify-start h-11 px-3 ${getNavClass(isActive)}`}
+                      >
+                        <Icon className="w-4 h-4 mr-3 flex-shrink-0" />
+                        <div className={`flex-1 text-left transition-opacity duration-200 overflow-hidden ${!open ? 'opacity-0 w-0' : 'opacity-100'}`}>
+                          <div className="flex items-center space-x-2">
+                            <span className="text-sm font-medium whitespace-nowrap">{item.label}</span>
+                          </div>
+                          <p className="text-xs text-muted-foreground whitespace-nowrap">{item.description}</p>
+                        </div>
+                      </Button>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                );
+              })}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        )}
+      </SidebarGroup>
+    );
+  };
+
   return (
     <Sidebar 
       className={`transition-all duration-300 ease-in-out ${
@@ -293,46 +369,14 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
           </SidebarGroup>
         )}
         
+        {/* NOVA TOOLS Module - AI-accessible */}
+        {renderToolsGroup()}
+        
         {/* NOVA WORKFLOWS Module */}
         {renderModuleGroup('NOVA WORKFLOWS', 'workflows', workflowItems, Workflow)}
         
         {/* NOVA AGENT Module */}
         {renderModuleGroup('NOVA AGENT', 'agent', agentItems, Bot)}
-
-        {/* Quick Actions */}
-        {open && (
-          <SidebarGroup>
-            <SidebarGroupLabel>Quick Actions</SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                <SidebarMenuItem>
-                  <SidebarMenuButton asChild>
-                    <Button
-                      variant="ghost"
-                      onClick={onCreateCanvas}
-                      className="w-full justify-start h-10 px-3 hover:bg-accent/50"
-                    >
-                      <Grid3X3 className="w-4 h-4 mr-3" />
-                      <span className="text-sm">Canvas Generator</span>
-                    </Button>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-                <SidebarMenuItem>
-                  <SidebarMenuButton asChild>
-                    <Button
-                      variant="ghost"
-                      onClick={() => onTabChange('instant-prd')}
-                      className="w-full justify-start h-10 px-3 hover:bg-accent/50"
-                    >
-                      <Sparkles className="w-4 h-4 mr-3" />
-                      <span className="text-sm">Instant PRD</span>
-                    </Button>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        )}
       </SidebarContent>
     </Sidebar>
   );
