@@ -34,6 +34,7 @@ export interface UserProfile {
   unlockedAgents: string[];
   badges: Badge[];
   avatar_url?: string;
+  longestStreak?: number;
 }
 
 export interface Badge {
@@ -42,6 +43,8 @@ export interface Badge {
   description: string;
   icon: string;
   unlockedAt: Date;
+  category?: string;
+  rarity?: string;
 }
 
 export interface ChatMessage {

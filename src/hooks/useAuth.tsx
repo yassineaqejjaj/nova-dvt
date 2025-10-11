@@ -54,20 +54,21 @@ export const useAuth = () => {
         throw profileError;
       }
 
-      // Load gamification data (for coins)
+      // Load gamification data (coins and streak)
       const { data: gamification, error: gamificationError } = await supabase
         .from('user_gamification')
-        .select('coins')
+        .select('coins, current_streak, longest_streak')
         .eq('user_id', userId)
         .maybeSingle();
 
       if (gamificationError) throw gamificationError;
 
-      // Load badges
+      // Load badges from user_gamification_badges
       const { data: badges, error: badgesError } = await supabase
-        .from('user_badges')
+        .from('user_gamification_badges')
         .select('*')
-        .eq('user_id', userId);
+        .eq('user_id', userId)
+        .order('unlocked_at', { ascending: false });
 
       if (badgesError) throw badgesError;
 
@@ -85,7 +86,7 @@ export const useAuth = () => {
         role: profile?.role || 'Team Member',
         level: profile?.level || 1,
         xp: profile?.xp || 0,
-        streak: profile?.streak || 0,
+        streak: gamification?.current_streak || 0,
         coins: gamification?.coins || 0,
         avatar_url: profile?.avatar_url,
         unlockedAgents: unlockedAgents?.map(ua => ua.agent_id) || [],
@@ -94,8 +95,11 @@ export const useAuth = () => {
           name: b.badge_name,
           description: b.badge_description,
           icon: b.badge_icon,
-          unlockedAt: new Date(b.unlocked_at)
-        })) || []
+          unlockedAt: new Date(b.unlocked_at),
+          category: b.badge_category,
+          rarity: b.rarity
+        })) || [],
+        longestStreak: gamification?.longest_streak || 0
       };
 
       setUserProfile(userProfile);

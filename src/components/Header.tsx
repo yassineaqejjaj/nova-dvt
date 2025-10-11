@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { UserProfile } from '@/types';
-import { Trophy, Zap, User } from 'lucide-react';
+import { Trophy, Zap, User, Star } from 'lucide-react';
 
 interface HeaderProps {
   user: UserProfile;
@@ -27,7 +27,7 @@ export const Header: React.FC<HeaderProps> = ({ user, onOpenProfile }) => {
         </div>
 
         <div className="flex items-center space-x-4">
-          {/* XP and Level Display */}
+          {/* Stats Display */}
           <div className="hidden sm:flex items-center space-x-3 bg-muted/50 rounded-lg px-3 py-2">
             <div className="flex items-center space-x-1">
               <Trophy className="w-4 h-4 text-agent-orange" />
@@ -36,6 +36,10 @@ export const Header: React.FC<HeaderProps> = ({ user, onOpenProfile }) => {
             <div className="flex items-center space-x-1">
               <Zap className="w-4 h-4 text-primary" />
               <span className="text-sm font-medium">{user.xp} XP</span>
+            </div>
+            <div className="flex items-center space-x-1">
+              <Star className="w-4 h-4 text-agent-orange" />
+              <span className="text-sm font-medium">{user.coins}</span>
             </div>
             <div className="w-20 h-2 bg-muted rounded-full overflow-hidden">
               <div 
@@ -59,9 +63,9 @@ export const Header: React.FC<HeaderProps> = ({ user, onOpenProfile }) => {
             className="flex items-center space-x-2 hover:bg-muted/50"
           >
             <Avatar className="w-8 h-8">
-              <AvatarImage src={`/api/placeholder/32/32?text=${user.name.split(' ').map(n => n[0]).join('')}`} />
+              <AvatarImage src={user.avatar_url || ''} />
               <AvatarFallback>
-                <User className="w-4 h-4" />
+                {user.name.split(' ').map(n => n[0]).join('')}
               </AvatarFallback>
             </Avatar>
             <div className="hidden md:block text-left">
