@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -81,8 +81,75 @@ export const Dashboard: React.FC<DashboardProps> = ({
     { action: 'Reached Level 5', time: '3 days ago', icon: Trophy }
   ];
 
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return 'Good morning';
+    if (hour < 18) return 'Good afternoon';
+    return 'Good evening';
+  };
+
+  const getGreetingEmoji = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return '☀️';
+    if (hour < 18) return '👋';
+    return '🌙';
+  };
+
+  // Rotating features for Instant PRD
+  const [currentFeatureIndex, setCurrentFeatureIndex] = useState(0);
+  const instantPRDFeatures = [
+    {
+      icon: '👥',
+      title: '3 AI-Generated Personas',
+      description: 'Complete with demographics, pain points, and motivations'
+    },
+    {
+      icon: '📝',
+      title: '12 Detailed User Stories',
+      description: 'Structured with acceptance criteria and priority levels'
+    },
+    {
+      icon: '🎨',
+      title: 'Interactive Wireframes',
+      description: 'Visual mockups generated from your description'
+    },
+    {
+      icon: '🏗️',
+      title: 'Technical Architecture',
+      description: 'Complete tech stack recommendations and system design'
+    },
+    {
+      icon: '📊',
+      title: 'Success Metrics & KPIs',
+      description: 'Measurable goals aligned with business objectives'
+    },
+    {
+      icon: '🚀',
+      title: 'Go-to-Market Strategy',
+      description: 'Launch plan with phasing and rollout recommendations'
+    }
+  ];
+
+  useEffect(() => {
+    // Rotate features every 4 seconds
+    const interval = setInterval(() => {
+      setCurrentFeatureIndex((prev) => (prev + 1) % instantPRDFeatures.length);
+    }, 4000);
+    return () => clearInterval(interval);
+  }, []);
+
   return (
     <div className="space-y-6">
+      {/* Welcome Header */}
+      <div className="text-center space-y-3">
+        <h1 className="text-4xl font-bold gradient-text animate-fade-in">
+          {getGreeting()}, {user.name}! {getGreetingEmoji()}
+        </h1>
+        <p className="text-muted-foreground text-lg">
+          Ready to collaborate with your AI squad? Here's your progress overview.
+        </p>
+      </div>
+
       {/* Continue Flow Card */}
       {session && (
         <ContinueFlow
@@ -92,26 +159,16 @@ export const Dashboard: React.FC<DashboardProps> = ({
         />
       )}
 
-      {/* Welcome Header */}
-      <div className="text-center space-y-2">
-        <h1 className="text-3xl font-bold gradient-text">
-          Welcome back, {user.name}! 👋
-        </h1>
-        <p className="text-muted-foreground">
-          Ready to collaborate with your AI squad? Here's your progress overview.
-        </p>
-      </div>
-
-      {/* Instant PRD CTA - Hero Feature */}
+      {/* Instant PRD CTA - Hero Feature with Rotating Highlights */}
       <Card className="relative overflow-hidden border-2 border-primary/50 bg-gradient-to-br from-primary/10 via-background to-accent/10">
         <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl" />
         <CardContent className="relative pt-6">
           <div className="flex flex-col md:flex-row items-center justify-between gap-6">
             <div className="flex items-start gap-4 flex-1">
               <div className="p-4 rounded-2xl bg-primary/20 backdrop-blur">
-                <Sparkles className="w-10 h-10 text-primary" />
+                <Sparkles className="w-10 h-10 text-primary animate-pulse" />
               </div>
-              <div className="space-y-2">
+              <div className="space-y-3">
                 <div className="flex items-center gap-2">
                   <h3 className="text-2xl font-bold">Instant PRD</h3>
                   <Badge variant="default" className="animate-pulse">
@@ -119,32 +176,58 @@ export const Dashboard: React.FC<DashboardProps> = ({
                   </Badge>
                 </div>
                 <p className="text-muted-foreground">
-                  Transformez une simple phrase en PRD complet avec personas, user stories, wireframes et plus en <span className="font-bold text-primary">15 secondes</span>
+                  Transform a simple phrase into a complete PRD with personas, user stories, wireframes and more in <span className="font-bold text-primary">15 seconds</span>
                 </p>
-                <div className="flex flex-wrap gap-2 pt-2">
-                  <Badge variant="secondary" className="text-xs">📝 12 User Stories</Badge>
-                  <Badge variant="secondary" className="text-xs">👥 3 Personas + Images</Badge>
-                  <Badge variant="secondary" className="text-xs">🎨 Wireframes</Badge>
-                  <Badge variant="secondary" className="text-xs">🏗️ Architecture</Badge>
-                  <Badge variant="secondary" className="text-xs">📊 KPIs</Badge>
+                
+                {/* Rotating Feature Highlight */}
+                <div className="p-4 rounded-lg bg-primary/5 border border-primary/20 animate-fade-in">
+                  <div className="flex items-start gap-3">
+                    <span className="text-2xl flex-shrink-0">
+                      {instantPRDFeatures[currentFeatureIndex].icon}
+                    </span>
+                    <div>
+                      <p className="font-semibold text-sm text-primary">
+                        {instantPRDFeatures[currentFeatureIndex].title}
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {instantPRDFeatures[currentFeatureIndex].description}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Feature Indicator Dots */}
+                <div className="flex gap-1.5 pt-1">
+                  {instantPRDFeatures.map((_, index) => (
+                    <button
+                      key={index}
+                      onClick={() => setCurrentFeatureIndex(index)}
+                      className={`h-1.5 rounded-full transition-all duration-300 ${
+                        index === currentFeatureIndex 
+                          ? 'w-6 bg-primary' 
+                          : 'w-1.5 bg-primary/30 hover:bg-primary/50'
+                      }`}
+                      aria-label={`View feature ${index + 1}`}
+                    />
+                  ))}
                 </div>
               </div>
             </div>
-            <div className="flex flex-col gap-3">
+            <div className="flex flex-col gap-3 items-center">
               <Button 
                 size="lg" 
-                className="group relative overflow-hidden"
-                onClick={() => window.location.href = '/instant-prd'}
+                className="group relative overflow-hidden px-8"
+                onClick={() => onNavigate('instant-prd')}
               >
                 <span className="relative z-10 flex items-center gap-2">
                   <Zap className="w-5 h-5" />
-                  Essayer Maintenant
+                  Try Now
                   <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                 </span>
                 <div className="absolute inset-0 bg-gradient-to-r from-primary to-accent opacity-0 group-hover:opacity-100 transition-opacity" />
               </Button>
-              <p className="text-xs text-center text-muted-foreground">
-                2 semaines → 15 secondes ⚡
+              <p className="text-xs text-center text-muted-foreground font-medium">
+                2 weeks → 15 seconds ⚡
               </p>
             </div>
           </div>
