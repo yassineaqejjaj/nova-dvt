@@ -1,5 +1,6 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { multiAgentPrompts } from "../_shared/prompts.ts";
 
 const lovableApiKey = Deno.env.get('LOVABLE_API_KEY');
 
@@ -90,16 +91,10 @@ serve(async (req) => {
       // Check if this agent has special tool capabilities
       const toolInstructions = getToolInstructions(agent);
       
+      // Use centralized prompt builder with agent context
       const systemMessage = {
         role: 'system',
-        content: `You are ${agent.name}, a ${agent.specialty} specialist. Your background: ${agent.backstory}
-
-Your key capabilities: ${agent.capabilities.join(', ')}
-Your expertise tags: ${agent.tags.join(', ')}
-
-${toolInstructions}
-
-Respond as this specific agent with your unique perspective and expertise. Keep responses concise (2-3 sentences), professional, and focused on your specialty. If other agents are mentioned, acknowledge their expertise but maintain your unique viewpoint.`
+        content: multiAgentPrompts.buildSystemPrompt(agent) + `\n\n${toolInstructions}`
       };
 
       const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {

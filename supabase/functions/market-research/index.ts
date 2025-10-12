@@ -1,4 +1,5 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+import { marketResearchPrompts } from "../_shared/prompts.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -32,34 +33,8 @@ Deno.serve(async (req) => {
       throw new Error('OpenAI API key not configured');
     }
 
-    const systemPrompt = `You are a market research analyst specializing in competitive intelligence and market trends. 
-Your task is to provide comprehensive market research based on the user's query.
-
-Analyze the query and provide insights in the following structure:
-1. Executive summary
-2. Key competitors (3-5) with their strengths and weaknesses
-3. Current market trends (5-7)
-4. User needs and pain points (5-7)
-5. Opportunities for differentiation (3-5)
-
-Format your response as JSON with this structure:
-{
-  "summary": "Brief executive summary",
-  "competitors": [
-    {
-      "name": "Competitor name",
-      "strengths": ["strength1", "strength2"],
-      "weaknesses": ["weakness1", "weakness2"]
-    }
-  ],
-  "trends": ["trend1", "trend2"],
-  "userNeeds": ["need1", "need2"],
-  "opportunities": ["opportunity1", "opportunity2"]
-}`;
-
-    const userPrompt = `Research Query: ${query}${context ? `\n\nAdditional Context: ${context}` : ''}
-
-Please provide comprehensive market research insights for this query.`;
+    const systemPrompt = marketResearchPrompts.system;
+    const userPrompt = marketResearchPrompts.research(query, context);
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',

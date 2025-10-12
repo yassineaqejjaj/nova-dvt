@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { intentDetectionPrompts } from "../_shared/prompts.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -18,33 +19,13 @@ serve(async (req) => {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
 
-    // System prompt for intent detection
-    const systemPrompt = `You are an intent detection assistant for Nova, a product management AI platform. 
-Your job is to analyze user messages and detect if they want to use specific tools.
-
-Available tools:
-1. "canvas_generator" - Use when user wants to:
-   - Create a business model canvas
-   - Generate frameworks (lean canvas, value proposition, etc.)
-   - Visualize business strategy
-   - Create product canvases
-   Keywords: canvas, framework, business model, lean canvas, value proposition
-
-2. "instant_prd" - Use when user wants to:
-   - Create a PRD (Product Requirements Document)
-   - Generate product specifications
-   - Write user stories
-   - Create product documentation
-   - Define product features
-   Keywords: PRD, product requirements, user stories, specifications, features, documentation
-
-3. "none" - Use when the message doesn't clearly indicate they want to use a tool
-
-Respond ONLY with the tool name in lowercase: "canvas_generator", "instant_prd", or "none"`;
+    // System prompt for intent detection using centralized prompts
+    const systemPrompt = intentDetectionPrompts.system;
+    const userInstructions = intentDetectionPrompts.detect;
 
     // Build conversation context
     const messages = [
-      { role: "system", content: systemPrompt },
+      { role: "system", content: `${systemPrompt}\n\n${userInstructions}` },
       ...(conversationHistory || []).slice(-3), // Last 3 messages for context
       { role: "user", content: message }
     ];

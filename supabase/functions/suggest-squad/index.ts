@@ -1,5 +1,6 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { squadSuggestionPrompts } from "../_shared/prompts.ts";
 
 const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
 
@@ -31,23 +32,8 @@ serve(async (req) => {
       familyColor: agent.familyColor
     }));
 
-    const systemPrompt = `You are an AI squad composition expert. Your job is to analyze a user's project context and recommend the most effective team of AI agents.
-
-Available agents:
-${JSON.stringify(agentsDescription, null, 2)}
-
-Based on the user's context, recommend 2-5 agents that would form the most effective squad. Consider:
-1. Complementary skill sets
-2. Coverage of required capabilities
-3. Balance between strategy, design, development, and growth
-4. Synergies between agent specialties
-
-Return your response as a JSON object with this structure:
-{
-  "recommendedAgents": ["agent-id-1", "agent-id-2", ...],
-  "reasoning": "Brief explanation of why this squad composition is optimal",
-  "squadName": "A creative name for this squad based on their combined strengths"
-}`;
+    const systemPrompt = squadSuggestionPrompts.system(agentsDescription);
+    const userPrompt = squadSuggestionPrompts.analyze(context);
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -59,7 +45,7 @@ Return your response as a JSON object with this structure:
         model: 'gpt-4o-mini',
         messages: [
           { role: 'system', content: systemPrompt },
-          { role: 'user', content: `Project context: ${context}` }
+          { role: 'user', content: userPrompt }
         ],
         response_format: { type: "json_object" },
         temperature: 0.7,
