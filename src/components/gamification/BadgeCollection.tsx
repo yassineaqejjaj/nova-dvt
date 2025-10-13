@@ -4,7 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Trophy, Lock, Search, Filter, Sparkles, Award } from 'lucide-react';
+import { Trophy, Lock, Search, Filter, Sparkles, Award, Share2 } from 'lucide-react';
 import type { Badge as BadgeType } from '@/hooks/useGamification';
 import { 
   badgeDefinitions, 
@@ -22,6 +22,15 @@ export const BadgeCollection = ({ badges }: BadgeCollectionProps) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<BadgeCategory | 'all'>('all');
   const [selectedRarity, setSelectedRarity] = useState<BadgeRarity | 'all'>('all');
+
+  const handleShareOnLinkedIn = (badgeDef: typeof badgeDefinitions[0], earnedDate: string) => {
+    const appUrl = window.location.origin;
+    const badgeUrl = `${appUrl}/#badge-${badgeDef.id}`;
+    const text = `I just earned the "${badgeDef.name}" badge! ${badgeDef.description}`;
+    
+    const linkedInUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(badgeUrl)}&text=${encodeURIComponent(text)}`;
+    window.open(linkedInUrl, '_blank', 'width=600,height=600');
+  };
 
   // Map earned badges by ID for quick lookup
   const earnedBadgesMap = useMemo(() => {
@@ -190,6 +199,21 @@ export const BadgeCollection = ({ badges }: BadgeCollectionProps) => {
                 {/* Sparkles for legendary */}
                 {isEarned && badgeDef.rarity === 'legendary' && (
                   <Sparkles className="absolute top-1 right-1 w-3 h-3 text-amber-500 animate-pulse" />
+                )}
+
+                {/* Share Button for Earned Badges */}
+                {isEarned && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="absolute bottom-1 right-1 h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleShareOnLinkedIn(badgeDef, earnedBadge.unlockedAt);
+                    }}
+                  >
+                    <Share2 className="w-3 h-3" />
+                  </Button>
                 )}
               </div>
 
