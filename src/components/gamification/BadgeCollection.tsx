@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Trophy, Lock, Search, Filter, Sparkles, Award, Share2 } from 'lucide-react';
+import { toast } from 'sonner';
 import type { Badge as BadgeType } from '@/hooks/useGamification';
 import { 
   badgeDefinitions, 
@@ -23,13 +24,82 @@ export const BadgeCollection = ({ badges }: BadgeCollectionProps) => {
   const [selectedCategory, setSelectedCategory] = useState<BadgeCategory | 'all'>('all');
   const [selectedRarity, setSelectedRarity] = useState<BadgeRarity | 'all'>('all');
 
-  const handleShareOnLinkedIn = (badgeDef: typeof badgeDefinitions[0], earnedDate: string) => {
-    const appUrl = window.location.origin;
-    const badgeUrl = `${appUrl}/#badge-${badgeDef.id}`;
-    const text = `I just earned the "${badgeDef.name}" badge! ${badgeDef.description}`;
-    
-    const linkedInUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(badgeUrl)}&text=${encodeURIComponent(text)}`;
-    window.open(linkedInUrl, '_blank', 'width=600,height=600');
+  const handleShareOnLinkedIn = async (badgeDef: typeof badgeDefinitions[0], earnedDate: string) => {
+    try {
+      // Create canvas to generate badge image
+      const canvas = document.createElement('canvas');
+      canvas.width = 800;
+      canvas.height = 800;
+      const ctx = canvas.getContext('2d');
+      
+      if (!ctx) return;
+
+      // Background with gradient
+      const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+      gradient.addColorStop(0, '#1a1a1a');
+      gradient.addColorStop(1, '#2d2d2d');
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Badge icon (emoji)
+      ctx.font = 'bold 200px Arial';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(badgeDef.icon, canvas.width / 2, canvas.height / 2 - 80);
+
+      // Badge name
+      ctx.font = 'bold 48px Arial';
+      ctx.fillStyle = '#ffffff';
+      ctx.fillText(badgeDef.name, canvas.width / 2, canvas.height / 2 + 140);
+
+      // Rarity badge
+      ctx.font = 'bold 32px Arial';
+      const rarityColors = {
+        common: '#9ca3af',
+        rare: '#3b82f6',
+        epic: '#a855f7',
+        legendary: '#f59e0b'
+      };
+      ctx.fillStyle = rarityColors[badgeDef.rarity as keyof typeof rarityColors] || '#9ca3af';
+      ctx.fillText(badgeDef.rarity.toUpperCase(), canvas.width / 2, canvas.height / 2 + 200);
+
+      // Date
+      ctx.font = '28px Arial';
+      ctx.fillStyle = '#9ca3af';
+      const dateStr = new Date(earnedDate).toLocaleDateString('en-US', { 
+        month: 'short', 
+        day: 'numeric', 
+        year: 'numeric' 
+      });
+      ctx.fillText(`Unlocked: ${dateStr}`, canvas.width / 2, canvas.height / 2 + 260);
+
+      // Convert canvas to blob and download
+      canvas.toBlob((blob) => {
+        if (!blob) return;
+        
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.download = `${badgeDef.id}-badge.png`;
+        link.href = url;
+        link.click();
+        URL.revokeObjectURL(url);
+      });
+
+      // Copy description to clipboard
+      const text = `🏆 Je viens de débloquer le badge "${badgeDef.name}" !\n\n${badgeDef.description}\n\nDébloqué le ${dateStr}`;
+      await navigator.clipboard.writeText(text);
+
+      // Show success message and open LinkedIn
+      toast.success('Image téléchargée et texte copié !', {
+        description: 'Collez le texte et uploadez l\'image sur LinkedIn'
+      });
+      
+      window.open('https://www.linkedin.com/feed/', '_blank');
+    } catch (error) {
+      toast.error('Erreur lors du partage', {
+        description: 'Impossible de générer l\'image du badge'
+      });
+    }
   };
 
   // Map earned badges by ID for quick lookup
