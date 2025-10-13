@@ -21,6 +21,7 @@ import { useSessionMemory } from '@/hooks/useSessionMemory';
 import { ProductContextManager } from '@/components/ProductContextManager';
 import { InstantPRD } from '@/components/InstantPRD';
 import { RealityMode } from '@/components/RealityMode';
+import { ConfidentialityBanner } from '@/components/ConfidentialityBanner';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -422,6 +423,7 @@ const Index = () => {
           </header>
           
           <main className="container mx-auto px-4 py-8 flex-1">
+            <ConfidentialityBanner />
             {renderTabContent()}
           </main>
         </div>

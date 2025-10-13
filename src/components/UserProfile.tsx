@@ -52,6 +52,8 @@ export const UserProfile: React.FC<UserProfileProps> = ({
     display_name: user.name,
     role: user.role
   });
+  const [showConfidentialityDialog, setShowConfidentialityDialog] = useState(false);
+  const [pendingAvatarFile, setPendingAvatarFile] = useState<File | null>(null);
 
   useEffect(() => {
     checkAdminStatus();
@@ -133,6 +135,18 @@ export const UserProfile: React.FC<UserProfileProps> = ({
   const handleAvatarUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
+
+    // Show confidentiality warning before upload
+    setPendingAvatarFile(file);
+    setShowConfidentialityDialog(true);
+  };
+
+  const confirmAvatarUpload = async () => {
+    if (!pendingAvatarFile) return;
+    setShowConfidentialityDialog(false);
+
+    const file = pendingAvatarFile;
+    setPendingAvatarFile(null);
 
     const validTypes = ['image/jpeg', 'image/png', 'image/webp'];
     if (!validTypes.includes(file.type)) {

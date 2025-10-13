@@ -30,6 +30,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { ConfidentialityDialog } from './ConfidentialityDialog';
 
 interface CanvasGeneratorProps {
   open: boolean;
@@ -426,10 +427,24 @@ export const CanvasGenerator: React.FC<CanvasGeneratorProps> = ({
   const [isGenerating, setIsGenerating] = useState(false);
   const [roleFilter, setRoleFilter] = useState<'all' | 'product-manager' | 'designer' | 'developer'>('all');
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [showConfidentialityDialog, setShowConfidentialityDialog] = useState(false);
+  const [pendingFiles, setPendingFiles] = useState<FileList | null>(null);
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
     if (!files) return;
+
+    // Show confidentiality warning before upload
+    setPendingFiles(files);
+    setShowConfidentialityDialog(true);
+  };
+
+  const confirmFileUpload = async () => {
+    if (!pendingFiles) return;
+    setShowConfidentialityDialog(false);
+
+    const files = pendingFiles;
+    setPendingFiles(null);
 
     const uploadPromises = Array.from(files).map(async (file) => {
       if (file.size > 5 * 1024 * 1024) { // 5MB limit
@@ -721,6 +736,11 @@ export const CanvasGenerator: React.FC<CanvasGeneratorProps> = ({
 
                 {/* Document upload section */}
                 <div className="space-y-4">
+                  <ConfidentialityDialog
+                    open={showConfidentialityDialog}
+                    onOpenChange={setShowConfidentialityDialog}
+                    onConfirm={confirmFileUpload}
+                  />
                   <div className="flex items-center justify-between">
                     <h4 className="text-md font-semibold">Supporting Documents</h4>
                     <Button
