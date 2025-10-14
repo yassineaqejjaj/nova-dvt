@@ -8,6 +8,7 @@ export interface Agent {
   tags: string[];
   xpRequired: number;
   familyColor: 'blue' | 'green' | 'purple' | 'orange';
+  personality?: 'balanced' | 'analytical' | 'creative' | 'socratic';
 }
 
 export interface Squad {

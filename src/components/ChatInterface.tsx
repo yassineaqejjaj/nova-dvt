@@ -459,7 +459,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ currentSquad, squa
       </Card>
 
       {/* Chat Messages */}
-      <Card className="flex flex-col h-[500px]">
+      <Card className="flex flex-col h-[700px]">
         <div className="p-4 border-b">
           <h3 className="font-semibold">Conversation</h3>
         </div>
@@ -474,7 +474,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ currentSquad, squa
                 }`}
               >
                 {message.sender !== 'user' && (
-                  <Avatar className="w-8 h-8">
+                  <Avatar className="w-10 h-10">
                     <AvatarImage src={(message.sender as Agent).avatar} />
                     <AvatarFallback>
                       {(message.sender as Agent).name.split(' ').map(n => n[0]).join('')}

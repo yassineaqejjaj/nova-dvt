@@ -28,10 +28,18 @@ export const CreateAgentDialog: React.FC<CreateAgentDialogProps> = ({
     name: '',
     specialty: '',
     familyColor: 'blue' as Agent['familyColor'],
+    personality: 'balanced' as Agent['personality'],
     capabilities: [] as string[],
     currentCapability: ''
   });
   const [isGenerating, setIsGenerating] = useState(false);
+
+  const personalityTypes = [
+    { id: 'balanced', name: 'Équilibré', description: 'Balance parfaite entre analyse et créativité' },
+    { id: 'analytical', name: 'Analytique', description: 'Centré sur les données et la logique' },
+    { id: 'creative', name: 'Créatif', description: 'Pensée divergente et solutions innovantes' },
+    { id: 'socratic', name: 'Socratique', description: 'Pose des questions pour approfondir' }
+  ];
 
   const handleAddCapability = () => {
     if (formData.currentCapability.trim() && !formData.capabilities.includes(formData.currentCapability.trim())) {
@@ -109,7 +117,8 @@ Example format:
         capabilities: formData.capabilities,
         tags: generatedData.tags || formData.capabilities.slice(0, 4),
         xpRequired: 0,
-        familyColor: formData.familyColor
+        familyColor: formData.familyColor,
+        personality: formData.personality
       };
 
       onAgentCreated(newAgent);
@@ -120,6 +129,7 @@ Example format:
         name: '',
         specialty: '',
         familyColor: 'blue',
+        personality: 'balanced',
         capabilities: [],
         currentCapability: ''
       });
@@ -165,21 +175,44 @@ Example format:
             </div>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="family">Family Color</Label>
-            <Select value={formData.familyColor} onValueChange={(value: Agent['familyColor']) => 
-              setFormData(prev => ({ ...prev, familyColor: value }))
-            }>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="blue">Blue (Product Management)</SelectItem>
-                <SelectItem value="green">Green (Design)</SelectItem>
-                <SelectItem value="purple">Purple (Development)</SelectItem>
-                <SelectItem value="orange">Orange (Marketing & Growth)</SelectItem>
-              </SelectContent>
-            </Select>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="family">Family Color</Label>
+              <Select value={formData.familyColor} onValueChange={(value: Agent['familyColor']) => 
+                setFormData(prev => ({ ...prev, familyColor: value }))
+              }>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="blue">Blue (Product Management)</SelectItem>
+                  <SelectItem value="green">Green (Design)</SelectItem>
+                  <SelectItem value="purple">Purple (Development)</SelectItem>
+                  <SelectItem value="orange">Orange (Marketing & Growth)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="personality">Personnalité</Label>
+              <Select value={formData.personality} onValueChange={(value: Agent['personality']) => 
+                setFormData(prev => ({ ...prev, personality: value }))
+              }>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {personalityTypes.map((type) => (
+                    <SelectItem key={type.id} value={type.id}>
+                      {type.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                {personalityTypes.find(t => t.id === formData.personality)?.description}
+              </p>
+            </div>
           </div>
 
           <div className="space-y-2">
