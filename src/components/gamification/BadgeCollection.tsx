@@ -26,10 +26,16 @@ export const BadgeCollection = ({ badges }: BadgeCollectionProps) => {
 
   const handleShareOnLinkedIn = async (badgeDef: typeof badgeDefinitions[0], earnedDate: string) => {
     try {
+      const dateStr = new Date(earnedDate).toLocaleDateString('fr-FR', { 
+        month: 'long', 
+        day: 'numeric', 
+        year: 'numeric' 
+      });
+
       // Create canvas to generate badge image
       const canvas = document.createElement('canvas');
-      canvas.width = 800;
-      canvas.height = 800;
+      canvas.width = 1200;
+      canvas.height = 1200;
       const ctx = canvas.getContext('2d');
       
       if (!ctx) return;
@@ -41,19 +47,20 @@ export const BadgeCollection = ({ badges }: BadgeCollectionProps) => {
       ctx.fillStyle = gradient;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      // Badge icon (emoji)
-      ctx.font = 'bold 200px Arial';
+      // Badge icon (emoji with proper font support)
+      ctx.font = '300px "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", sans-serif';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText(badgeDef.icon, canvas.width / 2, canvas.height / 2 - 80);
+      ctx.fillStyle = '#ffffff';
+      ctx.fillText(badgeDef.icon, canvas.width / 2, canvas.height / 2 - 120);
 
       // Badge name
-      ctx.font = 'bold 48px Arial';
+      ctx.font = 'bold 64px system-ui, -apple-system, sans-serif';
       ctx.fillStyle = '#ffffff';
-      ctx.fillText(badgeDef.name, canvas.width / 2, canvas.height / 2 + 140);
+      ctx.fillText(badgeDef.name, canvas.width / 2, canvas.height / 2 + 200);
 
       // Rarity badge
-      ctx.font = 'bold 32px Arial';
+      ctx.font = 'bold 42px system-ui, -apple-system, sans-serif';
       const rarityColors = {
         common: '#9ca3af',
         rare: '#3b82f6',
@@ -61,40 +68,53 @@ export const BadgeCollection = ({ badges }: BadgeCollectionProps) => {
         legendary: '#f59e0b'
       };
       ctx.fillStyle = rarityColors[badgeDef.rarity as keyof typeof rarityColors] || '#9ca3af';
-      ctx.fillText(badgeDef.rarity.toUpperCase(), canvas.width / 2, canvas.height / 2 + 200);
+      ctx.fillText(badgeDef.rarity.toUpperCase(), canvas.width / 2, canvas.height / 2 + 280);
 
       // Date
-      ctx.font = '28px Arial';
+      ctx.font = '36px system-ui, -apple-system, sans-serif';
       ctx.fillStyle = '#9ca3af';
-      const dateStr = new Date(earnedDate).toLocaleDateString('en-US', { 
-        month: 'short', 
-        day: 'numeric', 
-        year: 'numeric' 
-      });
-      ctx.fillText(`Unlocked: ${dateStr}`, canvas.width / 2, canvas.height / 2 + 260);
+      ctx.fillText(`Débloqué le ${dateStr}`, canvas.width / 2, canvas.height / 2 + 350);
 
-      // Convert canvas to blob and download
-      canvas.toBlob((blob) => {
+      // Convert canvas to blob
+      canvas.toBlob(async (blob) => {
         if (!blob) return;
         
+        const file = new File([blob], `${badgeDef.id}-badge.png`, { type: 'image/png' });
+        const text = `🏆 Je viens de débloquer le badge "${badgeDef.name}" !\n\n${badgeDef.description}\n\nDébloqué le ${dateStr}`;
+
+        // Try Web Share API first (works on mobile and some browsers)
+        if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+          try {
+            await navigator.share({
+              text: text,
+              files: [file]
+            });
+            toast.success('Badge partagé avec succès !');
+            return;
+          } catch (shareError) {
+            // User cancelled or share failed, continue to fallback
+            if ((shareError as Error).name !== 'AbortError') {
+              console.error('Share error:', shareError);
+            }
+          }
+        }
+
+        // Fallback: Download image and copy text
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.download = `${badgeDef.id}-badge.png`;
         link.href = url;
         link.click();
         URL.revokeObjectURL(url);
-      });
 
-      // Copy description to clipboard
-      const text = `🏆 Je viens de débloquer le badge "${badgeDef.name}" !\n\n${badgeDef.description}\n\nDébloqué le ${dateStr}`;
-      await navigator.clipboard.writeText(text);
+        await navigator.clipboard.writeText(text);
 
-      // Show success message and open LinkedIn
-      toast.success('Image téléchargée et texte copié !', {
-        description: 'Collez le texte et uploadez l\'image sur LinkedIn'
+        toast.success('Image téléchargée et texte copié !', {
+          description: 'Collez le texte et uploadez l\'image sur LinkedIn'
+        });
+        
+        window.open('https://www.linkedin.com/feed/', '_blank');
       });
-      
-      window.open('https://www.linkedin.com/feed/', '_blank');
     } catch (error) {
       toast.error('Erreur lors du partage', {
         description: 'Impossible de générer l\'image du badge'
