@@ -22,6 +22,8 @@ import { ProductContextManager } from '@/components/ProductContextManager';
 import { InstantPRD } from '@/components/InstantPRD';
 import { RealityMode } from '@/components/RealityMode';
 import { ConfidentialityBanner } from '@/components/ConfidentialityBanner';
+import { MeetingMinuteGenerator } from '@/components/MeetingMinuteGenerator';
+import { RACIGenerator } from '@/components/RACIGenerator';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -305,6 +307,12 @@ const Index = () => {
       
       case 'instant-prd':
         return <InstantPRD />;
+      
+      case 'meeting-minutes':
+        return <MeetingMinuteGenerator />;
+      
+      case 'raci-generator':
+        return <RACIGenerator />;
       
       case 'artifacts':
         return <Artifacts userId={user!.id} />;

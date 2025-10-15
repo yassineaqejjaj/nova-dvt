@@ -112,6 +112,20 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
       icon: Sparkles,
       description: 'Generate PRD in 15s',
       isAction: false
+    },
+    {
+      id: 'meeting-minutes' as TabType,
+      label: 'Meeting Minutes',
+      icon: FileText,
+      description: 'AI meeting transcription',
+      isAction: false
+    },
+    {
+      id: 'raci-generator' as TabType,
+      label: 'RACI Generator',
+      icon: Users,
+      description: 'Smart responsibility matrix',
+      isAction: false
     }
   ];
 
