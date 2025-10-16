@@ -24,6 +24,7 @@ import { RealityMode } from '@/components/RealityMode';
 import { ConfidentialityBanner } from '@/components/ConfidentialityBanner';
 import { MeetingMinuteGenerator } from '@/components/MeetingMinuteGenerator';
 import { RACIGenerator } from '@/components/RACIGenerator';
+import EpicToUserStories from '@/components/EpicToUserStories';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -313,6 +314,9 @@ const Index = () => {
       
       case 'raci-generator':
         return <RACIGenerator />;
+      
+      case 'epic-to-stories':
+        return <EpicToUserStories />;
       
       case 'artifacts':
         return <Artifacts userId={user!.id} />;

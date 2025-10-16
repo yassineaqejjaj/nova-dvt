@@ -126,6 +126,13 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
       icon: Users,
       description: 'Smart responsibility matrix',
       isAction: false
+    },
+    {
+      id: 'epic-to-stories' as TabType,
+      label: 'Epic to Stories',
+      icon: Sparkles,
+      description: 'AI-powered story breakdown',
+      isAction: false
     }
   ];
 

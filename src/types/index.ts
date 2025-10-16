@@ -58,7 +58,7 @@ export interface ChatMessage {
   attachments?: File[];
 }
 
-export type TabType = 'dashboard' | 'agents' | 'squads' | 'chat' | 'workflows' | 'artifacts' | 'analytics' | 'admin' | 'gamification' | 'instant-prd' | 'reality-mode' | 'meeting-minutes' | 'raci-generator';
+export type TabType = 'dashboard' | 'agents' | 'squads' | 'chat' | 'workflows' | 'artifacts' | 'analytics' | 'admin' | 'gamification' | 'instant-prd' | 'reality-mode' | 'meeting-minutes' | 'raci-generator' | 'epic-to-stories';
 
 export interface Artifact {
   id: string;
