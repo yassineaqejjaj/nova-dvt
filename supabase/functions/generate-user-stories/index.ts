@@ -112,6 +112,8 @@ Generate ${options?.storyCount || 'an appropriate number of'} user stories from 
 
     const result = JSON.parse(toolCall.function.arguments);
     
+    console.log('Generated stories result:', JSON.stringify(result, null, 2));
+    
     return new Response(JSON.stringify(result), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });

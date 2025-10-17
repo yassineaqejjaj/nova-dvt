@@ -79,6 +79,12 @@ const StoryGenerationModal = ({ epic, open, onClose, onGenerate }: StoryGenerati
 
       if (error) throw error;
 
+      console.log('Raw response from edge function:', data);
+      
+      if (!data || !data.stories) {
+        throw new Error('Invalid response format from edge function');
+      }
+
       const stories: UserStory[] = data.stories.map((story: any) => ({
         ...story,
         id: crypto.randomUUID(),
