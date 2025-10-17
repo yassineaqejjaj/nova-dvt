@@ -52,45 +52,9 @@ Generate ${options?.storyCount || 'an appropriate number of'} user stories from 
       body: JSON.stringify({
         model: 'google/gemini-2.5-flash',
         messages: [
-          { role: 'system', content: systemPrompt },
+          { role: 'system', content: `${systemPrompt}\nReturn ONLY valid JSON with top-level {\"stories\":[...]} and no prose.` },
           { role: 'user', content: userPrompt }
-        ],
-        tools: [{
-          type: 'function',
-          function: {
-            name: 'generate_user_stories',
-            description: 'Generate user stories from an Epic',
-            parameters: {
-              type: 'object',
-              properties: {
-                stories: {
-                  type: 'array',
-                  items: {
-                    type: 'object',
-                    properties: {
-                      title: { type: 'string' },
-                      story: {
-                        type: 'object',
-                        properties: {
-                          asA: { type: 'string' },
-                          iWant: { type: 'string' },
-                          soThat: { type: 'string' }
-                        }
-                      },
-                      acceptanceCriteria: { type: 'array', items: { type: 'string' } },
-                      effortPoints: { type: 'integer', enum: [1, 2, 3, 5, 8, 13] },
-                      priority: { type: 'string', enum: ['high', 'medium', 'low'] },
-                      technicalNotes: { type: 'string' },
-                      dependencies: { type: 'array', items: { type: 'string' } },
-                      tags: { type: 'array', items: { type: 'string' } }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }],
-        tool_choice: { type: 'function', function: { name: 'generate_user_stories' } }
+        ]
       }),
     });
 
@@ -141,25 +105,34 @@ Generate ${options?.storyCount || 'an appropriate number of'} user stories from 
       throw new Error('Fallback AI returned invalid data');
     }
 
-    const data = await response.json();
-    const toolCall = data.choices?.[0]?.message?.tool_calls?.[0];
-
-    if (!toolCall) {
-      throw new Error('No tool call in response');
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('AI Gateway error:', response.status, errorText);
+      // Fallback handled below
     }
 
-    const toolArgs = JSON.parse(toolCall.function.arguments || '{}');
-    let result: any = toolArgs;
+    const data = await response.json();
 
-    const isValidStory = (s: any) => s && typeof s.title === 'string' && s.title.length > 0 &&
-      s.story && typeof s.story.asA === 'string' && typeof s.story.iWant === 'string' && typeof s.story.soThat === 'string' &&
-      Array.isArray(s.acceptanceCriteria) && s.acceptanceCriteria.length >= 2 &&
-      typeof s.effortPoints === 'number' && ['high','medium','low'].includes(s.priority);
+    let result: any = null;
 
-    const needsFallback = !result?.stories || !Array.isArray(result.stories) || result.stories.length === 0 || result.stories.some((s: any) => !isValidStory(s));
+    // Prefer content parsing (no tools)
+    const content = data.choices?.[0]?.message?.content as string | undefined;
+    if (content) {
+      try {
+        result = JSON.parse(content);
+      } catch {
+        const match = content.match(/\{[\s\S]*\}/);
+        if (match) {
+          try { result = JSON.parse(match[0]); } catch { /* ignore */ }
+        }
+      }
+    }
 
-    if (needsFallback) {
-      console.warn('Tool output invalid/empty, falling back to direct JSON generation');
+    // Validate result, otherwise run fallback minimal call
+    const isValidStory = (s: any) => s && typeof s.title === 'string' && s.title && s.story && s.story.asA && s.story.iWant && s.story.soThat && Array.isArray(s.acceptanceCriteria);
+    const invalid = !result?.stories || !Array.isArray(result.stories) || result.stories.length === 0 || result.stories.some((s: any) => !isValidStory(s));
+
+    if (invalid) {
       const fbResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
         method: 'POST',
         headers: {
@@ -169,7 +142,7 @@ Generate ${options?.storyCount || 'an appropriate number of'} user stories from 
         body: JSON.stringify({
           model: 'google/gemini-2.5-flash',
           messages: [
-            { role: 'system', content: `${systemPrompt}\nReturn ONLY valid JSON with a top-level {\"stories\": Story[]} structure. No prose, code fences, or comments.` },
+            { role: 'system', content: `${systemPrompt}\nReturn ONLY valid JSON with top-level {\"stories\":Story[]} and no prose.` },
             { role: 'user', content: userPrompt }
           ]
         })
@@ -178,29 +151,29 @@ Generate ${options?.storyCount || 'an appropriate number of'} user stories from 
       if (!fbResponse.ok) {
         const t = await fbResponse.text();
         console.error('Fallback AI error:', fbResponse.status, t);
-        throw new Error('AI fallback failed');
+        return new Response(JSON.stringify({ error: 'AI gateway error' }), {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
       }
 
       const fbData = await fbResponse.json();
-      const content = fbData.choices?.[0]?.message?.content as string | undefined;
-      let parsed: any = null;
-      if (content) {
-        try {
-          parsed = JSON.parse(content);
-        } catch {
-          const match = content.match(/\{[\s\S]*\}/);
-          if (match) parsed = JSON.parse(match[0]);
+      const fbContent = fbData.choices?.[0]?.message?.content as string | undefined;
+      if (fbContent) {
+        try { result = JSON.parse(fbContent); } catch {
+          const match = fbContent.match(/\{[\s\S]*\}/);
+          if (match) result = JSON.parse(match[0]);
         }
-      }
-      if (parsed?.stories && Array.isArray(parsed.stories)) {
-        result = parsed;
-      } else {
-        throw new Error('Failed to parse structured stories from AI');
       }
     }
 
-    console.log('Generated stories result:', JSON.stringify(result, null, 2));
+    if (!result?.stories || !Array.isArray(result.stories)) {
+      return new Response(JSON.stringify({ stories: [] }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
 
+    console.log('Generated stories result:', JSON.stringify(result, null, 2));
     return new Response(JSON.stringify(result), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });

@@ -96,7 +96,10 @@ const StoryGenerationModal = ({ epic, open, onClose, onGenerate }: StoryGenerati
 
       const valid = mapped.filter(s => s && s.title && s.story?.asA && s.story?.iWant && s.story?.soThat && Array.isArray(s.acceptanceCriteria) && s.acceptanceCriteria.length >= 1);
       if (valid.length === 0) {
-        throw new Error('AI returned empty stories');
+        console.error('Invalid AI stories payload:', data);
+        toast.error('AI returned empty stories. Please try again.');
+        setIsGenerating(false);
+        return;
       }
 
       onGenerate(valid);
