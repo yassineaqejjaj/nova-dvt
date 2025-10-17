@@ -68,43 +68,28 @@ Generate ${options?.storyCount || 'an appropriate number of'} user stories from 
                   items: {
                     type: 'object',
                     properties: {
-                      title: {
-                        type: 'string',
-                        description: 'Short, descriptive title for the story'
-                      },
+                      title: { type: 'string', description: 'Short, descriptive title for the story' },
                       story: {
                         type: 'object',
                         properties: {
                           asA: { type: 'string', description: 'User role' },
                           iWant: { type: 'string', description: 'Desired action' },
                           soThat: { type: 'string', description: 'Expected benefit' }
-                        },
-                        required: ['asA', 'iWant', 'soThat']
+                        }
                       },
-                      acceptanceCriteria: {
-                        type: 'array',
-                        items: { type: 'string' },
-                        description: '2-4 specific, testable criteria'
-                      },
-                      effortPoints: {
-                        type: 'number',
-                        enum: [1, 2, 3, 5, 8, 13],
-                        description: 'Fibonacci effort estimate'
-                      },
-                      priority: {
-                        type: 'string',
-                        enum: ['high', 'medium', 'low']
-                      },
-                      technicalNotes: {
-                        type: 'string',
-                        description: 'Optional technical implementation notes'
-                      }
+                      acceptanceCriteria: { type: 'array', items: { type: 'string' }, description: '2-4 specific, testable criteria' },
+                      effortPoints: { type: 'integer', enum: [1, 2, 3, 5, 8, 13], description: 'Fibonacci effort estimate' },
+                      priority: { type: 'string', enum: ['high', 'medium', 'low'] },
+                      technicalNotes: { type: 'string', description: 'Optional technical implementation notes' },
+                      dependencies: { type: 'array', items: { type: 'string' }, description: 'IDs of dependent stories' },
+                      tags: { type: 'array', items: { type: 'string' } }
                     },
-                    required: ['title', 'story', 'acceptanceCriteria', 'effortPoints', 'priority']
+                    additionalProperties: false
                   }
                 }
               },
-              required: ['stories']
+              required: ['stories'],
+              additionalProperties: false
             }
           }
         }],
