@@ -85,7 +85,7 @@ const StoryGenerationModal = ({ epic, open, onClose, onGenerate }: StoryGenerati
         throw new Error('Invalid response format from edge function');
       }
 
-      const stories: UserStory[] = data.stories.map((story: any) => ({
+      const mapped: UserStory[] = data.stories.map((story: any) => ({
         ...story,
         id: crypto.randomUUID(),
         epicId: epic.id,
@@ -94,8 +94,13 @@ const StoryGenerationModal = ({ epic, open, onClose, onGenerate }: StoryGenerati
         tags: []
       }));
 
-      onGenerate(stories);
-      toast.success(`Generated ${stories.length} user stories`);
+      const valid = mapped.filter(s => s && s.title && s.story?.asA && s.story?.iWant && s.story?.soThat && Array.isArray(s.acceptanceCriteria) && s.acceptanceCriteria.length >= 1);
+      if (valid.length === 0) {
+        throw new Error('AI returned empty stories');
+      }
+
+      onGenerate(valid);
+      toast.success(`Generated ${valid.length} user stories`);
     } catch (error) {
       console.error('Story generation error:', error);
       toast.error('Failed to generate stories. Please try again.');

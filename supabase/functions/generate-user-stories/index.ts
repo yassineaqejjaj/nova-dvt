@@ -75,7 +75,9 @@ Generate ${options?.storyCount || 'an appropriate number of'} user stories from 
                           asA: { type: 'string', description: 'User role' },
                           iWant: { type: 'string', description: 'Desired action' },
                           soThat: { type: 'string', description: 'Expected benefit' }
-                        }
+                        },
+                        required: ['asA', 'iWant', 'soThat'],
+                        additionalProperties: false
                       },
                       acceptanceCriteria: { type: 'array', items: { type: 'string' }, description: '2-4 specific, testable criteria' },
                       effortPoints: { type: 'integer', enum: [1, 2, 3, 5, 8, 13], description: 'Fibonacci effort estimate' },
@@ -84,8 +86,11 @@ Generate ${options?.storyCount || 'an appropriate number of'} user stories from 
                       dependencies: { type: 'array', items: { type: 'string' }, description: 'IDs of dependent stories' },
                       tags: { type: 'array', items: { type: 'string' } }
                     },
+                    required: ['title', 'story', 'acceptanceCriteria', 'effortPoints', 'priority'],
                     additionalProperties: false
-                  }
+                  },
+                  minItems: 3,
+                  maxItems: 7
                 }
               },
               required: ['stories'],
@@ -110,10 +115,59 @@ Generate ${options?.storyCount || 'an appropriate number of'} user stories from 
       throw new Error('No tool call in response');
     }
 
-    const result = JSON.parse(toolCall.function.arguments);
-    
+    const toolArgs = JSON.parse(toolCall.function.arguments || '{}');
+    let result: any = toolArgs;
+
+    const isValidStory = (s: any) => s && typeof s.title === 'string' && s.title.length > 0 &&
+      s.story && typeof s.story.asA === 'string' && typeof s.story.iWant === 'string' && typeof s.story.soThat === 'string' &&
+      Array.isArray(s.acceptanceCriteria) && s.acceptanceCriteria.length >= 2 &&
+      typeof s.effortPoints === 'number' && ['high','medium','low'].includes(s.priority);
+
+    const needsFallback = !result?.stories || !Array.isArray(result.stories) || result.stories.length === 0 || result.stories.some((s: any) => !isValidStory(s));
+
+    if (needsFallback) {
+      console.warn('Tool output invalid/empty, falling back to direct JSON generation');
+      const fbResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${LOVABLE_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'google/gemini-2.5-flash',
+          messages: [
+            { role: 'system', content: `${systemPrompt}\nReturn ONLY valid JSON with a top-level {\"stories\": Story[]} structure. No prose, code fences, or comments.` },
+            { role: 'user', content: userPrompt }
+          ]
+        })
+      });
+
+      if (!fbResponse.ok) {
+        const t = await fbResponse.text();
+        console.error('Fallback AI error:', fbResponse.status, t);
+        throw new Error('AI fallback failed');
+      }
+
+      const fbData = await fbResponse.json();
+      const content = fbData.choices?.[0]?.message?.content as string | undefined;
+      let parsed: any = null;
+      if (content) {
+        try {
+          parsed = JSON.parse(content);
+        } catch {
+          const match = content.match(/\{[\s\S]*\}/);
+          if (match) parsed = JSON.parse(match[0]);
+        }
+      }
+      if (parsed?.stories && Array.isArray(parsed.stories)) {
+        result = parsed;
+      } else {
+        throw new Error('Failed to parse structured stories from AI');
+      }
+    }
+
     console.log('Generated stories result:', JSON.stringify(result, null, 2));
-    
+
     return new Response(JSON.stringify(result), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
