@@ -68,33 +68,25 @@ Generate ${options?.storyCount || 'an appropriate number of'} user stories from 
                   items: {
                     type: 'object',
                     properties: {
-                      title: { type: 'string', description: 'Short, descriptive title for the story' },
+                      title: { type: 'string' },
                       story: {
                         type: 'object',
                         properties: {
-                          asA: { type: 'string', description: 'User role' },
-                          iWant: { type: 'string', description: 'Desired action' },
-                          soThat: { type: 'string', description: 'Expected benefit' }
-                        },
-                        required: ['asA', 'iWant', 'soThat'],
-                        additionalProperties: false
+                          asA: { type: 'string' },
+                          iWant: { type: 'string' },
+                          soThat: { type: 'string' }
+                        }
                       },
-                      acceptanceCriteria: { type: 'array', items: { type: 'string' }, description: '2-4 specific, testable criteria' },
-                      effortPoints: { type: 'integer', enum: [1, 2, 3, 5, 8, 13], description: 'Fibonacci effort estimate' },
+                      acceptanceCriteria: { type: 'array', items: { type: 'string' } },
+                      effortPoints: { type: 'integer', enum: [1, 2, 3, 5, 8, 13] },
                       priority: { type: 'string', enum: ['high', 'medium', 'low'] },
-                      technicalNotes: { type: 'string', description: 'Optional technical implementation notes' },
-                      dependencies: { type: 'array', items: { type: 'string' }, description: 'IDs of dependent stories' },
+                      technicalNotes: { type: 'string' },
+                      dependencies: { type: 'array', items: { type: 'string' } },
                       tags: { type: 'array', items: { type: 'string' } }
-                    },
-                    required: ['title', 'story', 'acceptanceCriteria', 'effortPoints', 'priority'],
-                    additionalProperties: false
-                  },
-                  minItems: 3,
-                  maxItems: 7
+                    }
+                  }
                 }
-              },
-              required: ['stories'],
-              additionalProperties: false
+              }
             }
           }
         }],
@@ -105,7 +97,48 @@ Generate ${options?.storyCount || 'an appropriate number of'} user stories from 
     if (!response.ok) {
       const errorText = await response.text();
       console.error('AI Gateway error:', response.status, errorText);
-      throw new Error(`AI Gateway returned ${response.status}`);
+      // Fallback: direct JSON (no tool calling)
+      const fbResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${LOVABLE_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'google/gemini-2.5-flash',
+          messages: [
+            { role: 'system', content: `${systemPrompt}\nReturn ONLY valid JSON with a top-level {\"stories\": Story[]} structure. No prose, code fences, or comments.` },
+            { role: 'user', content: userPrompt }
+          ]
+        }),
+      });
+
+      if (!fbResponse.ok) {
+        const t = await fbResponse.text();
+        console.error('AI fallback error:', fbResponse.status, t);
+        throw new Error(`AI Gateway returned ${response.status}`);
+      }
+
+      const fbData = await fbResponse.json();
+      const content = fbData.choices?.[0]?.message?.content as string | undefined;
+      let parsed: any = null;
+      if (content) {
+        try {
+          parsed = JSON.parse(content);
+        } catch {
+          const match = content.match(/\{[\s\S]*\}/);
+          if (match) parsed = JSON.parse(match[0]);
+        }
+      }
+
+      if (parsed?.stories && Array.isArray(parsed.stories)) {
+        console.log('Generated stories result (fallback):', JSON.stringify(parsed, null, 2));
+        return new Response(JSON.stringify(parsed), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      throw new Error('Fallback AI returned invalid data');
     }
 
     const data = await response.json();
