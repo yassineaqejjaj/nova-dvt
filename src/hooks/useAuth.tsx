@@ -12,6 +12,8 @@ export const useAuth = () => {
   const [onboardingCompleted, setOnboardingCompleted] = useState(false);
 
   useEffect(() => {
+    let profileChannel: ReturnType<typeof supabase.channel> | null = null;
+
     // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
@@ -20,7 +22,7 @@ export const useAuth = () => {
         loadUserSquads(session.user.id);
 
         // Set up realtime subscription for profile updates
-        const profileChannel = supabase
+        profileChannel = supabase
           .channel('user-profile-changes')
           .on(
             'postgres_changes',
@@ -42,11 +44,6 @@ export const useAuth = () => {
             }
           )
           .subscribe();
-
-        // Clean up on unmount
-        return () => {
-          supabase.removeChannel(profileChannel);
-        };
       } else {
         setLoading(false);
       }
@@ -67,7 +64,12 @@ export const useAuth = () => {
       }
     );
 
-    return () => subscription.unsubscribe();
+    return () => {
+      subscription.unsubscribe();
+      if (profileChannel) {
+        supabase.removeChannel(profileChannel);
+      }
+    };
   }, []);
 
   const loadUserProfile = async (userId: string) => {
