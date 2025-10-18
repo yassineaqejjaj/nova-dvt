@@ -18,6 +18,7 @@ import { ProductContextManager } from './ProductContextManager';
 import { FeatureDiscoveryWorkflow } from './FeatureDiscoveryWorkflow';
 import { TechnicalSpecification } from './TechnicalSpecification';
 import { SmartDiscoveryCanvas } from './SmartDiscoveryCanvas';
+import EpicToUserStories from './EpicToUserStories';
 import {
   Rocket,
   Target,
@@ -51,7 +52,7 @@ interface Workflow {
     id: string;
     title: string;
     description: string;
-    tool?: 'canvas' | 'story' | 'impact' | 'research' | 'design' | 'code' | 'roadmap' | 'launch' | 'sprint' | 'kpi';
+    tool?: 'canvas' | 'story' | 'impact' | 'research' | 'design' | 'code' | 'roadmap' | 'launch' | 'sprint' | 'kpi' | 'epic-stories';
     completed?: boolean;
   }>;
 }
@@ -459,6 +460,45 @@ const workflows: Workflow[] = [
 
   // MON QUOTIDIEN  
   {
+    id: 'epic-to-stories',
+    name: 'Création de User Stories',
+    description: 'Transformer un Epic en User Stories détaillées et prêtes pour le développement',
+    icon: <FileText className="w-6 h-6" />,
+    category: 'Mon Quotidien',
+    tags: ['Epic', 'User Stories', 'Agile', 'Backlog', 'AI'],
+    difficulty: 'Beginner',
+    estimatedTime: '20-30 min',
+    steps: [
+      {
+        id: 'epic-definition',
+        title: 'Définir l\'Epic',
+        description: 'Créer ou sélectionner un Epic à décomposer en User Stories',
+        tool: 'epic-stories',
+        completed: false,
+      },
+      {
+        id: 'story-generation',
+        title: 'Génération des Stories',
+        description: 'Utiliser l\'IA pour générer des User Stories structurées',
+        tool: 'epic-stories',
+        completed: false,
+      },
+      {
+        id: 'story-review',
+        title: 'Revue et Ajustement',
+        description: 'Réviser et ajuster les User Stories générées',
+        tool: 'epic-stories',
+        completed: false,
+      },
+      {
+        id: 'backlog-ready',
+        title: 'Prêt pour le Backlog',
+        description: 'Finaliser et sauvegarder les User Stories',
+        completed: false,
+      },
+    ],
+  },
+  {
     id: 'design-system',
     name: 'Création de Design System',
     description: 'Construisez un design system complet avec identité de marque, composants et documentation',
@@ -558,6 +598,7 @@ export const Workflows: React.FC = () => {
   const [showFeatureDiscovery, setShowFeatureDiscovery] = useState(false);
   const [showTechnicalSpec, setShowTechnicalSpec] = useState(false);
   const [showSmartDiscovery, setShowSmartDiscovery] = useState(false);
+  const [showEpicToStories, setShowEpicToStories] = useState(false);
 
   const [activeContext, setActiveContext] = useState<{
     name: string;
@@ -637,6 +678,10 @@ export const Workflows: React.FC = () => {
       setShowSmartDiscovery(true);
       return;
     }
+    if (workflow.id === 'epic-to-stories') {
+      setShowEpicToStories(true);
+      return;
+    }
     
     setSelectedWorkflow(workflow);
     setCurrentStep(0);
@@ -678,6 +723,9 @@ export const Workflows: React.FC = () => {
         break;
       case 'kpi':
         setShowKPIGenerator(true);
+        break;
+      case 'epic-stories':
+        setShowEpicToStories(true);
         break;
     }
   };
@@ -855,6 +903,20 @@ export const Workflows: React.FC = () => {
           open={showContextManager} 
           onOpenChange={setShowContextManager}
         />
+        {showEpicToStories && (
+          <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm">
+            <div className="fixed inset-4 z-50 overflow-auto bg-background rounded-lg border shadow-lg p-6">
+              <Button
+                variant="ghost"
+                className="absolute right-4 top-4"
+                onClick={() => setShowEpicToStories(false)}
+              >
+                ✕
+              </Button>
+              <EpicToUserStories />
+            </div>
+          </div>
+        )}
       </div>
     );
   }
