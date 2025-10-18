@@ -50,11 +50,19 @@ export const ProductContextPage = () => {
     objectives: [] as string[],
     target_kpis: [] as string[],
     constraints: '',
-    target_audience: ''
+    target_audience: '',
+    sprintDuration: '2',
+    teamSize: '',
+    teamRoles: [] as string[],
+    techStack: [] as string[],
+    budget: '',
+    timeline: ''
   });
 
   const [newObjective, setNewObjective] = useState('');
   const [newKPI, setNewKPI] = useState('');
+  const [newRole, setNewRole] = useState('');
+  const [newTech, setNewTech] = useState('');
 
   useEffect(() => {
     loadContexts();
@@ -104,13 +112,20 @@ export const ProductContextPage = () => {
       const activeContext = typedContexts?.find(c => c.is_active) || typedContexts?.[0];
       if (activeContext) {
         setSelectedContext(activeContext);
+        const metadata = (activeContext as any).metadata || {};
         setFormData({
           name: activeContext.name,
           vision: activeContext.vision || '',
           objectives: activeContext.objectives || [],
           target_kpis: activeContext.target_kpis || [],
           constraints: activeContext.constraints || '',
-          target_audience: activeContext.target_audience || ''
+          target_audience: activeContext.target_audience || '',
+          sprintDuration: metadata.sprintDuration || '2',
+          teamSize: metadata.teamSize || '',
+          teamRoles: metadata.teamRoles || [],
+          techStack: metadata.techStack || [],
+          budget: metadata.budget || '',
+          timeline: metadata.timeline || ''
         });
       }
     } catch (error: any) {
@@ -163,8 +178,16 @@ export const ProductContextPage = () => {
         objectives: formData.objectives.filter(o => o.trim()),
         target_kpis: formData.target_kpis.filter(k => k.trim()),
         constraints: formData.constraints.trim() || null,
-        target_audience: formData.target_audience.trim() || null
-      };
+        target_audience: formData.target_audience.trim() || null,
+        metadata: {
+          sprintDuration: formData.sprintDuration,
+          teamSize: formData.teamSize,
+          teamRoles: formData.teamRoles.filter(r => r.trim()),
+          techStack: formData.techStack.filter(t => t.trim()),
+          budget: formData.budget,
+          timeline: formData.timeline
+        }
+      } as any;
 
       if (selectedContext) {
         // Update existing
@@ -302,20 +325,33 @@ export const ProductContextPage = () => {
       objectives: [],
       target_kpis: [],
       constraints: '',
-      target_audience: ''
+      target_audience: '',
+      sprintDuration: '2',
+      teamSize: '',
+      teamRoles: [],
+      techStack: [],
+      budget: '',
+      timeline: ''
     });
     setIsEditing(false);
   };
 
   const handleSelectContext = (context: ProductContext) => {
     setSelectedContext(context);
+    const metadata = (context as any).metadata || {};
     setFormData({
       name: context.name,
       vision: context.vision || '',
       objectives: context.objectives || [],
       target_kpis: context.target_kpis || [],
       constraints: context.constraints || '',
-      target_audience: context.target_audience || ''
+      target_audience: context.target_audience || '',
+      sprintDuration: metadata.sprintDuration || '2',
+      teamSize: metadata.teamSize || '',
+      teamRoles: metadata.teamRoles || [],
+      techStack: metadata.techStack || [],
+      budget: metadata.budget || '',
+      timeline: metadata.timeline || ''
     });
     setIsEditing(false);
   };
@@ -478,6 +514,175 @@ export const ProductContextPage = () => {
                     }}
                     rows={4}
                   />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="sprintDuration">Durée du sprint (semaines)</Label>
+                    <Input
+                      id="sprintDuration"
+                      type="number"
+                      placeholder="2"
+                      value={formData.sprintDuration}
+                      onChange={(e) => {
+                        setFormData(prev => ({ ...prev, sprintDuration: e.target.value }));
+                        setIsEditing(true);
+                      }}
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="teamSize">Taille de l'équipe</Label>
+                    <Input
+                      id="teamSize"
+                      placeholder="ex: 5-8 personnes"
+                      value={formData.teamSize}
+                      onChange={(e) => {
+                        setFormData(prev => ({ ...prev, teamSize: e.target.value }));
+                        setIsEditing(true);
+                      }}
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <Label>Rôles de l'équipe</Label>
+                  <div className="flex gap-2 mb-2">
+                    <Input
+                      placeholder="ex: Product Owner, Scrum Master..."
+                      value={newRole}
+                      onChange={(e) => setNewRole(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          if (newRole.trim()) {
+                            setFormData(prev => ({
+                              ...prev,
+                              teamRoles: [...prev.teamRoles, newRole.trim()]
+                            }));
+                            setNewRole('');
+                            setIsEditing(true);
+                          }
+                        }
+                      }}
+                    />
+                    <Button type="button" onClick={() => {
+                      if (newRole.trim()) {
+                        setFormData(prev => ({
+                          ...prev,
+                          teamRoles: [...prev.teamRoles, newRole.trim()]
+                        }));
+                        setNewRole('');
+                        setIsEditing(true);
+                      }
+                    }}>
+                      <Plus className="w-4 h-4" />
+                    </Button>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {formData.teamRoles.map((role, index) => (
+                      <Badge key={index} variant="secondary" className="gap-1">
+                        {role}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setFormData(prev => ({
+                              ...prev,
+                              teamRoles: prev.teamRoles.filter((_, i) => i !== index)
+                            }));
+                            setIsEditing(true);
+                          }}
+                          className="ml-1 hover:text-destructive"
+                        >
+                          ×
+                        </button>
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <Label>Stack technique</Label>
+                  <div className="flex gap-2 mb-2">
+                    <Input
+                      placeholder="ex: React, Node.js, PostgreSQL..."
+                      value={newTech}
+                      onChange={(e) => setNewTech(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          if (newTech.trim()) {
+                            setFormData(prev => ({
+                              ...prev,
+                              techStack: [...prev.techStack, newTech.trim()]
+                            }));
+                            setNewTech('');
+                            setIsEditing(true);
+                          }
+                        }
+                      }}
+                    />
+                    <Button type="button" onClick={() => {
+                      if (newTech.trim()) {
+                        setFormData(prev => ({
+                          ...prev,
+                          techStack: [...prev.techStack, newTech.trim()]
+                        }));
+                        setNewTech('');
+                        setIsEditing(true);
+                      }
+                    }}>
+                      <Plus className="w-4 h-4" />
+                    </Button>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {formData.techStack.map((tech, index) => (
+                      <Badge key={index} variant="secondary" className="gap-1">
+                        {tech}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setFormData(prev => ({
+                              ...prev,
+                              techStack: prev.techStack.filter((_, i) => i !== index)
+                            }));
+                            setIsEditing(true);
+                          }}
+                          className="ml-1 hover:text-destructive"
+                        >
+                          ×
+                        </button>
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="budget">Budget</Label>
+                    <Input
+                      id="budget"
+                      placeholder="ex: 100k€"
+                      value={formData.budget}
+                      onChange={(e) => {
+                        setFormData(prev => ({ ...prev, budget: e.target.value }));
+                        setIsEditing(true);
+                      }}
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="timeline">Timeline</Label>
+                    <Input
+                      id="timeline"
+                      placeholder="ex: Q1 2025 - Q4 2025"
+                      value={formData.timeline}
+                      onChange={(e) => {
+                        setFormData(prev => ({ ...prev, timeline: e.target.value }));
+                        setIsEditing(true);
+                      }}
+                    />
+                  </div>
                 </div>
 
                 <div>

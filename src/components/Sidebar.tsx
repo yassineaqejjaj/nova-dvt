@@ -67,6 +67,12 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
       description: 'Vue d\'ensemble'
     },
     {
+      id: 'product-context' as TabType,
+      label: 'Contexte Produit',
+      icon: Database,
+      description: 'Gestion du contexte global'
+    },
+    {
       id: 'artifacts' as TabType,
       label: 'Artifacts',
       icon: FileText,
@@ -87,50 +93,43 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
   ];
 
   // NOVA CORE Actions (non-tab actions)
-  const coreActions = [
-    {
-      label: 'Canvas Generator',
-      icon: Grid3X3,
-      description: 'Créer des canvas',
-      onClick: onCreateCanvas
-    }
-  ];
+  const coreActions: any[] = [];
 
   // NOVA TOOLS Module - AI-accessible tools
   const toolsItems = [
     {
+      label: 'Canvas Generator',
+      icon: Grid3X3,
+      description: 'Créer des canvas',
+      isAction: true,
+      onClick: onCreateCanvas
+    },
+    {
       id: 'instant-prd' as TabType,
-      label: 'Instant Product Requirements Document',
+      label: 'Instant PRD',
       icon: Sparkles,
       description: 'Générer un PRD en 15s',
       isAction: false
     },
     {
       id: 'meeting-minutes' as TabType,
-      label: 'Comptes-rendus de réunion',
+      label: 'Comptes-rendus',
       icon: FileText,
-      description: 'Transcription IA de réunion',
+      description: 'Transcription IA',
       isAction: false
     },
     {
       id: 'raci-generator' as TabType,
       label: 'Générateur RACI',
       icon: Users,
-      description: 'Matrice de responsabilités',
+      description: 'Matrice responsabilités',
       isAction: false
     },
     {
       id: 'epic-to-stories' as TabType,
       label: 'Epic vers Stories',
       icon: Sparkles,
-      description: 'Découpage de stories par IA',
-      isAction: false
-    },
-    {
-      id: 'product-context' as TabType,
-      label: 'Contexte Produit',
-      icon: Database,
-      description: 'Gestion du contexte global',
+      description: 'Découpage stories IA',
       isAction: false
     }
   ];
@@ -359,35 +358,6 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
         {/* NOVA CORE Module */}
         {renderModuleGroup('NOVA CORE', 'core', coreItems, Database)}
         
-        {/* NOVA CORE Actions */}
-        {expandedGroups.core && open && (
-          <SidebarGroup className="-mt-2">
-            <SidebarGroupContent>
-              <SidebarMenu>
-                {coreActions.map((action) => {
-                  const Icon = action.icon;
-                  return (
-                    <SidebarMenuItem key={action.label}>
-                      <SidebarMenuButton asChild>
-                        <Button
-                          variant="ghost"
-                          onClick={action.onClick}
-                          className="w-full justify-start h-11 px-3 hover:bg-primary/10 hover:text-primary/90"
-                        >
-                          <Icon className="w-4 h-4 mr-3 flex-shrink-0" />
-                          <div className="flex-1 text-left">
-                            <span className="text-sm font-medium whitespace-nowrap">{action.label}</span>
-                            <p className="text-xs text-muted-foreground whitespace-nowrap">{action.description}</p>
-                          </div>
-                        </Button>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  );
-                })}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        )}
         
         {/* NOVA TOOLS Module - AI-accessible */}
         {renderToolsGroup()}

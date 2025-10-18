@@ -73,6 +73,45 @@ export const InstantPRD = () => {
   const [currentSection, setCurrentSection] = useState("");
   const [prdDocument, setPrdDocument] = useState<PRDDocument | null>(null);
   const [isEditMode, setIsEditMode] = useState(false);
+  const [activeContext, setActiveContext] = useState<any>(null);
+
+  // Load active product context
+  useEffect(() => {
+    const loadActiveContext = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        const { data, error } = await supabase
+          .from('product_contexts')
+          .select('*')
+          .eq('user_id', user.id)
+          .eq('is_active', true)
+          .eq('is_deleted', false)
+          .single();
+
+        if (error) {
+          // No active context, get the most recent one
+          const { data: recent } = await supabase
+            .from('product_contexts')
+            .select('*')
+            .eq('user_id', user.id)
+            .eq('is_deleted', false)
+            .order('updated_at', { ascending: false })
+            .limit(1)
+            .single();
+          
+          setActiveContext(recent);
+        } else {
+          setActiveContext(data);
+        }
+      } catch (error) {
+        console.error('Error loading context:', error);
+      }
+    };
+
+    loadActiveContext();
+  }, []);
 
   const [sections, setSections] = useState<PRDSection[]>([
     { id: 'vision', title: 'Vision Produit', icon: Target, status: 'pending' },
@@ -152,15 +191,25 @@ export const InstantPRD = () => {
       updateSectionStatus('vision', 'generating');
       setProgress(10);
 
+      const contextInfo = activeContext ? `
+Contexte Produit:
+- Vision: ${activeContext.vision || 'Non définie'}
+- Objectifs: ${(activeContext.objectives || []).join(', ')}
+- Audience cible: ${activeContext.target_audience || 'Non définie'}
+- Contraintes: ${activeContext.constraints || 'Aucune'}
+` : '';
+
       const { data: visionData, error: visionError } = await supabase.functions.invoke('chat-ai', {
         body: {
-          message: `Based on this product idea: "${idea}"
+          message: `Contexte de l'idée produit: "${idea}"
 
-IMPORTANT: Return ONLY valid JSON without any markdown formatting or code blocks. Do not wrap in backticks.
+${contextInfo}
 
-Generate a compelling product vision in JSON format:
+IMPORTANT: Retourne UNIQUEMENT du JSON valide sans formatage markdown ni blocs de code. Ne pas envelopper avec des backticks.
+
+Génère une vision produit convaincante en format JSON:
 {
-  "vision": "A clear, inspiring 2-3 sentence product vision that captures the essence and impact"
+  "vision": "Une vision claire et inspirante en 2-3 phrases qui capture l'essence et l'impact"
 }`,
           mode: 'simple'
         }

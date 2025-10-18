@@ -81,10 +81,13 @@ export const MeetingMinuteGenerator: React.FC = () => {
   };
 
   const handleIgnoreElement = (id: string) => {
-    setMeetingData(prev => prev ? {
-      ...prev,
-      elements: prev.elements.map(e => e.id === id ? { ...e, status: 'ignored' } : e)
-    } : prev);
+    setMeetingData(prev => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        elements: prev.elements.filter(e => e.id !== id)
+      };
+    });
     setSelectedElements(prev => prev.filter(eid => eid !== id));
     toast.success('Élément ignoré');
   };
@@ -214,9 +217,49 @@ export const MeetingMinuteGenerator: React.FC = () => {
 
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Not authenticated');
+      if (!user) throw new Error('Non authentifié');
 
-      // Save meeting artifact
+      // Extract decisions and actions for user stories
+      const decisions = meetingData.elements.filter(e => e.type === 'decision' && (selectedElements.length === 0 || selectedElements.includes(e.id)));
+      const actions = meetingData.elements.filter(e => e.type === 'action' && (selectedElements.length === 0 || selectedElements.includes(e.id)));
+
+      // Convert decisions and actions to user stories
+      const stories = [
+        ...decisions.map((d, i) => ({
+          id: crypto.randomUUID(),
+          epicId: 'meeting-' + Date.now(),
+          title: `Décision: ${d.content.substring(0, 50)}`,
+          story: {
+            asA: 'membre de l\'équipe',
+            iWant: d.content,
+            soThat: d.rationale || 'implémenter la décision prise'
+          },
+          acceptanceCriteria: [d.content],
+          effortPoints: 3,
+          priority: 'high' as const,
+          dependencies: [],
+          status: 'draft' as const,
+          tags: ['meeting', 'decision']
+        })),
+        ...actions.map((a, i) => ({
+          id: crypto.randomUUID(),
+          epicId: 'meeting-' + Date.now(),
+          title: `Action: ${a.content.substring(0, 50)}`,
+          story: {
+            asA: a.assignedTo || 'membre de l\'équipe',
+            iWant: a.content,
+            soThat: 'compléter l\'action assignée'
+          },
+          acceptanceCriteria: [a.content],
+          effortPoints: 2,
+          priority: 'medium' as const,
+          dependencies: [],
+          status: 'draft' as const,
+          tags: ['meeting', 'action']
+        }))
+      ];
+
+      // Save meeting artifact with stories
       const { error: artifactError } = await supabase
         .from('artifacts')
         .insert([{
@@ -229,6 +272,7 @@ export const MeetingMinuteGenerator: React.FC = () => {
             elements: meetingData.elements.filter(e => 
               selectedElements.length === 0 || selectedElements.includes(e.id)
             ),
+            userStories: stories,
             transcript: meetingData.transcript,
             participants: meetingData.participants,
             date: meetingData.date,
@@ -239,11 +283,11 @@ export const MeetingMinuteGenerator: React.FC = () => {
       if (artifactError) throw artifactError;
 
       setStep('complete');
-      toast.success('Meeting minutes saved successfully!');
+      toast.success(`Compte-rendu sauvegardé avec ${stories.length} user stories générées !`);
 
     } catch (error: any) {
-      console.error('Save error:', error);
-      toast.error('Failed to save meeting minutes');
+      console.error('Erreur de sauvegarde:', error);
+      toast.error('Échec de sauvegarde du compte-rendu');
     }
   };
 
@@ -269,14 +313,14 @@ export const MeetingMinuteGenerator: React.FC = () => {
     <div className="space-y-6">
       <Tabs value={uploadType} onValueChange={(v) => setUploadType(v as any)}>
         <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="paste">Paste Text</TabsTrigger>
-          <TabsTrigger value="file">Upload File</TabsTrigger>
+          <TabsTrigger value="paste">Coller le texte</TabsTrigger>
+          <TabsTrigger value="file">Charger un fichier</TabsTrigger>
           <TabsTrigger value="url">Google Meet</TabsTrigger>
         </TabsList>
 
         <TabsContent value="paste" className="space-y-4">
           <Textarea
-            placeholder="Paste your meeting transcript here..."
+            placeholder="Collez la transcription de votre réunion ici..."
             value={textInput}
             onChange={(e) => setTextInput(e.target.value)}
             className="min-h-[300px]"
@@ -295,10 +339,10 @@ export const MeetingMinuteGenerator: React.FC = () => {
             <label htmlFor="file-upload" className="cursor-pointer">
               <Upload className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
               <p className="text-sm text-muted-foreground mb-2">
-                {selectedFile ? selectedFile.name : 'Click to upload or drag and drop'}
+                {selectedFile ? selectedFile.name : 'Cliquez pour télécharger ou glissez-déposez'}
               </p>
               <p className="text-xs text-muted-foreground">
-                Supported: .txt, .docx, .pdf, .mp3, .m4a, .wav
+                Formats supportés : .txt, .docx, .pdf, .mp3, .m4a, .wav
               </p>
             </label>
           </div>
@@ -306,7 +350,7 @@ export const MeetingMinuteGenerator: React.FC = () => {
 
         <TabsContent value="url" className="space-y-4">
           <p className="text-sm text-muted-foreground">
-            Paste the link to your Google Meet transcript document
+            Collez le lien vers votre document de transcription Google Meet
           </p>
           <Textarea
             placeholder="https://docs.google.com/document/d/..."
@@ -325,7 +369,7 @@ export const MeetingMinuteGenerator: React.FC = () => {
         className="w-full"
       >
         <Loader2 className="w-4 h-4 mr-2" />
-        Analyze Meeting
+        Analyser la réunion
       </Button>
     </div>
   );
@@ -334,11 +378,11 @@ export const MeetingMinuteGenerator: React.FC = () => {
     <div className="space-y-6 py-8">
       <div className="text-center">
         <Loader2 className="w-12 h-12 mx-auto mb-4 animate-spin text-primary" />
-        <h3 className="text-lg font-semibold mb-2">Processing Meeting...</h3>
+        <h3 className="text-lg font-semibold mb-2">Traitement de la réunion...</h3>
         <p className="text-sm text-muted-foreground mb-4">
           {processingProgress < 50
-            ? 'Transcribing audio...'
-            : 'Extracting key elements with AI...'}
+            ? 'Transcription audio...'
+            : 'Extraction des éléments clés avec l\'IA...'}
         </p>
         <Progress value={processingProgress} className="w-full" />
         <p className="text-xs text-muted-foreground mt-2">{processingProgress}%</p>
@@ -389,7 +433,7 @@ export const MeetingMinuteGenerator: React.FC = () => {
         <Tabs defaultValue="decisions" className="w-full">
           <TabsList className="grid grid-cols-6 w-full">
             <TabsTrigger value="decisions">
-              Decisions ({groupedElements.decision.length})
+              Décisions ({groupedElements.decision.length})
             </TabsTrigger>
             <TabsTrigger value="actions">
               Actions ({groupedElements.action.length})
@@ -401,19 +445,25 @@ export const MeetingMinuteGenerator: React.FC = () => {
               Insights ({groupedElements.insight.length})
             </TabsTrigger>
             <TabsTrigger value="risks">
-              Risks ({groupedElements.risk.length})
+              Risques ({groupedElements.risk.length})
             </TabsTrigger>
             <TabsTrigger value="ideas">
-              Ideas ({groupedElements.idea.length})
+              Idées ({groupedElements.idea.length})
             </TabsTrigger>
           </TabsList>
 
           {Object.entries(groupedElements).map(([type, elements]) => (
             <TabsContent key={type} value={`${type}s`} className="space-y-3">
               <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-semibold capitalize">{type}s</h3>
-                <Button variant="outline" size="sm">
-                  Validate All
+                <h3 className="text-lg font-semibold capitalize">
+                  {type === 'decision' ? 'Décisions' : 
+                   type === 'action' ? 'Actions' : 
+                   type === 'question' ? 'Questions' : 
+                   type === 'insight' ? 'Insights' : 
+                   type === 'risk' ? 'Risques' : 'Idées'}
+                </h3>
+                <Button variant="outline" size="sm" onClick={handleValidateAll}>
+                  Tout valider
                 </Button>
               </div>
 
@@ -436,14 +486,14 @@ export const MeetingMinuteGenerator: React.FC = () => {
 
                         {element.rationale && (
                           <p className="text-sm text-muted-foreground">
-                            <strong>Rationale:</strong> {element.rationale}
+                            <strong>Justification :</strong> {element.rationale}
                           </p>
                         )}
 
                         {element.assignedTo && (
                           <p className="text-sm">
-                            <strong>Assigned to:</strong> {element.assignedTo}
-                            {element.deadline && ` | Deadline: ${element.deadline}`}
+                            <strong>Assigné à :</strong> {element.assignedTo}
+                            {element.deadline && ` | Échéance : ${element.deadline}`}
                           </p>
                         )}
 
@@ -478,26 +528,26 @@ export const MeetingMinuteGenerator: React.FC = () => {
 
         <div className="flex gap-3">
           <Button onClick={() => setStep('upload')} variant="outline" className="flex-1">
-            Back
+            Retour
           </Button>
           <Button onClick={handleValidateAll} className="flex-1">
             <CheckCircle className="w-4 h-4 mr-2" />
-            Integrate All
+            Valider et Intégrer
           </Button>
         </div>
       </div>
     );
   };
 
-  const renderCompleteStep = () => (
+      const renderCompleteStep = () => (
     <div className="text-center space-y-6 py-8">
       <div className="w-16 h-16 mx-auto bg-green-500 rounded-full flex items-center justify-center">
         <CheckCircle className="w-8 h-8 text-white" />
       </div>
       <div>
-        <h3 className="text-2xl font-bold mb-2">Meeting Minutes Saved!</h3>
+        <h3 className="text-2xl font-bold mb-2">Compte-rendu sauvegardé !</h3>
         <p className="text-muted-foreground">
-          Your meeting has been analyzed and saved to your artifacts.
+          Votre réunion a été analysée et sauvegardée dans vos artefacts.
         </p>
       </div>
       <div className="flex gap-3 justify-center">
@@ -508,10 +558,10 @@ export const MeetingMinuteGenerator: React.FC = () => {
           setTextInput('');
           setSelectedFile(null);
         }}>
-          Process Another Meeting
+          Traiter une autre réunion
         </Button>
         <Button variant="outline">
-          View Artifacts
+          Voir les artefacts
         </Button>
       </div>
     </div>

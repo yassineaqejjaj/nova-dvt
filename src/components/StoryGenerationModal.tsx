@@ -85,14 +85,49 @@ const StoryGenerationModal = ({ epic, open, onClose, onGenerate }: StoryGenerati
         throw new Error('Invalid response format from edge function');
       }
 
-      const mapped: UserStory[] = data.stories.map((story: any) => ({
-        ...story,
-        id: crypto.randomUUID(),
-        epicId: epic.id,
-        status: 'draft' as const,
-        dependencies: [],
-        tags: []
-      }));
+      const mapped: UserStory[] = data.stories.map((story: any) => {
+        // Handle both old format (description) and new format (story object)
+        let storyObj;
+        if (story.story && typeof story.story === 'object') {
+          storyObj = story.story;
+        } else if (story.description) {
+          // Parse "As a [role], I want [action], so that [benefit]" format
+          const match = story.description.match(/As a (.+?), I want (.+?), so that (.+)/i);
+          if (match) {
+            storyObj = {
+              asA: match[1].trim(),
+              iWant: match[2].trim(),
+              soThat: match[3].trim()
+            };
+          } else {
+            storyObj = {
+              asA: 'utilisateur',
+              iWant: story.description || story.title,
+              soThat: 'utiliser la fonctionnalité'
+            };
+          }
+        } else {
+          storyObj = {
+            asA: 'utilisateur',
+            iWant: story.title,
+            soThat: 'utiliser la fonctionnalité'
+          };
+        }
+
+        return {
+          id: crypto.randomUUID(),
+          epicId: epic.id,
+          title: story.title,
+          story: storyObj,
+          acceptanceCriteria: Array.isArray(story.acceptance_criteria) ? story.acceptance_criteria : (Array.isArray(story.acceptanceCriteria) ? story.acceptanceCriteria : []),
+          effortPoints: story.effort || story.effortPoints || 3,
+          priority: (story.priority || 'medium') as 'high' | 'medium' | 'low',
+          status: 'draft' as const,
+          dependencies: [],
+          tags: [],
+          technicalNotes: story.technical_notes || story.technicalNotes
+        };
+      });
 
       const valid = mapped.filter(s => s && s.title && s.story?.asA && s.story?.iWant && s.story?.soThat && Array.isArray(s.acceptanceCriteria) && s.acceptanceCriteria.length >= 1);
       if (valid.length === 0) {
