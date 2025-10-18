@@ -23,7 +23,8 @@ import {
   Edit,
   Eye,
   Zap,
-  PartyPopper
+  PartyPopper,
+  BookOpen
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -55,14 +56,22 @@ interface UserStory {
 }
 
 interface PRDDocument {
+  introduction: string;
+  context: string;
+  problem: string;
   vision: string;
+  constraints: string[];
   personas: Persona[];
   userStories: UserStory[];
+  features: { name: string; description: string }[];
+  prioritization: { mvp: string[]; must: string[]; should: string[]; could: string[]; wont: string[] };
+  acceptance: string[];
   wireframes: string[];
   architecture: string;
+  risks: { risk: string; mitigation: string; dependencies?: string }[];
   kpis: string[];
   roadmap: { phase: string; timeline: string; deliverables: string[] }[];
-  risks: { risk: string; mitigation: string }[];
+  appendix: string[];
 }
 
 export const InstantPRD = () => {
@@ -114,62 +123,46 @@ export const InstantPRD = () => {
   }, []);
 
   const [sections, setSections] = useState<PRDSection[]>([
-    { id: 'vision', title: 'Vision Produit', icon: Target, status: 'pending' },
-    { id: 'personas', title: 'Personas (3)', icon: Users, status: 'pending' },
-    { id: 'stories', title: 'User Stories (12)', icon: FileText, status: 'pending' },
-    { id: 'wireframes', title: 'Wireframes (3)', icon: Layout, status: 'pending' },
-    { id: 'architecture', title: 'Architecture Technique', icon: Code2, status: 'pending' },
-    { id: 'kpis', title: 'KPIs SMART (5)', icon: TrendingUp, status: 'pending' },
-    { id: 'roadmap', title: 'Roadmap (3 phases)', icon: Map, status: 'pending' },
-    { id: 'risks', title: 'Risques & Mitigations', icon: AlertTriangle, status: 'pending' },
+    { id: 'introduction', title: 'Introduction', icon: BookOpen, status: 'pending' },
+    { id: 'context', title: 'Contexte & Objectifs', icon: Target, status: 'pending' },
+    { id: 'problem', title: 'Problème à résoudre', icon: AlertTriangle, status: 'pending' },
+    { id: 'vision', title: 'Vision produit', icon: Sparkles, status: 'pending' },
+    { id: 'constraints', title: 'Hypothèses & Contraintes', icon: AlertTriangle, status: 'pending' },
+    { id: 'personas', title: 'Utilisateurs cibles / Personas', icon: Users, status: 'pending' },
+    { id: 'stories', title: 'User Stories & Scénarios d\'usage', icon: FileText, status: 'pending' },
+    { id: 'features', title: 'Fonctionnalités clés', icon: Zap, status: 'pending' },
+    { id: 'prioritization', title: 'Priorisation (MoSCoW)', icon: Target, status: 'pending' },
+    { id: 'acceptance', title: 'Critères d\'acceptation', icon: CheckCircle2, status: 'pending' },
+    { id: 'wireframes', title: 'Design & UX', icon: Layout, status: 'pending' },
+    { id: 'architecture', title: 'Architecture & Intégrations', icon: Code2, status: 'pending' },
+    { id: 'risks', title: 'Dépendances & Risques', icon: AlertTriangle, status: 'pending' },
+    { id: 'kpis', title: 'Mesure du succès (KPIs)', icon: TrendingUp, status: 'pending' },
+    { id: 'roadmap', title: 'Roadmap & Planning', icon: Map, status: 'pending' },
+    { id: 'appendix', title: 'Annexes & Références', icon: FileText, status: 'pending' },
   ]);
 
   const updateSectionStatus = (sectionId: string, status: 'pending' | 'generating' | 'complete') => {
     setSections(prev => prev.map(s => s.id === sectionId ? { ...s, status } : s));
   };
 
-  // Helper function to parse AI responses that may be wrapped in markdown code blocks
+  // Helper function to parse AI responses
   const parseAIResponse = (data: any): any => {
     try {
-      // First extract the response field from the edge function return
       let content = data?.response || data;
-      
-      // If it's still an object, stringify it
       if (typeof content === 'object') {
         content = JSON.stringify(content);
       }
-      
-      // Remove markdown code blocks if present
       let jsonString = content.replace(/```json\s*/g, '').replace(/```\s*/g, '');
-      
-      // Try to find JSON object in the string
       const jsonMatch = jsonString.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
         jsonString = jsonMatch[0];
       }
-      
       const parsed = JSON.parse(jsonString);
       console.log('Parsed AI response:', parsed);
       return parsed;
     } catch (error) {
       console.error('Error parsing AI response:', error, 'Raw data:', data);
       throw new Error('Failed to parse AI response. Please try again.');
-    }
-  };
-
-  const generatePersonaImage = async (persona: Persona): Promise<string> => {
-    try {
-      const { data, error } = await supabase.functions.invoke('generate-persona-image', {
-        body: { 
-          prompt: `Professional portrait of ${persona.name}, ${persona.role}, ${persona.age} years old, modern corporate style, high quality headshot`,
-        }
-      });
-
-      if (error) throw error;
-      return data.imageUrl || '';
-    } catch (error) {
-      console.error('Error generating persona image:', error);
-      return '';
     }
   };
 
@@ -186,11 +179,6 @@ export const InstantPRD = () => {
     const startTime = Date.now();
 
     try {
-      // Step 1: Generate Vision (10%)
-      setCurrentSection("Vision Produit");
-      updateSectionStatus('vision', 'generating');
-      setProgress(10);
-
       const contextInfo = activeContext ? `
 Contexte Produit:
 - Vision: ${activeContext.vision || 'Non définie'}
@@ -199,48 +187,114 @@ Contexte Produit:
 - Contraintes: ${activeContext.constraints || 'Aucune'}
 ` : '';
 
-      const { data: visionData, error: visionError } = await supabase.functions.invoke('chat-ai', {
+      // Step 1: Introduction (6%)
+      setCurrentSection("Introduction");
+      updateSectionStatus('introduction', 'generating');
+      setProgress(6);
+
+      const { data: introData } = await supabase.functions.invoke('chat-ai', {
         body: {
-          message: `Contexte de l'idée produit: "${idea}"
+          message: `Idée: "${idea}"
 
-${contextInfo}
-
-IMPORTANT: Retourne UNIQUEMENT du JSON valide sans formatage markdown ni blocs de code. Ne pas envelopper avec des backticks.
-
-Génère une vision produit convaincante en format JSON:
-{
-  "vision": "Une vision claire et inspirante en 2-3 phrases qui capture l'essence et l'impact"
-}`,
+Génère une introduction concise (JSON uniquement):
+{ "introduction": "Texte en 2-3 phrases" }`,
           mode: 'simple'
         }
       });
 
-      if (visionError) throw visionError;
+      const introResult = parseAIResponse(introData);
+      updateSectionStatus('introduction', 'complete');
+
+      // Step 2: Context (12%)
+      setCurrentSection("Contexte & Objectifs");
+      updateSectionStatus('context', 'generating');
+      setProgress(12);
+
+      const { data: contextData } = await supabase.functions.invoke('chat-ai', {
+        body: {
+          message: `Idée: "${idea}"
+${contextInfo}
+
+Génère contexte et objectifs (JSON uniquement):
+{ "context": "Texte en 3-4 phrases" }`,
+          mode: 'simple'
+        }
+      });
+
+      const contextResult = parseAIResponse(contextData);
+      updateSectionStatus('context', 'complete');
+
+      // Step 3: Problem (18%)
+      setCurrentSection("Problème à résoudre");
+      updateSectionStatus('problem', 'generating');
+      setProgress(18);
+
+      const { data: problemData } = await supabase.functions.invoke('chat-ai', {
+        body: {
+          message: `Idée: "${idea}"
+
+Génère la description du problème (JSON uniquement):
+{ "problem": "Texte en 2-3 phrases" }`,
+          mode: 'simple'
+        }
+      });
+
+      const problemResult = parseAIResponse(problemData);
+      updateSectionStatus('problem', 'complete');
+
+      // Step 4: Vision (23%)
+      setCurrentSection("Vision produit");
+      updateSectionStatus('vision', 'generating');
+      setProgress(23);
+
+      const { data: visionData } = await supabase.functions.invoke('chat-ai', {
+        body: {
+          message: `Idée: "${idea}"
+
+Génère la vision (JSON uniquement):
+{ "vision": "Vision inspirante en 2-3 phrases" }`,
+          mode: 'simple'
+        }
+      });
+
       const visionResult = parseAIResponse(visionData);
-      if (!visionResult || !visionResult.vision) {
-        throw new Error('Invalid vision response from AI');
-      }
       updateSectionStatus('vision', 'complete');
 
-      // Step 2: Generate Personas (25%)
-      setCurrentSection("Personas");
-      updateSectionStatus('personas', 'generating');
-      setProgress(25);
+      // Step 5: Constraints (28%)
+      setCurrentSection("Hypothèses & Contraintes");
+      updateSectionStatus('constraints', 'generating');
+      setProgress(28);
 
-      const { data: personasData, error: personasError } = await supabase.functions.invoke('chat-ai', {
+      const { data: constraintsData } = await supabase.functions.invoke('chat-ai', {
         body: {
-          message: `Based on this product idea: "${idea}"
+          message: `Idée: "${idea}"
 
-IMPORTANT: Return ONLY valid JSON without any markdown formatting or code blocks. Do not wrap in backticks.
+Génère 4-5 contraintes (JSON uniquement):
+{ "constraints": ["Contrainte 1", "Contrainte 2", ...] }`,
+          mode: 'simple'
+        }
+      });
 
-Generate 3 detailed personas in JSON format:
+      const constraintsResult = parseAIResponse(constraintsData);
+      updateSectionStatus('constraints', 'complete');
+
+      // Step 6: Personas (34%)
+      setCurrentSection("Utilisateurs cibles / Personas");
+      updateSectionStatus('personas', 'generating');
+      setProgress(34);
+
+      const { data: personasData } = await supabase.functions.invoke('chat-ai', {
+        body: {
+          message: `Idée: "${idea}"
+
+Génère 3 personas (JSON uniquement):
 {
   "personas": [
     {
-      "name": "Full name",
-      "role": "Job title/role",
+      "name": "Nom",
+      "role": "Rôle",
       "age": 30,
-      "goals": ["Goal 1", "Goal 2", "Goal 3"],
+      "goals": ["Objectif 1", "Objectif 2", "Objectif 3"],
       "painPoints": ["Pain 1", "Pain 2", "Pain 3"]
     }
   ]
@@ -249,39 +303,28 @@ Generate 3 detailed personas in JSON format:
         }
       });
 
-      if (personasError) throw personasError;
       const personasResult = parseAIResponse(personasData);
-      if (!personasResult || !personasResult.personas || !Array.isArray(personasResult.personas)) {
-        throw new Error('Invalid personas response from AI');
-      }
-      
-      // Generate persona images in parallel (skip images to speed up for now)
-      const personasWithImages = personasResult.personas.map((persona: Persona) => ({
-        ...persona,
-        imageUrl: '' // We'll skip image generation for speed
-      }));
-      
+      const personasWithImages = personasResult.personas.map((p: Persona) => ({ ...p, imageUrl: '' }));
       updateSectionStatus('personas', 'complete');
 
-      // Step 3: Generate User Stories (40%)
-      setCurrentSection("User Stories");
+      // Step 7: User Stories (41%)
+      setCurrentSection("User Stories & Scénarios d'usage");
       updateSectionStatus('stories', 'generating');
-      setProgress(40);
+      setProgress(41);
 
-      const { data: storiesData, error: storiesError } = await supabase.functions.invoke('chat-ai', {
+      const { data: storiesData } = await supabase.functions.invoke('chat-ai', {
         body: {
-          message: `Based on this product idea: "${idea}" and these personas: ${JSON.stringify(personasWithImages)}
+          message: `Idée: "${idea}"
+Personas: ${JSON.stringify(personasWithImages)}
 
-IMPORTANT: Return ONLY valid JSON without any markdown formatting or code blocks. Do not wrap in backticks.
-
-Generate 12 user stories in JSON format:
+Génère 12 user stories (JSON uniquement):
 {
   "userStories": [
     {
       "id": "US-001",
-      "title": "Story title",
-      "description": "As a [persona], I want to [action] so that [benefit]",
-      "acceptanceCriteria": ["Criteria 1", "Criteria 2", "Criteria 3"],
+      "title": "Titre",
+      "description": "En tant que [persona], je veux [action] afin de [bénéfice]",
+      "acceptanceCriteria": ["Critère 1", "Critère 2", "Critère 3"],
       "priority": "high",
       "storyPoints": 5
     }
@@ -291,119 +334,171 @@ Generate 12 user stories in JSON format:
         }
       });
 
-      if (storiesError) throw storiesError;
       const storiesResult = parseAIResponse(storiesData);
-      if (!storiesResult || !storiesResult.userStories || !Array.isArray(storiesResult.userStories)) {
-        throw new Error('Invalid user stories response from AI');
-      }
       updateSectionStatus('stories', 'complete');
 
-      // Step 4: Generate Wireframes descriptions (55%)
-      setCurrentSection("Wireframes");
-      updateSectionStatus('wireframes', 'generating');
+      // Step 8: Features (48%)
+      setCurrentSection("Fonctionnalités clés");
+      updateSectionStatus('features', 'generating');
+      setProgress(48);
+
+      const { data: featuresData } = await supabase.functions.invoke('chat-ai', {
+        body: {
+          message: `Idée: "${idea}"
+
+Génère 5-7 fonctionnalités clés (JSON uniquement):
+{
+  "features": [
+    { "name": "Nom feature", "description": "Description détaillée" }
+  ]
+}`,
+          mode: 'simple'
+        }
+      });
+
+      const featuresResult = parseAIResponse(featuresData);
+      updateSectionStatus('features', 'complete');
+
+      // Step 9: Prioritization (55%)
+      setCurrentSection("Priorisation (MoSCoW)");
+      updateSectionStatus('prioritization', 'generating');
       setProgress(55);
 
-      const { data: wireframesData, error: wireframesError } = await supabase.functions.invoke('chat-ai', {
+      const { data: prioritizationData } = await supabase.functions.invoke('chat-ai', {
         body: {
-          message: `Based on this product idea: "${idea}"
+          message: `Idée: "${idea}"
 
-IMPORTANT: Return ONLY valid JSON without any markdown formatting or code blocks. Do not wrap in backticks.
-
-Generate 3 wireframe descriptions in JSON format:
+Génère la priorisation MoSCoW (JSON uniquement):
 {
-  "wireframes": [
-    "Detailed wireframe description 1",
-    "Detailed wireframe description 2",
-    "Detailed wireframe description 3"
-  ]
+  "prioritization": {
+    "mvp": ["Feature MVP 1", "Feature MVP 2"],
+    "must": ["Must have 1", "Must have 2"],
+    "should": ["Should have 1", "Should have 2"],
+    "could": ["Could have 1", "Could have 2"],
+    "wont": ["Won't have 1"]
+  }
 }`,
           mode: 'simple'
         }
       });
 
-      if (wireframesError) throw wireframesError;
+      const prioritizationResult = parseAIResponse(prioritizationData);
+      updateSectionStatus('prioritization', 'complete');
+
+      // Step 10: Acceptance Criteria (61%)
+      setCurrentSection("Critères d'acceptation");
+      updateSectionStatus('acceptance', 'generating');
+      setProgress(61);
+
+      const { data: acceptanceData } = await supabase.functions.invoke('chat-ai', {
+        body: {
+          message: `Idée: "${idea}"
+
+Génère 5-6 critères d'acceptation globaux (JSON uniquement):
+{ "acceptance": ["Critère 1", "Critère 2", ...] }`,
+          mode: 'simple'
+        }
+      });
+
+      const acceptanceResult = parseAIResponse(acceptanceData);
+      updateSectionStatus('acceptance', 'complete');
+
+      // Step 11: Wireframes (68%)
+      setCurrentSection("Design & UX");
+      updateSectionStatus('wireframes', 'generating');
+      setProgress(68);
+
+      const { data: wireframesData } = await supabase.functions.invoke('chat-ai', {
+        body: {
+          message: `Idée: "${idea}"
+
+Génère 3 descriptions de wireframes (JSON uniquement):
+{ "wireframes": ["Description 1", "Description 2", "Description 3"] }`,
+          mode: 'simple'
+        }
+      });
+
       const wireframesResult = parseAIResponse(wireframesData);
-      if (!wireframesResult || !wireframesResult.wireframes || !Array.isArray(wireframesResult.wireframes)) {
-        throw new Error('Invalid wireframes response from AI');
-      }
       updateSectionStatus('wireframes', 'complete');
 
-      // Step 5: Generate Architecture (70%)
-      setCurrentSection("Architecture Technique");
+      // Step 12: Architecture (75%)
+      setCurrentSection("Architecture & Intégrations");
       updateSectionStatus('architecture', 'generating');
-      setProgress(70);
+      setProgress(75);
 
-      const { data: archData, error: archError } = await supabase.functions.invoke('chat-ai', {
+      const { data: archData } = await supabase.functions.invoke('chat-ai', {
         body: {
-          message: `Based on this product idea: "${idea}"
+          message: `Idée: "${idea}"
 
-IMPORTANT: Return ONLY valid JSON without any markdown formatting or code blocks. Do not wrap in backticks.
-
-Generate a technical architecture as a Mermaid diagram in JSON format:
-{
-  "architecture": "graph TD\\n    A[Frontend] --> B[API Gateway]\\n    B --> C[Backend Services]\\n    C --> D[Database]"
-}`,
+Génère l'architecture technique (JSON uniquement):
+{ "architecture": "Description de l'architecture en texte structuré" }`,
           mode: 'simple'
         }
       });
 
-      if (archError) throw archError;
       const archResult = parseAIResponse(archData);
-      if (!archResult || !archResult.architecture) {
-        throw new Error('Invalid architecture response from AI');
-      }
       updateSectionStatus('architecture', 'complete');
 
-      // Step 6: Generate KPIs (80%)
-      setCurrentSection("KPIs SMART");
-      updateSectionStatus('kpis', 'generating');
-      setProgress(80);
+      // Step 13: Risks (81%)
+      setCurrentSection("Dépendances & Risques");
+      updateSectionStatus('risks', 'generating');
+      setProgress(81);
 
-      const { data: kpisData, error: kpisError } = await supabase.functions.invoke('chat-ai', {
+      const { data: risksData } = await supabase.functions.invoke('chat-ai', {
         body: {
-          message: `Based on this product idea: "${idea}"
+          message: `Idée: "${idea}"
 
-IMPORTANT: Return ONLY valid JSON without any markdown formatting or code blocks. Do not wrap in backticks.
-
-Generate 5 SMART KPIs in JSON format:
+Génère 4-5 risques avec dépendances (JSON uniquement):
 {
-  "kpis": [
-    "KPI 1: Specific metric with target and timeline",
-    "KPI 2: ...",
-    "KPI 3: ...",
-    "KPI 4: ...",
-    "KPI 5: ..."
+  "risks": [
+    {
+      "risk": "Description du risque",
+      "mitigation": "Stratégie de mitigation",
+      "dependencies": "Dépendances associées (optionnel)"
+    }
   ]
 }`,
           mode: 'simple'
         }
       });
 
-      if (kpisError) throw kpisError;
+      const risksResult = parseAIResponse(risksData);
+      updateSectionStatus('risks', 'complete');
+
+      // Step 14: KPIs (88%)
+      setCurrentSection("Mesure du succès (KPIs)");
+      updateSectionStatus('kpis', 'generating');
+      setProgress(88);
+
+      const { data: kpisData } = await supabase.functions.invoke('chat-ai', {
+        body: {
+          message: `Idée: "${idea}"
+
+Génère 5 KPIs SMART (JSON uniquement):
+{ "kpis": ["KPI 1 avec métrique et cible", "KPI 2", ...] }`,
+          mode: 'simple'
+        }
+      });
+
       const kpisResult = parseAIResponse(kpisData);
-      if (!kpisResult || !kpisResult.kpis || !Array.isArray(kpisResult.kpis)) {
-        throw new Error('Invalid KPIs response from AI');
-      }
       updateSectionStatus('kpis', 'complete');
 
-      // Step 7: Generate Roadmap (90%)
-      setCurrentSection("Roadmap");
+      // Step 15: Roadmap (94%)
+      setCurrentSection("Roadmap & Planning");
       updateSectionStatus('roadmap', 'generating');
-      setProgress(90);
+      setProgress(94);
 
-      const { data: roadmapData, error: roadmapError } = await supabase.functions.invoke('chat-ai', {
+      const { data: roadmapData } = await supabase.functions.invoke('chat-ai', {
         body: {
-          message: `Based on this product idea: "${idea}"
+          message: `Idée: "${idea}"
 
-IMPORTANT: Return ONLY valid JSON without any markdown formatting or code blocks. Do not wrap in backticks.
-
-Generate a 3-phase roadmap in JSON format:
+Génère une roadmap en 3 phases (JSON uniquement):
 {
   "roadmap": [
     {
       "phase": "Phase 1: MVP",
       "timeline": "Q1 2025",
-      "deliverables": ["Deliverable 1", "Deliverable 2", "Deliverable 3"]
+      "deliverables": ["Livrable 1", "Livrable 2", "Livrable 3"]
     }
   ]
 }`,
@@ -411,56 +506,47 @@ Generate a 3-phase roadmap in JSON format:
         }
       });
 
-      if (roadmapError) throw roadmapError;
       const roadmapResult = parseAIResponse(roadmapData);
-      if (!roadmapResult || !roadmapResult.roadmap || !Array.isArray(roadmapResult.roadmap)) {
-        throw new Error('Invalid roadmap response from AI');
-      }
       updateSectionStatus('roadmap', 'complete');
 
-      // Step 8: Generate Risks (95%)
-      setCurrentSection("Risques & Mitigations");
-      updateSectionStatus('risks', 'generating');
-      setProgress(95);
+      // Step 16: Appendix (99%)
+      setCurrentSection("Annexes & Références");
+      updateSectionStatus('appendix', 'generating');
+      setProgress(99);
 
-      const { data: risksData, error: risksError } = await supabase.functions.invoke('chat-ai', {
+      const { data: appendixData } = await supabase.functions.invoke('chat-ai', {
         body: {
-          message: `Based on this product idea: "${idea}"
+          message: `Idée: "${idea}"
 
-IMPORTANT: Return ONLY valid JSON without any markdown formatting or code blocks. Do not wrap in backticks.
-
-Generate risk analysis in JSON format:
-{
-  "risks": [
-    {
-      "risk": "Risk description",
-      "mitigation": "Mitigation strategy"
-    }
-  ]
-}`,
+Génère 3-4 références/annexes (JSON uniquement):
+{ "appendix": ["Référence 1", "Référence 2", ...] }`,
           mode: 'simple'
         }
       });
 
-      if (risksError) throw risksError;
-      const risksResult = parseAIResponse(risksData);
-      if (!risksResult || !risksResult.risks || !Array.isArray(risksResult.risks)) {
-        throw new Error('Invalid risks response from AI');
-      }
-      updateSectionStatus('risks', 'complete');
+      const appendixResult = parseAIResponse(appendixData);
+      updateSectionStatus('appendix', 'complete');
 
       // Complete!
       setProgress(100);
       
       const document: PRDDocument = {
+        introduction: introResult.introduction,
+        context: contextResult.context,
+        problem: problemResult.problem,
         vision: visionResult.vision,
+        constraints: constraintsResult.constraints,
         personas: personasWithImages,
         userStories: storiesResult.userStories,
+        features: featuresResult.features,
+        prioritization: prioritizationResult.prioritization,
+        acceptance: acceptanceResult.acceptance,
         wireframes: wireframesResult.wireframes,
         architecture: archResult.architecture,
+        risks: risksResult.risks,
         kpis: kpisResult.kpis,
         roadmap: roadmapResult.roadmap,
-        risks: risksResult.risks,
+        appendix: appendixResult.appendix,
       };
 
       setPrdDocument(document);
@@ -482,7 +568,6 @@ Generate risk analysis in JSON format:
         description: errorMessage
       });
       
-      // Reset all sections to pending
       setSections(prev => prev.map(s => ({ ...s, status: 'pending' })));
       setProgress(0);
     } finally {
@@ -506,18 +591,17 @@ Generate risk analysis in JSON format:
             </p>
           </div>
           <div className="flex flex-wrap justify-center gap-2">
-            <Badge variant="secondary">✨ Vision produit</Badge>
+            <Badge variant="secondary">✨ 16 sections complètes</Badge>
             <Badge variant="secondary">👥 3 Personas</Badge>
             <Badge variant="secondary">📝 12 User Stories</Badge>
-            <Badge variant="secondary">🎨 Wireframes</Badge>
+            <Badge variant="secondary">🎨 Design & UX</Badge>
             <Badge variant="secondary">🏗️ Architecture</Badge>
-            <Badge variant="secondary">📊 5 KPIs</Badge>
           </div>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="space-y-3">
             <Input
-              placeholder="Décrivez votre idée en une phrase... (ex: Un dashboard analytics pour que les managers voient la performance de leur équipe en temps réel)"
+              placeholder="Décrivez votre idée en une phrase..."
               value={idea}
               onChange={(e) => setIdea(e.target.value)}
               className="text-base h-12"
@@ -542,19 +626,6 @@ Generate risk analysis in JSON format:
               )}
             </Button>
           </div>
-
-          <div className="pt-4 border-t">
-            <div className="grid grid-cols-2 gap-4 text-center">
-              <div>
-                <div className="text-3xl font-bold text-primary">15s</div>
-                <div className="text-xs text-muted-foreground">Temps de génération</div>
-              </div>
-              <div>
-                <div className="text-3xl font-bold text-primary">8</div>
-                <div className="text-xs text-muted-foreground">Sections complètes</div>
-              </div>
-            </div>
-          </div>
         </CardContent>
       </Card>
     </div>
@@ -574,38 +645,40 @@ Generate risk analysis in JSON format:
           <div className="space-y-2">
             <div className="flex justify-between text-sm">
               <span className="font-medium">{progress}%</span>
-              <span className="text-muted-foreground">~{Math.round((100 - progress) / 7)}s restantes</span>
+              <span className="text-muted-foreground">~{Math.round((100 - progress) / 6)}s restantes</span>
             </div>
             <Progress value={progress} className="h-3" />
           </div>
 
-          <div className="space-y-3">
-            {sections.map((section) => (
-              <div
-                key={section.id}
-                className={`flex items-center gap-3 p-3 rounded-lg transition-colors ${
-                  section.status === 'complete' ? 'bg-green-500/10' :
-                  section.status === 'generating' ? 'bg-primary/10' :
-                  'bg-muted/50'
-                }`}
-              >
-                {section.status === 'complete' ? (
-                  <CheckCircle2 className="w-5 h-5 text-green-500 flex-shrink-0" />
-                ) : section.status === 'generating' ? (
-                  <Loader2 className="w-5 h-5 text-primary animate-spin flex-shrink-0" />
-                ) : (
-                  <section.icon className="w-5 h-5 text-muted-foreground flex-shrink-0" />
-                )}
-                <span className={`font-medium ${
-                  section.status === 'complete' ? 'text-green-600 dark:text-green-400' :
-                  section.status === 'generating' ? 'text-primary' :
-                  'text-muted-foreground'
-                }`}>
-                  {section.title}
-                </span>
-              </div>
-            ))}
-          </div>
+          <ScrollArea className="h-[400px]">
+            <div className="space-y-2 pr-4">
+              {sections.map((section) => (
+                <div
+                  key={section.id}
+                  className={`flex items-center gap-3 p-3 rounded-lg transition-colors ${
+                    section.status === 'complete' ? 'bg-green-500/10' :
+                    section.status === 'generating' ? 'bg-primary/10' :
+                    'bg-muted/50'
+                  }`}
+                >
+                  {section.status === 'complete' ? (
+                    <CheckCircle2 className="w-5 h-5 text-green-500 flex-shrink-0" />
+                  ) : section.status === 'generating' ? (
+                    <Loader2 className="w-5 h-5 text-primary animate-spin flex-shrink-0" />
+                  ) : (
+                    <section.icon className="w-5 h-5 text-muted-foreground flex-shrink-0" />
+                  )}
+                  <span className={`font-medium text-sm ${
+                    section.status === 'complete' ? 'text-green-600 dark:text-green-400' :
+                    section.status === 'generating' ? 'text-primary' :
+                    'text-muted-foreground'
+                  }`}>
+                    {section.title}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </ScrollArea>
         </CardContent>
       </Card>
     </div>
@@ -706,16 +779,75 @@ Generate risk analysis in JSON format:
 
             {/* Document Content */}
             <div className="lg:col-span-3 space-y-6">
+              {/* Introduction */}
+              <Card id="introduction">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <BookOpen className="w-5 h-5" />
+                    Introduction
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-lg leading-relaxed">{prdDocument.introduction}</p>
+                </CardContent>
+              </Card>
+
+              {/* Context & Objectives */}
+              <Card id="context">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Target className="w-5 h-5" />
+                    Contexte & Objectifs
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-lg leading-relaxed">{prdDocument.context}</p>
+                </CardContent>
+              </Card>
+
+              {/* Problem */}
+              <Card id="problem">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <AlertTriangle className="w-5 h-5" />
+                    Problème à résoudre
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-lg leading-relaxed">{prdDocument.problem}</p>
+                </CardContent>
+              </Card>
+
               {/* Vision */}
               <Card id="vision">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <Target className="w-5 h-5" />
-                    Vision Produit
+                    <Sparkles className="w-5 h-5" />
+                    Vision produit
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <p className="text-lg leading-relaxed">{prdDocument.vision}</p>
+                </CardContent>
+              </Card>
+
+              {/* Hypothèses & Contraintes */}
+              <Card id="constraints">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <AlertTriangle className="w-5 h-5" />
+                    Hypothèses & Contraintes
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <ul className="space-y-2">
+                    {prdDocument.constraints.map((constraint, idx) => (
+                      <li key={idx} className="flex items-start gap-2">
+                        <Badge variant="outline" className="mt-0.5">{idx + 1}</Badge>
+                        <span className="text-sm flex-1">{constraint}</span>
+                      </li>
+                    ))}
+                  </ul>
                 </CardContent>
               </Card>
 
@@ -724,7 +856,7 @@ Generate risk analysis in JSON format:
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Users className="w-5 h-5" />
-                    Personas
+                    Utilisateurs cibles / Personas
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -732,13 +864,6 @@ Generate risk analysis in JSON format:
                     {prdDocument.personas.map((persona, idx) => (
                       <Card key={idx}>
                         <CardContent className="pt-6">
-                          {persona.imageUrl && (
-                            <img 
-                              src={persona.imageUrl} 
-                              alt={persona.name}
-                              className="w-24 h-24 rounded-full mx-auto mb-4 object-cover"
-                            />
-                          )}
                           <h3 className="font-semibold text-center mb-1">{persona.name}</h3>
                           <p className="text-sm text-muted-foreground text-center mb-3">
                             {persona.role}, {persona.age} ans
@@ -774,7 +899,7 @@ Generate risk analysis in JSON format:
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <FileText className="w-5 h-5" />
-                    User Stories
+                    User Stories & Scénarios d'usage
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -818,12 +943,110 @@ Generate risk analysis in JSON format:
                 </CardContent>
               </Card>
 
+              {/* Features */}
+              <Card id="features">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Zap className="w-5 h-5" />
+                    Fonctionnalités clés
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    {prdDocument.features.map((feature, idx) => (
+                      <div key={idx} className="p-4 border rounded-lg">
+                        <h4 className="font-semibold mb-2">{feature.name}</h4>
+                        <p className="text-sm text-muted-foreground">{feature.description}</p>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Prioritization */}
+              <Card id="prioritization">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Target className="w-5 h-5" />
+                    Priorisation (MoSCoW)
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div>
+                      <Badge className="mb-2">MVP</Badge>
+                      <ul className="space-y-1 ml-4">
+                        {prdDocument.prioritization.mvp.map((item, idx) => (
+                          <li key={idx} className="text-sm">• {item}</li>
+                        ))}
+                      </ul>
+                    </div>
+                    <Separator />
+                    <div>
+                      <Badge variant="destructive" className="mb-2">Must Have</Badge>
+                      <ul className="space-y-1 ml-4">
+                        {prdDocument.prioritization.must.map((item, idx) => (
+                          <li key={idx} className="text-sm">• {item}</li>
+                        ))}
+                      </ul>
+                    </div>
+                    <Separator />
+                    <div>
+                      <Badge variant="default" className="mb-2">Should Have</Badge>
+                      <ul className="space-y-1 ml-4">
+                        {prdDocument.prioritization.should.map((item, idx) => (
+                          <li key={idx} className="text-sm">• {item}</li>
+                        ))}
+                      </ul>
+                    </div>
+                    <Separator />
+                    <div>
+                      <Badge variant="secondary" className="mb-2">Could Have</Badge>
+                      <ul className="space-y-1 ml-4">
+                        {prdDocument.prioritization.could.map((item, idx) => (
+                          <li key={idx} className="text-sm">• {item}</li>
+                        ))}
+                      </ul>
+                    </div>
+                    <Separator />
+                    <div>
+                      <Badge variant="outline" className="mb-2">Won't Have</Badge>
+                      <ul className="space-y-1 ml-4">
+                        {prdDocument.prioritization.wont.map((item, idx) => (
+                          <li key={idx} className="text-sm">• {item}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Acceptance Criteria */}
+              <Card id="acceptance">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <CheckCircle2 className="w-5 h-5" />
+                    Critères d'acceptation
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <ul className="space-y-2">
+                    {prdDocument.acceptance.map((criterion, idx) => (
+                      <li key={idx} className="flex items-start gap-2">
+                        <CheckCircle2 className="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" />
+                        <span className="text-sm flex-1">{criterion}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </CardContent>
+              </Card>
+
               {/* Wireframes */}
               <Card id="wireframes">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Layout className="w-5 h-5" />
-                    Wireframes
+                    Design & UX (Wireframes/Mockups)
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -843,14 +1066,46 @@ Generate risk analysis in JSON format:
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Code2 className="w-5 h-5" />
-                    Architecture Technique
+                    Architecture & Intégrations techniques
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="p-4 bg-muted rounded-lg">
-                    <pre className="text-xs overflow-x-auto">
+                    <pre className="text-xs overflow-x-auto whitespace-pre-wrap">
                       {prdDocument.architecture}
                     </pre>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Risks */}
+              <Card id="risks">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <AlertTriangle className="w-5 h-5" />
+                    Dépendances & Risques
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    {prdDocument.risks.map((item, idx) => (
+                      <div key={idx} className="p-4 border rounded-lg">
+                        <div className="flex items-start gap-2 mb-2">
+                          <AlertTriangle className="w-4 h-4 text-yellow-500 flex-shrink-0 mt-0.5" />
+                          <p className="text-sm font-medium">{item.risk}</p>
+                        </div>
+                        <div className="pl-6 space-y-1">
+                          <p className="text-sm text-muted-foreground">
+                            <span className="font-medium">Mitigation:</span> {item.mitigation}
+                          </p>
+                          {item.dependencies && (
+                            <p className="text-sm text-muted-foreground">
+                              <span className="font-medium">Dépendances:</span> {item.dependencies}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </CardContent>
               </Card>
@@ -860,7 +1115,7 @@ Generate risk analysis in JSON format:
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <TrendingUp className="w-5 h-5" />
-                    KPIs SMART
+                    Mesure du succès (KPIs/OKRs)
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -880,7 +1135,7 @@ Generate risk analysis in JSON format:
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Map className="w-5 h-5" />
-                    Roadmap
+                    Roadmap & Planning de livraison
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -909,30 +1164,23 @@ Generate risk analysis in JSON format:
                 </CardContent>
               </Card>
 
-              {/* Risks */}
-              <Card id="risks">
+              {/* Appendix */}
+              <Card id="appendix">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <AlertTriangle className="w-5 h-5" />
-                    Risques & Mitigations
+                    <FileText className="w-5 h-5" />
+                    Annexes & Références
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-3">
-                    {prdDocument.risks.map((item, idx) => (
-                      <div key={idx} className="p-4 border rounded-lg">
-                        <div className="flex items-start gap-2 mb-2">
-                          <AlertTriangle className="w-4 h-4 text-yellow-500 flex-shrink-0 mt-0.5" />
-                          <p className="text-sm font-medium">{item.risk}</p>
-                        </div>
-                        <div className="pl-6">
-                          <p className="text-sm text-muted-foreground">
-                            <span className="font-medium">Mitigation:</span> {item.mitigation}
-                          </p>
-                        </div>
-                      </div>
+                  <ul className="space-y-2">
+                    {prdDocument.appendix.map((item, idx) => (
+                      <li key={idx} className="flex items-start gap-2">
+                        <Badge variant="outline" className="mt-0.5">{idx + 1}</Badge>
+                        <span className="text-sm flex-1">{item}</span>
+                      </li>
                     ))}
-                  </div>
+                  </ul>
                 </CardContent>
               </Card>
             </div>
