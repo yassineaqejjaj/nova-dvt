@@ -527,7 +527,7 @@ export const MeetingMinuteGenerator: React.FC = () => {
     );
   };
 
-      const renderCompleteStep = () => (
+  const renderCompleteStep = () => (
     <div className="text-center space-y-6 py-8">
       <div className="w-16 h-16 mx-auto bg-green-500 rounded-full flex items-center justify-center">
         <CheckCircle className="w-8 h-8 text-white" />
