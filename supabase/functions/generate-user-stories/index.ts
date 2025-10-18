@@ -21,18 +21,20 @@ serve(async (req) => {
 
     const systemPrompt = `You are a product management expert specialized in breaking down Epics into actionable User Stories.
 
-TASK: Analyze the Epic and generate ${options?.storyCount || '3-7'} detailed User Stories.
+    LANGUAGE: Réponds en français.
 
-RULES:
-1. Each story must be independent and deliverable
-2. Stories should follow "As a [role], I want [action], so that [benefit]" format
-3. Each story needs 2-4 specific acceptance criteria
-4. Estimate effort using Fibonacci: 1, 2, 3, 5, 8, or 13 points
-5. Max complexity: ${options?.maxComplexity || 8} points (split if larger)
-6. Priority: high (must-have), medium (should-have), or low (nice-to-have)
-${options?.focusAreas?.length ? `7. Focus on these areas: ${options.focusAreas.join(', ')}` : ''}
+    TASK: Analyze the Epic and generate ${options?.storyCount || '3-7'} detailed User Stories.
 
-OUTPUT: Return valid JSON matching this structure.`;
+    RULES:
+    1. Each story must be independent and deliverable
+    2. Stories should follow "As a [role], I want [action], so that [benefit]" format
+    3. Each story needs 2-4 specific acceptance criteria
+    4. Estimate effort using Fibonacci: 1, 2, 3, 5, 8, or 13 points
+    5. Max complexity: ${options?.maxComplexity || 8} points (split if larger)
+    6. Priority: high (must-have), medium (should-have), or low (nice-to-have)
+    ${options?.focusAreas?.length ? `7. Focus on these areas: ${options.focusAreas.join(', ')}` : ''}
+
+    OUTPUT: Return valid JSON matching this structure.`;
 
     const userPrompt = `Epic Title: ${epic.title}
 

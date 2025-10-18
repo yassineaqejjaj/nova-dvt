@@ -34,6 +34,7 @@ interface MeetingElement {
   deadline?: string;
   source_quote?: string;
   timestamp?: string;
+  link?: string;
   linked_to?: { type: string; id: string; confidence: number }[];
   status: 'pending' | 'validated' | 'ignored';
 }
@@ -56,6 +57,37 @@ export const MeetingMinuteGenerator: React.FC = () => {
   const [processingProgress, setProcessingProgress] = useState(0);
   const [meetingData, setMeetingData] = useState<MeetingData | null>(null);
   const [selectedElements, setSelectedElements] = useState<string[]>([]);
+
+  const handleEditElement = (id: string) => {
+    setMeetingData(prev => {
+      if (!prev) return prev;
+      const current = prev.elements.find(e => e.id === id);
+      const updatedContent = prompt('Modifier l\'élément :', current?.content || '');
+      if (updatedContent === null) return prev;
+      return {
+        ...prev,
+        elements: prev.elements.map(e => e.id === id ? { ...e, content: updatedContent } : e)
+      };
+    });
+  };
+
+  const handleLinkElement = (id: string) => {
+    const link = prompt('Ajouter un lien (URL ou référence) :', '');
+    if (!link) return;
+    setMeetingData(prev => prev ? {
+      ...prev,
+      elements: prev.elements.map(e => e.id === id ? { ...e, link } : e)
+    } : prev);
+  };
+
+  const handleIgnoreElement = (id: string) => {
+    setMeetingData(prev => prev ? {
+      ...prev,
+      elements: prev.elements.map(e => e.id === id ? { ...e, status: 'ignored' } : e)
+    } : prev);
+    setSelectedElements(prev => prev.filter(eid => eid !== id));
+    toast.success('Élément ignoré');
+  };
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -141,12 +173,12 @@ export const MeetingMinuteGenerator: React.FC = () => {
 
       // Format the data
       const elements: MeetingElement[] = [
-        ...(analysisData.decisions || []).map((d: any) => ({ ...d, type: 'decision', status: 'pending' })),
-        ...(analysisData.actions || []).map((a: any) => ({ ...a, type: 'action', status: 'pending' })),
-        ...(analysisData.questions || []).map((q: any) => ({ ...q, type: 'question', status: 'pending' })),
-        ...(analysisData.insights || []).map((i: any) => ({ ...i, type: 'insight', status: 'pending' })),
-        ...(analysisData.risks || []).map((r: any) => ({ ...r, type: 'risk', status: 'pending' })),
-        ...(analysisData.ideas || []).map((i: any) => ({ ...i, type: 'idea', status: 'pending' }))
+        ...(analysisData.decisions || []).map((d: any) => ({ id: d.id ?? crypto.randomUUID(), ...d, type: 'decision', status: 'pending' })),
+        ...(analysisData.actions || []).map((a: any) => ({ id: a.id ?? crypto.randomUUID(), ...a, type: 'action', status: 'pending' })),
+        ...(analysisData.questions || []).map((q: any) => ({ id: q.id ?? crypto.randomUUID(), ...q, type: 'question', status: 'pending' })),
+        ...(analysisData.insights || []).map((i: any) => ({ id: i.id ?? crypto.randomUUID(), ...i, type: 'insight', status: 'pending' })),
+        ...(analysisData.risks || []).map((r: any) => ({ id: r.id ?? crypto.randomUUID(), ...r, type: 'risk', status: 'pending' })),
+        ...(analysisData.ideas || []).map((i: any) => ({ id: i.id ?? crypto.randomUUID(), ...i, type: 'idea', status: 'pending' }))
       ];
 
       setMeetingData({
@@ -416,17 +448,17 @@ export const MeetingMinuteGenerator: React.FC = () => {
                         )}
 
                         <div className="flex gap-2">
-                          <Button variant="ghost" size="sm">
+                          <Button variant="ghost" size="sm" onClick={() => handleEditElement(element.id)}>
                             <Edit className="w-3 h-3 mr-1" />
-                            Edit
+                            Éditer
                           </Button>
-                          <Button variant="ghost" size="sm">
+                          <Button variant="ghost" size="sm" onClick={() => handleLinkElement(element.id)}>
                             <Link className="w-3 h-3 mr-1" />
-                            Link
+                            Lier
                           </Button>
-                          <Button variant="ghost" size="sm">
+                          <Button variant="ghost" size="sm" onClick={() => handleIgnoreElement(element.id)}>
                             <X className="w-3 h-3 mr-1" />
-                            Ignore
+                            Ignorer
                           </Button>
                         </div>
                       </div>

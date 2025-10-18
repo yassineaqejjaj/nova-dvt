@@ -48,7 +48,7 @@ const EpicToUserStories = () => {
 
   const handleGenerateClick = () => {
     if (!epicTitle.trim() || !epicDescription.trim()) {
-      toast.error('Please provide Epic title and description');
+      toast.error('Merci de renseigner le titre et la description de l’Epic');
       return;
     }
 
@@ -72,7 +72,7 @@ const EpicToUserStories = () => {
   const handleSaveStories = (stories: UserStory[]) => {
     setSavedStories(stories);
     setShowReviewModal(false);
-    toast.success(`${stories.length} stories saved successfully`);
+    toast.success(`${stories.length} stories enregistrées avec succès`);
   };
 
   const toggleStoryExpand = (storyId: string) => {
@@ -89,33 +89,35 @@ const EpicToUserStories = () => {
 
   const totalPoints = savedStories.reduce((sum, story) => sum + story.effortPoints, 0);
   const estimatedSprints = Math.ceil(totalPoints / 20);
+  const priorityOrder = { high: 0, medium: 1, low: 2 } as const;
+  const sortedStories = savedStories.slice().sort((a, b) => priorityOrder[a.priority] - priorityOrder[b.priority]);
 
   return (
     <div className="container mx-auto py-8 px-4 max-w-6xl">
       <div className="mb-8">
-        <h1 className="text-4xl font-bold mb-2 text-foreground">Epic to User Stories</h1>
-        <p className="text-muted-foreground">Transform high-level Epics into actionable User Stories with AI</p>
+        <h1 className="text-4xl font-bold mb-2 text-foreground">Epic vers User Stories</h1>
+        <p className="text-muted-foreground">Transformez vos Epics en User Stories actionnables avec l’IA</p>
       </div>
 
       <Card className="mb-6">
         <CardHeader>
-          <CardTitle>Define Your Epic</CardTitle>
-          <CardDescription>Provide the Epic details to generate User Stories</CardDescription>
+          <CardTitle>Définir votre Epic</CardTitle>
+          <CardDescription>Renseignez les détails pour générer des User Stories</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
-            <label className="text-sm font-medium mb-2 block">Epic Title *</label>
+            <label className="text-sm font-medium mb-2 block">Titre de l’Epic *</label>
             <Input
-              placeholder="e.g., User Authentication System"
+              placeholder="ex.: Système d’authentification"
               value={epicTitle}
               onChange={(e) => setEpicTitle(e.target.value)}
             />
           </div>
 
           <div>
-            <label className="text-sm font-medium mb-2 block">Epic Description *</label>
+            <label className="text-sm font-medium mb-2 block">Description de l’Epic *</label>
             <Textarea
-              placeholder="Describe the Epic in detail: goals, scope, user needs..."
+              placeholder="Décrivez l’Epic en détail : objectifs, périmètre, besoins utilisateurs..."
               value={epicDescription}
               onChange={(e) => setEpicDescription(e.target.value)}
               rows={6}
@@ -123,9 +125,9 @@ const EpicToUserStories = () => {
           </div>
 
           <div>
-            <label className="text-sm font-medium mb-2 block">Additional Context (Optional)</label>
+            <label className="text-sm font-medium mb-2 block">Contexte additionnel (optionnel)</label>
             <Textarea
-              placeholder="Technical constraints, dependencies, target users..."
+              placeholder="Contraintes techniques, dépendances, utilisateurs cibles..."
               value={epicContext}
               onChange={(e) => setEpicContext(e.target.value)}
               rows={4}
@@ -138,7 +140,7 @@ const EpicToUserStories = () => {
             size="lg"
           >
             <Sparkles className="mr-2 h-5 w-5" />
-            Generate User Stories from Epic
+            Générer des User Stories à partir de l’Epic
           </Button>
         </CardContent>
       </Card>
@@ -149,7 +151,7 @@ const EpicToUserStories = () => {
             <div className="flex justify-between items-center">
               <div>
                 <CardTitle>User Stories ({savedStories.length})</CardTitle>
-                <CardDescription>Generated stories from your Epic</CardDescription>
+                <CardDescription>Stories générées à partir de votre Epic</CardDescription>
               </div>
               <div className="flex gap-2">
                 <Badge variant="secondary">
@@ -162,7 +164,7 @@ const EpicToUserStories = () => {
             </div>
           </CardHeader>
           <CardContent className="space-y-3">
-            {savedStories.map(story => (
+            {sortedStories.map(story => (
               <StoryCard
                 key={story.id}
                 story={story}
@@ -174,7 +176,7 @@ const EpicToUserStories = () => {
             <div className="flex gap-2 pt-4">
               <Button variant="outline" size="sm">
                 <Plus className="mr-2 h-4 w-4" />
-                Add Story Manually
+                Ajouter une story manuellement
               </Button>
               <Button 
                 variant="outline" 
@@ -182,7 +184,7 @@ const EpicToUserStories = () => {
                 onClick={handleGenerateClick}
               >
                 <RefreshCw className="mr-2 h-4 w-4" />
-                Regenerate All
+                Regénérer tout
               </Button>
             </div>
           </CardContent>

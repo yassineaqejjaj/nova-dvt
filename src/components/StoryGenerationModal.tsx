@@ -97,16 +97,16 @@ const StoryGenerationModal = ({ epic, open, onClose, onGenerate }: StoryGenerati
       const valid = mapped.filter(s => s && s.title && s.story?.asA && s.story?.iWant && s.story?.soThat && Array.isArray(s.acceptanceCriteria) && s.acceptanceCriteria.length >= 1);
       if (valid.length === 0) {
         console.error('Invalid AI stories payload:', data);
-        toast.error('AI returned empty stories. Please try again.');
+        toast.error('L’IA a renvoyé des stories vides. Réessayez.');
         setIsGenerating(false);
         return;
       }
 
       onGenerate(valid);
-      toast.success(`Generated ${valid.length} user stories`);
+      toast.success(`${valid.length} stories générées`);
     } catch (error) {
       console.error('Story generation error:', error);
-      toast.error('Failed to generate stories. Please try again.');
+      toast.error('Échec de génération des stories. Réessayez.');
     } finally {
       setIsGenerating(false);
     }
@@ -116,36 +116,36 @@ const StoryGenerationModal = ({ epic, open, onClose, onGenerate }: StoryGenerati
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
-          <DialogTitle>Generate User Stories</DialogTitle>
+          <DialogTitle>Générer des User Stories</DialogTitle>
           <DialogDescription>
-            Configure how AI should break down your Epic into User Stories
+            Configurez comment l’IA doit découper votre Epic en User Stories
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 py-4">
           <div>
-            <label className="text-sm font-medium mb-2 block text-muted-foreground">Epic Title</label>
+            <label className="text-sm font-medium mb-2 block text-muted-foreground">Titre de l’Epic</label>
             <p className="text-sm font-semibold">{epic.title}</p>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="text-sm font-medium mb-2 block">Story Count</label>
+              <label className="text-sm font-medium mb-2 block">Nombre de stories</label>
               <Select value={storyCount} onValueChange={setStoryCount}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="auto">Auto (3-7)</SelectItem>
-                  <SelectItem value="3">Exactly 3</SelectItem>
-                  <SelectItem value="5">Exactly 5</SelectItem>
-                  <SelectItem value="7">Exactly 7</SelectItem>
+                  <SelectItem value="3">Exactement 3</SelectItem>
+                  <SelectItem value="5">Exactement 5</SelectItem>
+                  <SelectItem value="7">Exactement 7</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
             <div>
-              <label className="text-sm font-medium mb-2 block">Max Complexity</label>
+              <label className="text-sm font-medium mb-2 block">Complexité max</label>
               <Select value={maxComplexity} onValueChange={setMaxComplexity}>
                 <SelectTrigger>
                   <SelectValue />
@@ -160,16 +160,16 @@ const StoryGenerationModal = ({ epic, open, onClose, onGenerate }: StoryGenerati
           </div>
 
           <div>
-            <label className="text-sm font-medium mb-2 block">Focus Areas (Optional)</label>
+            <label className="text-sm font-medium mb-2 block">Domaines d’attention (optionnel)</label>
             <div className="flex gap-2 mb-2">
               <Input
-                placeholder="e.g., Security, Performance, UX..."
+                placeholder="ex.: Sécurité, Performance, UX..."
                 value={focusInput}
                 onChange={(e) => setFocusInput(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleAddFocus()}
               />
               <Button type="button" variant="outline" onClick={handleAddFocus}>
-                Add
+                Ajouter
               </Button>
             </div>
             {focusAreas.length > 0 && (
@@ -190,18 +190,18 @@ const StoryGenerationModal = ({ epic, open, onClose, onGenerate }: StoryGenerati
 
         <DialogFooter>
           <Button variant="outline" onClick={onClose} disabled={isGenerating}>
-            Cancel
+            Annuler
           </Button>
           <Button onClick={handleGenerate} disabled={isGenerating}>
             {isGenerating ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Generating Stories...
+                Génération en cours...
               </>
             ) : (
               <>
                 <Sparkles className="mr-2 h-4 w-4" />
-                Generate Stories
+                Générer les stories
               </>
             )}
           </Button>

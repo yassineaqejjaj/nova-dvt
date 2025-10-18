@@ -77,13 +77,13 @@ const StoryReviewModal = ({ epic, generatedStories, open, onClose, onSave }: Sto
       next.delete(storyId);
       return next;
     });
-    toast.success('Story removed');
+    toast.success('Story supprimée');
   };
 
   const handleSave = () => {
     const storiesToSave = stories.filter(s => includedStories.has(s.id));
     if (storiesToSave.length === 0) {
-      toast.error('Please select at least one story to save');
+      toast.error('Veuillez sélectionner au moins une story à enregistrer');
       return;
     }
     onSave(storiesToSave);
@@ -106,9 +106,9 @@ const StoryReviewModal = ({ epic, generatedStories, open, onClose, onSave }: Sto
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[800px] max-h-[90vh] flex flex-col">
         <DialogHeader>
-          <DialogTitle>Review Generated Stories</DialogTitle>
+          <DialogTitle>Revoir les User Stories générées</DialogTitle>
           <DialogDescription>
-            Review and edit the generated User Stories before saving
+            Relisez et modifiez les User Stories générées avant enregistrement
           </DialogDescription>
         </DialogHeader>
 
@@ -148,15 +148,15 @@ const StoryReviewModal = ({ epic, generatedStories, open, onClose, onSave }: Sto
 
         <DialogFooter className="border-t pt-4">
           <Button variant="outline" onClick={onClose}>
-            Cancel
+            Annuler
           </Button>
           <Button variant="outline">
             <RefreshCw className="mr-2 h-4 w-4" />
-            Regenerate
+            Régénérer
           </Button>
           <Button onClick={handleSave}>
             <Save className="mr-2 h-4 w-4" />
-            Save {includedCount} {includedCount === 1 ? 'Story' : 'Stories'}
+            Enregistrer {includedCount} {includedCount === 1 ? 'story' : 'stories'}
           </Button>
         </DialogFooter>
       </DialogContent>

@@ -27,6 +27,8 @@ serve(async (req) => {
 
     const systemPrompt = `You are an expert meeting analyst. Extract key elements from meeting transcripts and structure them.
 
+LANGUAGE: Réponds toujours en français.
+
 Extract and categorize:
 1. DECISIONS: Clear decisions made, with rationale and decision makers
 2. ACTION ITEMS: Tasks with assignees and deadlines
