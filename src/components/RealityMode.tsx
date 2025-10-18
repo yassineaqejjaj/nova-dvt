@@ -268,13 +268,13 @@ Respond with conviction and expertise:`;
             <Sparkles className="w-10 h-10 text-primary" />
           </div>
           <div>
-            <h3 className="text-xl font-semibold mb-2">Reality Mode Unavailable</h3>
+            <h3 className="text-xl font-semibold mb-2">Reality Mode Indisponible</h3>
             <p className="text-muted-foreground">
-              You need to create a squad with AI agents to use Reality Mode
+              Vous devez créer une squad avec des agents IA pour utiliser Reality Mode
             </p>
           </div>
           <Button onClick={() => window.location.hash = '#squads'}>
-            Build Your Squad
+            Créer Votre Squad
           </Button>
         </div>
       </Card>
@@ -291,7 +291,7 @@ Respond with conviction and expertise:`;
           <Sparkles className="w-6 h-6 text-primary" />
         </div>
         <p className="text-muted-foreground">
-          Watch your AI squad debate and collaborate in real-time
+          Regardez votre squad IA débattre et collaborer en temps réel
         </p>
       </div>
 
@@ -300,7 +300,7 @@ Respond with conviction and expertise:`;
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center space-x-2">
             <Users className="w-4 h-4" />
-            <h3 className="font-semibold">Active Squad</h3>
+            <h3 className="font-semibold">Squad Active</h3>
             <Badge variant="secondary">{workingSquad.length} agents</Badge>
           </div>
           {currentRound > 0 && (
@@ -341,7 +341,7 @@ Respond with conviction and expertise:`;
       <Card className="overflow-hidden">
         <div className="p-4 border-b bg-muted/30">
           <div className="flex items-center justify-between">
-            <h3 className="font-semibold">Debate Arena</h3>
+            <h3 className="font-semibold">Arène de Débat</h3>
             <div className="flex items-center space-x-2">
               <Button
                 size="sm"
@@ -357,7 +357,7 @@ Respond with conviction and expertise:`;
               {isDebating && !isPaused && (
                 <Badge variant="default" className="animate-pulse">
                   <span className="w-2 h-2 rounded-full bg-white mr-2" />
-                  Live
+                  En Direct
                 </Badge>
               )}
             </div>
@@ -404,7 +404,7 @@ Respond with conviction and expertise:`;
                   {message.isThinking ? (
                     <div className="flex items-center space-x-2 text-muted-foreground">
                       <Loader2 className="w-4 h-4 animate-spin" />
-                      <span className="text-sm">Formulating response...</span>
+                      <span className="text-sm">Formulation de la réponse...</span>
                     </div>
                   ) : (
                     <>
@@ -431,7 +431,7 @@ Respond with conviction and expertise:`;
           {!isDebating ? (
             <div className="space-y-3">
               <Input
-                placeholder="Enter your debate topic... (e.g., Build me a product launch plan for a new fitness app)"
+                placeholder="Entrez le sujet de débat... (ex : Créez-moi un plan de lancement pour une nouvelle app fitness)"
                 value={prompt}
                 onChange={(e) => setPrompt(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && startDebate()}
@@ -442,7 +442,7 @@ Respond with conviction and expertise:`;
                 disabled={!prompt.trim()}
               >
                 <Play className="w-4 h-4 mr-2" />
-                Start Simulation
+                Démarrer la Simulation
               </Button>
             </div>
           ) : (
@@ -455,11 +455,11 @@ Respond with conviction and expertise:`;
               ) : (
                 <Button onClick={resumeDebate} className="flex-1">
                   <Play className="w-4 h-4 mr-2" />
-                  Resume
+                  Reprendre
                 </Button>
               )}
               <Button onClick={stopDebate} variant="destructive">
-                Stop
+                Arrêter
               </Button>
             </div>
           )}
@@ -471,12 +471,12 @@ Respond with conviction and expertise:`;
         <DialogContent className="max-w-4xl max-h-[80vh]">
           <DialogHeader>
             <DialogTitle>
-              Replace {agentToReplace?.name}
+              Remplacer {agentToReplace?.name}
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <Input
-              placeholder="Search agents..."
+              placeholder="Rechercher des agents..."
               className="w-full"
             />
             <ScrollArea className="h-[400px]">

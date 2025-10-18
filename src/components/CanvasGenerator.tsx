@@ -66,48 +66,48 @@ const canvasTemplates: CanvasTemplate[] = [
   // PRODUCT MANAGER FRAMEWORKS
   {
     id: 'moscow',
-    name: 'MoSCoW Prioritization',
-    description: 'Prioritize features using Must have, Should have, Could have, Won\'t have',
+    name: 'Priorisation MoSCoW',
+    description: 'Priorisez les fonctionnalités : Must have, Should have, Could have, Won\'t have',
     icon: <Target className="w-6 h-6" />,
     sections: ['Must Have', 'Should Have', 'Could Have', 'Won\'t Have'],
     prompts: {
-      'Must Have': 'What features are critical for launch?',
-      'Should Have': 'What features are important but not critical?',
-      'Could Have': 'What would be nice to have if time permits?',
-      'Won\'t Have': 'What are we explicitly not doing this time?'
+      'Must Have': 'Quelles fonctionnalités sont critiques pour le lancement ?',
+      'Should Have': 'Quelles fonctionnalités sont importantes mais non critiques ?',
+      'Could Have': 'Qu\'est-ce qui serait agréable à avoir si le temps le permet ?',
+      'Won\'t Have': 'Qu\'est-ce que nous ne faisons explicitement pas cette fois-ci ?'
     },
     color: 'bg-agent-blue',
     role: 'product-manager',
     formFields: [
-      { name: 'timeline', label: 'Project Timeline', type: 'input', placeholder: 'e.g., 3 months', required: true },
-      { name: 'budget', label: 'Budget Constraints', type: 'input', placeholder: 'Budget limitations' },
-      { name: 'stakeholders', label: 'Key Stakeholders', type: 'textarea', placeholder: 'List key stakeholders and their priorities' }
+      { name: 'timeline', label: 'Calendrier du Projet', type: 'input', placeholder: 'ex : 3 mois', required: true },
+      { name: 'budget', label: 'Contraintes Budgétaires', type: 'input', placeholder: 'Limitations budgétaires' },
+      { name: 'stakeholders', label: 'Parties Prenantes Clés', type: 'textarea', placeholder: 'Listez les parties prenantes clés et leurs priorités' }
     ]
   },
   {
     id: 'swot',
-    name: 'SWOT Analysis',
-    description: 'Analyze Strengths, Weaknesses, Opportunities, and Threats',
+    name: 'Analyse SWOT',
+    description: 'Analysez Forces, Faiblesses, Opportunités et Menaces',
     icon: <TrendingUp className="w-6 h-6" />,
-    sections: ['Strengths', 'Weaknesses', 'Opportunities', 'Threats'],
+    sections: ['Forces', 'Faiblesses', 'Opportunités', 'Menaces'],
     prompts: {
-      'Strengths': 'What advantages do we have?',
-      'Weaknesses': 'What areas need improvement?',
-      'Opportunities': 'What market opportunities exist?',
-      'Threats': 'What external threats should we consider?'
+      'Forces': 'Quels sont nos avantages ?',
+      'Faiblesses': 'Quels domaines nécessitent des améliorations ?',
+      'Opportunités': 'Quelles opportunités de marché existent ?',
+      'Menaces': 'Quelles menaces externes devons-nous considérer ?'
     },
     color: 'bg-agent-green',
     role: 'product-manager',
     formFields: [
-      { name: 'industry', label: 'Industry/Market', type: 'input', placeholder: 'e.g., SaaS, E-commerce', required: true },
-      { name: 'company_size', label: 'Company Size', type: 'select', options: ['Startup', 'Small (1-50)', 'Medium (51-500)', 'Large (500+)'] },
-      { name: 'competitors', label: 'Main Competitors', type: 'textarea', placeholder: 'List 3-5 main competitors' }
+      { name: 'industry', label: 'Industrie/Marché', type: 'input', placeholder: 'ex : SaaS, E-commerce', required: true },
+      { name: 'company_size', label: 'Taille de l\'Entreprise', type: 'select', options: ['Startup', 'Petite (1-50)', 'Moyenne (51-500)', 'Grande (500+)'] },
+      { name: 'competitors', label: 'Concurrents Principaux', type: 'textarea', placeholder: 'Listez 3-5 concurrents principaux' }
     ]
   },
   {
     id: 'business-model',
     name: 'Business Model Canvas',
-    description: 'Map out your business model across 9 key building blocks',
+    description: 'Cartographiez votre modèle d\'affaires en 9 blocs clés',
     icon: <Grid3X3 className="w-6 h-6" />,
     sections: [
       'Key Partners', 'Key Activities', 'Key Resources', 'Value Propositions',
@@ -572,16 +572,16 @@ export const CanvasGenerator: React.FC<CanvasGeneratorProps> = ({
         <DialogHeader>
           <DialogTitle className="flex items-center space-x-2">
             <Grid3X3 className="w-5 h-5 text-primary" />
-            <span>Multi-Canvas Generator</span>
+            <span>Générateur Multi-Canvas</span>
           </DialogTitle>
         </DialogHeader>
 
         {!selectedTemplate ? (
           <div className="space-y-6">
             <div>
-              <h3 className="text-lg font-semibold mb-2">Choose a Framework</h3>
+              <h3 className="text-lg font-semibold mb-2">Choisissez un Framework</h3>
               <p className="text-muted-foreground mb-4">
-                Select a framework tailored for Product Managers, Designers, or Developers to generate a structured canvas
+                Sélectionnez un framework adapté aux Product Managers, Designers ou Développeurs pour générer un canvas structuré
               </p>
             </div>
             
@@ -592,7 +592,7 @@ export const CanvasGenerator: React.FC<CanvasGeneratorProps> = ({
                 className="cursor-pointer px-4 py-2 text-sm hover:opacity-80"
                 onClick={() => setRoleFilter('all')}
               >
-                All Frameworks
+                Tous les Frameworks
               </Badge>
               <Badge 
                 variant={roleFilter === 'product-manager' ? 'default' : 'outline'}
@@ -616,7 +616,7 @@ export const CanvasGenerator: React.FC<CanvasGeneratorProps> = ({
                 onClick={() => setRoleFilter('developer')}
               >
                 <Code className="w-3 h-3 mr-1" />
-                Developer
+                Développeur
               </Badge>
             </div>
 
@@ -672,17 +672,17 @@ export const CanvasGenerator: React.FC<CanvasGeneratorProps> = ({
                 </div>
               </div>
               <Button variant="outline" onClick={() => setSelectedTemplate(null)}>
-                Back to Templates
+                Retour aux Templates
               </Button>
             </div>
 
             {Object.keys(generatedCanvas).length === 0 ? (
               <div className="space-y-6">
                 <div className="space-y-2">
-                  <Label htmlFor="context">Project Context</Label>
+                  <Label htmlFor="context">Contexte Projet</Label>
                   <Textarea
                     id="context"
-                    placeholder="Describe your project, product, or initiative that you want to analyze using this framework..."
+                    placeholder="Décrivez votre projet, produit ou initiative que vous souhaitez analyser avec ce framework..."
                     value={projectContext}
                     onChange={(e) => setProjectContext(e.target.value)}
                     rows={4}
@@ -692,7 +692,7 @@ export const CanvasGenerator: React.FC<CanvasGeneratorProps> = ({
                 {/* Custom form fields for selected template */}
                 {selectedTemplate.formFields && selectedTemplate.formFields.length > 0 && (
                   <div className="space-y-4">
-                    <h4 className="text-md font-semibold">Additional Information</h4>
+                    <h4 className="text-md font-semibold">Informations Complémentaires</h4>
                     {selectedTemplate.formFields.map((field) => (
                       <div key={field.name} className="space-y-2">
                         <Label htmlFor={field.name}>
@@ -723,7 +723,7 @@ export const CanvasGenerator: React.FC<CanvasGeneratorProps> = ({
                             value={formData[field.name] || ''}
                             onChange={(e) => updateFormData(field.name, e.target.value)}
                           >
-                            <option value="">Select an option...</option>
+                            <option value="">Sélectionnez une option...</option>
                             {field.options.map((option) => (
                               <option key={option} value={option}>{option}</option>
                             ))}
@@ -742,7 +742,7 @@ export const CanvasGenerator: React.FC<CanvasGeneratorProps> = ({
                     onConfirm={confirmFileUpload}
                   />
                   <div className="flex items-center justify-between">
-                    <h4 className="text-md font-semibold">Supporting Documents</h4>
+                    <h4 className="text-md font-semibold">Documents Supports</h4>
                     <Button
                       variant="outline"
                       size="sm"
@@ -750,7 +750,7 @@ export const CanvasGenerator: React.FC<CanvasGeneratorProps> = ({
                       type="button"
                     >
                       <Upload className="w-4 h-4 mr-2" />
-                      Upload Files
+                      Télécharger des Fichiers
                     </Button>
                   </div>
                   
@@ -766,7 +766,7 @@ export const CanvasGenerator: React.FC<CanvasGeneratorProps> = ({
                   {documents.length > 0 && (
                     <div className="space-y-2">
                       <p className="text-sm text-muted-foreground">
-                        Uploaded documents will be analyzed to enhance canvas generation
+                        Les documents téléchargés seront analysés pour améliorer la génération du canvas
                       </p>
                       <div className="grid grid-cols-1 gap-2">
                         {documents.map((doc, index) => (
@@ -800,12 +800,12 @@ export const CanvasGenerator: React.FC<CanvasGeneratorProps> = ({
                   {isGenerating ? (
                     <>
                       <Grid3X3 className="w-4 h-4 mr-2 animate-spin" />
-                      Generating Canvas...
+                      Génération du Canvas...
                     </>
                   ) : (
                     <>
                       <Grid3X3 className="w-4 h-4 mr-2" />
-                      Generate {selectedTemplate.name}
+                      Générer {selectedTemplate.name}
                     </>
                   )}
                 </Button>
@@ -813,15 +813,15 @@ export const CanvasGenerator: React.FC<CanvasGeneratorProps> = ({
             ) : (
               <div className="space-y-4">
                 <div className="flex justify-between items-center">
-                  <h4 className="text-lg font-semibold">Generated Canvas</h4>
+                  <h4 className="text-lg font-semibold">Canvas Généré</h4>
                   <div className="flex space-x-2">
                     <Button variant="outline" size="sm" onClick={copyCanvas}>
                       <Copy className="w-4 h-4 mr-2" />
-                      Copy
+                      Copier
                     </Button>
                     <Button variant="outline" size="sm" onClick={exportCanvas}>
                       <Download className="w-4 h-4 mr-2" />
-                      Export
+                      Exporter
                     </Button>
                   </div>
                 </div>
@@ -852,7 +852,7 @@ export const CanvasGenerator: React.FC<CanvasGeneratorProps> = ({
                   }}
                   className="w-full"
                 >
-                  Generate New Canvas
+                  Générer un Nouveau Canvas
                 </Button>
               </div>
             )}

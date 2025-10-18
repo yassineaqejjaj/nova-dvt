@@ -27,11 +27,11 @@ interface AgentGalleryProps {
 }
 
 const familyCategories = [
-  { id: 'all', label: 'All Agents', icon: Users, color: 'default' },
+  { id: 'all', label: 'Tous les Agents', icon: Users, color: 'default' },
   { id: 'blue', label: 'Product Management', icon: Users, color: 'agent-blue' },
   { id: 'green', label: 'Design & Workflow', icon: Palette, color: 'agent-green' },
-  { id: 'purple', label: 'Development', icon: Code, color: 'agent-purple' },
-  { id: 'orange', label: 'Growth & Analytics', icon: TrendingUp, color: 'agent-orange' }
+  { id: 'purple', label: 'Développement', icon: Code, color: 'agent-purple' },
+  { id: 'orange', label: 'Croissance & Analytics', icon: TrendingUp, color: 'agent-orange' }
 ];
 
 export const AgentGallery: React.FC<AgentGalleryProps> = ({
@@ -78,9 +78,9 @@ export const AgentGallery: React.FC<AgentGalleryProps> = ({
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold">Agent Gallery</h2>
+          <h2 className="text-2xl font-bold">Galerie d'Agents</h2>
           <p className="text-muted-foreground">
-            Discover and unlock specialized AI agents for your squads
+            Découvrez et débloquez des agents IA spécialisés pour vos squads
           </p>
         </div>
         <div className="flex items-center space-x-2">
@@ -89,11 +89,11 @@ export const AgentGallery: React.FC<AgentGalleryProps> = ({
             className="flex items-center space-x-2"
           >
             <Plus className="w-4 h-4" />
-            <span>Create Agent</span>
+            <span>Créer un Agent</span>
           </Button>
           <Badge variant="secondary" className="flex items-center space-x-1">
             <Users className="w-3 h-3" />
-            <span>{unlockedCount}/{allAvailableAgents.length} Unlocked</span>
+            <span>{unlockedCount}/{allAvailableAgents.length} Débloqués</span>
           </Badge>
         </div>
       </div>
@@ -104,7 +104,7 @@ export const AgentGallery: React.FC<AgentGalleryProps> = ({
         <div className="relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
           <Input
-            placeholder="Search agents by name, specialty, or capabilities..."
+            placeholder="Rechercher des agents par nom, spécialité ou capacités..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="pl-10 pr-10"
@@ -160,7 +160,7 @@ export const AgentGallery: React.FC<AgentGalleryProps> = ({
             className="flex items-center space-x-2"
           >
             <Filter className="w-4 h-4" />
-            <span>Unlocked Only</span>
+            <span>Débloqués Uniquement</span>
           </Button>
         </div>
       </div>
@@ -168,8 +168,8 @@ export const AgentGallery: React.FC<AgentGalleryProps> = ({
       {/* Results Count */}
       <div className="flex items-center justify-between">
         <p className="text-sm text-muted-foreground">
-          Showing {filteredAgents.length} agent{filteredAgents.length !== 1 ? 's' : ''}
-          {searchTerm && ` for "${searchTerm}"`}
+          Affichage de {filteredAgents.length} agent{filteredAgents.length !== 1 ? 's' : ''}
+          {searchTerm && ` pour "${searchTerm}"`}
         </p>
         
         {filteredAgents.length === 0 && (
@@ -182,7 +182,7 @@ export const AgentGallery: React.FC<AgentGalleryProps> = ({
               setShowUnlockedOnly(false);
             }}
           >
-            Clear Filters
+            Effacer les Filtres
           </Button>
         )}
       </div>
@@ -207,9 +207,9 @@ export const AgentGallery: React.FC<AgentGalleryProps> = ({
       {filteredAgents.length === 0 && (
         <div className="text-center py-12">
           <Users className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-          <h3 className="text-lg font-semibold mb-2">No agents found</h3>
+          <h3 className="text-lg font-semibold mb-2">Aucun agent trouvé</h3>
           <p className="text-muted-foreground mb-4">
-            Try adjusting your search terms or filters
+            Essayez d'ajuster vos termes de recherche ou vos filtres
           </p>
         </div>
       )}
