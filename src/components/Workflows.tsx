@@ -903,20 +903,6 @@ export const Workflows: React.FC = () => {
           open={showContextManager} 
           onOpenChange={setShowContextManager}
         />
-        {showEpicToStories && (
-          <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm">
-            <div className="fixed inset-4 z-50 overflow-auto bg-background rounded-lg border shadow-lg p-6">
-              <Button
-                variant="ghost"
-                className="absolute right-4 top-4"
-                onClick={() => setShowEpicToStories(false)}
-              >
-                ✕
-              </Button>
-              <EpicToUserStories />
-            </div>
-          </div>
-        )}
       </div>
     );
   }
@@ -1126,6 +1112,20 @@ export const Workflows: React.FC = () => {
             ✕ Fermer
           </Button>
           <SmartDiscoveryCanvas />
+        </div>
+      )}
+      
+      {showEpicToStories && (
+        <div className="fixed inset-0 z-50 bg-background">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="absolute top-4 right-4 z-50"
+            onClick={() => setShowEpicToStories(false)}
+          >
+            ✕ Fermer
+          </Button>
+          <EpicToUserStories />
         </div>
       )}
     </div>
