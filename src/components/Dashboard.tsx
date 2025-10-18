@@ -241,14 +241,14 @@ export const Dashboard: React.FC<DashboardProps> = ({
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium flex items-center space-x-2">
               <Trophy className="w-4 h-4 text-agent-orange" />
-              <span>Progress & Rewards</span>
+              <span>Progression & Récompenses</span>
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-end space-x-2">
-                  <span className="text-2xl font-bold">Level {user.level}</span>
+                  <span className="text-2xl font-bold">Niveau {user.level}</span>
                   <Badge variant="secondary" className="text-xs">
                     {user.xp} XP
                   </Badge>
@@ -260,8 +260,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
               </div>
               <div className="space-y-1">
                 <div className="flex justify-between text-xs text-muted-foreground">
-                  <span>Progress to Level {user.level + 1}</span>
-                  <span>{xpToNextLevel} XP needed</span>
+                  <span>Progression vers le niveau {user.level + 1}</span>
+                  <span>{xpToNextLevel} XP restants</span>
                 </div>
                 <Progress value={progressToNextLevel} className="h-2" />
               </div>
@@ -281,7 +281,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
             <div className="space-y-3">
               <div className="flex items-end space-x-2">
                 <span className="text-2xl font-bold">{unlockedAgentsCount}</span>
-                <span className="text-sm text-muted-foreground">of {allAgents.length}</span>
+                <span className="text-sm text-muted-foreground">sur {allAgents.length}</span>
               </div>
               <Button 
                 variant="outline" 
@@ -289,7 +289,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 onClick={() => onNavigate('agents')}
                 className="w-full text-xs"
               >
-                Browse Gallery
+                Voir la galerie
                 <ChevronRight className="w-3 h-3 ml-1" />
               </Button>
             </div>
@@ -301,7 +301,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium flex items-center space-x-2">
               <Target className="w-4 h-4 text-agent-green" />
-              <span>Active Squads</span>
+              <span>Squads actives</span>
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -316,7 +316,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 onClick={() => onNavigate('squads')}
                 className="w-full text-xs"
               >
-                {squads.length > 0 ? 'Manage Squads' : 'Create Squad'}
+                {squads.length > 0 ? 'Gérer les squads' : 'Créer une squad'}
                 <ChevronRight className="w-3 h-3 ml-1" />
               </Button>
             </div>
@@ -328,18 +328,18 @@ export const Dashboard: React.FC<DashboardProps> = ({
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium flex items-center space-x-2">
               <TrendingUp className="w-4 h-4 text-primary" />
-              <span>Daily Streak</span>
+              <span>Série quotidienne</span>
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
               <div className="flex items-end space-x-2">
                 <span className="text-2xl font-bold">{user.streak}</span>
-                <span className="text-sm text-muted-foreground">days</span>
+                <span className="text-sm text-muted-foreground">jours</span>
                 <span className="text-lg">🔥</span>
               </div>
               <p className="text-xs text-muted-foreground">
-                Keep collaborating to maintain your streak!
+                Continuez à collaborer pour maintenir votre série !
               </p>
             </div>
           </CardContent>
@@ -351,7 +351,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
         <div>
           <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
             <Zap className="h-6 w-6 text-primary" />
-            Instant Insights
+            Insights instantanés
           </h2>
           <InsightsPanel insights={insights} onDismiss={dismissInsight} />
         </div>
@@ -361,7 +361,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
       <div>
         <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
           <TrendingUp className="h-6 w-6 text-primary" />
-          Your Squad Universe
+          Votre univers Squad
         </h2>
         <DynamicStatsPanel userId={user.id} />
       </div>
@@ -370,7 +370,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
       <div>
         <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
           <Star className="h-6 w-6 text-primary" />
-          Quick Deck
+          Raccourcis
         </h2>
         <QuickDeck
           pinnedItems={pinnedItems}
@@ -384,7 +384,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
         <CardHeader>
           <CardTitle className="flex items-center space-x-2">
             <Zap className="w-5 h-5 text-primary" />
-            <span>Quick Actions</span>
+            <span>Actions rapides</span>
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -394,7 +394,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
               className="flex items-center space-x-2 h-12"
             >
               <Users className="w-4 h-4" />
-              <span>Create New Squad</span>
+              <span>Créer une nouvelle squad</span>
             </Button>
             <Button 
               variant="outline" 
@@ -402,7 +402,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
               className="flex items-center space-x-2 h-12"
             >
               <Star className="w-4 h-4" />
-              <span>Unlock New Agents</span>
+              <span>Débloquer de nouveaux agents</span>
             </Button>
             <Button 
               variant="outline" 
@@ -411,7 +411,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
               className="flex items-center space-x-2 h-12"
             >
               <MessageCircle className="w-4 h-4" />
-              <span>Start Chatting</span>
+              <span>Démarrer le chat</span>
             </Button>
           </div>
         </CardContent>
@@ -423,7 +423,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
               <Calendar className="w-5 h-5 text-agent-green" />
-              <span>Recent Activity</span>
+              <span>Activité récente</span>
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -451,7 +451,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
               <Award className="w-5 h-5 text-agent-orange" />
-              <span>Achievements</span>
+              <span>Succès</span>
             </CardTitle>
           </CardHeader>
           <CardContent>

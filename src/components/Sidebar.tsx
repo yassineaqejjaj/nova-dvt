@@ -106,7 +106,7 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
     },
     {
       id: 'instant-prd' as TabType,
-      label: 'Instant Product Requirement Documents',
+      label: 'PRD instantané',
       icon: Sparkles,
       description: 'Générer un PRD en 15s',
       isAction: false

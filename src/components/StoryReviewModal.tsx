@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -45,6 +45,12 @@ const StoryReviewModal = ({ epic, generatedStories, open, onClose, onSave }: Sto
     new Set(generatedStories.map(s => s.id))
   );
   const [expandedStories, setExpandedStories] = useState<Set<string>>(new Set());
+
+  // Sync when new stories arrive or modal toggles open
+  useEffect(() => {
+    setStories(generatedStories);
+    setIncludedStories(new Set(generatedStories.map(s => s.id)));
+  }, [generatedStories, open]);
 
   const toggleInclude = (storyId: string, included: boolean) => {
     setIncludedStories(prev => {
@@ -95,12 +101,12 @@ const StoryReviewModal = ({ epic, generatedStories, open, onClose, onSave }: Sto
   const estimatedSprints = Math.ceil(totalPoints / 20);
   const includedCount = includedStories.size;
 
-  const descCoverage = stories.filter(s => 
-    s.story.asA && s.story.iWant && s.story.soThat
-  ).length / stories.length * 100;
-  const acCoverage = stories.filter(s => 
-    s.acceptanceCriteria.length >= 2
-  ).length / stories.length * 100;
+  const descCoverage = stories.length
+    ? (stories.filter(s => s.story.asA && s.story.iWant && s.story.soThat).length / stories.length) * 100
+    : 0;
+  const acCoverage = stories.length
+    ? (stories.filter(s => s.acceptanceCriteria.length >= 2).length / stories.length) * 100
+    : 0;
 
   return (
     <Dialog open={open} onOpenChange={onClose}>

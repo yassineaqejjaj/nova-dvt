@@ -35,12 +35,12 @@ export const NovaChat: React.FC<NovaChatProps> = ({
   const [messages, setMessages] = useState<Message[]>([
     {
       role: 'assistant',
-      content: "Hi! I'm Nova, your AI product assistant. I can help you with:\n\n• Creating canvases and PRDs\n• Building and optimizing squads\n• Navigating workflows\n• Market research and analytics\n\nWhat would you like to work on today?",
+      content: "Bonjour ! Je suis Nova, votre assistant IA produit. Je peux vous aider à :\n\n• Créer des canvases et des PRD\n• Construire et optimiser des squads\n• Naviguer dans les workflows\n• Études de marché et analytics\n\nQue souhaitez-vous faire aujourd’hui ?",
       suggestions: [
-        { label: 'Create a Canvas', action: 'canvas', type: 'tool' },
-        { label: 'Build a Squad', action: 'squad', type: 'squad' },
-        { label: 'Generate PRD', action: 'prd', type: 'tool' },
-        { label: 'Start Discovery', action: 'discovery', type: 'workflow' }
+        { label: 'Créer un Canvas', action: 'canvas', type: 'tool' },
+        { label: 'Construire une Squad', action: 'squad', type: 'squad' },
+        { label: 'Générer un PRD', action: 'prd', type: 'tool' },
+        { label: 'Démarrer la Discovery', action: 'discovery', type: 'workflow' }
       ]
     }
   ]);
@@ -129,42 +129,35 @@ export const NovaChat: React.FC<NovaChatProps> = ({
         const squadSuggestion = await suggestSquad(userMessage);
         
         if (squadSuggestion) {
-          response = `${squadSuggestion.reasoning}\n\nI recommend the "${squadSuggestion.squadName}" squad. Would you like me to create this squad for you?`;
+          response = `${squadSuggestion.reasoning}\n\nJe recommande la squad \"${squadSuggestion.squadName}\". Voulez‑vous que je la crée pour vous ?`;
           suggestions = [
-            { label: 'Create This Squad', action: 'create_squad', type: 'squad' },
-            { label: 'Suggest Different Squad', action: 'suggest_different', type: 'squad' },
-            { label: 'View All Agents', action: 'agents', type: 'workflow' }
+            { label: 'Créer cette Squad', action: 'create_squad', type: 'squad' },
+            { label: 'Suggérer une autre Squad', action: 'suggest_different', type: 'squad' },
+            { label: 'Voir tous les agents', action: 'agents', type: 'workflow' }
           ];
         } else {
-          response = "I can help you build the perfect squad. Tell me about your project goals and I'll recommend the best agents for your team.";
+          response = "Je peux vous aider à construire l’équipe idéale. Dites‑moi vos objectifs de projet et je recommanderai les meilleurs agents pour votre squad.";
         }
       } else if (intent === 'canvas_generator') {
         // Canvas tool flow
-        response = "I'll help you create a canvas. What type of canvas would you like to create? I can help with Business Model Canvas, Lean Canvas, Value Proposition Canvas, and more.";
+        response = "Je vous aide à créer un canvas. Quel type de canvas souhaitez‑vous ? Business Model, Lean, Value Proposition, etc.";
         suggestions = [
-          { label: 'Open Canvas Generator', action: 'canvas', type: 'tool' },
+          { label: 'Ouvrir le Canvas Generator', action: 'canvas', type: 'tool' },
           { label: 'Business Model Canvas', action: 'canvas_business', type: 'tool' }
         ];
       } else if (intent === 'instant_prd') {
         // PRD tool flow
-        response = "I'll help you create a Product Requirements Document. I can generate user stories, feature specifications, and technical requirements.";
+        response = "Je vous aide à créer un PRD (Product Requirements Document). Je peux générer des user stories, des spécifications et des exigences techniques.";
         suggestions = [
-          { label: 'Generate PRD', action: 'prd', type: 'tool' },
-          { label: 'Create User Story', action: 'user_story', type: 'tool' }
+          { label: 'Générer un PRD', action: 'prd', type: 'tool' },
+          { label: 'Créer une User Story', action: 'user_story', type: 'tool' }
         ];
       } else {
         // General conversation
         const { data, error } = await supabase.functions.invoke('chat-ai', {
           body: { 
             message: userMessage,
-            systemPrompt: `You are Nova, a helpful AI product management assistant. 
-            You help users with:
-            - Product strategy and planning
-            - Creating canvases and PRDs
-            - Building effective teams
-            - Workflow guidance
-            
-            Be concise (2-3 sentences), friendly, and always suggest next actions.`
+            systemPrompt: `Vous êtes Nova, un assistant IA de product management.\n            Vous aidez les utilisateurs à :\n            - Stratégie produit et planification\n            - Création de canvases et PRD\n            - Construction d'équipes efficaces\n            - Guidance sur les workflows\n            \n            Soyez concis (2-3 phrases), amical, et proposez toujours des actions suivantes.`
           }
         });
 
@@ -174,8 +167,8 @@ export const NovaChat: React.FC<NovaChatProps> = ({
         // Add contextual suggestions
         if (userMessage.toLowerCase().includes('start') || userMessage.toLowerCase().includes('begin')) {
           suggestions = [
-            { label: 'Discovery Workflow', action: 'discovery', type: 'workflow' },
-            { label: 'Create Canvas', action: 'canvas', type: 'tool' }
+            { label: 'Workflow Discovery', action: 'discovery', type: 'workflow' },
+            { label: 'Créer un Canvas', action: 'canvas', type: 'tool' }
           ];
         }
       }
@@ -190,8 +183,8 @@ export const NovaChat: React.FC<NovaChatProps> = ({
     } catch (error: any) {
       console.error('Chat error:', error);
       toast({
-        title: "Error",
-        description: error.message || "Failed to send message. Please try again.",
+        title: "Erreur",
+        description: error.message || "Échec de l’envoi du message. Réessayez.",
         variant: "destructive"
       });
     } finally {
@@ -245,8 +238,8 @@ export const NovaChat: React.FC<NovaChatProps> = ({
             <Sparkles className="h-5 w-5 text-primary" />
           </div>
           <div>
-            <h2 className="text-lg font-semibold">Nova AI Assistant</h2>
-            <p className="text-sm text-muted-foreground">Your intelligent product companion</p>
+            <h2 className="text-lg font-semibold">Assistant IA Nova</h2>
+            <p className="text-sm text-muted-foreground">Votre compagnon produit intelligent</p>
           </div>
         </div>
 
@@ -311,7 +304,7 @@ export const NovaChat: React.FC<NovaChatProps> = ({
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyPress={handleKeyPress}
-              placeholder="Ask Nova anything..."
+              placeholder="Demandez tout à Nova..."
               disabled={isLoading}
               className="flex-1"
             />
@@ -327,9 +320,9 @@ export const NovaChat: React.FC<NovaChatProps> = ({
               )}
             </Button>
           </div>
-          <p className="text-xs text-muted-foreground mt-2">
-            Press Enter to send • Shift+Enter for new line
-          </p>
+            <p className="text-xs text-muted-foreground mt-2">
+              Appuyez sur Entrée pour envoyer • Shift+Entrée pour une nouvelle ligne
+            </p>
         </div>
       </DialogContent>
     </Dialog>

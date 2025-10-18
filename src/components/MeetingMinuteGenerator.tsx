@@ -442,7 +442,7 @@ export const MeetingMinuteGenerator: React.FC = () => {
               Questions ({groupedElements.question.length})
             </TabsTrigger>
             <TabsTrigger value="insights">
-              Insights ({groupedElements.insight.length})
+              Enseignements ({groupedElements.insight.length})
             </TabsTrigger>
             <TabsTrigger value="risks">
               Risques ({groupedElements.risk.length})
@@ -452,27 +452,66 @@ export const MeetingMinuteGenerator: React.FC = () => {
             </TabsTrigger>
           </TabsList>
 
-          {Object.entries(groupedElements).map(([type, elements]) => (
-            <TabsContent key={type} value={`${type}s`} className="space-y-3">
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-semibold capitalize">
-                  {type === 'decision' ? 'Décisions' : 
-                   type === 'action' ? 'Actions' : 
-                   type === 'question' ? 'Questions' : 
-                   type === 'insight' ? 'Insights' : 
-                   type === 'risk' ? 'Risques' : 'Idées'}
-                </h3>
-                <Button variant="outline" size="sm" onClick={handleValidateAll}>
-                  Tout valider
-                </Button>
-              </div>
+            {Object.entries(groupedElements).map(([type, elements]) => (
+              <TabsContent key={type} value={`${type}s`} className="space-y-3">
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-lg font-semibold capitalize">
+                    {type === 'decision' ? 'Décisions' : 
+                     type === 'action' ? 'Actions' : 
+                     type === 'question' ? 'Questions' : 
+                     type === 'insight' ? 'Enseignements' : 
+                     type === 'risk' ? 'Risques' : 'Idées'}
+                  </h3>
+                  <Button variant="outline" size="sm" onClick={handleValidateAll}>
+                    Tout valider
+                  </Button>
+                </div>
 
-              {elements.map((element) => (
-                <Card key={element.id} className="relative">
-                  <CardContent className="pt-6">
-                    <div className="flex items-start gap-3">
-                      <Checkbox
-                        checked={selectedElements.includes(element.id)}
+                {elements.length === 0 ? (
+                  <p className="text-sm text-muted-foreground py-8 text-center">
+                    {type === 'decision' ? 'Aucune décision détectée' :
+                     type === 'action' ? 'Aucune action détectée' :
+                     type === 'question' ? 'Aucune question détectée' :
+                     type === 'insight' ? 'Aucun enseignement détecté' :
+                     type === 'risk' ? 'Aucun risque détecté' : 'Aucune idée détectée'}
+                  </p>
+                ) : (
+                  elements.map((element) => (
+                    <Card key={element.id} className="relative">
+                      <CardContent className="pt-6">
+                        <div className="flex items-start gap-3">
+                          <Checkbox
+                            checked={selectedElements.includes(element.id)}
+                            onCheckedChange={() => toggleElement(element.id)}
+                          />
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2">
+                              {getElementIcon(type)}
+                              <span className="font-medium">{element.content}</span>
+                              {getConfidenceBadge(element.confidence)}
+                            </div>
+                            {element.rationale && (
+                              <p className="text-xs text-muted-foreground mt-1">{element.rationale}</p>
+                            )}
+                            <div className="flex gap-2 mt-2">
+                              <Button variant="outline" size="sm" onClick={() => handleEditElement(element.id)}>
+                                Éditer
+                              </Button>
+                              <Button variant="outline" size="sm" onClick={() => handleLinkElement(element.id)}>
+                                Lier
+                              </Button>
+                              <Button variant="ghost" size="sm" onClick={() => handleIgnoreElement(element.id)}>
+                                Ignorer
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))
+                )}
+              </TabsContent>
+            ))}
                         onCheckedChange={() => toggleElement(element.id)}
                       />
                       <div className="flex-1 space-y-2">
@@ -570,9 +609,9 @@ export const MeetingMinuteGenerator: React.FC = () => {
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       <div>
-        <h1 className="text-3xl font-bold mb-2">Meeting Minute Generator</h1>
+        <h1 className="text-3xl font-bold mb-2">Générateur de comptes-rendus</h1>
         <p className="text-muted-foreground">
-          Transform meeting recordings and transcripts into structured, actionable insights with AI
+          Transformez enregistrements et transcriptions de réunion en enseignements actionnables avec l’IA
         </p>
       </div>
 

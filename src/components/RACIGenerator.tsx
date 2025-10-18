@@ -48,20 +48,20 @@ export const RACIGenerator: React.FC = () => {
 
   const addStakeholder = () => {
     if (!newStakeholderName.trim()) {
-      toast.error('Please enter a stakeholder name');
+      toast.error('Veuillez saisir un nom d\'intervenant');
       return;
     }
 
     const newStakeholder: Stakeholder = {
       id: Date.now().toString(),
       name: newStakeholderName.trim(),
-      role: newStakeholderRole.trim() || 'Team Member'
+      role: newStakeholderRole.trim() || 'Membre de l\'équipe'
     };
 
     setStakeholders([...stakeholders, newStakeholder]);
     setNewStakeholderName('');
     setNewStakeholderRole('');
-    toast.success(`Added ${newStakeholder.name}`);
+    toast.success(`Ajouté ${newStakeholder.name}`);
   };
 
   const removeStakeholder = (id: string) => {
@@ -70,12 +70,12 @@ export const RACIGenerator: React.FC = () => {
 
   const generateRACIMatrix = async () => {
     if (!projectName.trim()) {
-      toast.error('Please enter a project name');
+      toast.error('Veuillez saisir un nom de projet');
       return;
     }
 
     if (stakeholders.length === 0) {
-      toast.error('Please add at least one stakeholder');
+      toast.error('Ajoutez au moins un intervenant');
       return;
     }
 
@@ -105,11 +105,11 @@ export const RACIGenerator: React.FC = () => {
 
       setTasks(generatedTasks);
       setShowMatrix(true);
-      toast.success('RACI matrix generated successfully!');
+      toast.success('Matrice RACI générée avec succès !');
 
     } catch (error: any) {
       console.error('Generation error:', error);
-      toast.error(error.message || 'Failed to generate RACI matrix');
+      toast.error(error.message || 'Échec de génération de la matrice RACI');
     } finally {
       setIsGenerating(false);
     }
@@ -157,7 +157,7 @@ export const RACIGenerator: React.FC = () => {
     a.download = `${projectName.replace(/\s+/g, '_')}_RACI_Matrix.csv`;
     a.click();
     URL.revokeObjectURL(url);
-    toast.success('Matrix exported successfully!');
+    toast.success('Matrice exportée avec succès !');
   };
 
   const saveMatrix = async () => {
@@ -181,11 +181,11 @@ export const RACIGenerator: React.FC = () => {
         }]);
 
       if (error) throw error;
-      toast.success('RACI matrix saved to artifacts!');
+      toast.success('Matrice RACI enregistrée dans les artefacts !');
 
     } catch (error: any) {
       console.error('Save error:', error);
-      toast.error('Failed to save matrix');
+      toast.error('Échec de l\'enregistrement de la matrice');
     }
   };
 
@@ -201,9 +201,9 @@ export const RACIGenerator: React.FC = () => {
   return (
     <div className="max-w-6xl mx-auto space-y-6">
       <div>
-        <h1 className="text-3xl font-bold mb-2">Smart RACI Generator</h1>
+        <h1 className="text-3xl font-bold mb-2">Générateur RACI</h1>
         <p className="text-muted-foreground">
-          Automatically generate a RACI matrix for your project with AI-powered role assignments
+          Générez automatiquement une matrice RACI pour votre projet avec des attributions IA
         </p>
       </div>
 
@@ -212,27 +212,27 @@ export const RACIGenerator: React.FC = () => {
           {/* Project Info */}
           <Card>
             <CardHeader>
-              <CardTitle>Project Information</CardTitle>
+              <CardTitle>Informations du projet</CardTitle>
               <CardDescription>
-                Describe your project to help AI understand the context
+                Décrivez votre projet pour aider l’IA à comprendre le contexte
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="project-name">Project Name</Label>
+                <Label htmlFor="project-name">Nom du projet</Label>
                 <Input
                   id="project-name"
-                  placeholder="E.g., Mobile App Redesign"
+                  placeholder="Ex.: Refonte de l’application mobile"
                   value={projectName}
                   onChange={(e) => setProjectName(e.target.value)}
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="project-description">Project Description</Label>
+                <Label htmlFor="project-description">Description du projet</Label>
                 <Textarea
                   id="project-description"
-                  placeholder="Describe the project scope, goals, and key deliverables..."
+                  placeholder="Décrivez le périmètre, les objectifs et les livrables clés..."
                   value={projectDescription}
                   onChange={(e) => setProjectDescription(e.target.value)}
                   className="min-h-[150px]"
@@ -246,17 +246,17 @@ export const RACIGenerator: React.FC = () => {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Users className="w-5 h-5" />
-                Stakeholders
+                Intervenants
               </CardTitle>
               <CardDescription>
-                Add team members and stakeholders who will be involved
+                Ajoutez les membres de l’équipe et parties prenantes impliqués
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex gap-2">
                 <div className="flex-1 space-y-2">
                   <Input
-                    placeholder="Name"
+                    placeholder="Nom"
                     value={newStakeholderName}
                     onChange={(e) => setNewStakeholderName(e.target.value)}
                     onKeyPress={(e) => e.key === 'Enter' && addStakeholder()}
@@ -264,7 +264,7 @@ export const RACIGenerator: React.FC = () => {
                 </div>
                 <div className="flex-1 space-y-2">
                   <Input
-                    placeholder="Role (optional)"
+                    placeholder="Rôle (optionnel)"
                     value={newStakeholderRole}
                     onChange={(e) => setNewStakeholderRole(e.target.value)}
                     onKeyPress={(e) => e.key === 'Enter' && addStakeholder()}
@@ -297,7 +297,7 @@ export const RACIGenerator: React.FC = () => {
 
                 {stakeholders.length === 0 && (
                   <div className="text-center py-8 text-muted-foreground text-sm">
-                    No stakeholders added yet
+                    Aucun intervenant ajouté
                   </div>
                 )}
               </div>
@@ -317,11 +317,11 @@ export const RACIGenerator: React.FC = () => {
                   {isGenerating ? (
                     <>
                       <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Generating RACI Matrix...
+                      Génération de la matrice RACI...
                     </>
                   ) : (
                     <>
-                      Generate Smart RACI Matrix
+                      Générer la matrice RACI
                     </>
                   )}
                 </Button>
@@ -342,18 +342,18 @@ export const RACIGenerator: React.FC = () => {
                 <div className="flex gap-2">
                   <Button variant="outline" size="sm" onClick={exportMatrix}>
                     <Download className="w-4 h-4 mr-2" />
-                    Export CSV
+                    Exporter CSV
                   </Button>
                   <Button variant="outline" size="sm" onClick={saveMatrix}>
                     <Share2 className="w-4 h-4 mr-2" />
-                    Save
+                    Enregistrer
                   </Button>
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => setShowMatrix(false)}
                   >
-                    Edit Project
+                    Modifier le projet
                   </Button>
                 </div>
               </div>
@@ -366,19 +366,19 @@ export const RACIGenerator: React.FC = () => {
               <div className="flex gap-6 flex-wrap">
                 <div className="flex items-center gap-2">
                   {getRoleIcon('R')}
-                  <span className="text-sm"><strong>R</strong> - Responsible</span>
+                  <span className="text-sm"><strong>R</strong> - Responsable</span>
                 </div>
                 <div className="flex items-center gap-2">
                   {getRoleIcon('A')}
-                  <span className="text-sm"><strong>A</strong> - Accountable</span>
+                  <span className="text-sm"><strong>A</strong> - Approbateur (Accountable)</span>
                 </div>
                 <div className="flex items-center gap-2">
                   {getRoleIcon('C')}
-                  <span className="text-sm"><strong>C</strong> - Consulted</span>
+                  <span className="text-sm"><strong>C</strong> - Consulté</span>
                 </div>
                 <div className="flex items-center gap-2">
                   {getRoleIcon('I')}
-                  <span className="text-sm"><strong>I</strong> - Informed</span>
+                  <span className="text-sm"><strong>I</strong> - Informé</span>
                 </div>
               </div>
             </CardContent>
@@ -390,7 +390,7 @@ export const RACIGenerator: React.FC = () => {
               <thead>
                 <tr className="bg-muted">
                   <th className="border p-3 text-left font-semibold min-w-[200px]">
-                    Task / Activity
+                    Tâche / Activité
                   </th>
                   {stakeholders.map((stakeholder) => (
                     <th key={stakeholder.id} className="border p-3 text-center min-w-[120px]">
