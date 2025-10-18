@@ -6,6 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Sparkles, Plus, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 import StoryGenerationModal from './StoryGenerationModal';
 import StoryReviewModal from './StoryReviewModal';
 import StoryCard from './StoryCard';
@@ -69,10 +70,34 @@ const EpicToUserStories = () => {
     setShowReviewModal(true);
   };
 
-  const handleSaveStories = (stories: UserStory[]) => {
-    setSavedStories(stories);
-    setShowReviewModal(false);
-    toast.success(`${stories.length} stories enregistrées avec succès`);
+  const handleSaveStories = async (stories: UserStory[]) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Non authentifié');
+
+      // Save stories to artifacts
+      const { error: artifactError } = await supabase
+        .from('artifacts')
+        .insert([{
+          user_id: user.id,
+          artifact_type: 'canvas' as const,
+          title: currentEpic?.title || 'User Stories',
+          content: {
+            type: 'user_stories',
+            epic: currentEpic,
+            stories: stories
+          } as any
+        }]);
+
+      if (artifactError) throw artifactError;
+
+      setSavedStories(stories);
+      setShowReviewModal(false);
+      toast.success(`${stories.length} stories enregistrées avec succès dans les artefacts`);
+    } catch (error: any) {
+      console.error('Erreur de sauvegarde:', error);
+      toast.error('Échec de sauvegarde des stories');
+    }
   };
 
   const toggleStoryExpand = (storyId: string) => {

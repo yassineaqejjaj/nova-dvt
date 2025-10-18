@@ -14,13 +14,13 @@ export const DynamicStatsPanel: React.FC<StatsPanelProps> = ({ userId, timeRange
   const topAgents = [
     { name: 'Sarah Chen', role: 'Product Manager', interactions: 24, trend: 'up' },
     { name: 'Alex Kim', role: 'Designer', interactions: 18, trend: 'up' },
-    { name: 'David Chang', role: 'Developer', interactions: 15, trend: 'stable' },
+    { name: 'David Chang', role: 'Développeur', interactions: 15, trend: 'stable' },
   ];
 
   const ongoingWorkflows = [
-    { name: 'Feature Discovery', progress: 75, daysActive: 3 },
-    { name: 'Sprint Planning', progress: 40, daysActive: 1 },
-    { name: 'Roadmap Planning', progress: 90, daysActive: 7 },
+    { name: 'Découverte de fonctionnalités', progress: 75, daysActive: 3 },
+    { name: 'Planification de sprint', progress: 40, daysActive: 1 },
+    { name: 'Planification de roadmap', progress: 90, daysActive: 7 },
   ];
 
   const performanceTrend = [
@@ -40,7 +40,7 @@ export const DynamicStatsPanel: React.FC<StatsPanelProps> = ({ userId, timeRange
         <CardHeader className="pb-3">
           <CardTitle className="text-base flex items-center gap-2">
             <Users className="h-4 w-4 text-primary" />
-            Top Agents This Week
+            Top Agents cette semaine
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -70,7 +70,7 @@ export const DynamicStatsPanel: React.FC<StatsPanelProps> = ({ userId, timeRange
         <CardHeader className="pb-3">
           <CardTitle className="text-base flex items-center gap-2">
             <Zap className="h-4 w-4 text-primary" />
-            Ongoing Workflows
+            Process en cours
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -103,7 +103,7 @@ export const DynamicStatsPanel: React.FC<StatsPanelProps> = ({ userId, timeRange
         <CardHeader className="pb-3">
           <CardTitle className="text-base flex items-center gap-2">
             <Target className="h-4 w-4 text-primary" />
-            Performance Trends
+            Tendances de performance
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -133,11 +133,11 @@ export const DynamicStatsPanel: React.FC<StatsPanelProps> = ({ userId, timeRange
               </div>
               <div>
                 <p className="text-lg font-bold">3</p>
-                <p className="text-xs text-muted-foreground">Active Squads</p>
+                <p className="text-xs text-muted-foreground">Squads actives</p>
               </div>
               <div>
                 <p className="text-lg font-bold">+18%</p>
-                <p className="text-xs text-muted-foreground">Growth</p>
+                <p className="text-xs text-muted-foreground">Croissance</p>
               </div>
             </div>
           </div>

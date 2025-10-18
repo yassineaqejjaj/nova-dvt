@@ -55,20 +55,20 @@ export const Dashboard: React.FC<DashboardProps> = ({
   const xpToNextLevel = nextLevelXP - user.xp;
   const unlockedAgentsCount = allAgents.filter(agent => user.unlockedAgents.includes(agent.id) || user.xp >= agent.xpRequired).length;
   const recentActivities = [{
-    action: 'Created squad "Product Launch Team"',
-    time: '2 hours ago',
+    action: 'Création de la squad "Équipe de lancement produit"',
+    time: 'il y a 2 heures',
     icon: Users
   }, {
-    action: 'Unlocked Sarah Chen (Product Strategy)',
-    time: '1 day ago',
+    action: 'Débloqué Sarah Chen (Stratégie Produit)',
+    time: 'il y a 1 jour',
     icon: Star
   }, {
-    action: 'Completed 5 conversations streak',
-    time: '2 days ago',
+    action: 'Série de 5 conversations complétée',
+    time: 'il y a 2 jours',
     icon: MessageCircle
   }, {
-    action: 'Reached Level 5',
-    time: '3 days ago',
+    action: 'Niveau 5 atteint',
+    time: 'il y a 3 jours',
     icon: Trophy
   }];
   const getGreeting = () => {
@@ -88,28 +88,28 @@ export const Dashboard: React.FC<DashboardProps> = ({
   const [currentFeatureIndex, setCurrentFeatureIndex] = useState(0);
   const instantPRDFeatures = [{
     icon: '👥',
-    title: '3 AI-Generated Personas',
-    description: 'Complete with demographics, pain points, and motivations'
+    title: '3 Personas générés par IA',
+    description: 'Complets avec démographies, problèmes et motivations'
   }, {
     icon: '📝',
-    title: '12 Detailed User Stories',
-    description: 'Structured with acceptance criteria and priority levels'
+    title: '12 User Stories détaillées',
+    description: 'Structurées avec critères d\'acceptation et niveaux de priorité'
   }, {
     icon: '🎨',
-    title: 'Interactive Wireframes',
-    description: 'Visual mockups generated from your description'
+    title: 'Wireframes interactifs',
+    description: 'Maquettes visuelles générées à partir de votre description'
   }, {
     icon: '🏗️',
-    title: 'Technical Architecture',
-    description: 'Complete tech stack recommendations and system design'
+    title: 'Architecture technique',
+    description: 'Recommandations de stack technique et conception système'
   }, {
     icon: '📊',
-    title: 'Success Metrics & KPIs',
-    description: 'Measurable goals aligned with business objectives'
+    title: 'Métriques de succès & KPIs',
+    description: 'Objectifs mesurables alignés avec les objectifs business'
   }, {
     icon: '🚀',
-    title: 'Go-to-Market Strategy',
-    description: 'Launch plan with phasing and rollout recommendations'
+    title: 'Stratégie Go-to-Market',
+    description: 'Plan de lancement avec phasage et recommandations de déploiement'
   }];
   useEffect(() => {
     // Rotate features every 4 seconds
@@ -405,7 +405,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                     <p className="text-xs text-muted-foreground">{badge.description}</p>
                   </div>
                   <Badge variant="secondary" className="text-xs">
-                    Unlocked
+                    Débloqué
                   </Badge>
                 </div>)}
             </div>

@@ -26,28 +26,28 @@ export const Navigation: React.FC<NavigationProps> = ({
   const tabs = [
     {
       id: 'dashboard' as TabType,
-      label: 'Dashboard',
+      label: 'Tableau de bord',
       icon: LayoutDashboard,
-      description: 'Overview & Progress'
+      description: 'Vue d\'ensemble & Progression'
     },
     {
       id: 'agents' as TabType,
-      label: 'Agent Gallery',
+      label: 'Galerie d\'Agents',
       icon: Users,
-      description: 'Browse & Unlock Agents'
+      description: 'Parcourir & Débloquer les Agents'
     },
     {
       id: 'squads' as TabType,
-      label: 'Squad Builder',
+      label: 'Créateur de Squad',
       icon: UserPlus,
-      description: 'Create AI Teams',
+      description: 'Créer des équipes IA',
       badge: squadCount > 0 ? squadCount.toString() : undefined
     },
     {
       id: 'chat' as TabType,
-      label: 'Chat Interface',
+      label: 'Interface de chat',
       icon: MessageCircle,
-      description: 'Collaborate with Agents',
+      description: 'Collaborer avec les Agents',
       disabled: !hasActiveChat,
       badge: hasActiveChat ? 'active' : undefined
     }

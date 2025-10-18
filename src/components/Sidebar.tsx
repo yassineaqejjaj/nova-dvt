@@ -62,7 +62,7 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
   const coreItems = [
     {
       id: 'dashboard' as TabType,
-      label: 'Dashboard',
+      label: 'Tableau de bord',
       icon: LayoutDashboard,
       description: 'Vue d\'ensemble'
     },
@@ -74,19 +74,19 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
     },
     {
       id: 'artifacts' as TabType,
-      label: 'Artifacts',
+      label: 'Artefacts',
       icon: FileText,
       description: 'Gestion des livrables'
     },
     {
       id: 'analytics' as TabType,
-      label: 'Analytics',
+      label: 'Analytiques',
       icon: BarChart3,
       description: 'Suivi & Performance'
     },
     {
       id: 'admin' as TabType,
-      label: 'Admin Panel',
+      label: 'Panneau Admin',
       icon: Shield,
       description: 'Gouvernance'
     }
@@ -138,7 +138,7 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
   const workflowItems = [
     {
       id: 'workflows' as TabType,
-      label: 'All Workflows',
+      label: 'Tous les Process',
       icon: Workflow,
       description: 'Processus guidés IA'
     }
@@ -148,23 +148,23 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
   const agentItems = [
     {
       id: 'reality-mode' as TabType,
-      label: 'Reality Mode',
+      label: 'Mode Réalité',
       icon: Sparkles,
-      description: 'Live squad simulation',
+      description: 'Simulation live de squad',
       disabled: !hasActiveChat,
       badge: hasActiveChat ? '✨' : undefined
     },
     {
       id: 'chat' as TabType,
-      label: 'Multi-Agent Chat',
+      label: 'Chat Multi-Agents',
       icon: MessageCircle,
-      description: 'Collaborate with AI squad',
+      description: 'Collaborer avec une squad IA',
       disabled: false,
       badge: hasActiveChat ? 'active' : undefined
     },
     {
       id: 'agents' as TabType,
-      label: 'Agent Gallery',
+      label: 'Galerie d\'Agents',
       icon: Users,
       description: 'Multi-rôle adaptatif'
     },
@@ -363,7 +363,7 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
         {renderToolsGroup()}
         
         {/* NOVA WORKFLOWS Module */}
-        {renderModuleGroup('NOVA WORKFLOWS', 'workflows', workflowItems, Workflow)}
+        {renderModuleGroup('NOVA PROCESS', 'workflows', workflowItems, Workflow)}
         
         {/* NOVA AGENT Module */}
         {renderModuleGroup('NOVA AGENT', 'agent', agentItems, Bot)}
