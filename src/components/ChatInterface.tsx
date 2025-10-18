@@ -174,10 +174,10 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ currentSquad, squa
         setIsLoading(false);
         return;
       } else if (intentData?.detectedIntent === 'instant_prd') {
-        // Navigate to Instant PRD or trigger it
+        // Navigate to Instant Product Requirements Document
         toast({
-          title: "Opening Instant PRD",
-          description: "Redirecting you to create a PRD...",
+          title: "Ouverture Instant Product Requirements Document",
+          description: "Redirection pour créer un PRD...",
         });
         setTimeout(() => {
           window.location.href = '/?tab=instant-prd';

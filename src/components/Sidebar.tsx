@@ -89,49 +89,48 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
   // NOVA CORE Actions (non-tab actions)
   const coreActions = [
     {
-      label: 'Product Contexts',
-      icon: Database,
-      description: 'Gérer vos contextes',
-      onClick: onManageContexts
+      label: 'Canvas Generator',
+      icon: Grid3X3,
+      description: 'Créer des canvas',
+      onClick: onCreateCanvas
     }
   ];
 
   // NOVA TOOLS Module - AI-accessible tools
   const toolsItems = [
     {
-      id: 'canvas-generator' as const,
-      label: 'Canvas Generator',
-      icon: Grid3X3,
-      description: 'Multi-canvas frameworks',
-      isAction: true,
-      onClick: onCreateCanvas
-    },
-    {
       id: 'instant-prd' as TabType,
-      label: 'Instant PRD',
+      label: 'Instant Product Requirements Document',
       icon: Sparkles,
-      description: 'Generate PRD in 15s',
+      description: 'Générer un PRD en 15s',
       isAction: false
     },
     {
       id: 'meeting-minutes' as TabType,
-      label: 'Meeting Minutes',
+      label: 'Comptes-rendus de réunion',
       icon: FileText,
-      description: 'AI meeting transcription',
+      description: 'Transcription IA de réunion',
       isAction: false
     },
     {
       id: 'raci-generator' as TabType,
-      label: 'RACI Generator',
+      label: 'Générateur RACI',
       icon: Users,
-      description: 'Smart responsibility matrix',
+      description: 'Matrice de responsabilités',
       isAction: false
     },
     {
       id: 'epic-to-stories' as TabType,
-      label: 'Epic to Stories',
+      label: 'Epic vers Stories',
       icon: Sparkles,
-      description: 'AI-powered story breakdown',
+      description: 'Découpage de stories par IA',
+      isAction: false
+    },
+    {
+      id: 'product-context' as TabType,
+      label: 'Contexte Produit',
+      icon: Database,
+      description: 'Gestion du contexte global',
       isAction: false
     }
   ];
@@ -325,7 +324,7 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
                     <SidebarMenuButton asChild>
                       <Button
                         variant="ghost"
-                        onClick={() => item.isAction ? item.onClick?.() : onTabChange(item.id as TabType)}
+                        onClick={() => (item as any).isAction ? (item as any).onClick?.() : onTabChange(item.id as TabType)}
                         className={`w-full justify-start h-11 px-3 ${getNavClass(isActive)}`}
                       >
                         <Icon className="w-4 h-4 mr-3 flex-shrink-0" />

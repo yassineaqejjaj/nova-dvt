@@ -18,7 +18,7 @@ import { InteractiveTutorial } from '@/components/InteractiveTutorial';
 import { MagicBar } from '@/components/MagicBar';
 import { ShareableMomentCard } from '@/components/ShareableMomentCard';
 import { useSessionMemory } from '@/hooks/useSessionMemory';
-import { ProductContextManager } from '@/components/ProductContextManager';
+import { ProductContextPage } from '@/components/ProductContextPage';
 import { InstantPRD } from '@/components/InstantPRD';
 import { RealityMode } from '@/components/RealityMode';
 import { ConfidentialityBanner } from '@/components/ConfidentialityBanner';
@@ -315,6 +315,9 @@ const Index = () => {
       case 'raci-generator':
         return <RACIGenerator />;
       
+      case 'product-context':
+        return <ProductContextPage />;
+      
       case 'epic-to-stories':
         return <EpicToUserStories />;
       
@@ -346,7 +349,7 @@ const Index = () => {
           squadCount={squads.length}
           hasActiveChat={!!currentSquad && currentSquad.agents.length > 0}
           onCreateCanvas={() => setShowCanvasGenerator(true)}
-          onManageContexts={() => setShowContextManager(true)}
+          onManageContexts={() => setActiveTab('product-context')}
         />
         
         <div className="flex-1 flex flex-col relative z-10">
@@ -540,19 +543,9 @@ const Index = () => {
         onClose={() => setShowCanvasGenerator(false)}
       />
 
-      {/* Product Context Manager */}
-      {user && (
-        <ProductContextManager
-          open={showContextManager}
-          onOpenChange={setShowContextManager}
-          onContextSelected={(context) => {
-            console.log('Context selected:', context);
-            toast.success(`Contexte "${context.name}" activé`);
-          }}
-        />
-      )}
+      {/* Context Manager Modal - Deprecated */}
 
-      {/* User Profile Dialog */}
+      {/* Canvas Generator Dialog */}
       {userProfile && (
         <UserProfile
             user={userProfile}

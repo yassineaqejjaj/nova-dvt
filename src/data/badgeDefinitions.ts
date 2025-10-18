@@ -150,11 +150,11 @@ export const badgeDefinitions: BadgeDefinition[] = [
   {
     id: 'speed_demon',
     name: 'Speed Demon',
-    description: 'Use Instant PRD to generate documentation in under 20 seconds',
+    description: 'Utiliser Instant Product Requirements Document pour générer la doc en moins de 20 secondes',
     icon: '⚡',
     category: 'productivity',
     rarity: 'epic',
-    requirement: 'Use Instant PRD',
+    requirement: 'Utiliser Instant Product Requirements Document',
     xpReward: 300,
     coinsReward: 60
   },

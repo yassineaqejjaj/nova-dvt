@@ -1,0 +1,625 @@
+import { useState, useEffect } from 'react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Loader2, Plus, Trash2, History, Search, CheckCircle2, AlertCircle, Save } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Separator } from '@/components/ui/separator';
+
+interface ProductContext {
+  id: string;
+  name: string;
+  vision: string | null;
+  objectives: string[];
+  target_kpis: string[];
+  constraints: string | null;
+  target_audience: string | null;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+interface ContextHistory {
+  id: string;
+  version: number;
+  snapshot: any;
+  created_at: string;
+}
+
+export const ProductContextPage = () => {
+  const { toast } = useToast();
+  const [contexts, setContexts] = useState<ProductContext[]>([]);
+  const [selectedContext, setSelectedContext] = useState<ProductContext | null>(null);
+  const [contextHistory, setContextHistory] = useState<ContextHistory[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
+  const [deleteContextId, setDeleteContextId] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isEditing, setIsEditing] = useState(false);
+  
+  const [formData, setFormData] = useState({
+    name: '',
+    vision: '',
+    objectives: [] as string[],
+    target_kpis: [] as string[],
+    constraints: '',
+    target_audience: ''
+  });
+
+  const [newObjective, setNewObjective] = useState('');
+  const [newKPI, setNewKPI] = useState('');
+
+  useEffect(() => {
+    loadContexts();
+  }, []);
+
+  useEffect(() => {
+    if (selectedContext) {
+      loadContextHistory(selectedContext.id);
+    }
+  }, [selectedContext]);
+
+  // Autosave every 5 seconds when editing
+  useEffect(() => {
+    if (!isEditing || !selectedContext) return;
+
+    const timer = setTimeout(() => {
+      handleSave(true); // silent save
+    }, 5000);
+
+    return () => clearTimeout(timer);
+  }, [formData, isEditing, selectedContext]);
+
+  const loadContexts = async () => {
+    setIsLoading(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('User not authenticated');
+
+      const { data, error } = await supabase
+        .from('product_contexts')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('is_deleted', false)
+        .order('updated_at', { ascending: false });
+
+      if (error) throw error;
+      
+      const typedContexts: ProductContext[] = (data || []).map(item => ({
+        ...item,
+        objectives: Array.isArray(item.objectives) ? item.objectives as string[] : [],
+        target_kpis: Array.isArray(item.target_kpis) ? item.target_kpis as string[] : []
+      }));
+      
+      setContexts(typedContexts);
+
+      // Select active context or most recent
+      const activeContext = typedContexts?.find(c => c.is_active) || typedContexts?.[0];
+      if (activeContext) {
+        setSelectedContext(activeContext);
+        setFormData({
+          name: activeContext.name,
+          vision: activeContext.vision || '',
+          objectives: activeContext.objectives || [],
+          target_kpis: activeContext.target_kpis || [],
+          constraints: activeContext.constraints || '',
+          target_audience: activeContext.target_audience || ''
+        });
+      }
+    } catch (error: any) {
+      console.error('Error loading contexts:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de charger les contextes",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const loadContextHistory = async (contextId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('context_history')
+        .select('*')
+        .eq('context_id', contextId)
+        .order('version', { ascending: false })
+        .limit(3);
+
+      if (error) throw error;
+      setContextHistory(data || []);
+    } catch (error) {
+      console.error('Error loading history:', error);
+    }
+  };
+
+  const handleSave = async (silent = false) => {
+    if (!formData.name.trim()) {
+      toast({
+        title: "Nom requis",
+        description: "Veuillez saisir un nom pour le contexte",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('User not authenticated');
+
+      const contextData = {
+        user_id: user.id,
+        name: formData.name.trim(),
+        vision: formData.vision.trim() || null,
+        objectives: formData.objectives.filter(o => o.trim()),
+        target_kpis: formData.target_kpis.filter(k => k.trim()),
+        constraints: formData.constraints.trim() || null,
+        target_audience: formData.target_audience.trim() || null
+      };
+
+      if (selectedContext) {
+        // Update existing
+        const { error } = await supabase
+          .from('product_contexts')
+          .update(contextData)
+          .eq('id', selectedContext.id);
+
+        if (error) throw error;
+
+        if (!silent) {
+          toast({
+            title: "Contexte mis à jour",
+            description: "Les modifications ont été sauvegardées"
+          });
+        }
+      } else {
+        // Create new - check limit
+        if (contexts.length >= 10) {
+          toast({
+            title: "Limite atteinte",
+            description: "Vous avez atteint la limite de 10 contextes. Supprimez-en un pour continuer.",
+            variant: "destructive"
+          });
+          return;
+        }
+
+        const { data, error } = await supabase
+          .from('product_contexts')
+          .insert([contextData])
+          .select()
+          .single();
+
+        if (error) throw error;
+        
+        const typedContext: ProductContext = {
+          ...data,
+          objectives: Array.isArray(data.objectives) ? data.objectives as string[] : [],
+          target_kpis: Array.isArray(data.target_kpis) ? data.target_kpis as string[] : []
+        };
+        
+        setSelectedContext(typedContext);
+
+        toast({
+          title: "Contexte créé",
+          description: "Le nouveau contexte a été sauvegardé"
+        });
+      }
+
+      loadContexts();
+      setIsEditing(false);
+    } catch (error: any) {
+      console.error('Error saving context:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de sauvegarder le contexte",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleAddObjective = () => {
+    if (newObjective.trim()) {
+      setFormData(prev => ({
+        ...prev,
+        objectives: [...prev.objectives, newObjective.trim()]
+      }));
+      setNewObjective('');
+      setIsEditing(true);
+    }
+  };
+
+  const handleRemoveObjective = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      objectives: prev.objectives.filter((_, i) => i !== index)
+    }));
+    setIsEditing(true);
+  };
+
+  const handleAddKPI = () => {
+    if (newKPI.trim()) {
+      setFormData(prev => ({
+        ...prev,
+        target_kpis: [...prev.target_kpis, newKPI.trim()]
+      }));
+      setNewKPI('');
+      setIsEditing(true);
+    }
+  };
+
+  const handleRemoveKPI = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      target_kpis: prev.target_kpis.filter((_, i) => i !== index)
+    }));
+    setIsEditing(true);
+  };
+
+  const handleDeleteContext = async () => {
+    if (!deleteContextId) return;
+
+    try {
+      const { error } = await supabase
+        .from('product_contexts')
+        .update({ is_deleted: true })
+        .eq('id', deleteContextId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Contexte supprimé",
+        description: "Le contexte a été supprimé avec succès"
+      });
+
+      setDeleteContextId(null);
+      loadContexts();
+    } catch (error: any) {
+      console.error('Error deleting context:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de supprimer le contexte",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleNewContext = () => {
+    setSelectedContext(null);
+    setFormData({
+      name: '',
+      vision: '',
+      objectives: [],
+      target_kpis: [],
+      constraints: '',
+      target_audience: ''
+    });
+    setIsEditing(false);
+  };
+
+  const handleSelectContext = (context: ProductContext) => {
+    setSelectedContext(context);
+    setFormData({
+      name: context.name,
+      vision: context.vision || '',
+      objectives: context.objectives || [],
+      target_kpis: context.target_kpis || [],
+      constraints: context.constraints || '',
+      target_audience: context.target_audience || ''
+    });
+    setIsEditing(false);
+  };
+
+  const filteredContexts = contexts.filter(c =>
+    c.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  return (
+    <div className="container mx-auto py-8 px-4 max-w-7xl">
+      <div className="mb-8">
+        <h1 className="text-4xl font-bold mb-2 text-foreground">Contexte Produit Global</h1>
+        <p className="text-muted-foreground">
+          Gérez et réutilisez vos contextes produit à travers toute l'application
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Contexts List */}
+        <Card className="lg:col-span-1">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle>Contextes ({contexts.length}/10)</CardTitle>
+              <Button onClick={handleNewContext} size="sm">
+                <Plus className="w-4 h-4 mr-1" />
+                Nouveau
+              </Button>
+            </div>
+            <CardDescription>Sélectionnez ou créez un contexte</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="mb-4">
+              <div className="relative">
+                <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Rechercher..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-8"
+                />
+              </div>
+            </div>
+
+            <ScrollArea className="h-[500px]">
+              {isLoading ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="w-6 h-6 animate-spin" />
+                </div>
+              ) : filteredContexts.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  {searchQuery ? 'Aucun contexte trouvé' : 'Aucun contexte. Créez-en un!'}
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {filteredContexts.map((context) => (
+                    <Card
+                      key={context.id}
+                      className={`cursor-pointer transition-all ${
+                        selectedContext?.id === context.id
+                          ? 'border-primary shadow-md'
+                          : 'hover:border-primary/50'
+                      }`}
+                      onClick={() => handleSelectContext(context)}
+                    >
+                      <CardContent className="p-4">
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-1">
+                              <h3 className="font-semibold truncate">{context.name}</h3>
+                              {context.is_active && (
+                                <Badge variant="default" className="text-xs">
+                                  Actif
+                                </Badge>
+                              )}
+                            </div>
+                            <p className="text-xs text-muted-foreground line-clamp-2">
+                              {context.vision || 'Aucune vision définie'}
+                            </p>
+                            <div className="flex gap-2 mt-2">
+                              <Badge variant="outline" className="text-xs">
+                                {context.objectives.length} objectifs
+                              </Badge>
+                              <Badge variant="outline" className="text-xs">
+                                {context.target_kpis.length} KPIs
+                              </Badge>
+                            </div>
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setDeleteContextId(context.id);
+                            }}
+                            className="h-8 w-8 text-destructive hover:text-destructive"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </ScrollArea>
+          </CardContent>
+        </Card>
+
+        {/* Context Editor */}
+        <Card className="lg:col-span-2">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle>
+                  {selectedContext ? 'Modifier le contexte' : 'Nouveau contexte'}
+                </CardTitle>
+                <CardDescription>
+                  {selectedContext
+                    ? 'Sauvegarde automatique toutes les 5 secondes'
+                    : 'Créez un nouveau contexte produit'}
+                </CardDescription>
+              </div>
+              {selectedContext && contextHistory.length > 0 && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowHistory(!showHistory)}
+                >
+                  <History className="w-4 h-4 mr-1" />
+                  Historique
+                </Button>
+              )}
+            </div>
+          </CardHeader>
+          <CardContent>
+            <ScrollArea className="h-[500px] pr-4">
+              <div className="space-y-6">
+                <div>
+                  <Label htmlFor="name">Nom du contexte *</Label>
+                  <Input
+                    id="name"
+                    placeholder="ex: Application mobile e-commerce"
+                    value={formData.name}
+                    onChange={(e) => {
+                      setFormData(prev => ({ ...prev, name: e.target.value }));
+                      setIsEditing(true);
+                    }}
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="vision">Vision</Label>
+                  <Textarea
+                    id="vision"
+                    placeholder="Quelle est la vision globale du produit?"
+                    value={formData.vision}
+                    onChange={(e) => {
+                      setFormData(prev => ({ ...prev, vision: e.target.value }));
+                      setIsEditing(true);
+                    }}
+                    rows={4}
+                  />
+                </div>
+
+                <div>
+                  <Label>Objectifs</Label>
+                  <div className="flex gap-2 mb-2">
+                    <Input
+                      placeholder="Ajouter un objectif..."
+                      value={newObjective}
+                      onChange={(e) => setNewObjective(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && handleAddObjective()}
+                    />
+                    <Button type="button" onClick={handleAddObjective}>
+                      <Plus className="w-4 h-4" />
+                    </Button>
+                  </div>
+                  <div className="space-y-2">
+                    {formData.objectives.map((obj, index) => (
+                      <div
+                        key={index}
+                        className="flex items-center gap-2 p-2 bg-muted rounded-md"
+                      >
+                        <CheckCircle2 className="w-4 h-4 text-green-600 flex-shrink-0" />
+                        <span className="flex-1 text-sm">{obj}</span>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleRemoveObjective(index)}
+                          className="h-6 w-6"
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <Label>KPIs cibles</Label>
+                  <div className="flex gap-2 mb-2">
+                    <Input
+                      placeholder="Ajouter un KPI..."
+                      value={newKPI}
+                      onChange={(e) => setNewKPI(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && handleAddKPI()}
+                    />
+                    <Button type="button" onClick={handleAddKPI}>
+                      <Plus className="w-4 h-4" />
+                    </Button>
+                  </div>
+                  <div className="space-y-2">
+                    {formData.target_kpis.map((kpi, index) => (
+                      <div
+                        key={index}
+                        className="flex items-center gap-2 p-2 bg-muted rounded-md"
+                      >
+                        <AlertCircle className="w-4 h-4 text-blue-600 flex-shrink-0" />
+                        <span className="flex-1 text-sm">{kpi}</span>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleRemoveKPI(index)}
+                          className="h-6 w-6"
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <Label htmlFor="target_audience">Public cible</Label>
+                  <Textarea
+                    id="target_audience"
+                    placeholder="Qui sont les utilisateurs principaux?"
+                    value={formData.target_audience}
+                    onChange={(e) => {
+                      setFormData(prev => ({ ...prev, target_audience: e.target.value }));
+                      setIsEditing(true);
+                    }}
+                    rows={3}
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="constraints">Contraintes</Label>
+                  <Textarea
+                    id="constraints"
+                    placeholder="Quelles sont les contraintes techniques, budgétaires, etc.?"
+                    value={formData.constraints}
+                    onChange={(e) => {
+                      setFormData(prev => ({ ...prev, constraints: e.target.value }));
+                      setIsEditing(true);
+                    }}
+                    rows={3}
+                  />
+                </div>
+
+                <Separator />
+
+                <div className="flex gap-2">
+                  <Button
+                    onClick={() => handleSave(false)}
+                    disabled={isSaving}
+                    className="flex-1"
+                  >
+                    {isSaving ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Sauvegarde...
+                      </>
+                    ) : (
+                      <>
+                        <Save className="w-4 h-4 mr-2" />
+                        {selectedContext ? 'Sauvegarder' : 'Créer le contexte'}
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </div>
+            </ScrollArea>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={!!deleteContextId} onOpenChange={() => setDeleteContextId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Supprimer le contexte?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Cette action supprimera définitivement ce contexte. Cette action ne peut pas être annulée.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteContext}>
+              Supprimer
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
+  );
+};

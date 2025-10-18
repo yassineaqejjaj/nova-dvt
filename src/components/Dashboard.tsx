@@ -170,13 +170,13 @@ export const Dashboard: React.FC<DashboardProps> = ({
               </div>
               <div className="space-y-3">
                 <div className="flex items-center gap-2">
-                  <h3 className="text-2xl font-bold">Instant PRD</h3>
+                  <h3 className="text-2xl font-bold">Instant Product Requirements Document</h3>
                   <Badge variant="default" className="animate-pulse">
-                    ✨ NEW
+                    ✨ NOUVEAU
                   </Badge>
                 </div>
                 <p className="text-muted-foreground">
-                  Transform a simple phrase into a complete PRD with personas, user stories, wireframes and more in <span className="font-bold text-primary">15 seconds</span>
+                  Transformez une simple phrase en PRD complet avec personas, user stories, wireframes et plus en <span className="font-bold text-primary">15 secondes</span>
                 </p>
                 
                 {/* Rotating Feature Highlight */}

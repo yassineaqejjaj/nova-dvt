@@ -451,7 +451,7 @@ Generate risk analysis in JSON format:
             </div>
           </div>
           <div>
-            <h1 className="text-4xl font-bold mb-2">Instant PRD</h1>
+            <h1 className="text-4xl font-bold mb-2">Instant Product Requirements Document</h1>
             <p className="text-muted-foreground text-lg">
               Transformez une idée en PRD complet en 15 secondes
             </p>

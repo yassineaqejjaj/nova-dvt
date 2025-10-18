@@ -85,8 +85,8 @@ export const useGamification = (userId: string | undefined) => {
         {
           user_id: userId,
           mission_date: today,
-          title: "Quick PRD",
-          description: "Génère 1 PRD via Instant PRD",
+          title: "PRD Rapide",
+          description: "Génère 1 PRD via Instant Product Requirements Document",
           mission_type: "create_prd",
           xp_reward: 50,
           coins_reward: 10,
