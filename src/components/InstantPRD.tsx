@@ -1072,7 +1072,9 @@ Génère 3-4 références/annexes (JSON uniquement):
                 <CardContent>
                   <div className="p-4 bg-muted rounded-lg">
                     <pre className="text-xs overflow-x-auto whitespace-pre-wrap">
-                      {prdDocument.architecture}
+                      {typeof prdDocument.architecture === 'string' 
+                        ? prdDocument.architecture 
+                        : JSON.stringify(prdDocument.architecture, null, 2)}
                     </pre>
                   </div>
                 </CardContent>
