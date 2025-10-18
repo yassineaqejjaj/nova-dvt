@@ -100,7 +100,7 @@ export const WorkflowSteps: React.FC<WorkflowStepsProps> = ({
                       <ArrowRight className="w-4 h-4 ml-2" />
                     </>
                   ) : (
-                    'Complete Workflow'
+                    'Terminer le Workflow'
                   )}
                 </Button>
               </div>

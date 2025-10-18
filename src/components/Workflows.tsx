@@ -319,6 +319,105 @@ const workflows: Workflow[] = [
 
   // COMITOLOGIE
   {
+    id: 'comite-projet',
+    name: 'Comité Projet',
+    description: 'Template prêt à l\'emploi pour préparer et animer un comité projet avec les bons outils',
+    icon: <FileText className="w-6 h-6" />,
+    category: 'Comitologie',
+    tags: ['Comité', 'Projet', 'Gouvernance', 'Suivi', 'Décision'],
+    difficulty: 'Intermediate',
+    estimatedTime: '45-60 min',
+    steps: [
+      {
+        id: 'preparation',
+        title: 'Préparation du Comité',
+        description: 'Créer l\'ordre du jour et préparer les documents de support',
+        tool: 'canvas',
+        completed: false,
+      },
+      {
+        id: 'status',
+        title: 'État d\'Avancement',
+        description: 'Synthétiser l\'avancement du projet vs planning',
+        tool: 'roadmap',
+        completed: false,
+      },
+      {
+        id: 'kpis',
+        title: 'Suivi des KPIs',
+        description: 'Présenter les indicateurs clés et leur évolution',
+        tool: 'kpi',
+        completed: false,
+      },
+      {
+        id: 'issues',
+        title: 'Risques et Décisions',
+        description: 'Identifier les blocages et points de décision',
+        tool: 'impact',
+        completed: false,
+      },
+      {
+        id: 'synthesis',
+        title: 'Compte-Rendu',
+        description: 'Documenter les décisions et actions à suivre',
+        completed: false,
+      },
+    ],
+  },
+  {
+    id: 'comite-pilotage',
+    name: 'Comité de Pilotage',
+    description: 'Template exécutif pour préparer un COPIL avec vision stratégique et décisions clés',
+    icon: <TrendingUp className="w-6 h-6" />,
+    category: 'Comitologie',
+    tags: ['COPIL', 'Stratégie', 'Gouvernance', 'Direction', 'Exécutif'],
+    difficulty: 'Advanced',
+    estimatedTime: '60-90 min',
+    steps: [
+      {
+        id: 'executive-summary',
+        title: 'Synthèse Exécutive',
+        description: 'Préparer le résumé exécutif pour la direction',
+        tool: 'canvas',
+        completed: false,
+      },
+      {
+        id: 'strategic-alignment',
+        title: 'Alignement Stratégique',
+        description: 'Vérifier l\'alignement avec la roadmap et objectifs business',
+        tool: 'roadmap',
+        completed: false,
+      },
+      {
+        id: 'business-impact',
+        title: 'Impact Business',
+        description: 'Analyser l\'impact business et le ROI attendu',
+        tool: 'impact',
+        completed: false,
+      },
+      {
+        id: 'market-position',
+        title: 'Positionnement Marché',
+        description: 'Présenter l\'analyse concurrentielle et positionnement',
+        tool: 'research',
+        completed: false,
+      },
+      {
+        id: 'strategic-decisions',
+        title: 'Décisions Stratégiques',
+        description: 'Obtenir les validations et arbitrages nécessaires',
+        completed: false,
+      },
+      {
+        id: 'action-plan',
+        title: 'Plan d\'Action',
+        description: 'Définir les prochaines étapes et responsabilités',
+        tool: 'sprint',
+        completed: false,
+      },
+    ],
+  },
+  {
     id: 'product-launch',
     name: 'Exécution de Lancement Produit',
     description: 'Planifiez et exécutez un lancement produit réussi avec checklist de tâches complète',
@@ -605,7 +704,7 @@ export const Workflows: React.FC = () => {
         <div className="flex items-center justify-between">
           <Button variant="ghost" onClick={handleBackToWorkflows}>
             <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Workflows
+            Retour aux Workflows
           </Button>
           <div className="flex items-center space-x-2">
             <Badge variant="outline">{selectedWorkflow.estimatedTime}</Badge>
