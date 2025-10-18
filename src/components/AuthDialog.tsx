@@ -43,13 +43,13 @@ export const AuthDialog: React.FC<AuthDialogProps> = ({ open, onClose }) => {
       if (error) throw error;
 
       toast({
-        title: "Welcome back!",
-        description: "You've successfully signed in.",
+        title: "Bienvenue !",
+        description: "Connexion réussie.",
       });
       onClose();
     } catch (error: any) {
       toast({
-        title: "Sign in failed",
+        title: "Échec de connexion",
         description: error.message,
         variant: "destructive",
       });
@@ -77,14 +77,14 @@ export const AuthDialog: React.FC<AuthDialogProps> = ({ open, onClose }) => {
       if (error) throw error;
 
       toast({
-        title: "Account created!",
-        description: "Please check your email to verify your account.",
+        title: "Compte créé !",
+        description: "Veuillez vérifier votre email pour confirmer votre compte.",
       });
       setActiveTab('signin');
       setSignUpData({ email: '', password: '', fullName: '', role: '' });
     } catch (error: any) {
       toast({
-        title: "Sign up failed",
+        title: "Échec de l'inscription",
         description: error.message,
         variant: "destructive",
       });
@@ -97,24 +97,24 @@ export const AuthDialog: React.FC<AuthDialogProps> = ({ open, onClose }) => {
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>Welcome to Squad Mate</DialogTitle>
+          <DialogTitle>Bienvenue sur Nova</DialogTitle>
           <DialogDescription>
-            Sign in to your account or create a new one to start building AI squads.
+            Connectez-vous à votre compte ou créez-en un nouveau pour commencer à créer vos équipes IA.
           </DialogDescription>
         </DialogHeader>
 
         <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'signin' | 'signup')}>
           <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="signin">Sign In</TabsTrigger>
-            <TabsTrigger value="signup">Sign Up</TabsTrigger>
+            <TabsTrigger value="signin">Connexion</TabsTrigger>
+            <TabsTrigger value="signup">Inscription</TabsTrigger>
           </TabsList>
 
           <TabsContent value="signin">
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">Sign In</CardTitle>
+                <CardTitle className="text-lg">Connexion</CardTitle>
                 <CardDescription>
-                  Enter your credentials to access your squads.
+                  Entrez vos identifiants pour accéder à vos équipes.
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -136,7 +136,7 @@ export const AuthDialog: React.FC<AuthDialogProps> = ({ open, onClose }) => {
                   </div>
                   
                   <div className="space-y-2">
-                    <Label htmlFor="signin-password">Password</Label>
+                    <Label htmlFor="signin-password">Mot de passe</Label>
                     <div className="relative">
                       <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                       <Input
@@ -155,10 +155,10 @@ export const AuthDialog: React.FC<AuthDialogProps> = ({ open, onClose }) => {
                     {isLoading ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Signing in...
+                        Connexion...
                       </>
                     ) : (
-                      'Sign In'
+                      'Se connecter'
                     )}
                   </Button>
                 </form>
@@ -169,21 +169,21 @@ export const AuthDialog: React.FC<AuthDialogProps> = ({ open, onClose }) => {
           <TabsContent value="signup">
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">Create Account</CardTitle>
+                <CardTitle className="text-lg">Créer un compte</CardTitle>
                 <CardDescription>
-                  Join Squad Mate and start building your AI teams.
+                  Rejoignez Nova et commencez à créer vos équipes IA.
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <form onSubmit={handleSignUp} className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="signup-name">Full Name</Label>
+                    <Label htmlFor="signup-name">Nom complet</Label>
                     <div className="relative">
                       <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                       <Input
                         id="signup-name"
                         type="text"
-                        placeholder="John Doe"
+                        placeholder="Jean Dupont"
                         className="pl-10"
                         value={signUpData.fullName}
                         onChange={(e) => setSignUpData(prev => ({ ...prev, fullName: e.target.value }))}
@@ -193,13 +193,13 @@ export const AuthDialog: React.FC<AuthDialogProps> = ({ open, onClose }) => {
                   </div>
                   
                   <div className="space-y-2">
-                    <Label htmlFor="signup-role">Role</Label>
+                    <Label htmlFor="signup-role">Rôle</Label>
                     <div className="relative">
                       <Briefcase className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                       <Input
                         id="signup-role"
                         type="text"
-                        placeholder="Product Manager, Developer, etc."
+                        placeholder="Product Manager, Développeur, etc."
                         className="pl-10"
                         value={signUpData.role}
                         onChange={(e) => setSignUpData(prev => ({ ...prev, role: e.target.value }))}
@@ -225,7 +225,7 @@ export const AuthDialog: React.FC<AuthDialogProps> = ({ open, onClose }) => {
                   </div>
                   
                   <div className="space-y-2">
-                    <Label htmlFor="signup-password">Password</Label>
+                    <Label htmlFor="signup-password">Mot de passe</Label>
                     <div className="relative">
                       <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                       <Input
@@ -245,10 +245,10 @@ export const AuthDialog: React.FC<AuthDialogProps> = ({ open, onClose }) => {
                     {isLoading ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Creating account...
+                        Création du compte...
                       </>
                     ) : (
-                      'Create Account'
+                      'Créer un compte'
                     )}
                   </Button>
                 </form>

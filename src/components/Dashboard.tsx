@@ -332,7 +332,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
           <Star className="h-6 w-6 text-primary" />
           Raccourcis
         </h2>
-        <QuickDeck pinnedItems={pinnedItems} onUnpin={unpinItem} onItemClick={handlePinnedItemClick} />
+        <QuickDeck pinnedItems={pinnedItems} onUnpin={unpinItem} onItemClick={handlePinnedItemClick} onNavigate={onNavigate} />
       </div>
 
       {/* Quick Actions */}

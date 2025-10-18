@@ -174,14 +174,26 @@ export const MeetingMinuteGenerator: React.FC = () => {
 
       setProcessingProgress(90);
 
-      // Format the data
+      // Format the data - ONLY include elements with valid content
       const elements: MeetingElement[] = [
-        ...(analysisData.decisions || []).map((d: any) => ({ id: d.id ?? crypto.randomUUID(), ...d, type: 'decision', status: 'pending' })),
-        ...(analysisData.actions || []).map((a: any) => ({ id: a.id ?? crypto.randomUUID(), ...a, type: 'action', status: 'pending' })),
-        ...(analysisData.questions || []).map((q: any) => ({ id: q.id ?? crypto.randomUUID(), ...q, type: 'question', status: 'pending' })),
-        ...(analysisData.insights || []).map((i: any) => ({ id: i.id ?? crypto.randomUUID(), ...i, type: 'insight', status: 'pending' })),
-        ...(analysisData.risks || []).map((r: any) => ({ id: r.id ?? crypto.randomUUID(), ...r, type: 'risk', status: 'pending' })),
-        ...(analysisData.ideas || []).map((i: any) => ({ id: i.id ?? crypto.randomUUID(), ...i, type: 'idea', status: 'pending' }))
+        ...(analysisData.decisions || [])
+          .filter((d: any) => d.content && d.content.trim())
+          .map((d: any) => ({ id: d.id ?? crypto.randomUUID(), ...d, type: 'decision', status: 'pending' })),
+        ...(analysisData.actions || [])
+          .filter((a: any) => a.content && a.content.trim())
+          .map((a: any) => ({ id: a.id ?? crypto.randomUUID(), ...a, type: 'action', status: 'pending' })),
+        ...(analysisData.questions || [])
+          .filter((q: any) => q.content && q.content.trim())
+          .map((q: any) => ({ id: q.id ?? crypto.randomUUID(), ...q, type: 'question', status: 'pending' })),
+        ...(analysisData.insights || [])
+          .filter((i: any) => i.content && i.content.trim())
+          .map((i: any) => ({ id: i.id ?? crypto.randomUUID(), ...i, type: 'insight', status: 'pending' })),
+        ...(analysisData.risks || [])
+          .filter((r: any) => r.content && r.content.trim())
+          .map((r: any) => ({ id: r.id ?? crypto.randomUUID(), ...r, type: 'risk', status: 'pending' })),
+        ...(analysisData.ideas || [])
+          .filter((i: any) => i.content && i.content.trim())
+          .map((i: any) => ({ id: i.id ?? crypto.randomUUID(), ...i, type: 'idea', status: 'pending' }))
       ];
 
       setMeetingData({
