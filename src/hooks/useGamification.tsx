@@ -55,6 +55,49 @@ export const useGamification = (userId: string | undefined) => {
     loadGamificationData();
     // Auto-generate missions if none exist for today
     generateMissionsIfNeeded();
+
+    // Set up realtime subscription for gamification updates
+    const channel = supabase
+      .channel('user-gamification-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'user_gamification',
+          filter: `user_id=eq.${userId}`
+        },
+        (payload) => {
+          console.log('Gamification update received:', payload);
+          if (payload.new && typeof payload.new === 'object') {
+            const newData = payload.new as any;
+            setStats({
+              level: newData.level ?? 1,
+              xp: newData.xp ?? 0,
+              coins: newData.coins ?? 0,
+              currentStreak: newData.current_streak ?? 0,
+              longestStreak: newData.longest_streak ?? 0,
+              streakFreezesAvailable: newData.streak_freezes_available ?? 0
+            });
+
+            // Show toast for level up
+            if (payload.old && typeof payload.old === 'object') {
+              const oldData = payload.old as any;
+              if (newData.level > oldData.level) {
+                toast({
+                  title: "🎉 LEVEL UP!",
+                  description: `Vous êtes maintenant niveau ${newData.level}!`,
+                });
+              }
+            }
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [userId]);
 
   const generateMissionsIfNeeded = async () => {

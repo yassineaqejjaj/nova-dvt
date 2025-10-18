@@ -4,12 +4,14 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { Sparkles, Plus, RefreshCw } from 'lucide-react';
+import { Sparkles, Plus, RefreshCw, FileDown, FileText } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import StoryGenerationModal from './StoryGenerationModal';
 import StoryReviewModal from './StoryReviewModal';
 import StoryCard from './StoryCard';
+import { Document, Packer, Paragraph, TextRun, HeadingLevel } from 'docx';
+import { saveAs } from 'file-saver';
 
 interface UserStory {
   id: string;
@@ -112,6 +114,141 @@ const EpicToUserStories = () => {
     });
   };
 
+  const exportToCSV = () => {
+    const headers = ['ID', 'Titre', 'En tant que', 'Je veux', 'Afin de', 'Critères d\'acceptation', 'Points', 'Priorité', 'Statut', 'Tags'];
+    
+    const rows = savedStories.map(story => [
+      story.id,
+      story.title,
+      story.story.asA,
+      story.story.iWant,
+      story.story.soThat,
+      story.acceptanceCriteria.join(' | '),
+      story.effortPoints,
+      story.priority,
+      story.status,
+      story.tags.join(', ')
+    ]);
+    
+    const csvContent = [
+      headers.join(','),
+      ...rows.map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(','))
+    ].join('\n');
+    
+    const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `user-stories-${currentEpic?.title || 'export'}-${Date.now()}.csv`;
+    link.click();
+    toast.success('Export CSV réussi');
+  };
+
+  const exportToWord = async () => {
+    if (!currentEpic) return;
+
+    try {
+      const doc = new Document({
+        sections: [{
+          children: [
+            new Paragraph({
+              text: `Epic: ${currentEpic.title}`,
+              heading: HeadingLevel.HEADING_1,
+            }),
+            new Paragraph({
+              text: currentEpic.description,
+              spacing: { after: 400 }
+            }),
+            ...(currentEpic.context ? [
+              new Paragraph({
+                text: 'Contexte',
+                heading: HeadingLevel.HEADING_2,
+              }),
+              new Paragraph({
+                text: currentEpic.context,
+                spacing: { after: 600 }
+              })
+            ] : []),
+            new Paragraph({
+              text: 'User Stories',
+              heading: HeadingLevel.HEADING_1,
+              spacing: { before: 600, after: 400 }
+            }),
+            ...savedStories.flatMap(story => [
+              new Paragraph({
+                text: story.title,
+                heading: HeadingLevel.HEADING_2,
+                spacing: { before: 400 }
+              }),
+              new Paragraph({
+                children: [
+                  new TextRun({ text: 'En tant que ', bold: true }),
+                  new TextRun(story.story.asA)
+                ]
+              }),
+              new Paragraph({
+                children: [
+                  new TextRun({ text: 'Je veux ', bold: true }),
+                  new TextRun(story.story.iWant)
+                ]
+              }),
+              new Paragraph({
+                 children: [
+                   new TextRun({ text: 'Afin de ', bold: true }),
+                   new TextRun(story.story.soThat)
+                 ],
+                 spacing: { after: 200 }
+               }),
+              new Paragraph({
+                children: [
+                  new TextRun({ text: 'Critères d\'acceptation :', bold: true })
+                ],
+                spacing: { before: 200 }
+              }),
+              ...story.acceptanceCriteria.map(criteria => 
+                new Paragraph({
+                  text: `• ${criteria}`,
+                  bullet: { level: 0 }
+                })
+              ),
+              new Paragraph({
+                children: [
+                  new TextRun({ text: `Points d'effort: ${story.effortPoints} | `, bold: true }),
+                  new TextRun({ text: `Priorité: ${story.priority === 'high' ? 'Haute' : story.priority === 'medium' ? 'Moyenne' : 'Basse'}`, bold: true })
+                ],
+                spacing: { after: 400, before: 200 }
+              }),
+              ...(story.technicalNotes ? [
+                new Paragraph({
+                  children: [
+                    new TextRun({ text: 'Notes techniques: ', bold: true }),
+                    new TextRun(story.technicalNotes)
+                  ],
+                  spacing: { after: 200 }
+                })
+              ] : []),
+              ...(story.dependencies.length > 0 ? [
+                new Paragraph({
+                  children: [
+                    new TextRun({ text: 'Dépendances: ', bold: true }),
+                    new TextRun(story.dependencies.join(', '))
+                  ],
+                  spacing: { after: 400 }
+                })
+              ] : [])
+            ])
+          ]
+        }]
+      });
+
+      const blob = await Packer.toBlob(doc);
+      saveAs(blob, `user-stories-${currentEpic.title}-${Date.now()}.docx`);
+      toast.success('Export Word réussi');
+    } catch (error) {
+      console.error('Erreur export Word:', error);
+      toast.error('Échec de l\'export Word');
+    }
+  };
+
   const totalPoints = savedStories.reduce((sum, story) => sum + story.effortPoints, 0);
   const estimatedSprints = Math.ceil(totalPoints / 20);
   const priorityOrder = { high: 0, medium: 1, low: 2 } as const;
@@ -198,7 +335,7 @@ const EpicToUserStories = () => {
               />
             ))}
 
-            <div className="flex gap-2 pt-4">
+            <div className="flex flex-wrap gap-2 pt-4">
               <Button variant="outline" size="sm">
                 <Plus className="mr-2 h-4 w-4" />
                 Ajouter une story manuellement
@@ -211,6 +348,26 @@ const EpicToUserStories = () => {
                 <RefreshCw className="mr-2 h-4 w-4" />
                 Regénérer tout
               </Button>
+              <div className="ml-auto flex gap-2">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={exportToCSV}
+                  disabled={savedStories.length === 0}
+                >
+                  <FileDown className="mr-2 h-4 w-4" />
+                  Exporter CSV
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={exportToWord}
+                  disabled={savedStories.length === 0}
+                >
+                  <FileText className="mr-2 h-4 w-4" />
+                  Exporter Word
+                </Button>
+              </div>
             </div>
           </CardContent>
         </Card>

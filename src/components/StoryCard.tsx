@@ -2,8 +2,11 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import { ChevronDown, ChevronRight, Edit, Trash2 } from 'lucide-react';
+import { ChevronDown, ChevronRight, Edit, Trash2, FileDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Document, Packer, Paragraph, TextRun, HeadingLevel } from 'docx';
+import { saveAs } from 'file-saver';
+import { toast } from 'sonner';
 
 interface UserStory {
   id: string;
@@ -48,6 +51,83 @@ const StoryCard = ({
   isIncluded = true
 }: StoryCardProps) => {
   const priorityStyle = priorityConfig[story.priority];
+
+  const exportStoryToWord = async () => {
+    try {
+      const doc = new Document({
+        sections: [{
+          children: [
+            new Paragraph({
+              text: story.title,
+              heading: HeadingLevel.HEADING_1,
+            }),
+            new Paragraph({
+              children: [
+                new TextRun({ text: 'En tant que ', bold: true }),
+                new TextRun(story.story.asA)
+              ]
+            }),
+            new Paragraph({
+              children: [
+                new TextRun({ text: 'Je veux ', bold: true }),
+                new TextRun(story.story.iWant)
+              ]
+            }),
+            new Paragraph({
+              children: [
+                new TextRun({ text: 'Afin de ', bold: true }),
+                new TextRun(story.story.soThat)
+              ],
+              spacing: { after: 200 }
+            }),
+            new Paragraph({
+              children: [
+                new TextRun({ text: 'Critères d\'acceptation :', bold: true })
+              ],
+              spacing: { before: 200 }
+            }),
+            ...story.acceptanceCriteria.map(criteria => 
+              new Paragraph({
+                text: `• ${criteria}`,
+                bullet: { level: 0 }
+              })
+            ),
+            new Paragraph({
+              children: [
+                new TextRun({ text: `Points: ${story.effortPoints} | `, bold: true }),
+                new TextRun({ text: `Priorité: ${story.priority === 'high' ? 'Haute' : story.priority === 'medium' ? 'Moyenne' : 'Basse'}`, bold: true })
+              ],
+              spacing: { after: 200, before: 200 }
+            }),
+            ...(story.technicalNotes ? [
+              new Paragraph({
+                children: [
+                  new TextRun({ text: 'Notes techniques: ', bold: true }),
+                  new TextRun(story.technicalNotes)
+                ],
+                spacing: { after: 200 }
+              })
+            ] : []),
+            ...(story.dependencies.length > 0 ? [
+              new Paragraph({
+                children: [
+                  new TextRun({ text: 'Dépendances: ', bold: true }),
+                  new TextRun(story.dependencies.join(', '))
+                ]
+              })
+            ] : [])
+          ]
+        }]
+      });
+
+      const blob = await Packer.toBlob(doc);
+      saveAs(blob, `user-story-${story.title.replace(/[^a-z0-9]/gi, '-')}-${Date.now()}.docx`);
+      toast.success('Story exportée en Word');
+    } catch (error) {
+      console.error('Erreur export:', error);
+      toast.error('Échec de l\'export');
+    }
+  };
 
   return (
     <Card className={cn(
@@ -141,6 +221,15 @@ const StoryCard = ({
           </div>
 
           <div className="flex gap-1 shrink-0">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={exportStoryToWord}
+              className="h-8 w-8 p-0"
+              title="Exporter en Word"
+            >
+              <FileDown className="h-4 w-4" />
+            </Button>
             {onEdit && (
               <Button
                 variant="ghost"

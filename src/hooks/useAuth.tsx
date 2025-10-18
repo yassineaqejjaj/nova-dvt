@@ -18,6 +18,35 @@ export const useAuth = () => {
       if (session?.user) {
         loadUserProfile(session.user.id);
         loadUserSquads(session.user.id);
+
+        // Set up realtime subscription for profile updates
+        const profileChannel = supabase
+          .channel('user-profile-changes')
+          .on(
+            'postgres_changes',
+            {
+              event: 'UPDATE',
+              schema: 'public',
+              table: 'profiles',
+              filter: `user_id=eq.${session.user.id}`
+            },
+            (payload) => {
+              console.log('Profile update received:', payload);
+              if (payload.new) {
+                setUserProfile(prev => prev ? {
+                  ...prev,
+                  level: payload.new.level,
+                  xp: payload.new.xp
+                } : null);
+              }
+            }
+          )
+          .subscribe();
+
+        // Clean up on unmount
+        return () => {
+          supabase.removeChannel(profileChannel);
+        };
       } else {
         setLoading(false);
       }
