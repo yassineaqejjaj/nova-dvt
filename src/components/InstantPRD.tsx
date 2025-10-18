@@ -67,7 +67,7 @@ interface PRDDocument {
   prioritization: { mvp: string[]; must: string[]; should: string[]; could: string[]; wont: string[] };
   acceptance: string[];
   wireframes: string[];
-  architecture: string;
+  architecture: any;
   risks: { risk: string; mitigation: string; dependencies?: string }[];
   kpis: string[];
   roadmap: { phase: string; timeline: string; deliverables: string[] }[];
@@ -164,6 +164,53 @@ export const InstantPRD = () => {
       console.error('Error parsing AI response:', error, 'Raw data:', data);
       throw new Error('Failed to parse AI response. Please try again.');
     }
+  };
+
+  const safeText = (val: any): string => {
+    if (val === null || val === undefined) return '';
+    if (typeof val === 'string') return val;
+    if (typeof val === 'number' || typeof val === 'boolean') return String(val);
+    if (Array.isArray(val)) return val.map(safeText).join(', ');
+    try { return JSON.stringify(val); } catch { return String(val); }
+  };
+
+  const normalizeArrayOfStrings = (arr: any): string[] => {
+    if (arr === null || arr === undefined) return [];
+    if (Array.isArray(arr)) return arr.map(safeText);
+    if (typeof arr === 'string') return [arr];
+    return [safeText(arr)];
+  };
+
+  const normalizeFeatures = (f: any): { name: string; description: string }[] => {
+    if (Array.isArray(f)) {
+      return f.map((item: any) => (
+        typeof item === 'string'
+          ? { name: item, description: '' }
+          : { name: safeText(item?.name ?? item?.title ?? 'Feature'), description: safeText(item?.description ?? item?.details ?? '') }
+      ));
+    }
+    if (f && typeof f === 'object') {
+      return [{ name: safeText(f?.name ?? f?.title ?? 'Feature'), description: safeText(f?.description ?? f?.details ?? '') }];
+    }
+    if (typeof f === 'string') return [{ name: f, description: '' }];
+    return [];
+  };
+
+  const normalizePrioritization = (p: any) => ({
+    mvp: normalizeArrayOfStrings(p?.mvp ?? p?.MVP ?? []),
+    must: normalizeArrayOfStrings(p?.must ?? []),
+    should: normalizeArrayOfStrings(p?.should ?? []),
+    could: normalizeArrayOfStrings(p?.could ?? []),
+    wont: normalizeArrayOfStrings(p?.wont ?? p?.wont_have ?? p?.wontHave ?? []),
+  });
+
+  const normalizeRoadmap = (r: any) => {
+    if (!Array.isArray(r)) return [];
+    return r.map((ph: any) => ({
+      phase: safeText(ph?.phase ?? ph?.title ?? 'Phase'),
+      timeline: safeText(ph?.timeline ?? ''),
+      deliverables: normalizeArrayOfStrings(ph?.deliverables ?? ph?.items ?? []),
+    }));
   };
 
   const generatePRD = async () => {
@@ -531,22 +578,33 @@ Génère 3-4 références/annexes (JSON uniquement):
       setProgress(100);
       
       const document: PRDDocument = {
-        introduction: introResult.introduction,
-        context: contextResult.context,
-        problem: problemResult.problem,
-        vision: visionResult.vision,
-        constraints: constraintsResult.constraints,
+        introduction: safeText(introResult.introduction),
+        context: safeText(contextResult.context),
+        problem: safeText(problemResult.problem),
+        vision: safeText(visionResult.vision),
+        constraints: normalizeArrayOfStrings(constraintsResult.constraints),
         personas: personasWithImages,
-        userStories: storiesResult.userStories,
-        features: featuresResult.features,
-        prioritization: prioritizationResult.prioritization,
-        acceptance: acceptanceResult.acceptance,
-        wireframes: wireframesResult.wireframes,
+        userStories: Array.isArray(storiesResult.userStories)
+          ? storiesResult.userStories.map((s: any) => ({
+              ...s,
+              acceptanceCriteria: normalizeArrayOfStrings(s?.acceptanceCriteria)
+            }))
+          : [],
+        features: normalizeFeatures(featuresResult.features),
+        prioritization: normalizePrioritization(prioritizationResult.prioritization),
+        acceptance: normalizeArrayOfStrings(acceptanceResult.acceptance),
+        wireframes: normalizeArrayOfStrings(wireframesResult.wireframes),
         architecture: archResult.architecture,
-        risks: risksResult.risks,
-        kpis: kpisResult.kpis,
-        roadmap: roadmapResult.roadmap,
-        appendix: appendixResult.appendix,
+        risks: Array.isArray(risksResult.risks)
+          ? risksResult.risks.map((r: any) => ({
+              risk: safeText(r?.risk ?? r?.title ?? ''),
+              mitigation: safeText(r?.mitigation ?? r?.solution ?? ''),
+              dependencies: r?.dependencies ? safeText(r.dependencies) : undefined,
+            }))
+          : [],
+        kpis: normalizeArrayOfStrings(kpisResult.kpis),
+        roadmap: normalizeRoadmap(roadmapResult.roadmap),
+        appendix: normalizeArrayOfStrings(appendixResult.appendix),
       };
 
       setPrdDocument(document);
@@ -844,7 +902,7 @@ Génère 3-4 références/annexes (JSON uniquement):
                     {prdDocument.constraints.map((constraint, idx) => (
                       <li key={idx} className="flex items-start gap-2">
                         <Badge variant="outline" className="mt-0.5">{idx + 1}</Badge>
-                        <span className="text-sm flex-1">{constraint}</span>
+                        <span className="text-sm flex-1">{safeText(constraint)}</span>
                       </li>
                     ))}
                   </ul>
@@ -955,8 +1013,8 @@ Génère 3-4 références/annexes (JSON uniquement):
                   <div className="space-y-3">
                     {prdDocument.features.map((feature, idx) => (
                       <div key={idx} className="p-4 border rounded-lg">
-                        <h4 className="font-semibold mb-2">{feature.name}</h4>
-                        <p className="text-sm text-muted-foreground">{feature.description}</p>
+                        <h4 className="font-semibold mb-2">{safeText(feature.name)}</h4>
+                        <p className="text-sm text-muted-foreground">{safeText(feature.description)}</p>
                       </div>
                     ))}
                   </div>
@@ -977,7 +1035,7 @@ Génère 3-4 références/annexes (JSON uniquement):
                       <Badge className="mb-2">MVP</Badge>
                       <ul className="space-y-1 ml-4">
                         {prdDocument.prioritization.mvp.map((item, idx) => (
-                          <li key={idx} className="text-sm">• {item}</li>
+                          <li key={idx} className="text-sm">• {safeText(item)}</li>
                         ))}
                       </ul>
                     </div>
@@ -986,7 +1044,7 @@ Génère 3-4 références/annexes (JSON uniquement):
                       <Badge variant="destructive" className="mb-2">Must Have</Badge>
                       <ul className="space-y-1 ml-4">
                         {prdDocument.prioritization.must.map((item, idx) => (
-                          <li key={idx} className="text-sm">• {item}</li>
+                          <li key={idx} className="text-sm">• {safeText(item)}</li>
                         ))}
                       </ul>
                     </div>
@@ -995,7 +1053,7 @@ Génère 3-4 références/annexes (JSON uniquement):
                       <Badge variant="default" className="mb-2">Should Have</Badge>
                       <ul className="space-y-1 ml-4">
                         {prdDocument.prioritization.should.map((item, idx) => (
-                          <li key={idx} className="text-sm">• {item}</li>
+                          <li key={idx} className="text-sm">• {safeText(item)}</li>
                         ))}
                       </ul>
                     </div>
@@ -1004,7 +1062,7 @@ Génère 3-4 références/annexes (JSON uniquement):
                       <Badge variant="secondary" className="mb-2">Could Have</Badge>
                       <ul className="space-y-1 ml-4">
                         {prdDocument.prioritization.could.map((item, idx) => (
-                          <li key={idx} className="text-sm">• {item}</li>
+                          <li key={idx} className="text-sm">• {safeText(item)}</li>
                         ))}
                       </ul>
                     </div>
@@ -1013,7 +1071,7 @@ Génère 3-4 références/annexes (JSON uniquement):
                       <Badge variant="outline" className="mb-2">Won't Have</Badge>
                       <ul className="space-y-1 ml-4">
                         {prdDocument.prioritization.wont.map((item, idx) => (
-                          <li key={idx} className="text-sm">• {item}</li>
+                          <li key={idx} className="text-sm">• {safeText(item)}</li>
                         ))}
                       </ul>
                     </div>
@@ -1034,7 +1092,7 @@ Génère 3-4 références/annexes (JSON uniquement):
                     {prdDocument.acceptance.map((criterion, idx) => (
                       <li key={idx} className="flex items-start gap-2">
                         <CheckCircle2 className="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" />
-                        <span className="text-sm flex-1">{criterion}</span>
+                        <span className="text-sm flex-1">{safeText(criterion)}</span>
                       </li>
                     ))}
                   </ul>
@@ -1125,7 +1183,7 @@ Génère 3-4 références/annexes (JSON uniquement):
                     {prdDocument.kpis.map((kpi, idx) => (
                       <div key={idx} className="flex items-start gap-3">
                         <Badge variant="outline" className="mt-0.5">{idx + 1}</Badge>
-                        <p className="text-sm flex-1">{kpi}</p>
+                        <p className="text-sm flex-1">{safeText(kpi)}</p>
                       </div>
                     ))}
                   </div>
@@ -1155,7 +1213,7 @@ Génère 3-4 références/annexes (JSON uniquement):
                             {phase.deliverables.map((deliverable, i) => (
                               <li key={i} className="flex items-start gap-2 text-sm">
                                 <CheckCircle2 className="w-4 h-4 text-primary flex-shrink-0 mt-0.5" />
-                                <span>{deliverable}</span>
+                                <span>{safeText(deliverable)}</span>
                               </li>
                             ))}
                           </ul>
@@ -1179,7 +1237,7 @@ Génère 3-4 références/annexes (JSON uniquement):
                     {prdDocument.appendix.map((item, idx) => (
                       <li key={idx} className="flex items-start gap-2">
                         <Badge variant="outline" className="mt-0.5">{idx + 1}</Badge>
-                        <span className="text-sm flex-1">{item}</span>
+                        <span className="text-sm flex-1">{safeText(item)}</span>
                       </li>
                     ))}
                   </ul>
