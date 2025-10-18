@@ -341,9 +341,7 @@ const Index = () => {
   return (
     <SidebarProvider defaultOpen={false}>
       <div className="min-h-screen bg-background relative flex w-full">
-        <div className="absolute inset-0 bg-white" />
-        
-        <SidebarNav 
+        <SidebarNav
           activeTab={activeTab} 
           onTabChange={handleTabChange}
           squadCount={squads.length}
