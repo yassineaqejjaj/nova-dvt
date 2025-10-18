@@ -17,10 +17,10 @@ export const QuickDeck: React.FC<QuickDeckProps> = ({ pinnedItems, onUnpin, onIt
         <CardHeader>
           <div className="flex items-center gap-2">
             <Pin className="h-4 w-4 text-muted-foreground" />
-            <CardTitle className="text-base">Quick Deck</CardTitle>
+            <CardTitle className="text-base">Raccourcis</CardTitle>
           </div>
           <CardDescription className="text-xs">
-            Pin your favorite workflows and agents for quick access
+            Épinglez vos workflows et agents favoris pour un accès rapide
           </CardDescription>
         </CardHeader>
       </Card>
@@ -47,10 +47,10 @@ export const QuickDeck: React.FC<QuickDeckProps> = ({ pinnedItems, onUnpin, onIt
       <CardHeader>
         <div className="flex items-center gap-2">
           <Pin className="h-4 w-4 text-primary" />
-          <CardTitle className="text-base">Quick Deck</CardTitle>
+          <CardTitle className="text-base">Raccourcis</CardTitle>
         </div>
         <CardDescription className="text-xs">
-          Your pinned items for quick access
+          Vos éléments épinglés pour un accès rapide
         </CardDescription>
       </CardHeader>
       <CardContent>

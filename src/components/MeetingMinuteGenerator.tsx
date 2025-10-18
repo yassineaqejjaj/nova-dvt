@@ -452,114 +452,63 @@ export const MeetingMinuteGenerator: React.FC = () => {
             </TabsTrigger>
           </TabsList>
 
-            {Object.entries(groupedElements).map(([type, elements]) => (
-              <TabsContent key={type} value={`${type}s`} className="space-y-3">
-                <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-lg font-semibold capitalize">
-                    {type === 'decision' ? 'Décisions' : 
-                     type === 'action' ? 'Actions' : 
-                     type === 'question' ? 'Questions' : 
-                     type === 'insight' ? 'Enseignements' : 
-                     type === 'risk' ? 'Risques' : 'Idées'}
-                  </h3>
-                  <Button variant="outline" size="sm" onClick={handleValidateAll}>
-                    Tout valider
-                  </Button>
-                </div>
+          {Object.entries(groupedElements).map(([type, elements]) => (
+            <TabsContent key={type} value={`${type}s`} className="space-y-3">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-semibold capitalize">
+                  {type === 'decision' ? 'Décisions' : 
+                   type === 'action' ? 'Actions' : 
+                   type === 'question' ? 'Questions' : 
+                   type === 'insight' ? 'Enseignements' : 
+                   type === 'risk' ? 'Risques' : 'Idées'}
+                </h3>
+                <Button variant="outline" size="sm" onClick={handleValidateAll}>
+                  Tout valider
+                </Button>
+              </div>
 
-                {elements.length === 0 ? (
-                  <p className="text-sm text-muted-foreground py-8 text-center">
-                    {type === 'decision' ? 'Aucune décision détectée' :
-                     type === 'action' ? 'Aucune action détectée' :
-                     type === 'question' ? 'Aucune question détectée' :
-                     type === 'insight' ? 'Aucun enseignement détecté' :
-                     type === 'risk' ? 'Aucun risque détecté' : 'Aucune idée détectée'}
-                  </p>
-                ) : (
-                  elements.map((element) => (
-                    <Card key={element.id} className="relative">
-                      <CardContent className="pt-6">
-                        <div className="flex items-start gap-3">
-                          <Checkbox
-                            checked={selectedElements.includes(element.id)}
-                            onCheckedChange={() => toggleElement(element.id)}
-                          />
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2">
-                              {getElementIcon(type)}
-                              <span className="font-medium">{element.content}</span>
-                              {getConfidenceBadge(element.confidence)}
-                            </div>
-                            {element.rationale && (
-                              <p className="text-xs text-muted-foreground mt-1">{element.rationale}</p>
-                            )}
-                            <div className="flex gap-2 mt-2">
-                              <Button variant="outline" size="sm" onClick={() => handleEditElement(element.id)}>
-                                Éditer
-                              </Button>
-                              <Button variant="outline" size="sm" onClick={() => handleLinkElement(element.id)}>
-                                Lier
-                              </Button>
-                              <Button variant="ghost" size="sm" onClick={() => handleIgnoreElement(element.id)}>
-                                Ignorer
-                              </Button>
-                            </div>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))
-                )}
-              </TabsContent>
-            ))}
-                        onCheckedChange={() => toggleElement(element.id)}
-                      />
-                      <div className="flex-1 space-y-2">
-                        <div className="flex items-start justify-between">
+              {elements.length === 0 ? (
+                <p className="text-sm text-muted-foreground py-8 text-center">
+                  {type === 'decision' ? 'Aucune décision détectée' :
+                   type === 'action' ? 'Aucune action détectée' :
+                   type === 'question' ? 'Aucune question détectée' :
+                   type === 'insight' ? 'Aucun enseignement détecté' :
+                   type === 'risk' ? 'Aucun risque détecté' : 'Aucune idée détectée'}
+                </p>
+              ) : (
+                elements.map((element) => (
+                  <Card key={element.id} className="relative">
+                    <CardContent className="pt-6">
+                      <div className="flex items-start gap-3">
+                        <Checkbox
+                          checked={selectedElements.includes(element.id)}
+                          onCheckedChange={() => toggleElement(element.id)}
+                        />
+                        <div className="flex-1">
                           <div className="flex items-center gap-2">
-                            {getElementIcon(element.type)}
-                            <p className="font-medium">{element.content}</p>
+                            {getElementIcon(type)}
+                            <span className="font-medium">{element.content}</span>
+                            {getConfidenceBadge(element.confidence)}
                           </div>
-                          {getConfidenceBadge(element.confidence)}
-                        </div>
-
-                        {element.rationale && (
-                          <p className="text-sm text-muted-foreground">
-                            <strong>Justification :</strong> {element.rationale}
-                          </p>
-                        )}
-
-                        {element.assignedTo && (
-                          <p className="text-sm">
-                            <strong>Assigné à :</strong> {element.assignedTo}
-                            {element.deadline && ` | Échéance : ${element.deadline}`}
-                          </p>
-                        )}
-
-                        <div className="flex gap-2">
-                          <Button variant="ghost" size="sm" onClick={() => handleEditElement(element.id)}>
-                            <Edit className="w-3 h-3 mr-1" />
-                            Éditer
-                          </Button>
-                          <Button variant="ghost" size="sm" onClick={() => handleLinkElement(element.id)}>
-                            <Link className="w-3 h-3 mr-1" />
-                            Lier
-                          </Button>
-                          <Button variant="ghost" size="sm" onClick={() => handleIgnoreElement(element.id)}>
-                            <X className="w-3 h-3 mr-1" />
-                            Ignorer
-                          </Button>
+                          {element.rationale && (
+                            <p className="text-xs text-muted-foreground mt-1">{element.rationale}</p>
+                          )}
+                          <div className="flex gap-2 mt-2">
+                            <Button variant="outline" size="sm" onClick={() => handleEditElement(element.id)}>
+                              Éditer
+                            </Button>
+                            <Button variant="outline" size="sm" onClick={() => handleLinkElement(element.id)}>
+                              Lier
+                            </Button>
+                            <Button variant="ghost" size="sm" onClick={() => handleIgnoreElement(element.id)}>
+                              Ignorer
+                            </Button>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-
-              {elements.length === 0 && (
-                <div className="text-center py-8 text-muted-foreground">
-                  No {type}s detected
-                </div>
+                    </CardContent>
+                  </Card>
+                ))
               )}
             </TabsContent>
           ))}

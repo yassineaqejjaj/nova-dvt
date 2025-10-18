@@ -38,8 +38,8 @@ export const Artifacts: React.FC<ArtifactsProps> = ({ userId }) => {
     } catch (error) {
       console.error('Error loading artifacts:', error);
       toast({
-        title: 'Error',
-        description: 'Failed to load artifacts',
+        title: 'Erreur',
+        description: 'Échec du chargement des artefacts',
         variant: 'destructive',
       });
     } finally {
@@ -58,14 +58,14 @@ export const Artifacts: React.FC<ArtifactsProps> = ({ userId }) => {
       
       setArtifacts(artifacts.filter(a => a.id !== id));
       toast({
-        title: 'Success',
-        description: 'Artifact deleted successfully',
+        title: 'Succès',
+        description: 'Artefact supprimé avec succès',
       });
     } catch (error) {
       console.error('Error deleting artifact:', error);
       toast({
-        title: 'Error',
-        description: 'Failed to delete artifact',
+        title: 'Erreur',
+        description: 'Échec de suppression de l\'artefact',
         variant: 'destructive',
       });
     }
@@ -89,8 +89,8 @@ export const Artifacts: React.FC<ArtifactsProps> = ({ userId }) => {
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
     toast({
-      title: 'Success',
-      description: 'All artifacts exported',
+      title: 'Succès',
+      description: 'Tous les artefacts exportés',
     });
   };
 
@@ -133,14 +133,14 @@ export const Artifacts: React.FC<ArtifactsProps> = ({ userId }) => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight">Artifacts</h2>
+          <h2 className="text-3xl font-bold tracking-tight">Artefacts</h2>
           <p className="text-muted-foreground">
-            All your generated canvases, stories, and analyses in one place
+            Tous vos canvas, stories et analyses générés en un seul endroit
           </p>
         </div>
         <Button onClick={handleExportAll} variant="outline">
           <Download className="w-4 h-4 mr-2" />
-          Export All
+          Tout exporter
         </Button>
       </div>
 
@@ -148,7 +148,7 @@ export const Artifacts: React.FC<ArtifactsProps> = ({ userId }) => {
       <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Artifacts</CardTitle>
+            <CardTitle className="text-sm font-medium">Total Artefacts</CardTitle>
             <FileText className="w-4 h-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -166,7 +166,7 @@ export const Artifacts: React.FC<ArtifactsProps> = ({ userId }) => {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">User Stories</CardTitle>
+            <CardTitle className="text-sm font-medium">Stories utilisateur</CardTitle>
             <FileText className="w-4 h-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -184,7 +184,7 @@ export const Artifacts: React.FC<ArtifactsProps> = ({ userId }) => {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Tech Specs</CardTitle>
+            <CardTitle className="text-sm font-medium">Spécs techniques</CardTitle>
             <FileText className="w-4 h-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -193,7 +193,7 @@ export const Artifacts: React.FC<ArtifactsProps> = ({ userId }) => {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Impact Analyses</CardTitle>
+            <CardTitle className="text-sm font-medium">Analyses d'impact</CardTitle>
             <TrendingUp className="w-4 h-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -207,7 +207,7 @@ export const Artifacts: React.FC<ArtifactsProps> = ({ userId }) => {
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
-            placeholder="Search artifacts..."
+            placeholder="Rechercher des artefacts..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="pl-10"
@@ -215,11 +215,11 @@ export const Artifacts: React.FC<ArtifactsProps> = ({ userId }) => {
         </div>
         <Tabs value={filterType} onValueChange={setFilterType} className="w-full sm:w-auto">
           <TabsList>
-            <TabsTrigger value="all">All</TabsTrigger>
-            <TabsTrigger value="canvas">Canvases</TabsTrigger>
+            <TabsTrigger value="all">Tous</TabsTrigger>
+            <TabsTrigger value="canvas">Canvas</TabsTrigger>
             <TabsTrigger value="story">Stories</TabsTrigger>
             <TabsTrigger value="epic">Epics</TabsTrigger>
-            <TabsTrigger value="tech_spec">Tech Specs</TabsTrigger>
+            <TabsTrigger value="tech_spec">Spécs tech</TabsTrigger>
             <TabsTrigger value="impact_analysis">Analyses</TabsTrigger>
           </TabsList>
         </Tabs>
@@ -230,9 +230,9 @@ export const Artifacts: React.FC<ArtifactsProps> = ({ userId }) => {
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12">
             <FileText className="w-12 h-12 text-muted-foreground mb-4" />
-            <h3 className="text-lg font-semibold mb-2">No artifacts yet</h3>
+            <h3 className="text-lg font-semibold mb-2">Aucun artefact pour l'instant</h3>
             <p className="text-muted-foreground text-center mb-4">
-              Start creating canvases, user stories, and impact analyses with your AI agents
+              Commencez à créer des canvas, user stories et analyses d'impact avec vos agents IA
             </p>
           </CardContent>
         </Card>

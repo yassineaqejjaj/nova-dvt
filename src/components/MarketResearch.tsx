@@ -32,7 +32,7 @@ export const MarketResearch: React.FC = () => {
     e.preventDefault();
     
     if (!query.trim()) {
-      toast.error('Please enter a research query');
+      toast.error('Veuillez saisir une requête de recherche');
       return;
     }
 
@@ -47,10 +47,10 @@ export const MarketResearch: React.FC = () => {
       if (error) throw error;
 
       setResults(data.results);
-      toast.success('Market research completed!');
+      toast.success('Étude de marché terminée !');
     } catch (error: any) {
       console.error('Market research error:', error);
-      toast.error('Failed to complete market research', {
+      toast.error('Échec de l\'étude de marché', {
         description: error.message
       });
     } finally {
@@ -61,9 +61,9 @@ export const MarketResearch: React.FC = () => {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-3xl font-bold mb-2">Market Research Tool</h2>
+        <h2 className="text-3xl font-bold mb-2">Étude de marché IA</h2>
         <p className="text-muted-foreground">
-          Gather competitive intelligence and market insights using AI-powered web research
+          Collectez de l'intelligence concurrentielle et des insights marché avec une recherche web propulsée par IA
         </p>
       </div>
 
@@ -71,19 +71,19 @@ export const MarketResearch: React.FC = () => {
         <CardHeader>
           <CardTitle className="flex items-center space-x-2">
             <Search className="w-5 h-5" />
-            <span>Research Parameters</span>
+            <span>Paramètres de recherche</span>
           </CardTitle>
           <CardDescription>
-            Enter your research topic and provide context for better results
+            Saisissez votre sujet de recherche et fournissez du contexte pour de meilleurs résultats
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleResearch} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="query">Research Query *</Label>
+              <Label htmlFor="query">Requête de recherche *</Label>
               <Input
                 id="query"
-                placeholder="e.g., AI-powered task management tools"
+                placeholder="ex: Outils de gestion de tâches propulsés par IA"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 required
@@ -91,10 +91,10 @@ export const MarketResearch: React.FC = () => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="context">Additional Context (Optional)</Label>
+              <Label htmlFor="context">Contexte additionnel (Optionnel)</Label>
               <Textarea
                 id="context"
-                placeholder="e.g., Target audience: small teams, Focus on: collaboration features"
+                placeholder="ex: Public cible: petites équipes, Focus: fonctionnalités de collaboration"
                 value={context}
                 onChange={(e) => setContext(e.target.value)}
                 rows={3}
@@ -105,12 +105,12 @@ export const MarketResearch: React.FC = () => {
               {isLoading ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Researching...
+                  Recherche en cours...
                 </>
               ) : (
                 <>
                   <Globe className="w-4 h-4 mr-2" />
-                  Start Research
+                  Démarrer la recherche
                 </>
               )}
             </Button>
@@ -125,7 +125,7 @@ export const MarketResearch: React.FC = () => {
               <CardHeader>
                 <CardTitle className="flex items-center space-x-2">
                   <AlertCircle className="w-5 h-5 text-primary" />
-                  <span>Executive Summary</span>
+                  <span>Synthèse exécutive</span>
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -139,7 +139,7 @@ export const MarketResearch: React.FC = () => {
               <CardHeader>
                 <CardTitle className="flex items-center space-x-2">
                   <Users className="w-5 h-5 text-agent-blue" />
-                  <span>Competitive Analysis</span>
+                  <span>Analyse concurrentielle</span>
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -150,7 +150,7 @@ export const MarketResearch: React.FC = () => {
                         <h4 className="font-semibold mb-3">{competitor.name}</h4>
                         <div className="grid md:grid-cols-2 gap-4">
                           <div>
-                            <p className="text-sm font-medium mb-2 text-green-600">Strengths</p>
+                            <p className="text-sm font-medium mb-2 text-green-600">Forces</p>
                             <ul className="space-y-1">
                               {competitor.strengths.map((strength, i) => (
                                 <li key={i} className="text-sm text-muted-foreground flex items-start">
@@ -161,7 +161,7 @@ export const MarketResearch: React.FC = () => {
                             </ul>
                           </div>
                           <div>
-                            <p className="text-sm font-medium mb-2 text-orange-600">Weaknesses</p>
+                            <p className="text-sm font-medium mb-2 text-orange-600">Faiblesses</p>
                             <ul className="space-y-1">
                               {competitor.weaknesses.map((weakness, i) => (
                                 <li key={i} className="text-sm text-muted-foreground flex items-start">
@@ -186,7 +186,7 @@ export const MarketResearch: React.FC = () => {
                 <CardHeader>
                   <CardTitle className="flex items-center space-x-2">
                     <TrendingUp className="w-5 h-5 text-agent-green" />
-                    <span>Market Trends</span>
+                    <span>Tendances du marché</span>
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -209,7 +209,7 @@ export const MarketResearch: React.FC = () => {
                 <CardHeader>
                   <CardTitle className="flex items-center space-x-2">
                     <TrendingUp className="w-5 h-5 text-agent-orange" />
-                    <span>Opportunities</span>
+                    <span>Opportunités</span>
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -231,7 +231,7 @@ export const MarketResearch: React.FC = () => {
               <CardHeader>
                 <CardTitle className="flex items-center space-x-2">
                   <Users className="w-5 h-5 text-agent-purple" />
-                  <span>User Needs & Pain Points</span>
+                  <span>Besoins utilisateurs & Points de douleur</span>
                 </CardTitle>
               </CardHeader>
               <CardContent>
