@@ -107,9 +107,9 @@ export const MeetingMinuteGenerator: React.FC = () => {
       
       if (validTypes.includes(file.type)) {
         setSelectedFile(file);
-        toast.success(`File selected: ${file.name}`);
-      } else {
-        toast.error('Invalid file type. Please upload .txt, .docx, .pdf, or audio files.');
+         toast.success(`Fichier sélectionné : ${file.name}`);
+       } else {
+         toast.error('Type de fichier invalide. Téléversez .txt, .docx, .pdf, ou des fichiers audio.');
       }
     }
   };
@@ -128,7 +128,7 @@ export const MeetingMinuteGenerator: React.FC = () => {
       } else if (uploadType === 'file' && selectedFile) {
         // For audio files, transcribe
         if (selectedFile.type.startsWith('audio/')) {
-          toast.info('Transcribing audio... This may take a few minutes.');
+           toast.info('Transcription audio... Cela peut prendre quelques minutes.');
           setProcessingProgress(20);
           
           const reader = new FileReader();
@@ -157,7 +157,7 @@ export const MeetingMinuteGenerator: React.FC = () => {
       }
 
       // Extract meeting elements using AI
-      toast.info('Analyzing meeting content with AI...');
+       toast.info('Analyse du contenu de la réunion avec l’IA...');
       setProcessingProgress(60);
 
       const { data: analysisData, error: analysisError } = await supabase.functions.invoke(
@@ -196,11 +196,11 @@ export const MeetingMinuteGenerator: React.FC = () => {
 
       setProcessingProgress(100);
       setStep('review');
-      toast.success('Meeting analysis complete!');
+      toast.success('Analyse de la réunion terminée !');
 
     } catch (error: any) {
       console.error('Processing error:', error);
-      toast.error(error.message || 'Failed to process meeting');
+      toast.error(error.message || 'Échec du traitement de la réunion');
       setStep('upload');
       setProcessingProgress(0);
     }
@@ -304,9 +304,9 @@ export const MeetingMinuteGenerator: React.FC = () => {
   };
 
   const getConfidenceBadge = (confidence: number) => {
-    if (confidence >= 80) return <Badge className="bg-green-500">✓ High</Badge>;
-    if (confidence >= 60) return <Badge className="bg-yellow-500">⚠️ Medium</Badge>;
-    return <Badge className="bg-gray-500">? Low</Badge>;
+     if (confidence >= 80) return <Badge className="bg-green-500">✓ Élevée</Badge>;
+    if (confidence >= 60) return <Badge className="bg-yellow-500">⚠️ Moyenne</Badge>;
+    return <Badge className="bg-gray-500">? Faible</Badge>;
   };
 
   const renderUploadStep = () => (
@@ -424,7 +424,7 @@ export const MeetingMinuteGenerator: React.FC = () => {
           </CardHeader>
           <CardContent>
             <div className="bg-muted/50 rounded-lg p-4">
-              <h4 className="font-medium mb-2">🎯 AI Summary</h4>
+              <h4 className="font-medium mb-2">🎯 Synthèse IA</h4>
               <p className="text-sm text-muted-foreground">{meetingData.summary}</p>
             </div>
           </CardContent>

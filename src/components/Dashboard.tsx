@@ -76,9 +76,9 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
   const getGreeting = () => {
     const hour = new Date().getHours();
-    if (hour < 12) return 'Good morning';
-    if (hour < 18) return 'Good afternoon';
-    return 'Good evening';
+    if (hour < 12) return 'Bonjour';
+    if (hour < 18) return 'Bon après-midi';
+    return 'Bonsoir';
   };
 
   const getGreetingEmoji = () => {
@@ -138,9 +138,9 @@ export const Dashboard: React.FC<DashboardProps> = ({
         <h1 className="text-4xl font-bold gradient-text animate-fade-in">
           {getGreeting()}, {user.name}! {getGreetingEmoji()}
         </h1>
-        <p className="text-muted-foreground text-lg">
-          Ready to collaborate with your AI squad? Here's your progress overview.
-        </p>
+          <p className="text-muted-foreground text-lg">
+            Prêt à collaborer avec votre squad d’IA ? Voici votre aperçu de progression.
+          </p>
         
         {/* Quick Stats Bar */}
         <div className="flex items-center justify-center gap-6 pt-2">
@@ -221,13 +221,13 @@ export const Dashboard: React.FC<DashboardProps> = ({
               >
                 <span className="relative z-10 flex items-center gap-2">
                   <Zap className="w-5 h-5" />
-                  Try Now
+                  Essayer maintenant
                   <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                 </span>
                 <div className="absolute inset-0 bg-gradient-to-r from-primary to-accent opacity-0 group-hover:opacity-100 transition-opacity" />
               </Button>
               <p className="text-xs text-center text-muted-foreground font-medium">
-                2 weeks → 15 seconds ⚡
+                2 semaines → 15 secondes ⚡
               </p>
             </div>
           </div>

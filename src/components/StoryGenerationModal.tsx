@@ -129,10 +129,10 @@ const StoryGenerationModal = ({ epic, open, onClose, onGenerate }: StoryGenerati
         };
       });
 
-      const valid = mapped.filter(s => s && s.title && s.story?.asA && s.story?.iWant && s.story?.soThat && Array.isArray(s.acceptanceCriteria) && s.acceptanceCriteria.length >= 1);
+      const valid = mapped.filter(s => s && s.title && s.story?.asA && s.story?.iWant && s.story?.soThat && Array.isArray(s.acceptanceCriteria));
       if (valid.length === 0) {
         console.error('Invalid AI stories payload:', data);
-        toast.error('L’IA a renvoyé des stories vides. Réessayez.');
+        toast.error("Échec de génération des stories. Réessayez dans un instant.");
         setIsGenerating(false);
         return;
       }
