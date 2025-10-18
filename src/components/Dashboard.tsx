@@ -6,44 +6,35 @@ import { Progress } from '@/components/ui/progress';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { UserProfile, Squad, TabType } from '@/types';
 import { allAgents } from '@/data/mockData';
-import { 
-  Trophy, 
-  Zap, 
-  Users, 
-  MessageCircle, 
-  TrendingUp,
-  Star,
-  Target,
-  Calendar,
-  Award,
-  ChevronRight,
-  Sparkles
-} from 'lucide-react';
+import { Trophy, Zap, Users, MessageCircle, TrendingUp, Star, Target, Calendar, Award, ChevronRight, Sparkles } from 'lucide-react';
 import { useInsights } from '@/hooks/useInsights';
 import { usePinnedItems } from '@/hooks/usePinnedItems';
 import { InsightsPanel } from './InsightsPanel';
 import { QuickDeck } from './QuickDeck';
 import { DynamicStatsPanel } from './DynamicStatsPanel';
-
 interface DashboardProps {
   user: UserProfile;
   squads: Squad[];
   onNavigate: (tab: TabType) => void;
 }
-
 export const Dashboard: React.FC<DashboardProps> = ({
   user,
   squads,
   onNavigate
 }) => {
-  const { insights, dismissInsight, generateInsights } = useInsights(user.id);
-  const { pinnedItems, unpinItem } = usePinnedItems(user.id);
-
+  const {
+    insights,
+    dismissInsight,
+    generateInsights
+  } = useInsights(user.id);
+  const {
+    pinnedItems,
+    unpinItem
+  } = usePinnedItems(user.id);
   useEffect(() => {
     // Generate insights on mount
     generateInsights();
   }, []);
-
   const handlePinnedItemClick = (item: any) => {
     switch (item.itemType) {
       case 'squad':
@@ -59,28 +50,33 @@ export const Dashboard: React.FC<DashboardProps> = ({
         onNavigate('dashboard' as any);
     }
   };
-  const progressToNextLevel = ((user.xp % 200) / 200) * 100;
+  const progressToNextLevel = user.xp % 200 / 200 * 100;
   const nextLevelXP = Math.ceil(user.xp / 200) * 200;
   const xpToNextLevel = nextLevelXP - user.xp;
-  
-  const unlockedAgentsCount = allAgents.filter(agent => 
-    user.unlockedAgents.includes(agent.id) || user.xp >= agent.xpRequired
-  ).length;
-
-  const recentActivities = [
-    { action: 'Created squad "Product Launch Team"', time: '2 hours ago', icon: Users },
-    { action: 'Unlocked Sarah Chen (Product Strategy)', time: '1 day ago', icon: Star },
-    { action: 'Completed 5 conversations streak', time: '2 days ago', icon: MessageCircle },
-    { action: 'Reached Level 5', time: '3 days ago', icon: Trophy }
-  ];
-
+  const unlockedAgentsCount = allAgents.filter(agent => user.unlockedAgents.includes(agent.id) || user.xp >= agent.xpRequired).length;
+  const recentActivities = [{
+    action: 'Created squad "Product Launch Team"',
+    time: '2 hours ago',
+    icon: Users
+  }, {
+    action: 'Unlocked Sarah Chen (Product Strategy)',
+    time: '1 day ago',
+    icon: Star
+  }, {
+    action: 'Completed 5 conversations streak',
+    time: '2 days ago',
+    icon: MessageCircle
+  }, {
+    action: 'Reached Level 5',
+    time: '3 days ago',
+    icon: Trophy
+  }];
   const getGreeting = () => {
     const hour = new Date().getHours();
     if (hour < 12) return 'Bonjour';
     if (hour < 18) return 'Bon après-midi';
     return 'Bonsoir';
   };
-
   const getGreetingEmoji = () => {
     const hour = new Date().getHours();
     if (hour < 12) return '☀️';
@@ -90,49 +86,39 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
   // Rotating features for Instant PRD
   const [currentFeatureIndex, setCurrentFeatureIndex] = useState(0);
-  const instantPRDFeatures = [
-    {
-      icon: '👥',
-      title: '3 AI-Generated Personas',
-      description: 'Complete with demographics, pain points, and motivations'
-    },
-    {
-      icon: '📝',
-      title: '12 Detailed User Stories',
-      description: 'Structured with acceptance criteria and priority levels'
-    },
-    {
-      icon: '🎨',
-      title: 'Interactive Wireframes',
-      description: 'Visual mockups generated from your description'
-    },
-    {
-      icon: '🏗️',
-      title: 'Technical Architecture',
-      description: 'Complete tech stack recommendations and system design'
-    },
-    {
-      icon: '📊',
-      title: 'Success Metrics & KPIs',
-      description: 'Measurable goals aligned with business objectives'
-    },
-    {
-      icon: '🚀',
-      title: 'Go-to-Market Strategy',
-      description: 'Launch plan with phasing and rollout recommendations'
-    }
-  ];
-
+  const instantPRDFeatures = [{
+    icon: '👥',
+    title: '3 AI-Generated Personas',
+    description: 'Complete with demographics, pain points, and motivations'
+  }, {
+    icon: '📝',
+    title: '12 Detailed User Stories',
+    description: 'Structured with acceptance criteria and priority levels'
+  }, {
+    icon: '🎨',
+    title: 'Interactive Wireframes',
+    description: 'Visual mockups generated from your description'
+  }, {
+    icon: '🏗️',
+    title: 'Technical Architecture',
+    description: 'Complete tech stack recommendations and system design'
+  }, {
+    icon: '📊',
+    title: 'Success Metrics & KPIs',
+    description: 'Measurable goals aligned with business objectives'
+  }, {
+    icon: '🚀',
+    title: 'Go-to-Market Strategy',
+    description: 'Launch plan with phasing and rollout recommendations'
+  }];
   useEffect(() => {
     // Rotate features every 4 seconds
     const interval = setInterval(() => {
-      setCurrentFeatureIndex((prev) => (prev + 1) % instantPRDFeatures.length);
+      setCurrentFeatureIndex(prev => (prev + 1) % instantPRDFeatures.length);
     }, 4000);
     return () => clearInterval(interval);
   }, []);
-
-  return (
-    <div className="space-y-6">
+  return <div className="space-y-6">
       {/* Welcome Header */}
       <div className="text-center space-y-3">
         <h1 className="text-4xl font-bold gradient-text animate-fade-in">
@@ -198,27 +184,12 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
                 {/* Feature Indicator Dots */}
                 <div className="flex gap-1.5 pt-1">
-                  {instantPRDFeatures.map((_, index) => (
-                    <button
-                      key={index}
-                      onClick={() => setCurrentFeatureIndex(index)}
-                      className={`h-1.5 rounded-full transition-all duration-300 ${
-                        index === currentFeatureIndex 
-                          ? 'w-6 bg-primary' 
-                          : 'w-1.5 bg-primary/30 hover:bg-primary/50'
-                      }`}
-                      aria-label={`View feature ${index + 1}`}
-                    />
-                  ))}
+                  {instantPRDFeatures.map((_, index) => <button key={index} onClick={() => setCurrentFeatureIndex(index)} className={`h-1.5 rounded-full transition-all duration-300 ${index === currentFeatureIndex ? 'w-6 bg-primary' : 'w-1.5 bg-primary/30 hover:bg-primary/50'}`} aria-label={`View feature ${index + 1}`} />)}
                 </div>
               </div>
             </div>
             <div className="flex flex-col gap-3 items-center">
-              <Button 
-                size="lg" 
-                className="group relative overflow-hidden px-8"
-                onClick={() => onNavigate('instant-prd')}
-              >
+              <Button size="lg" className="group relative overflow-hidden px-8" onClick={() => onNavigate('instant-prd')}>
                 <span className="relative z-10 flex items-center gap-2">
                   <Zap className="w-5 h-5" />
                   Essayer maintenant
@@ -274,7 +245,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium flex items-center space-x-2">
               <Users className="w-4 h-4 text-agent-blue" />
-              <span>Unlocked Agents</span>
+              <span>Agents Débloqués
+            </span>
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -283,12 +255,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 <span className="text-2xl font-bold">{unlockedAgentsCount}</span>
                 <span className="text-sm text-muted-foreground">sur {allAgents.length}</span>
               </div>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={() => onNavigate('agents')}
-                className="w-full text-xs"
-              >
+              <Button variant="outline" size="sm" onClick={() => onNavigate('agents')} className="w-full text-xs">
                 Voir la galerie
                 <ChevronRight className="w-3 h-3 ml-1" />
               </Button>
@@ -310,12 +277,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 <span className="text-2xl font-bold">{squads.length}</span>
                 <span className="text-sm text-muted-foreground">squads</span>
               </div>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={() => onNavigate('squads')}
-                className="w-full text-xs"
-              >
+              <Button variant="outline" size="sm" onClick={() => onNavigate('squads')} className="w-full text-xs">
                 {squads.length > 0 ? 'Gérer les squads' : 'Créer une squad'}
                 <ChevronRight className="w-3 h-3 ml-1" />
               </Button>
@@ -347,15 +309,13 @@ export const Dashboard: React.FC<DashboardProps> = ({
       </div>
 
       {/* Insights Panel */}
-      {insights.length > 0 && (
-        <div>
+      {insights.length > 0 && <div>
           <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
             <Zap className="h-6 w-6 text-primary" />
             Insights instantanés
           </h2>
           <InsightsPanel insights={insights} onDismiss={dismissInsight} />
-        </div>
-      )}
+        </div>}
 
       {/* Dynamic Stats Panel */}
       <div>
@@ -372,11 +332,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
           <Star className="h-6 w-6 text-primary" />
           Raccourcis
         </h2>
-        <QuickDeck
-          pinnedItems={pinnedItems}
-          onUnpin={unpinItem}
-          onItemClick={handlePinnedItemClick}
-        />
+        <QuickDeck pinnedItems={pinnedItems} onUnpin={unpinItem} onItemClick={handlePinnedItemClick} />
       </div>
 
       {/* Quick Actions */}
@@ -389,27 +345,15 @@ export const Dashboard: React.FC<DashboardProps> = ({
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <Button 
-              onClick={() => onNavigate('squads')} 
-              className="flex items-center space-x-2 h-12"
-            >
+            <Button onClick={() => onNavigate('squads')} className="flex items-center space-x-2 h-12">
               <Users className="w-4 h-4" />
               <span>Créer une nouvelle squad</span>
             </Button>
-            <Button 
-              variant="outline" 
-              onClick={() => onNavigate('agents')}
-              className="flex items-center space-x-2 h-12"
-            >
+            <Button variant="outline" onClick={() => onNavigate('agents')} className="flex items-center space-x-2 h-12">
               <Star className="w-4 h-4" />
               <span>Débloquer de nouveaux agents</span>
             </Button>
-            <Button 
-              variant="outline" 
-              onClick={() => onNavigate('chat')}
-              disabled={squads.length === 0}
-              className="flex items-center space-x-2 h-12"
-            >
+            <Button variant="outline" onClick={() => onNavigate('chat')} disabled={squads.length === 0} className="flex items-center space-x-2 h-12">
               <MessageCircle className="w-4 h-4" />
               <span>Démarrer le chat</span>
             </Button>
@@ -429,9 +373,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
           <CardContent>
             <div className="space-y-3">
               {recentActivities.map((activity, index) => {
-                const Icon = activity.icon;
-                return (
-                  <div key={index} className="flex items-center space-x-3 p-2 rounded-lg hover:bg-muted/50 transition-colors">
+              const Icon = activity.icon;
+              return <div key={index} className="flex items-center space-x-3 p-2 rounded-lg hover:bg-muted/50 transition-colors">
                     <div className="w-8 h-8 rounded-full bg-muted/50 flex items-center justify-center">
                       <Icon className="w-4 h-4" />
                     </div>
@@ -439,9 +382,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
                       <p className="text-sm font-medium">{activity.action}</p>
                       <p className="text-xs text-muted-foreground">{activity.time}</p>
                     </div>
-                  </div>
-                );
-              })}
+                  </div>;
+            })}
             </div>
           </CardContent>
         </Card>
@@ -456,8 +398,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {user.badges.map((badge) => (
-                <div key={badge.id} className="flex items-center space-x-3 p-2 rounded-lg bg-muted/30">
+              {user.badges.map(badge => <div key={badge.id} className="flex items-center space-x-3 p-2 rounded-lg bg-muted/30">
                   <div className="text-2xl">{badge.icon}</div>
                   <div className="flex-1">
                     <p className="text-sm font-medium">{badge.name}</p>
@@ -466,12 +407,10 @@ export const Dashboard: React.FC<DashboardProps> = ({
                   <Badge variant="secondary" className="text-xs">
                     Unlocked
                   </Badge>
-                </div>
-              ))}
+                </div>)}
             </div>
           </CardContent>
         </Card>
       </div>
-    </div>
-  );
+    </div>;
 };
