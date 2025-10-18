@@ -20,48 +20,50 @@ Your approach:
 Always respond with valid JSON only. Think step-by-step before generating content.`,
 
   userStory: (featureDescription: string, userType: string, context?: string) => `
-Let's create a comprehensive user story using a structured approach.
+Créons une user story complète en utilisant une approche structurée.
 
-STEP 1: UNDERSTAND THE CONTEXT
-Feature Description: ${featureDescription}
-User Type: ${userType}
-${context ? `Additional Context: ${context}` : ''}
+IMPORTANT: La user story doit être en français au format: "En tant que [userType], Je veux [action], Afin de [benefit]"
 
-STEP 2: ANALYZE THE USER NEED
-Think about:
-- What problem is the user trying to solve?
-- What is their end goal?
-- What value will they receive?
+STEP 1: COMPRENDRE LE CONTEXTE
+Description de la Fonctionnalité: ${featureDescription}
+Type d'Utilisateur: ${userType}
+${context ? `Contexte Additionnel: ${context}` : ''}
 
-STEP 3: DEFINE ACCEPTANCE CRITERIA
-Consider:
-- What must work for the story to be complete?
-- What are the edge cases?
-- How can we verify success?
+STEP 2: ANALYSER LE BESOIN UTILISATEUR
+Réfléchissez à:
+- Quel problème l'utilisateur essaie-t-il de résoudre?
+- Quel est son objectif final?
+- Quelle valeur va-t-il recevoir?
 
-STEP 4: ASSESS PRIORITY AND EFFORT
-Evaluate:
-- Business value and user impact (Priority: high/medium/low)
-- Technical complexity and time needed (Effort: Small/Medium/Large)
+STEP 3: DÉFINIR LES CRITÈRES D'ACCEPTATION
+Considérez:
+- Qu'est-ce qui doit fonctionner pour que la story soit complète?
+- Quels sont les cas limites?
+- Comment peut-on vérifier le succès?
 
-Now generate the user story in this JSON format:
+STEP 4: ÉVALUER LA PRIORITÉ ET L'EFFORT
+Évaluez:
+- Valeur métier et impact utilisateur (Priorité: high/medium/low)
+- Complexité technique et temps nécessaire (Effort: Small/Medium/Large)
+
+Générez maintenant la user story dans ce format JSON:
 {
-  "title": "Brief descriptive title that captures the essence",
-  "userType": "The specific type of user (e.g., admin, customer, manager)",
-  "action": "What the user wants to accomplish (clear action verb)",
-  "benefit": "The concrete value or outcome they receive",
+  "title": "Titre descriptif bref qui capture l'essence",
+  "userType": "Le type spécifique d'utilisateur (ex: admin, client, manager)",
+  "action": "Ce que l'utilisateur veut accomplir (verbe d'action clair)",
+  "benefit": "La valeur concrète ou le résultat qu'il reçoit",
   "acceptanceCriteria": [
-    "Specific, measurable criterion 1",
-    "Testable criterion 2", 
-    "Clear success condition 3",
-    "Edge case handling 4",
-    "Performance/UX requirement 5"
+    "Critère 1 spécifique et mesurable",
+    "Critère 2 testable", 
+    "Condition de succès claire 3",
+    "Gestion des cas limites 4",
+    "Exigence performance/UX 5"
   ],
-  "priority": "high|medium|low (based on business value and urgency)",
-  "estimatedEffort": "Small|Medium|Large (based on complexity and scope)"
+  "priority": "high|medium|low (basé sur valeur métier et urgence)",
+  "estimatedEffort": "Small|Medium|Large (basé sur complexité et portée)"
 }
 
-Think through each section carefully before responding.`,
+Réfléchissez soigneusement à chaque section avant de répondre. IMPORTANT: Tous les textes doivent être en français.`,
 
   impactEffort: (items: string[], context?: string) => `
 Let's analyze these items using a systematic impact vs effort framework.

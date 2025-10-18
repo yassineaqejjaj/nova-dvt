@@ -217,12 +217,12 @@ export const UserProfile: React.FC<UserProfileProps> = ({
   }, {} as Record<string, typeof user.badges>);
 
   const categoryLabels: Record<string, string> = {
-    getting_started: '🎯 Getting Started',
+    getting_started: '🎯 Débuter',
     collaboration: '🤝 Collaboration',
-    productivity: '⚡ Productivity',
-    mastery: '🏆 Mastery',
+    productivity: '⚡ Productivité',
+    mastery: '🏆 Maîtrise',
     social: '💬 Social',
-    special: '⭐ Special'
+    special: '⭐ Spécial'
   };
 
   const rarityColors: Record<string, string> = {
@@ -238,7 +238,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({
         <DialogHeader>
           <DialogTitle className="flex items-center space-x-2">
             <User className="w-5 h-5" />
-            <span>User Profile</span>
+            <span>Profil Utilisateur</span>
           </DialogTitle>
         </DialogHeader>
 
@@ -288,7 +288,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({
                       className="flex items-center space-x-2"
                     >
                       <Edit className="w-4 h-4" />
-                      <span>Edit Profile</span>
+                      <span>Modifier le Profil</span>
                     </Button>
                   </div>
                 </div>
@@ -492,7 +492,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({
                 className="flex items-center space-x-2"
               >
                 <Shield className="w-4 h-4" />
-                <span>Switch to Admin</span>
+                <span>Passer en Mode Admin</span>
               </Button>
             )}
             <Button
@@ -501,7 +501,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({
               className="flex items-center space-x-2"
             >
               <LogOut className="w-4 h-4" />
-              <span>Sign Out</span>
+              <span>Se Déconnecter</span>
             </Button>
           </div>
 
@@ -509,11 +509,11 @@ export const UserProfile: React.FC<UserProfileProps> = ({
           <Dialog open={isEditing} onOpenChange={setIsEditing}>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>Edit Profile</DialogTitle>
+                <DialogTitle>Modifier le Profil</DialogTitle>
               </DialogHeader>
               <form onSubmit={handleUpdateProfile} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="edit-name">Display Name</Label>
+                  <Label htmlFor="edit-name">Nom d'Affichage</Label>
                   <Input
                     id="edit-name"
                     value={editData.display_name}
@@ -523,7 +523,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({
                 </div>
                 
                 <div className="space-y-2">
-                  <Label htmlFor="edit-role">Role</Label>
+                  <Label htmlFor="edit-role">Rôle</Label>
                   <Input
                     id="edit-role"
                     value={editData.role}
@@ -534,7 +534,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({
                 
                 <div className="flex space-x-2">
                   <Button type="submit" disabled={isLoading} className="flex-1">
-                    {isLoading ? 'Saving...' : 'Save Changes'}
+                    {isLoading ? 'Enregistrement...' : 'Enregistrer les Modifications'}
                   </Button>
                   <Button 
                     type="button" 
@@ -542,7 +542,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({
                     onClick={() => setIsEditing(false)}
                     disabled={isLoading}
                   >
-                    Cancel
+                    Annuler
                   </Button>
                 </div>
               </form>

@@ -106,20 +106,20 @@ export const StoryWriter: React.FC<StoryWriterProps> = ({ open, onClose }) => {
     const storyText = `
 # ${generatedStory.title}
 
-**As a** ${generatedStory.userType}  
-**I want to** ${generatedStory.action}  
-**So that** ${generatedStory.benefit}
+**En tant que** ${generatedStory.userType}  
+**Je veux** ${generatedStory.action}  
+**Afin de** ${generatedStory.benefit}
 
-## Acceptance Criteria
+## Critères d'Acceptation
 ${generatedStory.acceptanceCriteria.map((criterion, i) => `${i + 1}. ${criterion}`).join('\n')}
 
-**Priority:** ${generatedStory.priority.toUpperCase()}  
-**Estimated Effort:** ${generatedStory.estimatedEffort}
+**Priorité:** ${generatedStory.priority.toUpperCase()}  
+**Effort Estimé:** ${generatedStory.estimatedEffort}
     `.trim();
 
     navigator.clipboard.writeText(storyText);
     setCopied(true);
-    toast.success('User story copied to clipboard!');
+    toast.success('User story copiée dans le presse-papier !');
     setTimeout(() => setCopied(false), 2000);
   };
 
@@ -129,15 +129,15 @@ ${generatedStory.acceptanceCriteria.map((criterion, i) => `${i + 1}. ${criterion
     const storyText = `
 # ${generatedStory.title}
 
-**As a** ${generatedStory.userType}  
-**I want to** ${generatedStory.action}  
-**So that** ${generatedStory.benefit}
+**En tant que** ${generatedStory.userType}  
+**Je veux** ${generatedStory.action}  
+**Afin de** ${generatedStory.benefit}
 
-## Acceptance Criteria
+## Critères d'Acceptation
 ${generatedStory.acceptanceCriteria.map((criterion, i) => `${i + 1}. ${criterion}`).join('\n')}
 
-**Priority:** ${generatedStory.priority.toUpperCase()}  
-**Estimated Effort:** ${generatedStory.estimatedEffort}
+**Priorité:** ${generatedStory.priority.toUpperCase()}  
+**Effort Estimé:** ${generatedStory.estimatedEffort}
     `.trim();
 
     const blob = new Blob([storyText], { type: 'text/markdown' });
@@ -149,7 +149,7 @@ ${generatedStory.acceptanceCriteria.map((criterion, i) => `${i + 1}. ${criterion
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-    toast.success('User story exported!');
+    toast.success('User story exportée !');
   };
 
   const getPriorityColor = (priority: string) => {
@@ -167,7 +167,7 @@ ${generatedStory.acceptanceCriteria.map((criterion, i) => `${i + 1}. ${criterion
         <DialogHeader>
           <DialogTitle className="flex items-center space-x-2">
             <FileText className="w-6 h-6" />
-            <span>AI Story Writer</span>
+            <span>Générateur de User Stories IA</span>
           </DialogTitle>
         </DialogHeader>
 
@@ -176,14 +176,14 @@ ${generatedStory.acceptanceCriteria.map((criterion, i) => `${i + 1}. ${criterion
             <>
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-lg">Feature Details</CardTitle>
+                  <CardTitle className="text-lg">Détails de la Fonctionnalité</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="feature">Feature Description *</Label>
+                    <Label htmlFor="feature">Description de la Fonctionnalité *</Label>
                     <Textarea
                       id="feature"
-                      placeholder="Describe the feature you want to create a user story for..."
+                      placeholder="Décrivez la fonctionnalité pour laquelle vous voulez créer une user story..."
                       value={featureDescription}
                       onChange={(e) => setFeatureDescription(e.target.value)}
                       rows={4}
@@ -191,20 +191,20 @@ ${generatedStory.acceptanceCriteria.map((criterion, i) => `${i + 1}. ${criterion
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="userType">User Type</Label>
+                    <Label htmlFor="userType">Type d'Utilisateur</Label>
                     <Input
                       id="userType"
-                      placeholder="e.g., Product Manager, End User, Admin"
+                      placeholder="ex : Product Manager, Utilisateur Final, Admin"
                       value={userType}
                       onChange={(e) => setUserType(e.target.value)}
                     />
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="context">Additional Context (Optional)</Label>
+                    <Label htmlFor="context">Contexte Additionnel (Optionnel)</Label>
                     <Textarea
                       id="context"
-                      placeholder="Any additional context, constraints, or requirements..."
+                      placeholder="Tout contexte, contraintes ou exigences supplémentaires..."
                       value={context}
                       onChange={(e) => setContext(e.target.value)}
                       rows={3}
@@ -215,18 +215,18 @@ ${generatedStory.acceptanceCriteria.map((criterion, i) => `${i + 1}. ${criterion
 
               <div className="flex justify-end space-x-2">
                 <Button variant="outline" onClick={onClose}>
-                  Cancel
+                  Annuler
                 </Button>
                 <Button onClick={handleGenerate} disabled={isGenerating || !featureDescription.trim()}>
                   {isGenerating ? (
                     <>
                       <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Generating...
+                      Génération...
                     </>
                   ) : (
                     <>
                       <FileText className="w-4 h-4 mr-2" />
-                      Generate Story
+                      Générer la Story
                     </>
                   )}
                 </Button>
@@ -249,21 +249,21 @@ ${generatedStory.acceptanceCriteria.map((criterion, i) => `${i + 1}. ${criterion
                 <CardContent className="space-y-6">
                   <div className="space-y-3">
                     <div className="flex items-start space-x-2">
-                      <span className="font-semibold text-muted-foreground">As a</span>
+                      <span className="font-semibold text-muted-foreground">En tant que</span>
                       <span className="font-medium">{generatedStory.userType}</span>
                     </div>
                     <div className="flex items-start space-x-2">
-                      <span className="font-semibold text-muted-foreground">I want to</span>
+                      <span className="font-semibold text-muted-foreground">Je veux</span>
                       <span className="font-medium">{generatedStory.action}</span>
                     </div>
                     <div className="flex items-start space-x-2">
-                      <span className="font-semibold text-muted-foreground">So that</span>
+                      <span className="font-semibold text-muted-foreground">Afin de</span>
                       <span className="font-medium">{generatedStory.benefit}</span>
                     </div>
                   </div>
 
                   <div className="space-y-3">
-                    <h4 className="font-semibold">Acceptance Criteria</h4>
+                    <h4 className="font-semibold">Critères d'Acceptation</h4>
                     <ul className="space-y-2">
                       {generatedStory.acceptanceCriteria.map((criterion, index) => (
                         <li key={index} className="flex items-start space-x-2">
@@ -278,25 +278,25 @@ ${generatedStory.acceptanceCriteria.map((criterion, i) => `${i + 1}. ${criterion
 
               <div className="flex justify-between">
                 <Button variant="outline" onClick={() => setGeneratedStory(null)}>
-                  Generate Another
+                  Générer une Autre
                 </Button>
                 <div className="flex space-x-2">
                   <Button variant="outline" onClick={handleCopy}>
                     {copied ? (
                       <>
                         <CheckCircle className="w-4 h-4 mr-2" />
-                        Copied!
+                        Copié !
                       </>
                     ) : (
                       <>
                         <Copy className="w-4 h-4 mr-2" />
-                        Copy
+                        Copier
                       </>
                     )}
                   </Button>
                   <Button onClick={handleExport}>
                     <Download className="w-4 h-4 mr-2" />
-                    Export
+                    Exporter
                   </Button>
                 </div>
               </div>

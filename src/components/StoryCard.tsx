@@ -32,9 +32,9 @@ interface StoryCardProps {
 }
 
 const priorityConfig = {
-  high: { label: 'High', className: 'bg-red-500/10 text-red-600 border-red-500/20' },
-  medium: { label: 'Medium', className: 'bg-amber-500/10 text-amber-600 border-amber-500/20' },
-  low: { label: 'Low', className: 'bg-blue-500/10 text-blue-600 border-blue-500/20' }
+  high: { label: 'Haute', className: 'bg-red-500/10 text-red-600 border-red-500/20' },
+  medium: { label: 'Moyenne', className: 'bg-amber-500/10 text-amber-600 border-amber-500/20' },
+  low: { label: 'Basse', className: 'bg-blue-500/10 text-blue-600 border-blue-500/20' }
 };
 
 const StoryCard = ({
@@ -99,14 +99,14 @@ const StoryCard = ({
                 <div>
                   <p className="text-sm text-muted-foreground mb-1">User Story:</p>
                   <p className="text-sm">
-                    <span className="font-medium">As a</span> {story.story.asA},{' '}
-                    <span className="font-medium">I want</span> {story.story.iWant},{' '}
-                    <span className="font-medium">so that</span> {story.story.soThat}
+                    <span className="font-medium">En tant que</span> {story.story.asA},{' '}
+                    <span className="font-medium">Je veux</span> {story.story.iWant},{' '}
+                    <span className="font-medium">Afin de</span> {story.story.soThat}
                   </p>
                 </div>
 
                 <div>
-                  <p className="text-sm font-medium mb-2">Acceptance Criteria:</p>
+                  <p className="text-sm font-medium mb-2">Critères d'Acceptation :</p>
                   <ul className="space-y-1">
                     {story.acceptanceCriteria.map((criteria, idx) => (
                       <li key={idx} className="text-sm flex items-start gap-2">
@@ -119,14 +119,14 @@ const StoryCard = ({
 
                 {story.technicalNotes && (
                   <div>
-                    <p className="text-sm font-medium mb-1">Technical Notes:</p>
+                    <p className="text-sm font-medium mb-1">Notes Techniques :</p>
                     <p className="text-sm text-muted-foreground">{story.technicalNotes}</p>
                   </div>
                 )}
 
                 {story.dependencies.length > 0 && (
                   <div>
-                    <p className="text-sm font-medium mb-1">Dependencies:</p>
+                    <p className="text-sm font-medium mb-1">Dépendances :</p>
                     <div className="flex flex-wrap gap-1">
                       {story.dependencies.map(dep => (
                         <Badge key={dep} variant="outline" className="text-xs">
