@@ -1453,13 +1453,85 @@ Génère 3-4 références/annexes (JSON uniquement):
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-3">
-                    {displayDocument.kpis.map((kpi, idx) => (
-                      <div key={idx} className="flex items-start gap-3">
-                        <Badge variant="outline" className="mt-0.5">{idx + 1}</Badge>
-                        <p className="text-sm flex-1">{safeText(kpi)}</p>
-                      </div>
-                    ))}
+                  <div className="space-y-4">
+                    {displayDocument.kpis.map((kpi, idx) => {
+                      // Try to parse KPI if it's a JSON string
+                      let parsedKpi: any = kpi;
+                      if (typeof kpi === 'string') {
+                        try {
+                          const parsed = JSON.parse(kpi);
+                          if (typeof parsed === 'object') {
+                            parsedKpi = parsed;
+                          }
+                        } catch {
+                          // Keep as string if parsing fails
+                        }
+                      }
+
+                      // Check if it's a structured KPI object
+                      const isStructured = typeof parsedKpi === 'object' && parsedKpi !== null && 'name' in parsedKpi;
+
+                      return (
+                        <div key={idx} className="border rounded-lg p-4 space-y-3">
+                          <div className="flex items-start gap-3">
+                            <Badge className="mt-0.5">{idx + 1}</Badge>
+                            <div className="flex-1 space-y-2">
+                              {isStructured ? (
+                                <>
+                                  <h4 className="font-semibold text-base">{parsedKpi?.name || ''}</h4>
+                                  {parsedKpi?.metric && (
+                                    <div className="text-sm">
+                                      <span className="font-medium text-muted-foreground">Métrique: </span>
+                                      <span>{parsedKpi.metric}</span>
+                                    </div>
+                                  )}
+                                  {parsedKpi?.target && (
+                                    <div className="text-sm">
+                                      <span className="font-medium text-muted-foreground">Cible: </span>
+                                      <span className="font-medium">{parsedKpi.target}</span>
+                                    </div>
+                                  )}
+                                  {parsedKpi?.smart_attributes && (
+                                    <div className="mt-3 p-3 bg-muted/50 rounded-md">
+                                      <p className="text-xs font-medium mb-2">Critères SMART:</p>
+                                      <div className="grid grid-cols-1 gap-2 text-xs">
+                                        {parsedKpi.smart_attributes.specific && (
+                                          <div>
+                                            <span className="font-semibold">Spécifique:</span> {parsedKpi.smart_attributes.specific}
+                                          </div>
+                                        )}
+                                        {parsedKpi.smart_attributes.measurable && (
+                                          <div>
+                                            <span className="font-semibold">Mesurable:</span> {parsedKpi.smart_attributes.measurable}
+                                          </div>
+                                        )}
+                                        {parsedKpi.smart_attributes.achievable && (
+                                          <div>
+                                            <span className="font-semibold">Atteignable:</span> {parsedKpi.smart_attributes.achievable}
+                                          </div>
+                                        )}
+                                        {parsedKpi.smart_attributes.relevant && (
+                                          <div>
+                                            <span className="font-semibold">Pertinent:</span> {parsedKpi.smart_attributes.relevant}
+                                          </div>
+                                        )}
+                                        {parsedKpi.smart_attributes.time_bound && (
+                                          <div>
+                                            <span className="font-semibold">Temporel:</span> {parsedKpi.smart_attributes.time_bound}
+                                          </div>
+                                        )}
+                                      </div>
+                                    </div>
+                                  )}
+                                </>
+                              ) : (
+                                <p className="text-sm">{safeText(kpi)}</p>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 </CardContent>
               </Card>
