@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Textarea } from "@/components/ui/textarea";
 import { 
   Sparkles, 
   Loader2, 
@@ -24,7 +25,8 @@ import {
   Eye,
   Zap,
   PartyPopper,
-  BookOpen
+  BookOpen,
+  Save
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -99,6 +101,8 @@ export const InstantPRD = () => {
   const [prdDocument, setPrdDocument] = useState<PRDDocument | null>(null);
   const [isEditMode, setIsEditMode] = useState(false);
   const [activeContext, setActiveContext] = useState<any>(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const [editedDocument, setEditedDocument] = useState<PRDDocument | null>(null);
 
   // Load active product context
   useEffect(() => {
@@ -683,6 +687,7 @@ Génère 3-4 références/annexes (JSON uniquement):
       };
 
       setPrdDocument(document);
+      setEditedDocument(document);
 
       const elapsed = Date.now() - startTime;
       console.log(`PRD generated in ${elapsed}ms`);
@@ -820,6 +825,56 @@ Génère 3-4 références/annexes (JSON uniquement):
   const renderDocumentScreen = () => {
     if (!prdDocument) return null;
 
+    const displayDocument = isEditMode ? editedDocument : prdDocument;
+    if (!displayDocument) return null;
+
+    const handleSavePRD = async () => {
+      setIsSaving(true);
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+          toast.error("Vous devez être connecté pour sauvegarder");
+          return;
+        }
+
+        const contentToSave = isEditMode ? editedDocument : prdDocument;
+
+        const { error } = await supabase
+          .from('artifacts')
+          .insert([{
+            user_id: user.id,
+            artifact_type: 'prd' as any,
+            title: `PRD - ${idea}`,
+            content: contentToSave as any,
+            metadata: {
+              generatedAt: new Date().toISOString(),
+              idea: idea,
+              sectionsCount: sections.length
+            } as any
+          }]);
+
+        if (error) throw error;
+
+        toast.success("PRD sauvegardé dans vos artefacts !");
+      } catch (error) {
+        console.error('Error saving PRD:', error);
+        toast.error("Erreur lors de la sauvegarde");
+      } finally {
+        setIsSaving(false);
+      }
+    };
+
+    const handleSaveEdits = () => {
+      setPrdDocument(editedDocument);
+      setIsEditMode(false);
+      toast.success("Modifications enregistrées !");
+    };
+
+    const handleCancelEdits = () => {
+      setEditedDocument(prdDocument);
+      setIsEditMode(false);
+    };
+
     const handleExportPDF = () => {
       toast.info("Export PDF en cours de développement");
     };
@@ -853,31 +908,51 @@ Génère 3-4 références/annexes (JSON uniquement):
                 </div>
               </div>
               <div className="flex gap-2">
-                <Button variant="outline" size="sm" onClick={handleShare}>
-                  <Share2 className="w-4 h-4 mr-2" />
-                  Partager
-                </Button>
-                <Button variant="outline" size="sm" onClick={handleExportPDF}>
-                  <Download className="w-4 h-4 mr-2" />
-                  Export PDF
-                </Button>
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={() => setIsEditMode(!isEditMode)}
-                >
-                  {isEditMode ? (
-                    <>
-                      <Eye className="w-4 h-4 mr-2" />
-                      View
-                    </>
-                  ) : (
-                    <>
+                {isEditMode ? (
+                  <>
+                    <Button variant="outline" size="sm" onClick={handleCancelEdits}>
+                      Annuler
+                    </Button>
+                    <Button size="sm" onClick={handleSaveEdits}>
+                      <Save className="w-4 h-4 mr-2" />
+                      Enregistrer les modifications
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <Button variant="outline" size="sm" onClick={handleShare}>
+                      <Share2 className="w-4 h-4 mr-2" />
+                      Partager
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={handleExportPDF}>
+                      <Download className="w-4 h-4 mr-2" />
+                      Export PDF
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => {
+                        setEditedDocument(prdDocument);
+                        setIsEditMode(true);
+                      }}
+                    >
                       <Edit className="w-4 h-4 mr-2" />
                       Edit
-                    </>
-                  )}
-                </Button>
+                    </Button>
+                    <Button 
+                      size="sm"
+                      onClick={handleSavePRD}
+                      disabled={isSaving}
+                    >
+                      {isSaving ? (
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      ) : (
+                        <Save className="w-4 h-4 mr-2" />
+                      )}
+                      Enregistrer PRD
+                    </Button>
+                  </>
+                )}
               </div>
             </div>
           </div>
@@ -921,7 +996,15 @@ Génère 3-4 références/annexes (JSON uniquement):
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-lg leading-relaxed">{prdDocument.introduction}</p>
+                  {isEditMode ? (
+                    <Textarea
+                      value={editedDocument?.introduction || ''}
+                      onChange={(e) => setEditedDocument(prev => prev ? {...prev, introduction: e.target.value} : null)}
+                      className="min-h-[100px] text-base"
+                    />
+                  ) : (
+                    <p className="text-lg leading-relaxed">{displayDocument.introduction}</p>
+                  )}
                 </CardContent>
               </Card>
 
@@ -934,7 +1017,15 @@ Génère 3-4 références/annexes (JSON uniquement):
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-lg leading-relaxed">{prdDocument.context}</p>
+                  {isEditMode ? (
+                    <Textarea
+                      value={editedDocument?.context || ''}
+                      onChange={(e) => setEditedDocument(prev => prev ? {...prev, context: e.target.value} : null)}
+                      className="min-h-[100px] text-base"
+                    />
+                  ) : (
+                    <p className="text-lg leading-relaxed">{displayDocument.context}</p>
+                  )}
                 </CardContent>
               </Card>
 
@@ -947,7 +1038,15 @@ Génère 3-4 références/annexes (JSON uniquement):
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-lg leading-relaxed">{prdDocument.problem}</p>
+                  {isEditMode ? (
+                    <Textarea
+                      value={editedDocument?.problem || ''}
+                      onChange={(e) => setEditedDocument(prev => prev ? {...prev, problem: e.target.value} : null)}
+                      className="min-h-[100px] text-base"
+                    />
+                  ) : (
+                    <p className="text-lg leading-relaxed">{displayDocument.problem}</p>
+                  )}
                 </CardContent>
               </Card>
 
@@ -960,7 +1059,15 @@ Génère 3-4 références/annexes (JSON uniquement):
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-lg leading-relaxed">{prdDocument.vision}</p>
+                  {isEditMode ? (
+                    <Textarea
+                      value={editedDocument?.vision || ''}
+                      onChange={(e) => setEditedDocument(prev => prev ? {...prev, vision: e.target.value} : null)}
+                      className="min-h-[100px] text-base"
+                    />
+                  ) : (
+                    <p className="text-lg leading-relaxed">{displayDocument.vision}</p>
+                  )}
                 </CardContent>
               </Card>
 
@@ -974,10 +1081,22 @@ Génère 3-4 références/annexes (JSON uniquement):
                 </CardHeader>
                 <CardContent>
                   <ul className="space-y-2">
-                    {prdDocument.constraints.map((constraint, idx) => (
+                    {displayDocument.constraints.map((constraint, idx) => (
                       <li key={idx} className="flex items-start gap-2">
                         <Badge variant="outline" className="mt-0.5">{idx + 1}</Badge>
-                        <span className="text-sm flex-1">{safeText(constraint)}</span>
+                        {isEditMode ? (
+                          <Input
+                            value={constraint}
+                            onChange={(e) => {
+                              const newConstraints = [...(editedDocument?.constraints || [])];
+                              newConstraints[idx] = e.target.value;
+                              setEditedDocument(prev => prev ? {...prev, constraints: newConstraints} : null);
+                            }}
+                            className="flex-1 text-sm"
+                          />
+                        ) : (
+                          <span className="text-sm flex-1">{safeText(constraint)}</span>
+                        )}
                       </li>
                     ))}
                   </ul>
@@ -994,7 +1113,7 @@ Génère 3-4 références/annexes (JSON uniquement):
                 </CardHeader>
                 <CardContent>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    {prdDocument.personas.map((persona, idx) => (
+                    {displayDocument.personas.map((persona, idx) => (
                       <Card key={idx}>
                         <CardContent className="pt-6">
                           <h3 className="font-semibold text-center mb-1">{persona.name}</h3>
@@ -1037,7 +1156,7 @@ Génère 3-4 références/annexes (JSON uniquement):
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-6">
-                    {prdDocument.userJourneyMap.map((stage, idx) => (
+                    {displayDocument.userJourneyMap.map((stage, idx) => (
                       <div key={idx} className="border rounded-lg p-4 bg-muted/30">
                         <div className="flex items-center gap-3 mb-4">
                           <Badge className="text-lg px-3 py-1">{idx + 1}</Badge>
@@ -1109,7 +1228,7 @@ Génère 3-4 références/annexes (JSON uniquement):
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-6">
-                    {prdDocument.features.map((feature) => (
+                    {displayDocument.features.map((feature) => (
                       <div key={feature.id} className="space-y-4">
                         <div className="p-4 border-2 rounded-lg bg-muted/50">
                           <div className="flex items-center gap-2 mb-2">
@@ -1189,7 +1308,7 @@ Génère 3-4 références/annexes (JSON uniquement):
                     <div>
                       <Badge className="mb-2">MVP</Badge>
                       <ul className="space-y-1 ml-4">
-                        {prdDocument.prioritization.mvp.map((item, idx) => (
+                        {displayDocument.prioritization.mvp.map((item, idx) => (
                           <li key={idx} className="text-sm">• {safeText(item)}</li>
                         ))}
                       </ul>
@@ -1198,7 +1317,7 @@ Génère 3-4 références/annexes (JSON uniquement):
                     <div>
                       <Badge variant="destructive" className="mb-2">Must Have</Badge>
                       <ul className="space-y-1 ml-4">
-                        {prdDocument.prioritization.must.map((item, idx) => (
+                        {displayDocument.prioritization.must.map((item, idx) => (
                           <li key={idx} className="text-sm">• {safeText(item)}</li>
                         ))}
                       </ul>
@@ -1207,7 +1326,7 @@ Génère 3-4 références/annexes (JSON uniquement):
                     <div>
                       <Badge variant="default" className="mb-2">Should Have</Badge>
                       <ul className="space-y-1 ml-4">
-                        {prdDocument.prioritization.should.map((item, idx) => (
+                        {displayDocument.prioritization.should.map((item, idx) => (
                           <li key={idx} className="text-sm">• {safeText(item)}</li>
                         ))}
                       </ul>
@@ -1216,7 +1335,7 @@ Génère 3-4 références/annexes (JSON uniquement):
                     <div>
                       <Badge variant="secondary" className="mb-2">Could Have</Badge>
                       <ul className="space-y-1 ml-4">
-                        {prdDocument.prioritization.could.map((item, idx) => (
+                        {displayDocument.prioritization.could.map((item, idx) => (
                           <li key={idx} className="text-sm">• {safeText(item)}</li>
                         ))}
                       </ul>
@@ -1225,7 +1344,7 @@ Génère 3-4 références/annexes (JSON uniquement):
                     <div>
                       <Badge variant="outline" className="mb-2">Won't Have</Badge>
                       <ul className="space-y-1 ml-4">
-                        {prdDocument.prioritization.wont.map((item, idx) => (
+                        {displayDocument.prioritization.wont.map((item, idx) => (
                           <li key={idx} className="text-sm">• {safeText(item)}</li>
                         ))}
                       </ul>
@@ -1244,7 +1363,7 @@ Génère 3-4 références/annexes (JSON uniquement):
                 </CardHeader>
                 <CardContent>
                   <ul className="space-y-2">
-                    {prdDocument.acceptance.map((criterion, idx) => (
+                    {displayDocument.acceptance.map((criterion, idx) => (
                       <li key={idx} className="flex items-start gap-2">
                         <CheckCircle2 className="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" />
                         <span className="text-sm flex-1">{safeText(criterion)}</span>
@@ -1264,7 +1383,7 @@ Génère 3-4 références/annexes (JSON uniquement):
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    {prdDocument.wireframes.map((wireframe, idx) => (
+                    {displayDocument.wireframes.map((wireframe, idx) => (
                       <div key={idx} className="p-4 border rounded-lg">
                         <h4 className="font-semibold mb-2">Wireframe {idx + 1}</h4>
                         <p className="text-sm text-muted-foreground">{wireframe}</p>
@@ -1285,9 +1404,9 @@ Génère 3-4 références/annexes (JSON uniquement):
                 <CardContent>
                   <div className="p-4 bg-muted rounded-lg">
                     <pre className="text-xs overflow-x-auto whitespace-pre-wrap">
-                      {typeof prdDocument.architecture === 'string' 
-                        ? prdDocument.architecture 
-                        : JSON.stringify(prdDocument.architecture, null, 2)}
+                      {typeof displayDocument.architecture === 'string' 
+                        ? displayDocument.architecture 
+                        : JSON.stringify(displayDocument.architecture, null, 2)}
                     </pre>
                   </div>
                 </CardContent>
@@ -1303,7 +1422,7 @@ Génère 3-4 références/annexes (JSON uniquement):
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-3">
-                    {prdDocument.risks.map((item, idx) => (
+                    {displayDocument.risks.map((item, idx) => (
                       <div key={idx} className="p-4 border rounded-lg">
                         <div className="flex items-start gap-2 mb-2">
                           <AlertTriangle className="w-4 h-4 text-yellow-500 flex-shrink-0 mt-0.5" />
@@ -1335,7 +1454,7 @@ Génère 3-4 références/annexes (JSON uniquement):
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-3">
-                    {prdDocument.kpis.map((kpi, idx) => (
+                    {displayDocument.kpis.map((kpi, idx) => (
                       <div key={idx} className="flex items-start gap-3">
                         <Badge variant="outline" className="mt-0.5">{idx + 1}</Badge>
                         <p className="text-sm flex-1">{safeText(kpi)}</p>
@@ -1355,7 +1474,7 @@ Génère 3-4 références/annexes (JSON uniquement):
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    {prdDocument.roadmap.map((phase, idx) => (
+                    {displayDocument.roadmap.map((phase, idx) => (
                       <Card key={idx}>
                         <CardHeader>
                           <div className="flex items-center justify-between">
@@ -1389,7 +1508,7 @@ Génère 3-4 références/annexes (JSON uniquement):
                 </CardHeader>
                 <CardContent>
                   <ul className="space-y-2">
-                    {prdDocument.appendix.map((item, idx) => (
+                    {displayDocument.appendix.map((item, idx) => (
                       <li key={idx} className="flex items-start gap-2">
                         <Badge variant="outline" className="mt-0.5">{idx + 1}</Badge>
                         <span className="text-sm flex-1">{safeText(item)}</span>
