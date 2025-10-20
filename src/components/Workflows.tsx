@@ -754,6 +754,28 @@ export const Workflows: React.FC = () => {
 
   useEffect(() => {
     loadActiveContext();
+
+    // Subscribe to realtime changes on product_contexts
+    const channel = supabase
+      .channel('product-contexts-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'product_contexts'
+        },
+        (payload) => {
+          console.log('Context updated:', payload);
+          // Reload active context when any context is updated
+          loadActiveContext();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const handleWorkflowSelect = (workflow: Workflow) => {
