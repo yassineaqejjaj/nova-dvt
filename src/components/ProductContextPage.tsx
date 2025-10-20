@@ -374,6 +374,46 @@ export const ProductContextPage = () => {
     c.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  const handleSetActive = async (contextId: string, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('User not authenticated');
+
+      // Deactivate all contexts
+      const { error: deactivateError } = await supabase
+        .from('product_contexts')
+        .update({ is_active: false })
+        .eq('user_id', user.id)
+        .eq('is_deleted', false);
+
+      if (deactivateError) throw deactivateError;
+
+      // Activate selected context
+      const { error: activateError } = await supabase
+        .from('product_contexts')
+        .update({ is_active: true })
+        .eq('id', contextId)
+        .eq('user_id', user.id);
+
+      if (activateError) throw activateError;
+
+      await loadContexts(true);
+      toast({
+        title: "Contexte activé",
+        description: "Ce contexte sera utilisé par défaut"
+      });
+    } catch (error: any) {
+      console.error('Error activating context:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible d'activer le contexte",
+        variant: "destructive"
+      });
+    }
+  };
+
   return (
     <div className="container mx-auto py-8 px-4 max-w-7xl">
       <div className="mb-8">
@@ -383,99 +423,113 @@ export const ProductContextPage = () => {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Contexts List */}
-        <Card className="lg:col-span-1">
+      <div className="flex flex-col gap-6">
+        {/* Contexts List - Full Width */}
+        <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
-              <CardTitle>Contextes ({contexts.length}/10)</CardTitle>
-              <Button onClick={handleNewContext} size="sm">
-                <Plus className="w-4 h-4 mr-1" />
-                Nouveau
+              <div className="flex items-center gap-4">
+                <CardTitle>Mes Contextes ({contexts.length}/10)</CardTitle>
+                <div className="relative w-64">
+                  <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Rechercher..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-8"
+                  />
+                </div>
+              </div>
+              <Button onClick={handleNewContext} size="default">
+                <Plus className="w-4 h-4 mr-2" />
+                Nouveau contexte
               </Button>
             </div>
-            <CardDescription>Sélectionnez ou créez un contexte</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="mb-4">
-              <div className="relative">
-                <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Rechercher..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-8"
-                />
+            {isLoading ? (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="w-8 h-8 animate-spin" />
               </div>
-            </div>
-
-            <ScrollArea className="h-[500px]">
-              {isLoading ? (
-                <div className="flex items-center justify-center py-8">
-                  <Loader2 className="w-6 h-6 animate-spin" />
-                </div>
-              ) : filteredContexts.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  {searchQuery ? 'Aucun contexte trouvé' : 'Aucun contexte. Créez-en un!'}
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  {filteredContexts.map((context) => (
-                    <Card
-                      key={context.id}
-                      className={`cursor-pointer transition-all ${
-                        selectedContext?.id === context.id
-                          ? 'border-primary shadow-md'
-                          : 'hover:border-primary/50'
-                      }`}
-                      onClick={() => handleSelectContext(context)}
-                    >
-                      <CardContent className="p-4">
-                        <div className="flex items-start justify-between">
+            ) : filteredContexts.length === 0 ? (
+              <div className="text-center py-12 text-muted-foreground">
+                {searchQuery ? 'Aucun contexte trouvé' : 'Aucun contexte. Créez-en un pour commencer!'}
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                {filteredContexts.map((context) => (
+                  <Card
+                    key={context.id}
+                    className={`cursor-pointer transition-all hover:shadow-lg ${
+                      selectedContext?.id === context.id
+                        ? 'border-primary shadow-md ring-2 ring-primary/20'
+                        : 'hover:border-primary/50'
+                    }`}
+                    onClick={() => handleSelectContext(context)}
+                  >
+                    <CardContent className="p-5">
+                      <div className="space-y-3">
+                        <div className="flex items-start justify-between gap-3">
                           <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 mb-1">
-                              <h3 className="font-semibold truncate">{context.name}</h3>
+                            <div className="flex items-center gap-2 mb-2">
+                              <h3 className="font-semibold text-base truncate">{context.name}</h3>
                               {context.is_active && (
-                                <Badge variant="default" className="text-xs">
+                                <Badge variant="default" className="text-xs shrink-0">
                                   Actif
                                 </Badge>
                               )}
                             </div>
-                            <p className="text-xs text-muted-foreground line-clamp-2">
+                            <p className="text-sm text-muted-foreground line-clamp-2 min-h-[2.5rem]">
                               {context.vision || 'Aucune vision définie'}
                             </p>
-                            <div className="flex gap-2 mt-2">
-                              <Badge variant="outline" className="text-xs">
-                                {context.objectives.length} objectifs
-                              </Badge>
-                              <Badge variant="outline" className="text-xs">
-                                {context.target_kpis.length} KPIs
-                              </Badge>
-                            </div>
                           </div>
+                        </div>
+                        
+                        <div className="flex gap-2">
+                          <Badge variant="outline" className="text-xs">
+                            {context.objectives.length} objectifs
+                          </Badge>
+                          <Badge variant="outline" className="text-xs">
+                            {context.target_kpis.length} KPIs
+                          </Badge>
+                        </div>
+
+                        <Separator />
+
+                        <div className="flex gap-2">
                           <Button
-                            variant="ghost"
-                            size="icon"
+                            variant={context.is_active ? "default" : "outline"}
+                            size="sm"
+                            className="flex-1"
+                            onClick={(e) => handleSetActive(context.id, e)}
+                            disabled={context.is_active}
+                          >
+                            <CheckCircle2 className="w-4 h-4 mr-1" />
+                            {context.is_active ? 'Actif' : 'Définir actif'}
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
                             onClick={(e) => {
                               e.stopPropagation();
                               setDeleteContextId(context.id);
                             }}
-                            className="h-8 w-8 text-destructive hover:text-destructive"
+                            className="text-destructive hover:text-destructive"
                           >
-                            <Trash2 className="h-4 w-4" />
+                            <Trash2 className="w-4 h-4" />
                           </Button>
                         </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              )}
-            </ScrollArea>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
 
-        {/* Context Editor */}
-        <Card className="lg:col-span-2">
+        {/* Context Editor - Full Width */}
+        <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
