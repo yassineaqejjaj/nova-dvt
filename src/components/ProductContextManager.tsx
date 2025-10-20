@@ -193,7 +193,8 @@ export const ProductContextManager = ({ open, onOpenChange, onContextSelected }:
         const { error } = await supabase
           .from('product_contexts')
           .update(contextData)
-          .eq('id', selectedContext.id);
+          .eq('id', selectedContext.id)
+          .eq('user_id', user.id);
 
         if (error) throw error;
 
