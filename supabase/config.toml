@@ -44,3 +44,6 @@ verify_jwt = true
 
 [functions.generate-user-stories]
 verify_jwt = false
+
+[functions.generate-roadmap-from-document]
+verify_jwt = false

@@ -112,6 +112,13 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
       isAction: false
     },
     {
+      id: 'document-roadmap' as TabType,
+      label: 'Document vers Roadmap',
+      icon: FileText,
+      description: 'Roadmap depuis document',
+      isAction: false
+    },
+    {
       id: 'meeting-minutes' as TabType,
       label: 'Comptes-rendus',
       icon: FileText,

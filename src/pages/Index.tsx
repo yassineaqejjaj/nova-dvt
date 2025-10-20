@@ -25,6 +25,7 @@ import { ConfidentialityBanner } from '@/components/ConfidentialityBanner';
 import { MeetingMinuteGenerator } from '@/components/MeetingMinuteGenerator';
 import { RACIGenerator } from '@/components/RACIGenerator';
 import EpicToUserStories from '@/components/EpicToUserStories';
+import { DocumentRoadmapGenerator } from '@/components/DocumentRoadmapGenerator';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -308,6 +309,9 @@ const Index = () => {
       
       case 'instant-prd':
         return <InstantPRD />;
+      
+      case 'document-roadmap':
+        return <DocumentRoadmapGenerator />;
       
       case 'meeting-minutes':
         return <MeetingMinuteGenerator />;

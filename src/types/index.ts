@@ -58,13 +58,13 @@ export interface ChatMessage {
   attachments?: File[];
 }
 
-export type TabType = 'dashboard' | 'agents' | 'squads' | 'chat' | 'workflows' | 'artifacts' | 'analytics' | 'admin' | 'gamification' | 'instant-prd' | 'reality-mode' | 'meeting-minutes' | 'raci-generator' | 'epic-to-stories' | 'product-context';
+export type TabType = 'dashboard' | 'agents' | 'squads' | 'chat' | 'workflows' | 'artifacts' | 'analytics' | 'admin' | 'gamification' | 'instant-prd' | 'document-roadmap' | 'reality-mode' | 'meeting-minutes' | 'raci-generator' | 'epic-to-stories' | 'product-context';
 
 export interface Artifact {
   id: string;
   user_id: string;
   squad_id?: string;
-  artifact_type: 'canvas' | 'story' | 'impact_analysis' | 'epic' | 'tech_spec';
+  artifact_type: 'canvas' | 'story' | 'impact_analysis' | 'epic' | 'tech_spec' | 'roadmap' | 'prd';
   title: string;
   content: any;
   metadata?: any;
