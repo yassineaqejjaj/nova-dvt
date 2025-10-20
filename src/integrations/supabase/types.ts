@@ -1092,6 +1092,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      soft_delete_context: {
+        Args: { context_id: string }
+        Returns: undefined
+      }
     }
     Enums: {
       app_role: "admin" | "moderator" | "user"

@@ -313,10 +313,7 @@ export const ProductContextManager = ({ open, onOpenChange, onContextSelected }:
 
       // Mark as deleted (soft delete)
       const { error } = await supabase
-        .from('product_contexts')
-        .update({ is_deleted: true, is_active: false })
-        .eq('id', deleteContextId)
-        .eq('user_id', user.id);
+        .rpc('soft_delete_context', { context_id: deleteContextId });
 
       if (error) {
         console.error('Delete error:', error);

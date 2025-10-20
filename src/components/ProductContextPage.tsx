@@ -313,12 +313,7 @@ export const ProductContextPage = () => {
       if (!user) throw new Error('User not authenticated');
 
       const { error } = await supabase
-        .from('product_contexts')
-        .update({ 
-          is_deleted: true
-        })
-        .eq('id', deleteContextId)
-        .eq('user_id', user.id);
+        .rpc('soft_delete_context', { context_id: deleteContextId });
 
       if (error) throw error;
 
