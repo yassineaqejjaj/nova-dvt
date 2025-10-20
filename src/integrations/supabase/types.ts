@@ -461,6 +461,7 @@ export type Database = {
           id: string
           is_active: boolean
           is_deleted: boolean
+          metadata: Json | null
           name: string
           objectives: Json | null
           target_audience: string | null
@@ -475,6 +476,7 @@ export type Database = {
           id?: string
           is_active?: boolean
           is_deleted?: boolean
+          metadata?: Json | null
           name: string
           objectives?: Json | null
           target_audience?: string | null
@@ -489,6 +491,7 @@ export type Database = {
           id?: string
           is_active?: boolean
           is_deleted?: boolean
+          metadata?: Json | null
           name?: string
           objectives?: Json | null
           target_audience?: string | null
