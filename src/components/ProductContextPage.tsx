@@ -353,7 +353,7 @@ export const ProductContextPage = () => {
       console.error('Error deleting context:', error);
       toast({
         title: "Erreur",
-        description: "Impossible de supprimer le contexte",
+        description: (error?.message as string) || "Impossible de supprimer le contexte",
         variant: "destructive"
       });
       setDeleteContextId(null);
@@ -912,7 +912,7 @@ export const ProductContextPage = () => {
       </div>
 
       {/* Delete Confirmation Dialog */}
-      <AlertDialog open={!!deleteContextId} onOpenChange={() => setDeleteContextId(null)}>
+      <AlertDialog open={!!deleteContextId} onOpenChange={(open) => { if (!open) setDeleteContextId(null); }}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Supprimer le contexte?</AlertDialogTitle>

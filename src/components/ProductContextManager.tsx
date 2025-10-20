@@ -312,7 +312,7 @@ export const ProductContextManager = ({ open, onOpenChange, onContextSelected }:
       // Mark as deleted (soft delete)
       const { error } = await supabase
         .from('product_contexts')
-        .update({ is_deleted: true, is_active: false })
+        .update({ is_deleted: true, is_active: false, user_id: user.id })
         .eq('id', deleteContextId)
         .eq('user_id', user.id);
 
@@ -767,7 +767,7 @@ export const ProductContextManager = ({ open, onOpenChange, onContextSelected }:
       </Dialog>
 
       {/* Delete Confirmation */}
-      <AlertDialog open={!!deleteContextId} onOpenChange={() => setDeleteContextId(null)}>
+      <AlertDialog open={!!deleteContextId} onOpenChange={(open) => { if (!open) setDeleteContextId(null); }}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Êtes-vous sûr ?</AlertDialogTitle>
