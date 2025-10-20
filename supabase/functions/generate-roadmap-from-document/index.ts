@@ -12,11 +12,11 @@ serve(async (req) => {
   }
 
   try {
-    const { documentContent, documentName, startDate, periodType } = await req.json();
+    const { documentContent, textContent, documentName, startDate, periodType, inputType } = await req.json();
 
-    if (!documentContent || !startDate) {
+    if ((!documentContent && !textContent) || !startDate) {
       return new Response(
-        JSON.stringify({ error: 'Document content and start date are required' }),
+        JSON.stringify({ error: 'Content and start date are required' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -26,8 +26,8 @@ serve(async (req) => {
       throw new Error('LOVABLE_API_KEY is not configured');
     }
 
-    // Decode base64 document content
-    const decodedContent = atob(documentContent);
+    // Get content based on input type
+    const decodedContent = inputType === 'text' ? textContent : atob(documentContent);
     
     // Create system prompt
     const systemPrompt = `Tu es un expert en product management et en planification de roadmap produit.

@@ -5,7 +5,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Calendar, Upload, Sparkles, FileText, Loader2, Download, Save } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Textarea } from '@/components/ui/textarea';
+import { Calendar, Upload, Sparkles, FileText, Loader2, Download, Save, FileUp, ClipboardPaste } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import jsPDF from 'jspdf';
@@ -26,6 +28,8 @@ interface RoadmapResult {
 
 export const DocumentRoadmapGenerator: React.FC = () => {
   const [file, setFile] = useState<File | null>(null);
+  const [pastedText, setPastedText] = useState('');
+  const [inputMode, setInputMode] = useState<'file' | 'text'>('file');
   const [startDate, setStartDate] = useState('');
   const [periodType, setPeriodType] = useState<'quarter' | 'month'>('quarter');
   const [isGenerating, setIsGenerating] = useState(false);
@@ -53,26 +57,68 @@ export const DocumentRoadmapGenerator: React.FC = () => {
   };
 
   const handleGenerateRoadmap = async () => {
-    if (!file || !startDate) {
-      toast.error('Veuillez uploader un document et sélectionner une date de début');
+    if (inputMode === 'file' && !file) {
+      toast.error('Veuillez uploader un document');
+      return;
+    }
+    
+    if (inputMode === 'text' && !pastedText.trim()) {
+      toast.error('Veuillez coller du texte');
+      return;
+    }
+    
+    if (!startDate) {
+      toast.error('Veuillez sélectionner une date de début');
       return;
     }
 
     setIsGenerating(true);
 
     try {
-      // Read file as base64
-      const reader = new FileReader();
-      reader.onload = async (e) => {
-        const base64Content = e.target?.result as string;
-        
-        // Call edge function to generate roadmap
+      if (inputMode === 'file' && file) {
+        // Read file as base64
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+          const base64Content = e.target?.result as string;
+          
+          // Call edge function to generate roadmap
+          const { data, error } = await supabase.functions.invoke('generate-roadmap-from-document', {
+            body: {
+              documentContent: base64Content.split(',')[1], // Remove data:...;base64, prefix
+              documentName: file.name,
+              startDate,
+              periodType,
+              inputType: 'file'
+            }
+          });
+
+          if (error) {
+            console.error('Error generating roadmap:', error);
+            toast.error('Erreur lors de la génération de la roadmap');
+            setIsGenerating(false);
+            return;
+          }
+
+          setRoadmap(data);
+          toast.success('Roadmap générée avec succès !');
+          setIsGenerating(false);
+        };
+
+        reader.onerror = () => {
+          toast.error('Erreur lors de la lecture du fichier');
+          setIsGenerating(false);
+        };
+
+        reader.readAsDataURL(file);
+      } else if (inputMode === 'text') {
+        // Call edge function with pasted text
         const { data, error } = await supabase.functions.invoke('generate-roadmap-from-document', {
           body: {
-            documentContent: base64Content.split(',')[1], // Remove data:...;base64, prefix
-            documentName: file.name,
+            textContent: pastedText,
+            documentName: 'Texte collé',
             startDate,
-            periodType
+            periodType,
+            inputType: 'text'
           }
         });
 
@@ -86,14 +132,7 @@ export const DocumentRoadmapGenerator: React.FC = () => {
         setRoadmap(data);
         toast.success('Roadmap générée avec succès !');
         setIsGenerating(false);
-      };
-
-      reader.onerror = () => {
-        toast.error('Erreur lors de la lecture du fichier');
-        setIsGenerating(false);
-      };
-
-      reader.readAsDataURL(file);
+      }
     } catch (error) {
       console.error('Error:', error);
       toast.error('Erreur lors de la génération de la roadmap');
@@ -111,16 +150,17 @@ export const DocumentRoadmapGenerator: React.FC = () => {
         return;
       }
 
+      const sourceName = inputMode === 'file' ? file?.name : 'Texte collé';
       const { error } = await supabase.from('artifacts').insert([{
         user_id: user.id,
         artifact_type: 'epic',
-        title: `Roadmap - ${file?.name || 'Document'}`,
+        title: `Roadmap - ${sourceName || 'Document'}`,
         content: roadmap as any,
         metadata: {
           generatedAt: new Date().toISOString(),
           startDate,
           periodType,
-          documentName: file?.name,
+          documentName: sourceName,
           artifactSubtype: 'roadmap'
         } as any
       }]);
@@ -141,9 +181,10 @@ export const DocumentRoadmapGenerator: React.FC = () => {
     const pageWidth = doc.internal.pageSize.getWidth();
     
     // Title
+    const pdfSourceName = inputMode === 'file' ? file?.name : 'Texte collé';
     doc.setFontSize(20);
     doc.setFont('helvetica', 'bold');
-    doc.text('Roadmap - ' + (file?.name || 'Document'), pageWidth / 2, 20, { align: 'center' });
+    doc.text('Roadmap - ' + (pdfSourceName || 'Document'), pageWidth / 2, 20, { align: 'center' });
     
     let yPos = 30;
 
@@ -221,7 +262,8 @@ export const DocumentRoadmapGenerator: React.FC = () => {
     });
 
     // Save
-    doc.save(`Roadmap-${file?.name || 'document'}.pdf`);
+    const downloadFileName = inputMode === 'file' ? file?.name : 'texte-colle';
+    doc.save(`Roadmap-${downloadFileName || 'document'}.pdf`);
     toast.success('PDF téléchargé avec succès !');
   };
 
@@ -264,27 +306,56 @@ export const DocumentRoadmapGenerator: React.FC = () => {
             <Upload className="w-5 h-5" />
             <span>Configuration</span>
           </CardTitle>
-          <CardDescription>Uploadez votre document et configurez les paramètres de la roadmap</CardDescription>
+          <CardDescription>Uploadez un document ou collez du texte pour générer votre roadmap</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="file-upload">Document (PDF, DOCX, TXT)</Label>
-            <div className="flex items-center space-x-2">
-              <Input
-                id="file-upload"
-                type="file"
-                accept=".pdf,.docx,.txt"
-                onChange={handleFileChange}
-                className="flex-1"
+          <Tabs value={inputMode} onValueChange={(value) => setInputMode(value as 'file' | 'text')}>
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="file" className="flex items-center gap-2">
+                <FileUp className="w-4 h-4" />
+                Upload Fichier
+              </TabsTrigger>
+              <TabsTrigger value="text" className="flex items-center gap-2">
+                <ClipboardPaste className="w-4 h-4" />
+                Coller Texte
+              </TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="file" className="space-y-2 mt-4">
+              <Label htmlFor="file-upload">Document (PDF, DOCX, TXT)</Label>
+              <div className="flex items-center space-x-2">
+                <Input
+                  id="file-upload"
+                  type="file"
+                  accept=".pdf,.docx,.txt"
+                  onChange={handleFileChange}
+                  className="flex-1"
+                />
+                {file && (
+                  <Badge variant="outline" className="flex items-center space-x-1">
+                    <FileText className="w-3 h-3" />
+                    <span>{file.name}</span>
+                  </Badge>
+                )}
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="text" className="space-y-2 mt-4">
+              <Label htmlFor="pasted-text">Texte à analyser</Label>
+              <Textarea
+                id="pasted-text"
+                placeholder="Collez ici votre texte (description du produit, vision, objectifs, etc.)..."
+                value={pastedText}
+                onChange={(e) => setPastedText(e.target.value)}
+                className="min-h-[200px] resize-y"
               />
-              {file && (
-                <Badge variant="outline" className="flex items-center space-x-1">
-                  <FileText className="w-3 h-3" />
-                  <span>{file.name}</span>
-                </Badge>
+              {pastedText && (
+                <p className="text-sm text-muted-foreground">
+                  {pastedText.length} caractères
+                </p>
               )}
-            </div>
-          </div>
+            </TabsContent>
+          </Tabs>
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
@@ -313,7 +384,7 @@ export const DocumentRoadmapGenerator: React.FC = () => {
 
           <Button 
             onClick={handleGenerateRoadmap} 
-            disabled={!file || !startDate || isGenerating}
+            disabled={(inputMode === 'file' && !file) || (inputMode === 'text' && !pastedText.trim()) || !startDate || isGenerating}
             className="w-full"
           >
             {isGenerating ? (
