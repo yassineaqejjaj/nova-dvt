@@ -96,72 +96,94 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
   // NOVA CORE Actions (non-tab actions)
   const coreActions: any[] = [];
 
-  // NOVA TOOLS Module - AI-accessible tools
-  const toolsItems = [
-    {
-      label: 'Canvas Generator',
-      icon: Grid3X3,
-      description: 'Créer des canvas',
-      isAction: true,
-      onClick: onCreateCanvas
+  // NOVA TOOLS Module - organized by segments
+  const toolsSegments = {
+    discovery: {
+      title: 'Découverte & Recherche',
+      items: [
+        {
+          id: 'user-persona-builder' as TabType,
+          label: 'User Personas',
+          icon: Users,
+          description: 'Builder de personas'
+        }
+      ]
     },
-    {
-      id: 'instant-prd' as TabType,
-      label: 'PRD instantané',
-      icon: Sparkles,
-      description: 'Générer un PRD en 15s',
-      isAction: false
+    planning: {
+      title: 'Planification Stratégique',
+      items: [
+        {
+          label: 'Canvas Generator',
+          icon: Grid3X3,
+          description: 'Frameworks stratégiques',
+          isAction: true,
+          onClick: onCreateCanvas
+        },
+        {
+          id: 'document-roadmap' as TabType,
+          label: 'Document vers Roadmap',
+          icon: FileText,
+          description: 'Roadmap depuis document'
+        }
+      ]
     },
-    {
-      id: 'document-roadmap' as TabType,
-      label: 'Document vers Roadmap',
-      icon: FileText,
-      description: 'Roadmap depuis document',
-      isAction: false
+    specifications: {
+      title: 'Spécifications & Définition',
+      items: [
+        {
+          id: 'instant-prd' as TabType,
+          label: 'PRD instantané',
+          icon: Sparkles,
+          description: 'Générer un PRD en 15s'
+        },
+        {
+          id: 'epic-to-stories' as TabType,
+          label: 'Epic vers Stories',
+          icon: Sparkles,
+          description: 'Découpage stories IA'
+        }
+      ]
     },
-    {
-      id: 'user-persona-builder' as TabType,
-      label: 'User Personas',
-      icon: Users,
-      description: 'Builder de personas',
-      isAction: false
+    team: {
+      title: 'Gestion d\'Équipe',
+      items: [
+        {
+          id: 'raci-generator' as TabType,
+          label: 'Générateur RACI',
+          icon: Users,
+          description: 'Matrice responsabilités'
+        }
+      ]
     },
-    {
-      id: 'estimation-tool' as TabType,
-      label: 'Estimation & Sizing',
-      icon: Calculator,
-      description: 'Estimations rapides',
-      isAction: false
+    metrics: {
+      title: 'Estimation & Métriques',
+      items: [
+        {
+          id: 'estimation-tool' as TabType,
+          label: 'Estimation & Sizing',
+          icon: Calculator,
+          description: 'Estimations rapides'
+        }
+      ]
     },
-    {
-      id: 'release-notes-generator' as TabType,
-      label: 'Release Notes',
-      icon: FileText,
-      description: 'Générateur de notes',
-      isAction: false
-    },
-    {
-      id: 'meeting-minutes' as TabType,
-      label: 'Comptes-rendus',
-      icon: FileText,
-      description: 'Transcription IA',
-      isAction: false
-    },
-    {
-      id: 'raci-generator' as TabType,
-      label: 'Générateur RACI',
-      icon: Users,
-      description: 'Matrice responsabilités',
-      isAction: false
-    },
-    {
-      id: 'epic-to-stories' as TabType,
-      label: 'Epic vers Stories',
-      icon: Sparkles,
-      description: 'Découpage stories IA',
-      isAction: false
+    documentation: {
+      title: 'Documentation',
+      items: [
+        {
+          id: 'release-notes-generator' as TabType,
+          label: 'Release Notes',
+          icon: FileText,
+          description: 'Générateur de notes'
+        },
+        {
+          id: 'meeting-minutes' as TabType,
+          label: 'Comptes-rendus',
+          icon: FileText,
+          description: 'Transcription IA'
+        }
+      ]
     }
-  ];
+  };
 
   // NOVA WORKFLOWS Module
   const workflowItems = [
@@ -343,30 +365,39 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
         {isExpanded && (
           <SidebarGroupContent>
             <SidebarMenu>
-              {toolsItems.map((item) => {
-                const Icon = item.icon;
-                const isActive = !item.isAction && activeTab === item.id;
-                
-                return (
-                  <SidebarMenuItem key={item.label}>
-                    <SidebarMenuButton asChild>
-                      <Button
-                        variant="ghost"
-                        onClick={() => (item as any).isAction ? (item as any).onClick?.() : onTabChange(item.id as TabType)}
-                        className={`w-full justify-start h-11 px-3 ${getNavClass(isActive)}`}
-                      >
-                        <Icon className="w-4 h-4 mr-3 flex-shrink-0" />
-                        <div className={`flex-1 text-left transition-opacity duration-200 overflow-hidden ${!open ? 'opacity-0 w-0' : 'opacity-100'}`}>
-                          <div className="flex items-center space-x-2">
-                            <span className="text-sm font-medium whitespace-nowrap">{item.label}</span>
-                          </div>
-                          <p className="text-xs text-muted-foreground whitespace-nowrap">{item.description}</p>
-                        </div>
-                      </Button>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                );
-              })}
+              {Object.entries(toolsSegments).map(([segmentKey, segment]) => (
+                <div key={segmentKey} className="mb-4">
+                  {open && (
+                    <div className="px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                      {segment.title}
+                    </div>
+                  )}
+                  {segment.items.map((item) => {
+                    const Icon = item.icon;
+                    const isActive = !(item as any).isAction && activeTab === item.id;
+                    
+                    return (
+                      <SidebarMenuItem key={item.label}>
+                        <SidebarMenuButton asChild>
+                          <Button
+                            variant="ghost"
+                            onClick={() => (item as any).isAction ? (item as any).onClick?.() : onTabChange(item.id as TabType)}
+                            className={`w-full justify-start h-10 px-3 ${getNavClass(isActive)}`}
+                          >
+                            <Icon className="w-4 h-4 mr-3 flex-shrink-0" />
+                            <div className={`flex-1 text-left transition-opacity duration-200 overflow-hidden ${!open ? 'opacity-0 w-0' : 'opacity-100'}`}>
+                              <div className="flex items-center space-x-2">
+                                <span className="text-sm font-medium whitespace-nowrap">{item.label}</span>
+                              </div>
+                              <p className="text-xs text-muted-foreground whitespace-nowrap">{item.description}</p>
+                            </div>
+                          </Button>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    );
+                  })}
+                </div>
+              ))}
             </SidebarMenu>
           </SidebarGroupContent>
         )}

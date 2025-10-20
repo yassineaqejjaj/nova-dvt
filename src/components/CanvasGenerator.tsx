@@ -62,28 +62,37 @@ interface UploadedDocument {
   size: number;
 }
 
-const canvasTemplates: CanvasTemplate[] = [
-  // PRODUCT MANAGER FRAMEWORKS
-  {
-    id: 'moscow',
-    name: 'Priorisation MoSCoW',
-    description: 'Priorisez les fonctionnalités : Must have, Should have, Could have, Won\'t have',
-    icon: <Target className="w-6 h-6" />,
-    sections: ['Must Have', 'Should Have', 'Could Have', 'Won\'t Have'],
-    prompts: {
-      'Must Have': 'Quelles fonctionnalités sont critiques pour le lancement ?',
-      'Should Have': 'Quelles fonctionnalités sont importantes mais non critiques ?',
-      'Could Have': 'Qu\'est-ce qui serait agréable à avoir si le temps le permet ?',
-      'Won\'t Have': 'Qu\'est-ce que nous ne faisons explicitement pas cette fois-ci ?'
-    },
-    color: 'bg-agent-blue',
-    role: 'product-manager',
-    formFields: [
-      { name: 'timeline', label: 'Calendrier du Projet', type: 'input', placeholder: 'ex : 3 mois', required: true },
-      { name: 'budget', label: 'Contraintes Budgétaires', type: 'input', placeholder: 'Limitations budgétaires' },
-      { name: 'stakeholders', label: 'Parties Prenantes Clés', type: 'textarea', placeholder: 'Listez les parties prenantes clés et leurs priorités' }
-    ]
+// Canvas templates organized by segments
+const canvasSegments = {
+  discovery: {
+    title: 'Découverte & Recherche',
+    description: 'Analysez vos utilisateurs et le marché',
+    templates: [] as CanvasTemplate[]
   },
+  planning: {
+    title: 'Planification Stratégique',
+    description: 'Définissez votre stratégie et roadmap',
+    templates: [] as CanvasTemplate[]
+  },
+  prioritization: {
+    title: 'Priorisation',
+    description: 'Priorisez vos initiatives',
+    templates: [] as CanvasTemplate[]
+  },
+  design: {
+    title: 'Design & UX',
+    description: 'Concevez l\'expérience utilisateur',
+    templates: [] as CanvasTemplate[]
+  },
+  development: {
+    title: 'Développement',
+    description: 'Planifiez l\'architecture technique',
+    templates: [] as CanvasTemplate[]
+  }
+};
+
+const canvasTemplates: CanvasTemplate[] = [
+  // DISCOVERY & RESEARCH
   {
     id: 'swot',
     name: 'Analyse SWOT',
@@ -105,31 +114,147 @@ const canvasTemplates: CanvasTemplate[] = [
     ]
   },
   {
+    id: 'user-journey',
+    name: 'User Journey Map',
+    description: 'Cartographiez l\'expérience utilisateur complète',
+    icon: <Map className="w-6 h-6" />,
+    sections: ['Persona', 'Awareness', 'Consideration', 'Purchase/Action', 'Retention', 'Advocacy', 'Pain Points', 'Opportunities'],
+    prompts: {
+      'Persona': 'Qui est l\'utilisateur ? (Démographie, objectifs, motivations)',
+      'Awareness': 'Comment l\'utilisateur découvre le produit ?',
+      'Consideration': 'Que pense/ressent l\'utilisateur durant l\'évaluation ?',
+      'Purchase/Action': 'Quel est le moment clé d\'action ou de conversion ?',
+      'Retention': 'Comment maintenons-nous l\'engagement dans le temps ?',
+      'Advocacy': 'Qu\'est-ce qui fait que les utilisateurs recommandent ?',
+      'Pain Points': 'Quelles frustrations existent à chaque étape ?',
+      'Opportunities': 'Où pouvons-nous améliorer l\'expérience ?'
+    },
+    color: 'bg-agent-blue',
+    role: 'designer',
+    formFields: [
+      { name: 'user_type', label: 'Type d\'Utilisateur', type: 'input', placeholder: 'ex : Premier achat', required: true },
+      { name: 'journey_scope', label: 'Périmètre du Parcours', type: 'select', options: ['Feature unique', 'Onboarding produit', 'Cycle complet', 'Tâche spécifique'] },
+      { name: 'touchpoints', label: 'Points de Contact Clés', type: 'textarea', placeholder: 'Listez les principaux touchpoints' }
+    ]
+  },
+
+  // STRATEGIC PLANNING
+  {
     id: 'business-model',
     name: 'Business Model Canvas',
-    description: 'Cartographiez votre modèle d\'affaires en 9 blocs clés',
+    description: 'Cartographiez votre modèle d\'affaires en 9 blocs',
     icon: <Grid3X3 className="w-6 h-6" />,
     sections: [
       'Key Partners', 'Key Activities', 'Key Resources', 'Value Propositions',
       'Customer Relationships', 'Channels', 'Customer Segments', 'Cost Structure', 'Revenue Streams'
     ],
     prompts: {
-      'Key Partners': 'Who are our key partners and suppliers?',
-      'Key Activities': 'What key activities does our business require?',
-      'Key Resources': 'What key resources does our business require?',
-      'Value Propositions': 'What value do we deliver to customers?',
-      'Customer Relationships': 'What type of relationship do we have with customers?',
-      'Channels': 'How do we reach and deliver to customers?',
-      'Customer Segments': 'Who are we creating value for?',
-      'Cost Structure': 'What are the most important costs in our business?',
-      'Revenue Streams': 'For what value are customers willing to pay?'
+      'Key Partners': 'Quels sont nos partenaires et fournisseurs clés ?',
+      'Key Activities': 'Quelles activités clés notre entreprise nécessite ?',
+      'Key Resources': 'Quelles ressources clés nécessitons-nous ?',
+      'Value Propositions': 'Quelle valeur délivrons-nous aux clients ?',
+      'Customer Relationships': 'Quel type de relation avec les clients ?',
+      'Channels': 'Comment atteignons-nous et livrons aux clients ?',
+      'Customer Segments': 'Pour qui créons-nous de la valeur ?',
+      'Cost Structure': 'Quels sont les coûts les plus importants ?',
+      'Revenue Streams': 'Pour quelle valeur les clients paient-ils ?'
     },
     color: 'bg-agent-purple',
     role: 'product-manager',
     formFields: [
-      { name: 'business_type', label: 'Business Type', type: 'select', options: ['B2B', 'B2C', 'B2B2C', 'Marketplace'], required: true },
-      { name: 'revenue_model', label: 'Revenue Model', type: 'select', options: ['Subscription', 'One-time', 'Freemium', 'Commission', 'Advertising'] },
-      { name: 'target_market', label: 'Target Market Size', type: 'input', placeholder: 'Estimated market size' }
+      { name: 'business_type', label: 'Type de Business', type: 'select', options: ['B2B', 'B2C', 'B2B2C', 'Marketplace'], required: true },
+      { name: 'revenue_model', label: 'Modèle de Revenus', type: 'select', options: ['Abonnement', 'Achat unique', 'Freemium', 'Commission', 'Publicité'] },
+      { name: 'target_market', label: 'Taille du Marché Cible', type: 'input', placeholder: 'Taille estimée du marché' }
+    ]
+  },
+  {
+    id: 'product-roadmap',
+    name: 'Product Roadmap',
+    description: 'Timeline stratégique de développement produit',
+    icon: <Calendar className="w-6 h-6" />,
+    sections: ['Now (0-3 mois)', 'Next (3-6 mois)', 'Later (6-12 mois)', 'Vision Future', 'Dépendances', 'Métriques de Succès'],
+    prompts: {
+      'Now (0-3 mois)': 'Quelles sont les priorités immédiates et quick wins ?',
+      'Next (3-6 mois)': 'Quelles features sont planifiées à court terme ?',
+      'Later (6-12 mois)': 'Quelles initiatives long terme sont à l\'horizon ?',
+      'Vision Future': 'Quelle est la vision produit au-delà de 12 mois ?',
+      'Dépendances': 'Quelles dépendances externes ou blocages existent ?',
+      'Métriques de Succès': 'Comment mesurerez-vous le succès à chaque étape ?'
+    },
+    color: 'bg-agent-blue',
+    role: 'product-manager',
+    formFields: [
+      { name: 'product_stage', label: 'Stade du Produit', type: 'select', options: ['Pre-lancement', 'MVP', 'Croissance', 'Mature'], required: true },
+      { name: 'team_capacity', label: 'Capacité de l\'Équipe', type: 'input', placeholder: 'Taille équipe développement' },
+      { name: 'market_pressure', label: 'Pression Marché', type: 'select', options: ['Faible', 'Moyenne', 'Haute', 'Critique'] }
+    ]
+  },
+  {
+    id: 'okr-canvas',
+    name: 'OKR Canvas',
+    description: 'Définissez Objectifs et Résultats Clés',
+    icon: <Flag className="w-6 h-6" />,
+    sections: ['Objectif 1', 'Résultats Clés 1', 'Objectif 2', 'Résultats Clés 2', 'Objectif 3', 'Résultats Clés 3', 'Alignement & Dépendances'],
+    prompts: {
+      'Objectif 1': 'Quel est votre objectif principal ? (Qualitatif, inspirant)',
+      'Résultats Clés 1': 'Quels sont les 3-4 résultats mesurables de succès ?',
+      'Objectif 2': 'Quel est votre second objectif important ?',
+      'Résultats Clés 2': 'Quels résultats mesurables soutiennent cet objectif ?',
+      'Objectif 3': 'Quel est votre troisième objectif clé ?',
+      'Résultats Clés 3': 'Quelles métriques traceront cet objectif ?',
+      'Alignement & Dépendances': 'Comment ces OKRs s\'alignent avec les objectifs entreprise ? Quelles dépendances ?'
+    },
+    color: 'bg-agent-green',
+    role: 'product-manager',
+    formFields: [
+      { name: 'timeframe', label: 'Période OKR', type: 'select', options: ['Trimestre', 'Semestre', 'Année'], required: true },
+      { name: 'team', label: 'Équipe/Département', type: 'input', placeholder: 'ex : Produit, Engineering' },
+      { name: 'company_okrs', label: 'OKRs Entreprise Liés', type: 'textarea', placeholder: 'Listez les OKRs entreprise pertinents' }
+    ]
+  },
+  {
+    id: 'gtm-strategy',
+    name: 'Go-to-Market Strategy',
+    description: 'Planifiez votre lancement et entrée marché',
+    icon: <TrendingUp className="w-6 h-6" />,
+    sections: ['Marché Cible', 'Proposition de Valeur', 'Stratégie Pricing', 'Canaux Marketing', 'Stratégie Vente', 'Timeline Lancement', 'Métriques Succès'],
+    prompts: {
+      'Marché Cible': 'Qui est votre client idéal ? Définissez segments et personas.',
+      'Proposition de Valeur': 'Quelle valeur unique votre produit apporte ?',
+      'Stratégie Pricing': 'Comment allez-vous pricer et packager ?',
+      'Canaux Marketing': 'Quels canaux utiliserez-vous pour atteindre les clients ?',
+      'Stratégie Vente': 'Comment allez-vous acquérir et convertir ?',
+      'Timeline Lancement': 'Quels sont les jalons et dates clés ?',
+      'Métriques Succès': 'Quels KPIs mesureront le succès du lancement ?'
+    },
+    color: 'bg-agent-purple',
+    role: 'product-manager',
+    formFields: [
+      { name: 'product_type', label: 'Type de Produit', type: 'select', options: ['Nouveau Produit', 'Lancement Feature', 'Expansion Marché', 'Relancement'], required: true },
+      { name: 'launch_date', label: 'Date Lancement Cible', type: 'input', placeholder: 'MM/AAAA' },
+      { name: 'budget', label: 'Budget Marketing', type: 'input', placeholder: 'Budget alloué' }
+    ]
+  },
+
+  // PRIORITIZATION
+  {
+    id: 'moscow',
+    name: 'Priorisation MoSCoW',
+    description: 'Priorisez les fonctionnalités : Must have, Should have, Could have, Won\'t have',
+    icon: <Target className="w-6 h-6" />,
+    sections: ['Must Have', 'Should Have', 'Could Have', 'Won\'t Have'],
+    prompts: {
+      'Must Have': 'Quelles fonctionnalités sont critiques pour le lancement ?',
+      'Should Have': 'Quelles fonctionnalités sont importantes mais non critiques ?',
+      'Could Have': 'Qu\'est-ce qui serait agréable à avoir si le temps le permet ?',
+      'Won\'t Have': 'Qu\'est-ce que nous ne faisons explicitement pas cette fois-ci ?'
+    },
+    color: 'bg-agent-blue',
+    role: 'product-manager',
+    formFields: [
+      { name: 'timeline', label: 'Calendrier du Projet', type: 'input', placeholder: 'ex : 3 mois', required: true },
+      { name: 'budget', label: 'Contraintes Budgétaires', type: 'input', placeholder: 'Limitations budgétaires' },
+      { name: 'stakeholders', label: 'Parties Prenantes Clés', type: 'textarea', placeholder: 'Listez les parties prenantes clés et leurs priorités' }
     ]
   },
   {
@@ -154,76 +279,8 @@ const canvasTemplates: CanvasTemplate[] = [
       { name: 'timeframe', label: 'Evaluation Timeframe', type: 'select', options: ['Quarter', 'Half-year', 'Year'] }
     ]
   },
-  {
-    id: 'product-roadmap',
-    name: 'Product Roadmap',
-    description: 'Strategic timeline for product development and releases',
-    icon: <Calendar className="w-6 h-6" />,
-    sections: ['Now (0-3 months)', 'Next (3-6 months)', 'Later (6-12 months)', 'Future Vision', 'Dependencies', 'Success Metrics'],
-    prompts: {
-      'Now (0-3 months)': 'What are the immediate priorities and quick wins?',
-      'Next (3-6 months)': 'What features are planned for the near term?',
-      'Later (6-12 months)': 'What longer-term initiatives are on the horizon?',
-      'Future Vision': 'What is the long-term product vision beyond 12 months?',
-      'Dependencies': 'What external dependencies or blockers exist?',
-      'Success Metrics': 'How will you measure success at each stage?'
-    },
-    color: 'bg-agent-blue',
-    role: 'product-manager',
-    formFields: [
-      { name: 'product_stage', label: 'Product Stage', type: 'select', options: ['Pre-launch', 'MVP', 'Growth', 'Mature'], required: true },
-      { name: 'team_capacity', label: 'Team Capacity', type: 'input', placeholder: 'Development team size' },
-      { name: 'market_pressure', label: 'Market Pressure', type: 'select', options: ['Low', 'Medium', 'High', 'Critical'] }
-    ]
-  },
-  {
-    id: 'okr-canvas',
-    name: 'OKR Canvas',
-    description: 'Define Objectives and Key Results for focused execution',
-    icon: <Flag className="w-6 h-6" />,
-    sections: ['Objective 1', 'Key Results 1', 'Objective 2', 'Key Results 2', 'Objective 3', 'Key Results 3', 'Alignment & Dependencies'],
-    prompts: {
-      'Objective 1': 'What is your primary objective? (Qualitative, inspirational)',
-      'Key Results 1': 'What are 3-4 measurable results that define success?',
-      'Objective 2': 'What is your second most important objective?',
-      'Key Results 2': 'What measurable results support this objective?',
-      'Objective 3': 'What is your third key objective?',
-      'Key Results 3': 'What metrics will track this objective?',
-      'Alignment & Dependencies': 'How do these OKRs align with company goals? What dependencies exist?'
-    },
-    color: 'bg-agent-green',
-    role: 'product-manager',
-    formFields: [
-      { name: 'timeframe', label: 'OKR Timeframe', type: 'select', options: ['Quarter', 'Half-year', 'Year'], required: true },
-      { name: 'team', label: 'Team/Department', type: 'input', placeholder: 'e.g., Product, Engineering' },
-      { name: 'company_okrs', label: 'Related Company OKRs', type: 'textarea', placeholder: 'List relevant company-level OKRs' }
-    ]
-  },
-  {
-    id: 'gtm-strategy',
-    name: 'Go-to-Market Strategy',
-    description: 'Plan your product launch and market entry strategy',
-    icon: <TrendingUp className="w-6 h-6" />,
-    sections: ['Target Market', 'Value Proposition', 'Pricing Strategy', 'Marketing Channels', 'Sales Strategy', 'Launch Timeline', 'Success Metrics'],
-    prompts: {
-      'Target Market': 'Who is your ideal customer? Define segments and personas.',
-      'Value Proposition': 'What unique value does your product provide?',
-      'Pricing Strategy': 'How will you price and package your product?',
-      'Marketing Channels': 'Which channels will you use to reach customers?',
-      'Sales Strategy': 'How will you acquire and convert customers?',
-      'Launch Timeline': 'What are the key milestones and dates?',
-      'Success Metrics': 'What KPIs will measure launch success?'
-    },
-    color: 'bg-agent-purple',
-    role: 'product-manager',
-    formFields: [
-      { name: 'product_type', label: 'Product Type', type: 'select', options: ['New Product', 'Feature Launch', 'Market Expansion', 'Relaunch'], required: true },
-      { name: 'launch_date', label: 'Target Launch Date', type: 'input', placeholder: 'MM/YYYY' },
-      { name: 'budget', label: 'Marketing Budget', type: 'input', placeholder: 'Budget allocated' }
-    ]
-  },
 
-  // DESIGNER FRAMEWORKS
+  // DESIGN & UX
   {
     id: 'design-system',
     name: 'Design System Canvas',
@@ -244,30 +301,6 @@ const canvasTemplates: CanvasTemplate[] = [
       { name: 'platform', label: 'Platform', type: 'select', options: ['Web', 'Mobile', 'Cross-platform'], required: true },
       { name: 'design_maturity', label: 'Design System Maturity', type: 'select', options: ['Starting', 'Growing', 'Established', 'Mature'] },
       { name: 'team_size', label: 'Design Team Size', type: 'input', placeholder: 'Number of designers' }
-    ]
-  },
-  {
-    id: 'user-journey',
-    name: 'User Journey Map',
-    description: 'Map the complete user experience across all touchpoints',
-    icon: <Map className="w-6 h-6" />,
-    sections: ['Persona', 'Awareness', 'Consideration', 'Purchase/Action', 'Retention', 'Advocacy', 'Pain Points', 'Opportunities'],
-    prompts: {
-      'Persona': 'Who is the user? (Demographics, goals, motivations)',
-      'Awareness': 'How does the user become aware of the product?',
-      'Consideration': 'What does the user think/feel during evaluation?',
-      'Purchase/Action': 'What is the key action or conversion moment?',
-      'Retention': 'How do we keep users engaged over time?',
-      'Advocacy': 'What makes users recommend the product?',
-      'Pain Points': 'What frustrations exist at each stage?',
-      'Opportunities': 'Where can we improve the experience?'
-    },
-    color: 'bg-agent-blue',
-    role: 'designer',
-    formFields: [
-      { name: 'user_type', label: 'Primary User Type', type: 'input', placeholder: 'e.g., First-time buyer', required: true },
-      { name: 'journey_scope', label: 'Journey Scope', type: 'select', options: ['Single feature', 'Product onboarding', 'Full lifecycle', 'Specific task'] },
-      { name: 'touchpoints', label: 'Key Touchpoints', type: 'textarea', placeholder: 'List main user touchpoints' }
     ]
   },
   {
@@ -316,7 +349,7 @@ const canvasTemplates: CanvasTemplate[] = [
     ]
   },
 
-  // DEVELOPER FRAMEWORKS
+  // DEVELOPMENT
   {
     id: 'tech-architecture',
     name: 'Technical Architecture',
@@ -414,6 +447,23 @@ const canvasTemplates: CanvasTemplate[] = [
     ]
   }
 ];
+
+// Organize templates into segments
+canvasSegments.discovery.templates = canvasTemplates.filter(t => 
+  ['swot', 'user-journey'].includes(t.id)
+);
+canvasSegments.planning.templates = canvasTemplates.filter(t => 
+  ['business-model', 'product-roadmap', 'okr-canvas', 'gtm-strategy'].includes(t.id)
+);
+canvasSegments.prioritization.templates = canvasTemplates.filter(t => 
+  ['moscow', 'rice'].includes(t.id)
+);
+canvasSegments.design.templates = canvasTemplates.filter(t => 
+  ['design-system', 'wireframe-planning', 'ab-test'].includes(t.id)
+);
+canvasSegments.development.templates = canvasTemplates.filter(t => 
+  ['tech-architecture', 'api-design', 'sprint-planning', 'code-review'].includes(t.id)
+);
 
 export const CanvasGenerator: React.FC<CanvasGeneratorProps> = ({
   open,
@@ -585,46 +635,17 @@ export const CanvasGenerator: React.FC<CanvasGeneratorProps> = ({
               </p>
             </div>
             
-            {/* Category filters */}
-            <div className="flex flex-wrap gap-2 pb-4 border-b">
-              <Badge 
-                variant={roleFilter === 'all' ? 'default' : 'outline'}
-                className="cursor-pointer px-4 py-2 text-sm hover:opacity-80"
-                onClick={() => setRoleFilter('all')}
-              >
-                Tous les Frameworks
-              </Badge>
-              <Badge 
-                variant={roleFilter === 'product-manager' ? 'default' : 'outline'}
-                className="cursor-pointer px-4 py-2 text-sm hover:opacity-80"
-                onClick={() => setRoleFilter('product-manager')}
-              >
-                <Target className="w-3 h-3 mr-1" />
-                Product Manager
-              </Badge>
-              <Badge 
-                variant={roleFilter === 'designer' ? 'default' : 'outline'}
-                className="cursor-pointer px-4 py-2 text-sm hover:opacity-80"
-                onClick={() => setRoleFilter('designer')}
-              >
-                <Palette className="w-3 h-3 mr-1" />
-                Designer
-              </Badge>
-              <Badge 
-                variant={roleFilter === 'developer' ? 'default' : 'outline'}
-                className="cursor-pointer px-4 py-2 text-sm hover:opacity-80"
-                onClick={() => setRoleFilter('developer')}
-              >
-                <Code className="w-3 h-3 mr-1" />
-                Développeur
-              </Badge>
-            </div>
-
-            {/* Filtered Frameworks */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {canvasTemplates
-                .filter(template => roleFilter === 'all' || template.role === roleFilter)
-                .map((template) => (
+            {/* Frameworks organized by segments */}
+            <div className="space-y-8">
+              {Object.entries(canvasSegments).map(([segmentKey, segment]) => (
+                <div key={segmentKey} className="space-y-4">
+                  <div>
+                    <h4 className="text-lg font-semibold text-primary">{segment.title}</h4>
+                    <p className="text-sm text-muted-foreground">{segment.description}</p>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {segment.templates.map((template) => (
                   <Card 
                     key={template.id} 
                     className="cursor-pointer hover:shadow-md transition-all duration-200 hover:scale-105"
@@ -655,8 +676,11 @@ export const CanvasGenerator: React.FC<CanvasGeneratorProps> = ({
                         )}
                       </div>
                     </CardContent>
-                  </Card>
-                ))}
+                    </Card>
+                    ))}
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         ) : (
