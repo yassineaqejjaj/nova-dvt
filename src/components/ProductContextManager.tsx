@@ -36,7 +36,7 @@ interface ContextHistory {
 interface ProductContextManagerProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onContextSelected?: (context: ProductContext) => void;
+  onContextSelected?: () => void;
 }
 
 export const ProductContextManager = ({ open, onOpenChange, onContextSelected }: ProductContextManagerProps) => {
@@ -281,7 +281,13 @@ export const ProductContextManager = ({ open, onOpenChange, onContextSelected }:
         throw activateError;
       }
 
-      await loadContexts();
+      await loadContexts(true);
+      
+      // Notify parent component to reload active context
+      if (onContextSelected) {
+        onContextSelected();
+      }
+      
       toast({
         title: "Contexte activé",
         description: "Ce contexte sera utilisé par défaut dans les workflows"

@@ -701,58 +701,58 @@ export const Workflows: React.FC = () => {
     target_audience: string | null;
   } | null>(null);
 
-  // Load active context on mount
-  useEffect(() => {
-    const loadActiveContext = async () => {
-      try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) return;
+  // Load active context on mount and when context manager closes
+  const loadActiveContext = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
 
-        const { data, error } = await supabase
+      const { data, error } = await supabase
+        .from('product_contexts')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('is_active', true)
+        .eq('is_deleted', false)
+        .single();
+
+      if (error || !data) {
+        // If no active context, get the most recent one
+        const { data: recentData } = await supabase
           .from('product_contexts')
           .select('*')
           .eq('user_id', user.id)
-          .eq('is_active', true)
           .eq('is_deleted', false)
+          .order('updated_at', { ascending: false })
+          .limit(1)
           .single();
 
-        if (error || !data) {
-          // If no active context, get the most recent one
-          const { data: recentData } = await supabase
-            .from('product_contexts')
-            .select('*')
-            .eq('user_id', user.id)
-            .eq('is_deleted', false)
-            .order('updated_at', { ascending: false })
-            .limit(1)
-            .single();
-
-          if (recentData) {
-            setActiveContext({
-              name: recentData.name,
-              vision: recentData.vision,
-              objectives: Array.isArray(recentData.objectives) ? recentData.objectives as string[] : [],
-              target_kpis: Array.isArray(recentData.target_kpis) ? recentData.target_kpis as string[] : [],
-              constraints: recentData.constraints,
-              target_audience: recentData.target_audience
-            });
-          }
-          return;
+        if (recentData) {
+          setActiveContext({
+            name: recentData.name,
+            vision: recentData.vision,
+            objectives: Array.isArray(recentData.objectives) ? recentData.objectives as string[] : [],
+            target_kpis: Array.isArray(recentData.target_kpis) ? recentData.target_kpis as string[] : [],
+            constraints: recentData.constraints,
+            target_audience: recentData.target_audience
+          });
         }
-
-        setActiveContext({
-          name: data.name,
-          vision: data.vision,
-          objectives: Array.isArray(data.objectives) ? data.objectives as string[] : [],
-          target_kpis: Array.isArray(data.target_kpis) ? data.target_kpis as string[] : [],
-          constraints: data.constraints,
-          target_audience: data.target_audience
-        });
-      } catch (error) {
-        console.error('Error loading active context:', error);
+        return;
       }
-    };
 
+      setActiveContext({
+        name: data.name,
+        vision: data.vision,
+        objectives: Array.isArray(data.objectives) ? data.objectives as string[] : [],
+        target_kpis: Array.isArray(data.target_kpis) ? data.target_kpis as string[] : [],
+        constraints: data.constraints,
+        target_audience: data.target_audience
+      });
+    } catch (error) {
+      console.error('Error loading active context:', error);
+    }
+  };
+
+  useEffect(() => {
     loadActiveContext();
   }, []);
 
@@ -994,6 +994,7 @@ export const Workflows: React.FC = () => {
         <ProductContextManager 
           open={showContextManager} 
           onOpenChange={setShowContextManager}
+          onContextSelected={loadActiveContext}
         />
       </div>
     );
