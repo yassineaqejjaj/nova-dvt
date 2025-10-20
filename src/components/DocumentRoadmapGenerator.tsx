@@ -8,6 +8,8 @@ import { Badge } from '@/components/ui/badge';
 import { Calendar, Upload, Sparkles, FileText, Loader2, Download, Save } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 interface RoadmapItem {
   quarter: string;
@@ -132,6 +134,97 @@ export const DocumentRoadmapGenerator: React.FC = () => {
     }
   };
 
+  const handleDownloadPDF = () => {
+    if (!roadmap) return;
+
+    const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.getWidth();
+    
+    // Title
+    doc.setFontSize(20);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Roadmap - ' + (file?.name || 'Document'), pageWidth / 2, 20, { align: 'center' });
+    
+    let yPos = 30;
+
+    // Summary
+    if (roadmap.summary) {
+      doc.setFontSize(14);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Résumé', 15, yPos);
+      yPos += 8;
+      
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'normal');
+      const summaryLines = doc.splitTextToSize(roadmap.summary, pageWidth - 30);
+      doc.text(summaryLines, 15, yPos);
+      yPos += summaryLines.length * 5 + 10;
+    }
+
+    // Quarters
+    const quarters = generateQuarters();
+    quarters.forEach((quarter) => {
+      const quarterItems = roadmap.items.filter(item => item.quarter === quarter);
+      
+      if (yPos > 250) {
+        doc.addPage();
+        yPos = 20;
+      }
+
+      // Quarter title
+      doc.setFontSize(14);
+      doc.setFont('helvetica', 'bold');
+      doc.text(`${quarter} - ${quarterItems.length} items`, 15, yPos);
+      yPos += 8;
+
+      if (quarterItems.length > 0) {
+        const tableData = quarterItems.map(item => [
+          item.title,
+          item.description,
+          item.priority,
+          item.category || '-'
+        ]);
+
+        autoTable(doc, {
+          startY: yPos,
+          head: [['Titre', 'Description', 'Priorité', 'Catégorie']],
+          body: tableData,
+          theme: 'striped',
+          headStyles: { fillColor: [67, 56, 202] },
+          styles: { fontSize: 9, cellPadding: 3 },
+          columnStyles: {
+            0: { cellWidth: 45 },
+            1: { cellWidth: 80 },
+            2: { cellWidth: 25 },
+            3: { cellWidth: 30 }
+          },
+          didParseCell: function(data) {
+            if (data.column.index === 2 && data.section === 'body') {
+              const priority = data.cell.raw as string;
+              if (priority === 'high') {
+                data.cell.styles.textColor = [220, 38, 38];
+                data.cell.styles.fontStyle = 'bold';
+              } else if (priority === 'medium') {
+                data.cell.styles.textColor = [234, 88, 12];
+              }
+            }
+          }
+        });
+
+        yPos = (doc as any).lastAutoTable.finalY + 10;
+      } else {
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'italic');
+        doc.text('Aucun item pour cette période', 15, yPos);
+        yPos += 10;
+      }
+    });
+
+    // Save
+    doc.save(`Roadmap-${file?.name || 'document'}.pdf`);
+    toast.success('PDF téléchargé avec succès !');
+  };
+
   const getPriorityColor = (priority: string) => {
     switch (priority) {
       case 'high': return 'destructive';
@@ -243,10 +336,16 @@ export const DocumentRoadmapGenerator: React.FC = () => {
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <h3 className="text-2xl font-bold">Roadmap Générée</h3>
-            <Button onClick={handleSaveToArtifacts} variant="outline">
-              <Save className="w-4 h-4 mr-2" />
-              Enregistrer
-            </Button>
+            <div className="flex gap-2">
+              <Button onClick={handleDownloadPDF} variant="outline">
+                <Download className="w-4 h-4 mr-2" />
+                Télécharger PDF
+              </Button>
+              <Button onClick={handleSaveToArtifacts} variant="outline">
+                <Save className="w-4 h-4 mr-2" />
+                Enregistrer
+              </Button>
+            </div>
           </div>
 
           {roadmap.summary && (
