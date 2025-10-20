@@ -17,7 +17,8 @@ import {
   Bot,
   ChevronDown,
   Shield,
-  Calculator
+  Calculator,
+  Star
 } from 'lucide-react';
 import {
   Sidebar,
@@ -49,19 +50,17 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
   onManageContexts
 }) => {
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({
-    core: true,
-    tools: true,
-    workflows: true,
+    quickAccess: true,
+    core: false,
+    tools: false,
+    workflows: false,
     agent: true,
   });
 
   const [expandedSegments, setExpandedSegments] = useState<Record<string, boolean>>({
-    discovery: true,
-    planning: true,
-    specifications: true,
-    team: true,
-    metrics: true,
-    documentation: true,
+    discovery: false,
+    planning: false,
+    team: false,
   });
 
   const toggleGroup = (groupId: string) => {
@@ -72,127 +71,123 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
     setExpandedSegments(prev => ({ ...prev, [segmentId]: !prev[segmentId] }));
   };
 
-  // NOVA CORE Module
-  const coreItems = [
+  // ACCÈS RAPIDE - Always visible
+  const quickAccessItems = [
     {
       id: 'dashboard' as TabType,
-      label: 'Tableau de bord',
+      label: 'Dashboard',
       icon: LayoutDashboard,
       description: 'Vue d\'ensemble'
     },
     {
-      id: 'product-context' as TabType,
-      label: 'Contexte Produit',
-      icon: Database,
-      description: 'Gestion du contexte global'
+      id: 'chat' as TabType,
+      label: 'Chat Multi-Agents',
+      icon: MessageCircle,
+      description: 'Collaboration IA',
+      badge: hasActiveChat ? 'active' : undefined
     },
     {
       id: 'artifacts' as TabType,
       label: 'Artefacts',
       icon: FileText,
-      description: 'Gestion des livrables'
+      description: 'Livrables'
+    }
+  ];
+
+  // NOVA CORE - Simplified
+  const coreItems = [
+    {
+      id: 'product-context' as TabType,
+      label: 'Contexte Produit',
+      icon: Database,
+      description: 'Contexte global'
     },
     {
       id: 'analytics' as TabType,
       label: 'Analytiques',
       icon: BarChart3,
-      description: 'Suivi & Performance'
+      description: 'Performance'
     },
     {
       id: 'admin' as TabType,
-      label: 'Panneau Admin',
+      label: 'Admin',
       icon: Shield,
-      description: 'Gouvernance'
+      description: 'Paramètres'
     }
   ];
 
   // NOVA CORE Actions (non-tab actions)
   const coreActions: any[] = [];
 
-  // NOVA TOOLS Module - organized by segments
+  // NOVA TOOLS Module - Optimized into 3 segments
   const toolsSegments = {
     discovery: {
-      title: 'Découverte & Recherche',
+      title: 'Discovery & Strategy',
       items: [
         {
           id: 'user-persona-builder' as TabType,
           label: 'User Personas',
           icon: Users,
-          description: 'Builder de personas'
-        }
-      ]
-    },
-    planning: {
-      title: 'Planification Stratégique',
-      items: [
+          description: 'Personas utilisateur'
+        },
         {
           label: 'Canvas Generator',
           icon: Grid3X3,
           description: 'Frameworks stratégiques',
           isAction: true,
           onClick: onCreateCanvas
-        },
-        {
-          id: 'document-roadmap' as TabType,
-          label: 'Document vers Roadmap',
-          icon: FileText,
-          description: 'Roadmap depuis document'
         }
       ]
     },
-    specifications: {
-      title: 'Spécifications & Définition',
+    planning: {
+      title: 'Specs & Planning',
       items: [
         {
           id: 'instant-prd' as TabType,
-          label: 'PRD instantané',
+          label: 'PRD',
           icon: Sparkles,
-          description: 'Générer un PRD en 15s'
+          description: 'Générateur PRD'
+        },
+        {
+          id: 'document-roadmap' as TabType,
+          label: 'Doc → Roadmap',
+          icon: FileText,
+          description: 'Convertir en roadmap'
         },
         {
           id: 'epic-to-stories' as TabType,
-          label: 'Epic vers Stories',
+          label: 'Epic → Stories',
           icon: Sparkles,
-          description: 'Découpage stories IA'
+          description: 'Découpage Auto'
         }
       ]
     },
     team: {
-      title: 'Gestion d\'Équipe',
+      title: 'Team & Docs',
       items: [
         {
           id: 'raci-generator' as TabType,
-          label: 'Générateur RACI',
+          label: 'RACI',
           icon: Users,
-          description: 'Matrice responsabilités'
-        }
-      ]
-    },
-    metrics: {
-      title: 'Estimation & Métriques',
-      items: [
+          description: 'Responsabilités'
+        },
         {
           id: 'estimation-tool' as TabType,
-          label: 'Estimation & Sizing',
+          label: 'Estimation',
           icon: Calculator,
-          description: 'Estimations rapides'
-        }
-      ]
-    },
-    documentation: {
-      title: 'Documentation',
-      items: [
+          description: 'Sizing'
+        },
         {
           id: 'release-notes-generator' as TabType,
           label: 'Release Notes',
           icon: FileText,
-          description: 'Générateur de notes'
+          description: 'Notes version'
         },
         {
           id: 'meeting-minutes' as TabType,
-          label: 'Comptes-rendus',
+          label: 'CR Réunion',
           icon: FileText,
-          description: 'Transcription IA'
+          description: 'Transcription'
         }
       ]
     }
@@ -282,7 +277,7 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
           <Button
             variant="ghost"
             onClick={() => toggleGroup(groupId)}
-            className="w-full justify-start px-2 h-8 hover:bg-primary/5"
+            className="w-full justify-start px-2 h-7 hover:bg-primary/5"
           >
             <ModuleIcon className="w-4 h-4 mr-2 text-primary" />
             {open && (
@@ -292,7 +287,7 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
                 </SidebarGroupLabel>
                 <ChevronDown
                   className={`w-4 h-4 transition-transform ${
-                    isExpanded ? 'transform rotate-180' : ''
+                    isExpanded ? 'rotate-180' : ''
                   }`}
                 />
               </>
@@ -314,7 +309,7 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
                         variant="ghost"
                         onClick={() => !item.disabled && onTabChange(item.id)}
                         disabled={item.disabled}
-                        className={`w-full justify-start h-11 px-3 ${getNavClass(isActive, item.disabled)}`}
+                        className={`w-full justify-start h-9 px-3 ${getNavClass(isActive, item.disabled)}`}
                       >
                         <Icon className="w-4 h-4 mr-3 flex-shrink-0" />
                         <div className={`flex-1 text-left transition-opacity duration-200 overflow-hidden ${!open ? 'opacity-0 w-0' : 'opacity-100'}`}>
@@ -333,7 +328,6 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
                               </Badge>
                             )}
                           </div>
-                          <p className="text-xs text-muted-foreground whitespace-nowrap">{item.description}</p>
                         </div>
                       </Button>
                     </SidebarMenuButton>
@@ -349,14 +343,14 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
 
   const renderToolsGroup = () => {
     const isExpanded = expandedGroups.tools;
-    
+
     return (
       <SidebarGroup key="tools">
         <div className="mb-2">
           <Button
             variant="ghost"
             onClick={() => toggleGroup('tools')}
-            className="w-full justify-start px-2 h-8 hover:bg-primary/5"
+            className="w-full justify-start px-2 h-7 hover:bg-primary/5"
           >
             <Sparkles className="w-4 h-4 mr-2 text-primary" />
             {open && (
@@ -367,7 +361,7 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
                 <Badge variant="secondary" className="text-xs">AI</Badge>
                 <ChevronDown
                   className={`w-4 h-4 ml-2 transition-transform ${
-                    isExpanded ? 'transform rotate-180' : ''
+                    isExpanded ? 'rotate-180' : ''
                   }`}
                 />
               </>
@@ -386,7 +380,7 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
                     <Button
                       variant="ghost"
                       onClick={() => toggleSegment(segmentKey)}
-                      className="w-full justify-start px-3 py-2 h-8 hover:bg-muted/50"
+                      className="w-full justify-start px-3 py-2 h-7 hover:bg-muted/50"
                     >
                       {open && (
                         <>
@@ -395,7 +389,7 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
                           </span>
                           <ChevronDown
                             className={`w-3 h-3 transition-transform ${
-                              isSegmentExpanded ? 'transform rotate-180' : ''
+                              isSegmentExpanded ? 'rotate-180' : ''
                             }`}
                           />
                         </>
@@ -415,14 +409,13 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
                             <Button
                               variant="ghost"
                               onClick={() => (item as any).isAction ? (item as any).onClick?.() : onTabChange(item.id as TabType)}
-                              className={`w-full justify-start h-10 px-3 ${getNavClass(isActive)}`}
+                              className={`w-full justify-start h-9 px-3 ${getNavClass(isActive)}`}
                             >
                               <Icon className="w-4 h-4 mr-3 flex-shrink-0" />
                               <div className={`flex-1 text-left transition-opacity duration-200 overflow-hidden ${!open ? 'opacity-0 w-0' : 'opacity-100'}`}>
                                 <div className="flex items-center space-x-2">
                                   <span className="text-sm font-medium whitespace-nowrap">{item.label}</span>
                                 </div>
-                                <p className="text-xs text-muted-foreground whitespace-nowrap">{item.description}</p>
                               </div>
                             </Button>
                           </SidebarMenuButton>
@@ -448,18 +441,20 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
-      <SidebarContent className="overflow-hidden">
-        {/* NOVA CORE Module */}
+      <SidebarContent>
+        {/* ACCÈS RAPIDE - Always visible */}
+        {renderModuleGroup('ACCÈS RAPIDE', 'quickAccess', quickAccessItems, Star)}
+        
+        {/* NOVA CORE - Simplified */}
         {renderModuleGroup('NOVA CORE', 'core', coreItems, Database)}
         
-        
-        {/* NOVA TOOLS Module - AI-accessible */}
+        {/* NOVA TOOLS - Optimized segments */}
         {renderToolsGroup()}
         
-        {/* NOVA WORKFLOWS Module */}
+        {/* NOVA PROCESS - Workflows */}
         {renderModuleGroup('NOVA PROCESS', 'workflows', workflowItems, Workflow)}
         
-        {/* NOVA AGENT Module */}
+        {/* NOVA AGENT - Expanded by default */}
         {renderModuleGroup('NOVA AGENT', 'agent', agentItems, Bot)}
       </SidebarContent>
     </Sidebar>
