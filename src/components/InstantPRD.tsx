@@ -46,13 +46,21 @@ interface Persona {
   imageUrl?: string;
 }
 
+interface Feature {
+  id: string;
+  name: string;
+  description: string;
+  userStories?: UserStory[];
+}
+
 interface UserStory {
   id: string;
+  featureId: string;
   title: string;
   description: string;
   acceptanceCriteria: string[];
   priority: 'high' | 'medium' | 'low';
-  storyPoints: number;
+  complexity: 'XS' | 'S' | 'M' | 'L' | 'XL';
 }
 
 interface PRDDocument {
@@ -62,8 +70,7 @@ interface PRDDocument {
   vision: string;
   constraints: string[];
   personas: Persona[];
-  userStories: UserStory[];
-  features: { name: string; description: string }[];
+  features: Feature[];
   prioritization: { mvp: string[]; must: string[]; should: string[]; could: string[]; wont: string[] };
   acceptance: string[];
   wireframes: string[];
@@ -129,8 +136,7 @@ export const InstantPRD = () => {
     { id: 'vision', title: 'Vision produit', icon: Sparkles, status: 'pending' },
     { id: 'constraints', title: 'Hypothèses & Contraintes', icon: AlertTriangle, status: 'pending' },
     { id: 'personas', title: 'Utilisateurs cibles / Personas', icon: Users, status: 'pending' },
-    { id: 'stories', title: 'User Stories & Scénarios d\'usage', icon: FileText, status: 'pending' },
-    { id: 'features', title: 'Fonctionnalités clés', icon: Zap, status: 'pending' },
+    { id: 'features', title: 'Fonctionnalités & User Stories', icon: Zap, status: 'pending' },
     { id: 'prioritization', title: 'Priorisation (MoSCoW)', icon: Target, status: 'pending' },
     { id: 'acceptance', title: 'Critères d\'acceptation', icon: CheckCircle2, status: 'pending' },
     { id: 'wireframes', title: 'Design & UX', icon: Layout, status: 'pending' },
@@ -181,18 +187,23 @@ export const InstantPRD = () => {
     return [safeText(arr)];
   };
 
-  const normalizeFeatures = (f: any): { name: string; description: string }[] => {
+  const normalizeFeatures = (f: any): Feature[] => {
     if (Array.isArray(f)) {
-      return f.map((item: any) => (
+      return f.map((item: any, idx: number) => (
         typeof item === 'string'
-          ? { name: item, description: '' }
-          : { name: safeText(item?.name ?? item?.title ?? 'Feature'), description: safeText(item?.description ?? item?.details ?? '') }
+          ? { id: `F-${idx + 1}`, name: item, description: '', userStories: [] }
+          : { 
+              id: item.id || `F-${idx + 1}`,
+              name: safeText(item?.name ?? item?.title ?? 'Feature'), 
+              description: safeText(item?.description ?? item?.details ?? ''),
+              userStories: []
+            }
       ));
     }
     if (f && typeof f === 'object') {
-      return [{ name: safeText(f?.name ?? f?.title ?? 'Feature'), description: safeText(f?.description ?? f?.details ?? '') }];
+      return [{ id: 'F-1', name: safeText(f?.name ?? f?.title ?? 'Feature'), description: safeText(f?.description ?? f?.details ?? ''), userStories: [] }];
     }
-    if (typeof f === 'string') return [{ name: f, description: '' }];
+    if (typeof f === 'string') return [{ id: 'F-1', name: f, description: '', userStories: [] }];
     return [];
   };
 
@@ -354,26 +365,22 @@ Génère 3 personas (JSON uniquement):
       const personasWithImages = personasResult.personas.map((p: Persona) => ({ ...p, imageUrl: '' }));
       updateSectionStatus('personas', 'complete');
 
-      // Step 7: User Stories (41%)
-      setCurrentSection("User Stories & Scénarios d'usage");
-      updateSectionStatus('stories', 'generating');
+      // Step 7: Features (41%)
+      setCurrentSection("Fonctionnalités clés");
+      updateSectionStatus('features', 'generating');
       setProgress(41);
 
-      const { data: storiesData } = await supabase.functions.invoke('chat-ai', {
+      const { data: featuresData } = await supabase.functions.invoke('chat-ai', {
         body: {
           message: `Idée: "${idea}"
-Personas: ${JSON.stringify(personasWithImages)}
 
-Génère 12 user stories (JSON uniquement):
+Génère 5-7 fonctionnalités clés avec leurs user stories (JSON uniquement):
 {
-  "userStories": [
-    {
-      "id": "US-001",
-      "title": "Titre",
-      "description": "En tant que [persona], je veux [action] afin de [bénéfice]",
-      "acceptanceCriteria": ["Critère 1", "Critère 2", "Critère 3"],
-      "priority": "high",
-      "storyPoints": 5
+  "features": [
+    { 
+      "id": "F-001",
+      "name": "Nom de la fonctionnalité", 
+      "description": "Description détaillée de la fonctionnalité"
     }
   ]
 }`,
@@ -381,29 +388,53 @@ Génère 12 user stories (JSON uniquement):
         }
       });
 
-      const storiesResult = parseAIResponse(storiesData);
-      updateSectionStatus('stories', 'complete');
-
-      // Step 8: Features (48%)
-      setCurrentSection("Fonctionnalités clés");
-      updateSectionStatus('features', 'generating');
+      const featuresResult = parseAIResponse(featuresData);
+      const normalizedFeatures = normalizeFeatures(featuresResult.features);
+      
+      // Step 8: User Stories (48%) - Generate stories for each feature
+      setCurrentSection("User Stories basées sur les fonctionnalités");
       setProgress(48);
 
-      const { data: featuresData } = await supabase.functions.invoke('chat-ai', {
-        body: {
-          message: `Idée: "${idea}"
+      // Generate user stories for each feature
+      for (let i = 0; i < normalizedFeatures.length; i++) {
+        const feature = normalizedFeatures[i];
+        setProgress(48 + (i * 7 / normalizedFeatures.length));
 
-Génère 5-7 fonctionnalités clés (JSON uniquement):
+        const { data: storiesData } = await supabase.functions.invoke('chat-ai', {
+          body: {
+            message: `Idée: "${idea}"
+Fonctionnalité: ${feature.name} - ${feature.description}
+Personas: ${JSON.stringify(personasWithImages)}
+
+Génère 2-4 user stories spécifiques à cette fonctionnalité (JSON uniquement).
+Utilise le T-shirt sizing (XS, S, M, L, XL) pour la complexité:
+- XS: < 4h de travail
+- S: 4-8h de travail  
+- M: 1-2 jours de travail
+- L: 3-5 jours de travail
+- XL: > 5 jours de travail
+
 {
-  "features": [
-    { "name": "Nom feature", "description": "Description détaillée" }
+  "userStories": [
+    {
+      "id": "US-${String(i + 1).padStart(3, '0')}-001",
+      "featureId": "${feature.id}",
+      "title": "Titre court et clair",
+      "description": "En tant que [persona], je veux [action] afin de [bénéfice]",
+      "acceptanceCriteria": ["Critère 1", "Critère 2", "Critère 3"],
+      "priority": "high",
+      "complexity": "M"
+    }
   ]
 }`,
-          mode: 'simple'
-        }
-      });
+            mode: 'simple'
+          }
+        });
 
-      const featuresResult = parseAIResponse(featuresData);
+        const storiesResult = parseAIResponse(storiesData);
+        feature.userStories = storiesResult.userStories || [];
+      }
+
       updateSectionStatus('features', 'complete');
 
       // Step 9: Prioritization (55%)
@@ -584,13 +615,7 @@ Génère 3-4 références/annexes (JSON uniquement):
         vision: safeText(visionResult.vision),
         constraints: normalizeArrayOfStrings(constraintsResult.constraints),
         personas: personasWithImages,
-        userStories: Array.isArray(storiesResult.userStories)
-          ? storiesResult.userStories.map((s: any) => ({
-              ...s,
-              acceptanceCriteria: normalizeArrayOfStrings(s?.acceptanceCriteria)
-            }))
-          : [],
-        features: normalizeFeatures(featuresResult.features),
+        features: normalizedFeatures,
         prioritization: normalizePrioritization(prioritizationResult.prioritization),
         acceptance: normalizeArrayOfStrings(acceptanceResult.acceptance),
         wireframes: normalizeArrayOfStrings(wireframesResult.wireframes),
@@ -952,69 +977,77 @@ Génère 3-4 références/annexes (JSON uniquement):
                 </CardContent>
               </Card>
 
-              {/* User Stories */}
-              <Card id="stories">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <FileText className="w-5 h-5" />
-                    User Stories & Scénarios d'usage
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {prdDocument.userStories.map((story) => (
-                      <Card key={story.id}>
-                        <CardHeader>
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                              <Badge variant="outline">{story.id}</Badge>
-                              <h4 className="font-semibold">{story.title}</h4>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <Badge variant={
-                                story.priority === 'high' ? 'destructive' : 
-                                story.priority === 'medium' ? 'default' : 'secondary'
-                              }>
-                                {story.priority}
-                              </Badge>
-                              <Badge variant="outline">{story.storyPoints} pts</Badge>
-                            </div>
-                          </div>
-                        </CardHeader>
-                        <CardContent className="space-y-3">
-                          <p className="text-sm italic">{story.description}</p>
-                          <div>
-                            <p className="text-xs font-medium mb-2">Critères d'acceptation:</p>
-                            <ul className="text-sm space-y-1">
-                              {story.acceptanceCriteria.map((criteria, idx) => (
-                                <li key={idx} className="flex items-start gap-2">
-                                  <CheckCircle2 className="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" />
-                                  <span>{criteria}</span>
-                                </li>
-                              ))}
-                            </ul>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Features */}
+              {/* Features & User Stories */}
               <Card id="features">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Zap className="w-5 h-5" />
-                    Fonctionnalités clés
+                    Fonctionnalités & User Stories
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-3">
-                    {prdDocument.features.map((feature, idx) => (
-                      <div key={idx} className="p-4 border rounded-lg">
-                        <h4 className="font-semibold mb-2">{safeText(feature.name)}</h4>
-                        <p className="text-sm text-muted-foreground">{safeText(feature.description)}</p>
+                  <div className="space-y-6">
+                    {prdDocument.features.map((feature) => (
+                      <div key={feature.id} className="space-y-4">
+                        <div className="p-4 border-2 rounded-lg bg-muted/50">
+                          <div className="flex items-center gap-2 mb-2">
+                            <Badge className="font-mono">{feature.id}</Badge>
+                            <h3 className="font-bold text-lg">{feature.name}</h3>
+                          </div>
+                          <p className="text-sm text-muted-foreground">{feature.description}</p>
+                        </div>
+                        
+                        {/* User Stories for this feature */}
+                        {feature.userStories && feature.userStories.length > 0 && (
+                          <div className="ml-6 space-y-3">
+                            {feature.userStories.map((story) => (
+                              <Card key={story.id} className="border-l-4 border-l-primary">
+                                <CardHeader className="pb-3">
+                                  <div className="flex items-center justify-between flex-wrap gap-2">
+                                    <div className="flex items-center gap-2">
+                                      <Badge variant="outline" className="font-mono">{story.id}</Badge>
+                                      <h4 className="font-semibold">{story.title}</h4>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                      <Badge variant={
+                                        story.priority === 'high' ? 'destructive' : 
+                                        story.priority === 'medium' ? 'default' : 'secondary'
+                                      }>
+                                        {story.priority}
+                                      </Badge>
+                                      <Badge 
+                                        variant="outline"
+                                        className={
+                                          story.complexity === 'XS' ? 'bg-green-100 text-green-800' :
+                                          story.complexity === 'S' ? 'bg-blue-100 text-blue-800' :
+                                          story.complexity === 'M' ? 'bg-yellow-100 text-yellow-800' :
+                                          story.complexity === 'L' ? 'bg-orange-100 text-orange-800' :
+                                          'bg-red-100 text-red-800'
+                                        }
+                                      >
+                                        {story.complexity}
+                                      </Badge>
+                                    </div>
+                                  </div>
+                                </CardHeader>
+                                <CardContent className="space-y-3 pt-0">
+                                  <p className="text-sm italic">{story.description}</p>
+                                  <div>
+                                    <p className="text-xs font-medium mb-2">Critères d'acceptation:</p>
+                                    <ul className="text-sm space-y-1">
+                                      {story.acceptanceCriteria.map((criteria, idx) => (
+                                        <li key={idx} className="flex items-start gap-2">
+                                          <CheckCircle2 className="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" />
+                                          <span>{criteria}</span>
+                                        </li>
+                                      ))}
+                                    </ul>
+                                  </div>
+                                </CardContent>
+                              </Card>
+                            ))}
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>
