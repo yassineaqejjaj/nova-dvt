@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 
 export interface Theme {
   id: string;
@@ -145,6 +146,7 @@ interface ThemeContextType {
   currentTheme: string;
   setTheme: (themeId: string) => void;
   themes: Theme[];
+  loadUserTheme: (userId: string) => Promise<void>;
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
@@ -153,10 +155,8 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [currentTheme, setCurrentTheme] = useState<string>('nova-light');
 
   useEffect(() => {
-    // Always default to nova-light on first load
-    const savedTheme = 'nova-light';
-    localStorage.setItem('nova-theme', savedTheme);
-    applyTheme(savedTheme);
+    // Set default theme on first load
+    applyTheme('nova-light');
   }, []);
 
   const applyTheme = (themeId: string) => {
@@ -164,13 +164,46 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     setCurrentTheme(themeId);
   };
 
-  const setTheme = (themeId: string) => {
+  const loadUserTheme = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('theme')
+        .eq('user_id', userId)
+        .single();
+
+      if (error) throw error;
+
+      if (data?.theme) {
+        applyTheme(data.theme);
+      }
+    } catch (error) {
+      console.error('Error loading user theme:', error);
+    }
+  };
+
+  const setTheme = async (themeId: string) => {
     applyTheme(themeId);
-    localStorage.setItem('nova-theme', themeId);
+
+    // Save to database if user is authenticated
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (user) {
+        const { error } = await supabase
+          .from('profiles')
+          .update({ theme: themeId })
+          .eq('user_id', user.id);
+
+        if (error) throw error;
+      }
+    } catch (error) {
+      console.error('Error saving theme:', error);
+    }
   };
 
   return (
-    <ThemeContext.Provider value={{ currentTheme, setTheme, themes }}>
+    <ThemeContext.Provider value={{ currentTheme, setTheme, themes, loadUserTheme }}>
       {children}
     </ThemeContext.Provider>
   );

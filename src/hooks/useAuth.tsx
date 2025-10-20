@@ -2,8 +2,10 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { User } from '@supabase/supabase-js';
 import { UserProfile, Squad, Badge } from '@/types';
+import { useTheme } from '@/contexts/ThemeContext';
 
 export const useAuth = () => {
+  const { loadUserTheme } = useTheme();
   const [user, setUser] = useState<User | null>(null);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [squads, setSquads] = useState<Squad[]>([]);
@@ -20,6 +22,7 @@ export const useAuth = () => {
       if (session?.user) {
         loadUserProfile(session.user.id);
         loadUserSquads(session.user.id);
+        loadUserTheme(session.user.id);
 
         // Set up realtime subscription for profile updates
         profileChannel = supabase
@@ -56,6 +59,9 @@ export const useAuth = () => {
         if (session?.user) {
           loadUserProfile(session.user.id);
           loadUserSquads(session.user.id);
+          setTimeout(() => {
+            loadUserTheme(session.user.id);
+          }, 0);
         } else {
           setUserProfile(null);
           setSquads([]);

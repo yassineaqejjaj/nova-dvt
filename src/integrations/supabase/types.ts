@@ -508,6 +508,7 @@ export type Database = {
           level: number
           role: string | null
           streak: number
+          theme: string | null
           updated_at: string
           user_id: string
           xp: number
@@ -520,6 +521,7 @@ export type Database = {
           level?: number
           role?: string | null
           streak?: number
+          theme?: string | null
           updated_at?: string
           user_id: string
           xp?: number
@@ -532,6 +534,7 @@ export type Database = {
           level?: number
           role?: string | null
           streak?: number
+          theme?: string | null
           updated_at?: string
           user_id?: string
           xp?: number
