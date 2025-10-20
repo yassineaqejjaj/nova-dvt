@@ -358,6 +358,9 @@ export const ProductContextManager = ({ open, onOpenChange, onContextSelected }:
     if (!selectedContext) return;
 
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('User not authenticated');
+
       const snapshot = historyItem.snapshot;
       const { error } = await supabase
         .from('product_contexts')
@@ -367,9 +370,11 @@ export const ProductContextManager = ({ open, onOpenChange, onContextSelected }:
           objectives: snapshot.objectives,
           target_kpis: snapshot.target_kpis,
           constraints: snapshot.constraints,
-          target_audience: snapshot.target_audience
+          target_audience: snapshot.target_audience,
+          user_id: user.id
         })
-        .eq('id', selectedContext.id);
+        .eq('id', selectedContext.id)
+        .eq('user_id', user.id);
 
       if (error) throw error;
 
