@@ -28,7 +28,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { Shield, Flag, FileText, Trash2, Edit, Plus } from 'lucide-react';
+import { Shield, Flag, FileText, Trash2, Edit, Plus, Gift, Loader2 } from 'lucide-react';
 
 interface FeatureFlag {
   id: string;
@@ -51,6 +51,11 @@ export const AdminPanel: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [deleteArtifactId, setDeleteArtifactId] = useState<string | null>(null);
   const [editingFlag, setEditingFlag] = useState<FeatureFlag | null>(null);
+  const [isDeploying, setIsDeploying] = useState(false);
+  const [boxType, setBoxType] = useState<'common' | 'rare' | 'epic' | 'legendary'>('epic');
+  const [expiresInHours, setExpiresInHours] = useState(72);
+  const [campaignName, setCampaignName] = useState('');
+  const [deploymentReport, setDeploymentReport] = useState<any>(null);
 
   useEffect(() => {
     loadData();
@@ -133,6 +138,35 @@ export const AdminPanel: React.FC = () => {
     }
   };
 
+  const handleDeployMysteryBox = async () => {
+    setIsDeploying(true);
+    setDeploymentReport(null);
+    
+    try {
+      const { data, error } = await supabase.functions.invoke('deploy-mystery-box', {
+        body: {
+          box_type: boxType,
+          expires_in_hours: expiresInHours,
+          campaign_name: campaignName || undefined,
+        },
+      });
+
+      if (error) throw error;
+
+      setDeploymentReport(data);
+      toast.success('Mystery boxes deployed!', {
+        description: `${data.deployment.boxes_deployed} boxes deployed to users`,
+      });
+    } catch (error: any) {
+      console.error('Error deploying mystery boxes:', error);
+      toast.error('Failed to deploy mystery boxes', {
+        description: error.message,
+      });
+    } finally {
+      setIsDeploying(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -146,7 +180,7 @@ export const AdminPanel: React.FC = () => {
       </div>
 
       <Tabs defaultValue="features" className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="features">
             <Flag className="w-4 h-4 mr-2" />
             Feature Flags
@@ -154,6 +188,10 @@ export const AdminPanel: React.FC = () => {
           <TabsTrigger value="artifacts">
             <FileText className="w-4 h-4 mr-2" />
             Artifacts
+          </TabsTrigger>
+          <TabsTrigger value="gamification">
+            <Gift className="w-4 h-4 mr-2" />
+            Mystery Boxes
           </TabsTrigger>
         </TabsList>
 
@@ -239,6 +277,123 @@ export const AdminPanel: React.FC = () => {
                     ))}
                   </div>
                 </ScrollArea>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="gamification" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Deploy Mystery Boxes</CardTitle>
+              <CardDescription>Send mystery boxes to all users</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="boxType">Box Type</Label>
+                  <select
+                    id="boxType"
+                    className="w-full p-2 border rounded-md bg-background"
+                    value={boxType}
+                    onChange={(e) => setBoxType(e.target.value as any)}
+                  >
+                    <option value="common">Common (Standard rewards)</option>
+                    <option value="rare">Rare (Better rewards)</option>
+                    <option value="epic">Epic (Great rewards)</option>
+                    <option value="legendary">Legendary (Best rewards)</option>
+                  </select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="expiresIn">Expires In (hours)</Label>
+                  <Input
+                    id="expiresIn"
+                    type="number"
+                    min="1"
+                    max="168"
+                    value={expiresInHours}
+                    onChange={(e) => setExpiresInHours(parseInt(e.target.value))}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    How long users have to open the box (1-168 hours)
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="campaignName">Campaign Name (Optional)</Label>
+                  <Input
+                    id="campaignName"
+                    placeholder="e.g., Launch Week Special"
+                    value={campaignName}
+                    onChange={(e) => setCampaignName(e.target.value)}
+                  />
+                </div>
+
+                <Button
+                  onClick={handleDeployMysteryBox}
+                  disabled={isDeploying}
+                  className="w-full"
+                  size="lg"
+                >
+                  {isDeploying ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Deploying...
+                    </>
+                  ) : (
+                    <>
+                      <Gift className="w-4 h-4 mr-2" />
+                      Deploy to All Users
+                    </>
+                  )}
+                </Button>
+              </div>
+
+              {deploymentReport && (
+                <div className="mt-6 p-4 border rounded-lg bg-muted/50">
+                  <h4 className="font-semibold mb-3">Deployment Report</h4>
+                  <div className="space-y-2 text-sm">
+                    {deploymentReport.campaign_name && (
+                      <p>
+                        <span className="text-muted-foreground">Campaign:</span>{' '}
+                        <span className="font-medium">{deploymentReport.campaign_name}</span>
+                      </p>
+                    )}
+                    <p>
+                      <span className="text-muted-foreground">Box Type:</span>{' '}
+                      <Badge variant="outline">{deploymentReport.box_type}</Badge>
+                    </p>
+                    <p>
+                      <span className="text-muted-foreground">Total Users:</span>{' '}
+                      <span className="font-medium">
+                        {deploymentReport.deployment.total_users}
+                      </span>
+                    </p>
+                    <p>
+                      <span className="text-muted-foreground">Successfully Deployed:</span>{' '}
+                      <span className="font-medium text-green-600">
+                        {deploymentReport.deployment.boxes_deployed}
+                      </span>
+                    </p>
+                    {deploymentReport.deployment.errors > 0 && (
+                      <p>
+                        <span className="text-muted-foreground">Errors:</span>{' '}
+                        <span className="font-medium text-destructive">
+                          {deploymentReport.deployment.errors}
+                        </span>
+                      </p>
+                    )}
+                    {deploymentReport.expires_at && (
+                      <p>
+                        <span className="text-muted-foreground">Expires:</span>{' '}
+                        <span className="font-medium">
+                          {new Date(deploymentReport.expires_at).toLocaleString()}
+                        </span>
+                      </p>
+                    )}
+                  </div>
+                </div>
               )}
             </CardContent>
           </Card>
