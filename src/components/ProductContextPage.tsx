@@ -322,13 +322,33 @@ export const ProductContextPage = () => {
 
       if (error) throw error;
 
+      // If the deleted context was the selected one, reset the form
+      if (selectedContext?.id === deleteContextId) {
+        setSelectedContext(null);
+        setFormData({
+          name: '',
+          vision: '',
+          objectives: [],
+          target_kpis: [],
+          constraints: '',
+          target_audience: '',
+          sprintDuration: '2',
+          teamSize: '',
+          teamRoles: [],
+          techStack: [],
+          budget: '',
+          timeline: ''
+        });
+        setIsEditing(false);
+      }
+
       toast({
         title: "Contexte supprimé",
         description: "Le contexte a été supprimé avec succès"
       });
 
       setDeleteContextId(null);
-      loadContexts();
+      await loadContexts();
     } catch (error: any) {
       console.error('Error deleting context:', error);
       toast({
@@ -336,6 +356,7 @@ export const ProductContextPage = () => {
         description: "Impossible de supprimer le contexte",
         variant: "destructive"
       });
+      setDeleteContextId(null);
     }
   };
 
