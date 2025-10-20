@@ -63,6 +63,14 @@ interface UserStory {
   complexity: 'XS' | 'S' | 'M' | 'L' | 'XL';
 }
 
+interface JourneyStage {
+  stage: string;
+  actions: string[];
+  thoughts: string[];
+  painPoints: string[];
+  opportunities: string[];
+}
+
 interface PRDDocument {
   introduction: string;
   context: string;
@@ -70,6 +78,7 @@ interface PRDDocument {
   vision: string;
   constraints: string[];
   personas: Persona[];
+  userJourneyMap: JourneyStage[];
   features: Feature[];
   prioritization: { mvp: string[]; must: string[]; should: string[]; could: string[]; wont: string[] };
   acceptance: string[];
@@ -136,6 +145,7 @@ export const InstantPRD = () => {
     { id: 'vision', title: 'Vision produit', icon: Sparkles, status: 'pending' },
     { id: 'constraints', title: 'Hypothèses & Contraintes', icon: AlertTriangle, status: 'pending' },
     { id: 'personas', title: 'Utilisateurs cibles / Personas', icon: Users, status: 'pending' },
+    { id: 'userJourneyMap', title: 'User Journey Map', icon: Map, status: 'pending' },
     { id: 'features', title: 'Fonctionnalités & User Stories', icon: Zap, status: 'pending' },
     { id: 'prioritization', title: 'Priorisation (MoSCoW)', icon: Target, status: 'pending' },
     { id: 'acceptance', title: 'Critères d\'acceptation', icon: CheckCircle2, status: 'pending' },
@@ -365,10 +375,41 @@ Génère 3 personas (JSON uniquement):
       const personasWithImages = personasResult.personas.map((p: Persona) => ({ ...p, imageUrl: '' }));
       updateSectionStatus('personas', 'complete');
 
-      // Step 7: Features (41%)
+      // Step 7: User Journey Map (38%)
+      setCurrentSection("User Journey Map");
+      updateSectionStatus('userJourneyMap', 'generating');
+      setProgress(38);
+
+      const { data: journeyData } = await supabase.functions.invoke('chat-ai', {
+        body: {
+          message: `Idée: "${idea}"
+Personas: ${JSON.stringify(personasWithImages)}
+
+Génère une user journey map avec 4-6 étapes principales du parcours utilisateur (JSON uniquement).
+Pour chaque étape, inclus les actions, pensées, pain points et opportunités:
+
+{
+  "userJourneyMap": [
+    {
+      "stage": "Découverte",
+      "actions": ["Action 1", "Action 2"],
+      "thoughts": ["Pensée 1", "Pensée 2"],
+      "painPoints": ["Point de friction 1", "Point de friction 2"],
+      "opportunities": ["Opportunité d'amélioration 1", "Opportunité 2"]
+    }
+  ]
+}`,
+          mode: 'simple'
+        }
+      });
+
+      const journeyResult = parseAIResponse(journeyData);
+      updateSectionStatus('userJourneyMap', 'complete');
+
+      // Step 8: Features (44%)
       setCurrentSection("Fonctionnalités clés");
       updateSectionStatus('features', 'generating');
-      setProgress(41);
+      setProgress(44);
 
       const { data: featuresData } = await supabase.functions.invoke('chat-ai', {
         body: {
@@ -391,14 +432,14 @@ Génère 5-7 fonctionnalités clés avec leurs user stories (JSON uniquement):
       const featuresResult = parseAIResponse(featuresData);
       const normalizedFeatures = normalizeFeatures(featuresResult.features);
       
-      // Step 8: User Stories (48%) - Generate stories for each feature
+      // Step 9: User Stories (51%) - Generate stories for each feature
       setCurrentSection("User Stories basées sur les fonctionnalités");
-      setProgress(48);
+      setProgress(51);
 
       // Generate user stories for each feature
       for (let i = 0; i < normalizedFeatures.length; i++) {
         const feature = normalizedFeatures[i];
-        setProgress(48 + (i * 7 / normalizedFeatures.length));
+        setProgress(51 + (i * 7 / normalizedFeatures.length));
 
         const { data: storiesData } = await supabase.functions.invoke('chat-ai', {
           body: {
@@ -437,10 +478,10 @@ Utilise le T-shirt sizing (XS, S, M, L, XL) pour la complexité:
 
       updateSectionStatus('features', 'complete');
 
-      // Step 9: Prioritization (55%)
+      // Step 10: Prioritization (58%)
       setCurrentSection("Priorisation (MoSCoW)");
       updateSectionStatus('prioritization', 'generating');
-      setProgress(55);
+      setProgress(58);
 
       const { data: prioritizationData } = await supabase.functions.invoke('chat-ai', {
         body: {
@@ -463,10 +504,10 @@ Génère la priorisation MoSCoW (JSON uniquement):
       const prioritizationResult = parseAIResponse(prioritizationData);
       updateSectionStatus('prioritization', 'complete');
 
-      // Step 10: Acceptance Criteria (61%)
+      // Step 11: Acceptance Criteria (64%)
       setCurrentSection("Critères d'acceptation");
       updateSectionStatus('acceptance', 'generating');
-      setProgress(61);
+      setProgress(64);
 
       const { data: acceptanceData } = await supabase.functions.invoke('chat-ai', {
         body: {
@@ -481,10 +522,10 @@ Génère 5-6 critères d'acceptation globaux (JSON uniquement):
       const acceptanceResult = parseAIResponse(acceptanceData);
       updateSectionStatus('acceptance', 'complete');
 
-      // Step 11: Wireframes (68%)
+      // Step 12: Wireframes (70%)
       setCurrentSection("Design & UX");
       updateSectionStatus('wireframes', 'generating');
-      setProgress(68);
+      setProgress(70);
 
       const { data: wireframesData } = await supabase.functions.invoke('chat-ai', {
         body: {
@@ -499,10 +540,10 @@ Génère 3 descriptions de wireframes (JSON uniquement):
       const wireframesResult = parseAIResponse(wireframesData);
       updateSectionStatus('wireframes', 'complete');
 
-      // Step 12: Architecture (75%)
+      // Step 13: Architecture (76%)
       setCurrentSection("Architecture & Intégrations");
       updateSectionStatus('architecture', 'generating');
-      setProgress(75);
+      setProgress(76);
 
       const { data: archData } = await supabase.functions.invoke('chat-ai', {
         body: {
@@ -517,10 +558,10 @@ Génère l'architecture technique (JSON uniquement):
       const archResult = parseAIResponse(archData);
       updateSectionStatus('architecture', 'complete');
 
-      // Step 13: Risks (81%)
+      // Step 14: Risks (82%)
       setCurrentSection("Dépendances & Risques");
       updateSectionStatus('risks', 'generating');
-      setProgress(81);
+      setProgress(82);
 
       const { data: risksData } = await supabase.functions.invoke('chat-ai', {
         body: {
@@ -543,7 +584,7 @@ Génère 4-5 risques avec dépendances (JSON uniquement):
       const risksResult = parseAIResponse(risksData);
       updateSectionStatus('risks', 'complete');
 
-      // Step 14: KPIs (88%)
+      // Step 15: KPIs (88%)
       setCurrentSection("Mesure du succès (KPIs)");
       updateSectionStatus('kpis', 'generating');
       setProgress(88);
@@ -561,7 +602,7 @@ Génère 5 KPIs SMART (JSON uniquement):
       const kpisResult = parseAIResponse(kpisData);
       updateSectionStatus('kpis', 'complete');
 
-      // Step 15: Roadmap (94%)
+      // Step 16: Roadmap (94%)
       setCurrentSection("Roadmap & Planning");
       updateSectionStatus('roadmap', 'generating');
       setProgress(94);
@@ -587,7 +628,7 @@ Génère une roadmap en 3 phases (JSON uniquement):
       const roadmapResult = parseAIResponse(roadmapData);
       updateSectionStatus('roadmap', 'complete');
 
-      // Step 16: Appendix (99%)
+      // Step 17: Appendix (99%)
       setCurrentSection("Annexes & Références");
       updateSectionStatus('appendix', 'generating');
       setProgress(99);
@@ -615,6 +656,15 @@ Génère 3-4 références/annexes (JSON uniquement):
         vision: safeText(visionResult.vision),
         constraints: normalizeArrayOfStrings(constraintsResult.constraints),
         personas: personasWithImages,
+        userJourneyMap: Array.isArray(journeyResult.userJourneyMap)
+          ? journeyResult.userJourneyMap.map((stage: any) => ({
+              stage: safeText(stage?.stage ?? ''),
+              actions: normalizeArrayOfStrings(stage?.actions ?? []),
+              thoughts: normalizeArrayOfStrings(stage?.thoughts ?? []),
+              painPoints: normalizeArrayOfStrings(stage?.painPoints ?? []),
+              opportunities: normalizeArrayOfStrings(stage?.opportunities ?? []),
+            }))
+          : [],
         features: normalizedFeatures,
         prioritization: normalizePrioritization(prioritizationResult.prioritization),
         acceptance: normalizeArrayOfStrings(acceptanceResult.acceptance),
@@ -674,11 +724,11 @@ Génère 3-4 références/annexes (JSON uniquement):
             </p>
           </div>
           <div className="flex flex-wrap justify-center gap-2">
-            <Badge variant="secondary">✨ 16 sections complètes</Badge>
+            <Badge variant="secondary">✨ 17 sections complètes</Badge>
             <Badge variant="secondary">👥 3 Personas</Badge>
-            <Badge variant="secondary">📝 12 User Stories</Badge>
+            <Badge variant="secondary">🗺️ User Journey Map</Badge>
+            <Badge variant="secondary">📝 12+ User Stories</Badge>
             <Badge variant="secondary">🎨 Design & UX</Badge>
-            <Badge variant="secondary">🏗️ Architecture</Badge>
           </div>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -972,6 +1022,78 @@ Génère 3-4 références/annexes (JSON uniquement):
                           </div>
                         </CardContent>
                       </Card>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* User Journey Map */}
+              <Card id="userJourneyMap">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Map className="w-5 h-5" />
+                    User Journey Map
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-6">
+                    {prdDocument.userJourneyMap.map((stage, idx) => (
+                      <div key={idx} className="border rounded-lg p-4 bg-muted/30">
+                        <div className="flex items-center gap-3 mb-4">
+                          <Badge className="text-lg px-3 py-1">{idx + 1}</Badge>
+                          <h3 className="font-bold text-xl">{stage.stage}</h3>
+                        </div>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <h4 className="font-semibold text-sm flex items-center gap-2">
+                              <CheckCircle2 className="w-4 h-4 text-blue-500" />
+                              Actions
+                            </h4>
+                            <ul className="text-sm space-y-1 ml-6">
+                              {stage.actions.map((action, i) => (
+                                <li key={i}>• {action}</li>
+                              ))}
+                            </ul>
+                          </div>
+                          
+                          <div className="space-y-2">
+                            <h4 className="font-semibold text-sm flex items-center gap-2">
+                              <Users className="w-4 h-4 text-purple-500" />
+                              Pensées
+                            </h4>
+                            <ul className="text-sm space-y-1 ml-6">
+                              {stage.thoughts.map((thought, i) => (
+                                <li key={i}>• {thought}</li>
+                              ))}
+                            </ul>
+                          </div>
+                          
+                          <div className="space-y-2">
+                            <h4 className="font-semibold text-sm flex items-center gap-2">
+                              <AlertTriangle className="w-4 h-4 text-red-500" />
+                              Pain Points
+                            </h4>
+                            <ul className="text-sm space-y-1 ml-6">
+                              {stage.painPoints.map((pain, i) => (
+                                <li key={i}>• {pain}</li>
+                              ))}
+                            </ul>
+                          </div>
+                          
+                          <div className="space-y-2">
+                            <h4 className="font-semibold text-sm flex items-center gap-2">
+                              <Sparkles className="w-4 h-4 text-green-500" />
+                              Opportunités
+                            </h4>
+                            <ul className="text-sm space-y-1 ml-6">
+                              {stage.opportunities.map((opp, i) => (
+                                <li key={i}>• {opp}</li>
+                              ))}
+                            </ul>
+                          </div>
+                        </div>
+                      </div>
                     ))}
                   </div>
                 </CardContent>
