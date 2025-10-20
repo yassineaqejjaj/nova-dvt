@@ -207,7 +207,8 @@ export const ProductContextPage = () => {
         const { error } = await supabase
           .from('product_contexts')
           .update(contextData)
-          .eq('id', selectedContext.id);
+          .eq('id', selectedContext.id)
+          .eq('user_id', user.id);
 
         if (error) throw error;
 
@@ -307,10 +308,17 @@ export const ProductContextPage = () => {
     if (!deleteContextId) return;
 
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('User not authenticated');
+
       const { error } = await supabase
         .from('product_contexts')
-        .update({ is_deleted: true })
-        .eq('id', deleteContextId);
+        .update({ 
+          is_deleted: true,
+          user_id: user.id 
+        })
+        .eq('id', deleteContextId)
+        .eq('user_id', user.id);
 
       if (error) throw error;
 
@@ -384,7 +392,10 @@ export const ProductContextPage = () => {
       // Deactivate all contexts
       const { error: deactivateError } = await supabase
         .from('product_contexts')
-        .update({ is_active: false })
+        .update({ 
+          is_active: false,
+          user_id: user.id 
+        })
         .eq('user_id', user.id)
         .eq('is_deleted', false);
 
@@ -393,7 +404,10 @@ export const ProductContextPage = () => {
       // Activate selected context
       const { error: activateError } = await supabase
         .from('product_contexts')
-        .update({ is_active: true })
+        .update({ 
+          is_active: true,
+          user_id: user.id 
+        })
         .eq('id', contextId)
         .eq('user_id', user.id);
 
