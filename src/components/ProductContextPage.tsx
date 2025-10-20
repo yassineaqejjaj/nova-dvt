@@ -168,8 +168,12 @@ export const ProductContextPage = () => {
 
     setIsSaving(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('User not authenticated');
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError) {
+        console.error('Auth error:', userError);
+        throw new Error('Erreur d\'authentification: ' + userError.message);
+      }
+      if (!user) throw new Error('Vous devez être connecté pour sauvegarder un contexte');
 
       const contextData = {
         user_id: user.id,
@@ -241,9 +245,10 @@ export const ProductContextPage = () => {
       setIsEditing(false);
     } catch (error: any) {
       console.error('Error saving context:', error);
+      const errorMessage = error.message || error.details || "Impossible de sauvegarder le contexte";
       toast({
-        title: "Erreur",
-        description: "Impossible de sauvegarder le contexte",
+        title: "Erreur de sauvegarde",
+        description: errorMessage,
         variant: "destructive"
       });
     } finally {
