@@ -55,8 +55,21 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
     agent: true,
   });
 
+  const [expandedSegments, setExpandedSegments] = useState<Record<string, boolean>>({
+    discovery: true,
+    planning: true,
+    specifications: true,
+    team: true,
+    metrics: true,
+    documentation: true,
+  });
+
   const toggleGroup = (groupId: string) => {
     setExpandedGroups(prev => ({ ...prev, [groupId]: !prev[groupId] }));
+  };
+
+  const toggleSegment = (segmentId: string) => {
+    setExpandedSegments(prev => ({ ...prev, [segmentId]: !prev[segmentId] }));
   };
 
   // NOVA CORE Module
@@ -365,39 +378,60 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
         {isExpanded && (
           <SidebarGroupContent>
             <SidebarMenu>
-              {Object.entries(toolsSegments).map(([segmentKey, segment]) => (
-                <div key={segmentKey} className="mb-4">
-                  {open && (
-                    <div className="px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                      {segment.title}
-                    </div>
-                  )}
-                  {segment.items.map((item) => {
-                    const Icon = item.icon;
-                    const isActive = !(item as any).isAction && activeTab === item.id;
+              {Object.entries(toolsSegments).map(([segmentKey, segment]) => {
+                const isSegmentExpanded = expandedSegments[segmentKey];
+                
+                return (
+                  <div key={segmentKey} className="mb-2">
+                    <Button
+                      variant="ghost"
+                      onClick={() => toggleSegment(segmentKey)}
+                      className="w-full justify-start px-3 py-2 h-8 hover:bg-muted/50"
+                    >
+                      {open && (
+                        <>
+                          <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex-1 text-left">
+                            {segment.title}
+                          </span>
+                          <ChevronDown
+                            className={`w-3 h-3 transition-transform ${
+                              isSegmentExpanded ? 'transform rotate-180' : ''
+                            }`}
+                          />
+                        </>
+                      )}
+                      {!open && (
+                        <div className="w-4 h-0.5 bg-muted-foreground/30 rounded" />
+                      )}
+                    </Button>
                     
-                    return (
-                      <SidebarMenuItem key={item.label}>
-                        <SidebarMenuButton asChild>
-                          <Button
-                            variant="ghost"
-                            onClick={() => (item as any).isAction ? (item as any).onClick?.() : onTabChange(item.id as TabType)}
-                            className={`w-full justify-start h-10 px-3 ${getNavClass(isActive)}`}
-                          >
-                            <Icon className="w-4 h-4 mr-3 flex-shrink-0" />
-                            <div className={`flex-1 text-left transition-opacity duration-200 overflow-hidden ${!open ? 'opacity-0 w-0' : 'opacity-100'}`}>
-                              <div className="flex items-center space-x-2">
-                                <span className="text-sm font-medium whitespace-nowrap">{item.label}</span>
+                    {isSegmentExpanded && segment.items.map((item) => {
+                      const Icon = item.icon;
+                      const isActive = !(item as any).isAction && activeTab === item.id;
+                      
+                      return (
+                        <SidebarMenuItem key={item.label}>
+                          <SidebarMenuButton asChild>
+                            <Button
+                              variant="ghost"
+                              onClick={() => (item as any).isAction ? (item as any).onClick?.() : onTabChange(item.id as TabType)}
+                              className={`w-full justify-start h-10 px-3 ${getNavClass(isActive)}`}
+                            >
+                              <Icon className="w-4 h-4 mr-3 flex-shrink-0" />
+                              <div className={`flex-1 text-left transition-opacity duration-200 overflow-hidden ${!open ? 'opacity-0 w-0' : 'opacity-100'}`}>
+                                <div className="flex items-center space-x-2">
+                                  <span className="text-sm font-medium whitespace-nowrap">{item.label}</span>
+                                </div>
+                                <p className="text-xs text-muted-foreground whitespace-nowrap">{item.description}</p>
                               </div>
-                              <p className="text-xs text-muted-foreground whitespace-nowrap">{item.description}</p>
-                            </div>
-                          </Button>
-                        </SidebarMenuButton>
-                      </SidebarMenuItem>
-                    );
-                  })}
-                </div>
-              ))}
+                            </Button>
+                          </SidebarMenuButton>
+                        </SidebarMenuItem>
+                      );
+                    })}
+                  </div>
+                );
+              })}
             </SidebarMenu>
           </SidebarGroupContent>
         )}
