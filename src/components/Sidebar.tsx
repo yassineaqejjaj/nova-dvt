@@ -16,7 +16,8 @@ import {
   Database,
   Bot,
   ChevronDown,
-  Shield
+  Shield,
+  Calculator
 } from 'lucide-react';
 import {
   Sidebar,
@@ -116,6 +117,27 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
       label: 'Document vers Roadmap',
       icon: FileText,
       description: 'Roadmap depuis document',
+      isAction: false
+    },
+    {
+      id: 'user-persona-builder' as TabType,
+      label: 'User Personas',
+      icon: Users,
+      description: 'Builder de personas',
+      isAction: false
+    },
+    {
+      id: 'estimation-tool' as TabType,
+      label: 'Estimation & Sizing',
+      icon: Calculator,
+      description: 'Estimations rapides',
+      isAction: false
+    },
+    {
+      id: 'release-notes-generator' as TabType,
+      label: 'Release Notes',
+      icon: FileText,
+      description: 'Générateur de notes',
       isAction: false
     },
     {

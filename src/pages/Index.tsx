@@ -26,6 +26,9 @@ import { MeetingMinuteGenerator } from '@/components/MeetingMinuteGenerator';
 import { RACIGenerator } from '@/components/RACIGenerator';
 import EpicToUserStories from '@/components/EpicToUserStories';
 import { DocumentRoadmapGenerator } from '@/components/DocumentRoadmapGenerator';
+import { UserPersonaBuilder } from '@/components/UserPersonaBuilder';
+import { EstimationTool } from '@/components/EstimationTool';
+import { ReleaseNotesGenerator } from '@/components/ReleaseNotesGenerator';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -324,6 +327,15 @@ const Index = () => {
       
       case 'epic-to-stories':
         return <EpicToUserStories />;
+      
+      case 'user-persona-builder':
+        return <UserPersonaBuilder />;
+      
+      case 'estimation-tool':
+        return <EstimationTool />;
+      
+      case 'release-notes-generator':
+        return <ReleaseNotesGenerator />;
       
       case 'artifacts':
         return <Artifacts userId={user!.id} />;
