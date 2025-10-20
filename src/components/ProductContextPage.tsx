@@ -203,10 +203,11 @@ export const ProductContextPage = () => {
       } as any;
 
       if (selectedContext) {
-        // Update existing
+        // Update existing (do not update user_id on UPDATE to satisfy RLS WITH CHECK)
+        const { user_id, ...updateData } = contextData;
         const { error } = await supabase
           .from('product_contexts')
-          .update(contextData)
+          .update(updateData)
           .eq('id', selectedContext.id)
           .eq('user_id', user.id);
 
@@ -314,8 +315,7 @@ export const ProductContextPage = () => {
       const { error } = await supabase
         .from('product_contexts')
         .update({ 
-          is_deleted: true,
-          user_id: user.id 
+          is_deleted: true
         })
         .eq('id', deleteContextId)
         .eq('user_id', user.id);
@@ -414,8 +414,7 @@ export const ProductContextPage = () => {
       const { error: deactivateError } = await supabase
         .from('product_contexts')
         .update({ 
-          is_active: false,
-          user_id: user.id 
+          is_active: false
         })
         .eq('user_id', user.id)
         .eq('is_deleted', false);
@@ -426,8 +425,7 @@ export const ProductContextPage = () => {
       const { error: activateError } = await supabase
         .from('product_contexts')
         .update({ 
-          is_active: true,
-          user_id: user.id 
+          is_active: true
         })
         .eq('id', contextId)
         .eq('user_id', user.id);

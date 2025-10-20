@@ -189,10 +189,11 @@ export const ProductContextManager = ({ open, onOpenChange, onContextSelected }:
       };
 
       if (selectedContext) {
-        // Update existing
+        // Update existing (do not update user_id on UPDATE to satisfy RLS WITH CHECK)
+        const { user_id, ...updateData } = contextData as any;
         const { error } = await supabase
           .from('product_contexts')
-          .update(contextData)
+          .update(updateData)
           .eq('id', selectedContext.id)
           .eq('user_id', user.id);
 
@@ -313,7 +314,7 @@ export const ProductContextManager = ({ open, onOpenChange, onContextSelected }:
       // Mark as deleted (soft delete)
       const { error } = await supabase
         .from('product_contexts')
-        .update({ is_deleted: true, is_active: false, user_id: user.id })
+        .update({ is_deleted: true, is_active: false })
         .eq('id', deleteContextId)
         .eq('user_id', user.id);
 
@@ -370,8 +371,7 @@ export const ProductContextManager = ({ open, onOpenChange, onContextSelected }:
           objectives: snapshot.objectives,
           target_kpis: snapshot.target_kpis,
           constraints: snapshot.constraints,
-          target_audience: snapshot.target_audience,
-          user_id: user.id
+          target_audience: snapshot.target_audience
         })
         .eq('id', selectedContext.id)
         .eq('user_id', user.id);
