@@ -85,7 +85,7 @@ export const ProductContextPage = () => {
     return () => clearTimeout(timer);
   }, [formData, isEditing, selectedContext]);
 
-  const loadContexts = async () => {
+  const loadContexts = async (preserveSelection = false) => {
     setIsLoading(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -108,7 +108,16 @@ export const ProductContextPage = () => {
       
       setContexts(typedContexts);
 
-      // Select active context or most recent
+      // If preserving selection and a context is already selected, keep it
+      if (preserveSelection && selectedContext) {
+        const updatedContext = typedContexts.find(c => c.id === selectedContext.id);
+        if (updatedContext) {
+          setSelectedContext(updatedContext);
+          return; // Don't update form data, keep user's edits
+        }
+      }
+
+      // Otherwise, select active context or most recent
       const activeContext = typedContexts?.find(c => c.is_active) || typedContexts?.[0];
       if (activeContext) {
         setSelectedContext(activeContext);
@@ -241,7 +250,7 @@ export const ProductContextPage = () => {
         });
       }
 
-      loadContexts();
+      loadContexts(true); // Preserve selection after save
       setIsEditing(false);
     } catch (error: any) {
       console.error('Error saving context:', error);
