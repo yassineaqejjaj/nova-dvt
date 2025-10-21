@@ -213,7 +213,13 @@ export const DocumentRoadmapGenerator: React.FC = () => {
     const pdfSourceName = inputMode === 'file' ? file?.name : 'Texte collé';
     doc.setFontSize(20);
     doc.setFont('helvetica', 'bold');
-    doc.text('Roadmap - ' + (pdfSourceName || 'Document'), pageWidth / 2, 20, { align: 'center' });
+    const formatLabels = {
+      chronological: 'Chronologique',
+      thematic: 'Thématique',
+      'now-next-later': 'Now/Next/Later',
+      okr: 'OKR'
+    };
+    doc.text(`Roadmap ${formatLabels[roadmapFormat]} - ${pdfSourceName || 'Document'}`, pageWidth / 2, 20, { align: 'center' });
     
     let yPos = 30;
 
@@ -231,68 +237,258 @@ export const DocumentRoadmapGenerator: React.FC = () => {
       yPos += summaryLines.length * 5 + 10;
     }
 
-    // Quarters
-    const quarters = generateQuarters();
-    quarters.forEach((quarter) => {
-      const quarterItems = roadmap.items.filter(item => item.quarter === quarter);
-      
-      if (yPos > 250) {
-        doc.addPage();
-        yPos = 20;
-      }
+    // Format-specific content
+    if (roadmapFormat === 'chronological' && roadmap.items) {
+      // Chronological format
+      const quarters = generateQuarters();
+      quarters.forEach((quarter) => {
+        const quarterItems = roadmap.items!.filter(item => item.quarter === quarter);
+        
+        if (yPos > 250) {
+          doc.addPage();
+          yPos = 20;
+        }
 
-      // Quarter title
-      doc.setFontSize(14);
-      doc.setFont('helvetica', 'bold');
-      doc.text(`${quarter} - ${quarterItems.length} items`, 15, yPos);
-      yPos += 8;
+        doc.setFontSize(14);
+        doc.setFont('helvetica', 'bold');
+        doc.text(`${quarter} - ${quarterItems.length} items`, 15, yPos);
+        yPos += 8;
 
-      if (quarterItems.length > 0) {
-        const tableData = quarterItems.map(item => [
-          item.title,
-          item.description,
-          item.priority,
-          item.category || '-'
-        ]);
+        if (quarterItems.length > 0) {
+          const tableData = quarterItems.map(item => [
+            item.title,
+            item.description,
+            item.priority,
+            item.category || '-'
+          ]);
 
-        autoTable(doc, {
-          startY: yPos,
-          head: [['Titre', 'Description', 'Priorité', 'Catégorie']],
-          body: tableData,
-          theme: 'striped',
-          headStyles: { fillColor: [67, 56, 202] },
-          styles: { fontSize: 9, cellPadding: 3 },
-          columnStyles: {
-            0: { cellWidth: 45 },
-            1: { cellWidth: 80 },
-            2: { cellWidth: 25 },
-            3: { cellWidth: 30 }
-          },
-          didParseCell: function(data) {
-            if (data.column.index === 2 && data.section === 'body') {
-              const priority = data.cell.raw as string;
-              if (priority === 'high') {
-                data.cell.styles.textColor = [220, 38, 38];
-                data.cell.styles.fontStyle = 'bold';
-              } else if (priority === 'medium') {
-                data.cell.styles.textColor = [234, 88, 12];
+          autoTable(doc, {
+            startY: yPos,
+            head: [['Titre', 'Description', 'Priorité', 'Catégorie']],
+            body: tableData,
+            theme: 'striped',
+            headStyles: { fillColor: [67, 56, 202] },
+            styles: { fontSize: 9, cellPadding: 3 },
+            columnStyles: {
+              0: { cellWidth: 45 },
+              1: { cellWidth: 80 },
+              2: { cellWidth: 25 },
+              3: { cellWidth: 30 }
+            },
+            didParseCell: function(data) {
+              if (data.column.index === 2 && data.section === 'body') {
+                const priority = data.cell.raw as string;
+                if (priority === 'high') {
+                  data.cell.styles.textColor = [220, 38, 38];
+                  data.cell.styles.fontStyle = 'bold';
+                } else if (priority === 'medium') {
+                  data.cell.styles.textColor = [234, 88, 12];
+                }
               }
             }
-          }
-        });
+          });
 
-        yPos = (doc as any).lastAutoTable.finalY + 10;
-      } else {
+          yPos = (doc as any).lastAutoTable.finalY + 10;
+        } else {
+          doc.setFontSize(10);
+          doc.setFont('helvetica', 'italic');
+          doc.text('Aucun item pour cette période', 15, yPos);
+          yPos += 10;
+        }
+      });
+    } else if (roadmapFormat === 'thematic' && roadmap.pillars) {
+      // Thematic format
+      roadmap.pillars.forEach((pillar, index) => {
+        if (yPos > 250) {
+          doc.addPage();
+          yPos = 20;
+        }
+
+        doc.setFontSize(14);
+        doc.setFont('helvetica', 'bold');
+        doc.text(`Pilier ${index + 1}: ${pillar.name}`, 15, yPos);
+        yPos += 6;
+
         doc.setFontSize(10);
         doc.setFont('helvetica', 'italic');
-        doc.text('Aucun item pour cette période', 15, yPos);
-        yPos += 10;
-      }
-    });
+        const descLines = doc.splitTextToSize(pillar.description, pageWidth - 30);
+        doc.text(descLines, 15, yPos);
+        yPos += descLines.length * 5 + 5;
+
+        if (pillar.initiatives.length > 0) {
+          const tableData = pillar.initiatives.map(item => [
+            item.title,
+            item.description,
+            item.priority,
+            item.timeline || '-'
+          ]);
+
+          autoTable(doc, {
+            startY: yPos,
+            head: [['Initiative', 'Description', 'Priorité', 'Timeline']],
+            body: tableData,
+            theme: 'striped',
+            headStyles: { fillColor: [67, 56, 202] },
+            styles: { fontSize: 9, cellPadding: 3 },
+            columnStyles: {
+              0: { cellWidth: 45 },
+              1: { cellWidth: 70 },
+              2: { cellWidth: 25 },
+              3: { cellWidth: 40 }
+            },
+            didParseCell: function(data) {
+              if (data.column.index === 2 && data.section === 'body') {
+                const priority = data.cell.raw as string;
+                if (priority === 'high') {
+                  data.cell.styles.textColor = [220, 38, 38];
+                  data.cell.styles.fontStyle = 'bold';
+                } else if (priority === 'medium') {
+                  data.cell.styles.textColor = [234, 88, 12];
+                }
+              }
+            }
+          });
+
+          yPos = (doc as any).lastAutoTable.finalY + 15;
+        }
+      });
+    } else if (roadmapFormat === 'now-next-later' && roadmap.now && roadmap.next && roadmap.later) {
+      // Now/Next/Later format
+      const sections = [
+        { title: 'NOW - En cours (0-3 mois)', items: roadmap.now, color: [34, 197, 94] as [number, number, number] },
+        { title: 'NEXT - À venir (3-6 mois)', items: roadmap.next, color: [59, 130, 246] as [number, number, number] },
+        { title: 'LATER - Futur (6+ mois)', items: roadmap.later, color: [168, 85, 247] as [number, number, number] }
+      ];
+
+      sections.forEach((section) => {
+        if (yPos > 250) {
+          doc.addPage();
+          yPos = 20;
+        }
+
+        doc.setFontSize(14);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(section.color[0], section.color[1], section.color[2]);
+        doc.text(section.title, 15, yPos);
+        doc.setTextColor(0, 0, 0);
+        yPos += 8;
+
+        if (section.items.length > 0) {
+          const tableData = section.items.map(item => [
+            item.title,
+            item.description,
+            item.priority,
+            item.category || '-'
+          ]);
+
+          autoTable(doc, {
+            startY: yPos,
+            head: [['Titre', 'Description', 'Priorité', 'Catégorie']],
+            body: tableData,
+            theme: 'striped',
+            headStyles: { fillColor: section.color },
+            styles: { fontSize: 9, cellPadding: 3 },
+            columnStyles: {
+              0: { cellWidth: 45 },
+              1: { cellWidth: 80 },
+              2: { cellWidth: 25 },
+              3: { cellWidth: 30 }
+            },
+            didParseCell: function(data) {
+              if (data.column.index === 2 && data.section === 'body') {
+                const priority = data.cell.raw as string;
+                if (priority === 'high') {
+                  data.cell.styles.textColor = [220, 38, 38];
+                  data.cell.styles.fontStyle = 'bold';
+                } else if (priority === 'medium') {
+                  data.cell.styles.textColor = [234, 88, 12];
+                }
+              }
+            }
+          });
+
+          yPos = (doc as any).lastAutoTable.finalY + 12;
+        } else {
+          doc.setFontSize(10);
+          doc.setFont('helvetica', 'italic');
+          doc.text('Aucun item', 15, yPos);
+          yPos += 10;
+        }
+      });
+    } else if (roadmapFormat === 'okr' && roadmap.okrs) {
+      // OKR format
+      roadmap.okrs.forEach((okr, index) => {
+        if (yPos > 240) {
+          doc.addPage();
+          yPos = 20;
+        }
+
+        doc.setFontSize(14);
+        doc.setFont('helvetica', 'bold');
+        doc.text(`Objectif ${index + 1}: ${okr.objective}`, 15, yPos);
+        yPos += 8;
+
+        // Key Results
+        doc.setFontSize(11);
+        doc.setFont('helvetica', 'bold');
+        doc.text('Résultats Clés:', 15, yPos);
+        yPos += 6;
+
+        doc.setFontSize(9);
+        doc.setFont('helvetica', 'normal');
+        okr.keyResults.forEach((kr) => {
+          const krLines = doc.splitTextToSize(`• ${kr}`, pageWidth - 35);
+          doc.text(krLines, 20, yPos);
+          yPos += krLines.length * 5;
+        });
+        yPos += 3;
+
+        // Initiatives
+        if (okr.initiatives.length > 0) {
+          doc.setFontSize(11);
+          doc.setFont('helvetica', 'bold');
+          doc.text('Initiatives:', 15, yPos);
+          yPos += 6;
+
+          const tableData = okr.initiatives.map(item => [
+            item.title,
+            item.description,
+            item.priority
+          ]);
+
+          autoTable(doc, {
+            startY: yPos,
+            head: [['Initiative', 'Description', 'Priorité']],
+            body: tableData,
+            theme: 'striped',
+            headStyles: { fillColor: [67, 56, 202] },
+            styles: { fontSize: 9, cellPadding: 3 },
+            columnStyles: {
+              0: { cellWidth: 50 },
+              1: { cellWidth: 100 },
+              2: { cellWidth: 30 }
+            },
+            didParseCell: function(data) {
+              if (data.column.index === 2 && data.section === 'body') {
+                const priority = data.cell.raw as string;
+                if (priority === 'high') {
+                  data.cell.styles.textColor = [220, 38, 38];
+                  data.cell.styles.fontStyle = 'bold';
+                } else if (priority === 'medium') {
+                  data.cell.styles.textColor = [234, 88, 12];
+                }
+              }
+            }
+          });
+
+          yPos = (doc as any).lastAutoTable.finalY + 15;
+        }
+      });
+    }
 
     // Save
     const downloadFileName = inputMode === 'file' ? file?.name : 'texte-colle';
-    doc.save(`Roadmap-${downloadFileName || 'document'}.pdf`);
+    doc.save(`Roadmap-${roadmapFormat}-${downloadFileName || 'document'}.pdf`);
     toast.success('PDF téléchargé avec succès !');
   };
 
