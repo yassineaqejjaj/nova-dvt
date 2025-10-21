@@ -12,18 +12,43 @@ import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { ThematicRoadmapView } from './roadmap-views/ThematicRoadmapView';
+import { ChronologicalRoadmapView } from './roadmap-views/ChronologicalRoadmapView';
+import { NowNextLaterView } from './roadmap-views/NowNextLaterView';
+import { OKRRoadmapView } from './roadmap-views/OKRRoadmapView';
 
 interface RoadmapItem {
-  quarter: string;
+  quarter?: string;
   title: string;
   description: string;
   priority: 'high' | 'medium' | 'low';
   category: string;
+  timeline?: string;
 }
 
+interface ThematicPillar {
+  name: string;
+  description: string;
+  initiatives: RoadmapItem[];
+}
+
+interface OKRItem {
+  objective: string;
+  keyResults: string[];
+  initiatives: RoadmapItem[];
+  status: 'not-started' | 'in-progress' | 'completed';
+}
+
+type RoadmapFormat = 'chronological' | 'thematic' | 'now-next-later' | 'okr';
+
 interface RoadmapResult {
-  items: RoadmapItem[];
+  items?: RoadmapItem[];
   summary: string;
+  pillars?: ThematicPillar[];
+  now?: RoadmapItem[];
+  next?: RoadmapItem[];
+  later?: RoadmapItem[];
+  okrs?: OKRItem[];
 }
 
 export const DocumentRoadmapGenerator: React.FC = () => {
@@ -32,6 +57,7 @@ export const DocumentRoadmapGenerator: React.FC = () => {
   const [inputMode, setInputMode] = useState<'file' | 'text'>('file');
   const [startDate, setStartDate] = useState('');
   const [periodType, setPeriodType] = useState<'quarter' | 'month'>('quarter');
+  const [roadmapFormat, setRoadmapFormat] = useState<RoadmapFormat>('chronological');
   const [isGenerating, setIsGenerating] = useState(false);
   const [roadmap, setRoadmap] = useState<RoadmapResult | null>(null);
 
@@ -88,6 +114,7 @@ export const DocumentRoadmapGenerator: React.FC = () => {
               documentName: file.name,
               startDate,
               periodType,
+              roadmapFormat,
               inputType: 'file'
             }
           });
@@ -118,6 +145,7 @@ export const DocumentRoadmapGenerator: React.FC = () => {
             documentName: 'Texte collé',
             startDate,
             periodType,
+            roadmapFormat,
             inputType: 'text'
           }
         });
@@ -154,12 +182,13 @@ export const DocumentRoadmapGenerator: React.FC = () => {
       const { error } = await supabase.from('artifacts').insert([{
         user_id: user.id,
         artifact_type: 'epic',
-        title: `Roadmap - ${sourceName || 'Document'}`,
+        title: `Roadmap ${roadmapFormat} - ${sourceName || 'Document'}`,
         content: roadmap as any,
         metadata: {
           generatedAt: new Date().toISOString(),
           startDate,
           periodType,
+          roadmapFormat,
           documentName: sourceName,
           artifactSubtype: 'roadmap'
         } as any
@@ -357,28 +386,53 @@ export const DocumentRoadmapGenerator: React.FC = () => {
             </TabsContent>
           </Tabs>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="start-date">Date de début</Label>
-              <Input
-                id="start-date"
-                type="date"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label>Période</Label>
-              <Select value={periodType} onValueChange={(value: 'quarter' | 'month') => setPeriodType(value)}>
+              <Label>Format de Roadmap</Label>
+              <Select value={roadmapFormat} onValueChange={(value: RoadmapFormat) => setRoadmapFormat(value)}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="quarter">Par Trimestre (Q1, Q2, Q3, Q4)</SelectItem>
-                  <SelectItem value="month">Par Mois</SelectItem>
+                  <SelectItem value="chronological">📅 Chronologique (Timeline)</SelectItem>
+                  <SelectItem value="thematic">📊 Thématique (Par piliers)</SelectItem>
+                  <SelectItem value="now-next-later">🎯 Now / Next / Later</SelectItem>
+                  <SelectItem value="okr">🎖️ Orienté Objectifs (OKR)</SelectItem>
                 </SelectContent>
               </Select>
+              <p className="text-xs text-muted-foreground">
+                {roadmapFormat === 'chronological' && 'Visualisation par trimestre/mois - Idéal pour équipes produit et tech'}
+                {roadmapFormat === 'thematic' && 'Structure par piliers stratégiques - Idéal pour C-level et stakeholders'}
+                {roadmapFormat === 'now-next-later' && 'Catégorisation agile par phase - Idéal pour MVPs et contextes itératifs'}
+                {roadmapFormat === 'okr' && 'Lien objectifs-résultats-actions - Idéal pour pilotage stratégique'}
+              </p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="start-date">Date de début</Label>
+                <Input
+                  id="start-date"
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                />
+              </div>
+
+              {roadmapFormat === 'chronological' && (
+                <div className="space-y-2">
+                  <Label>Période</Label>
+                  <Select value={periodType} onValueChange={(value: 'quarter' | 'month') => setPeriodType(value)}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="quarter">Par Trimestre (Q1, Q2, Q3, Q4)</SelectItem>
+                      <SelectItem value="month">Par Mois</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
             </div>
           </div>
 
@@ -430,52 +484,21 @@ export const DocumentRoadmapGenerator: React.FC = () => {
             </Card>
           )}
 
-          <div className="grid gap-6">
-            {generateQuarters().map(quarter => {
-              const quarterItems = roadmap.items.filter(item => item.quarter === quarter);
-              
-              return (
-                <Card key={quarter}>
-                  <CardHeader>
-                    <CardTitle className="flex items-center space-x-2">
-                      <Calendar className="w-5 h-5" />
-                      <span>{quarter}</span>
-                      <Badge variant="outline">{quarterItems.length} items</Badge>
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    {quarterItems.length === 0 ? (
-                      <p className="text-sm text-muted-foreground text-center py-8">
-                        Aucun item pour cette période
-                      </p>
-                    ) : (
-                      <div className="space-y-3">
-                        {quarterItems.map((item, index) => (
-                          <div
-                            key={index}
-                            className="flex items-start justify-between p-4 bg-muted/50 rounded-lg hover:bg-muted transition-colors"
-                          >
-                            <div className="flex-1 space-y-2">
-                              <div className="flex items-center space-x-2">
-                                <h4 className="font-semibold">{item.title}</h4>
-                                <Badge variant={getPriorityColor(item.priority)}>
-                                  {item.priority}
-                                </Badge>
-                                {item.category && (
-                                  <Badge variant="outline">{item.category}</Badge>
-                                )}
-                              </div>
-                              <p className="text-sm text-muted-foreground">{item.description}</p>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
+          {roadmapFormat === 'chronological' && roadmap.items && (
+            <ChronologicalRoadmapView items={roadmap.items} quarters={generateQuarters()} />
+          )}
+
+          {roadmapFormat === 'thematic' && roadmap.pillars && (
+            <ThematicRoadmapView pillars={roadmap.pillars} />
+          )}
+
+          {roadmapFormat === 'now-next-later' && roadmap.now && roadmap.next && roadmap.later && (
+            <NowNextLaterView now={roadmap.now} next={roadmap.next} later={roadmap.later} />
+          )}
+
+          {roadmapFormat === 'okr' && roadmap.okrs && (
+            <OKRRoadmapView okrs={roadmap.okrs} />
+          )}
         </div>
       )}
     </div>
