@@ -82,10 +82,17 @@ Return ONLY a valid JSON object with this exact structure:
       if (error) throw error;
 
       const analysisData = typeof data === 'string' ? JSON.parse(data) : data;
-      setAnalysis(analysisData);
+      const normalized: AnalysisResult = {
+        problem: typeof analysisData?.problem === 'string' ? analysisData.problem : '',
+        personas: Array.isArray(analysisData?.personas) ? analysisData.personas : [],
+        analytics: Array.isArray(analysisData?.analytics) ? analysisData.analytics : [],
+        competitors: typeof analysisData?.competitors === 'string' ? analysisData.competitors : '',
+        redFlags: Array.isArray(analysisData?.redFlags) ? analysisData.redFlags : [],
+      };
+      setAnalysis(normalized);
       
       // Auto-generate solutions after analysis
-      await generateSolutions(analysisData.problem);
+      await generateSolutions(normalized.problem);
       
       // Auto-generate validation data
       setValidation({
@@ -259,18 +266,18 @@ Return ONLY a valid JSON object:
                 <span className="font-semibold">Nova Analysis</span>
                 <span className="text-xs text-muted-foreground">(3s ago)</span>
               </div>
-              <ul className="space-y-1 text-sm">
-                <li className="flex items-center gap-2">
-                  <Target className="w-3 h-3" />
-                  Problem detected: {analysis.problem.substring(0, 50)}...
-                </li>
-                {analysis.redFlags.map((flag, idx) => (
-                  <li key={idx} className="flex items-center gap-2">
-                    <AlertTriangle className="w-3 h-3 text-yellow-500" />
-                    {flag}
+                <ul className="space-y-1 text-sm">
+                  <li className="flex items-center gap-2">
+                    <Target className="w-3 h-3" />
+                    Problem detected: {(analysis?.problem ? analysis.problem.substring(0, 50) : '—')}...
                   </li>
-                ))}
-              </ul>
+                  {(Array.isArray(analysis?.redFlags) ? analysis!.redFlags : []).map((flag, idx) => (
+                    <li key={idx} className="flex items-center gap-2">
+                      <AlertTriangle className="w-3 h-3 text-yellow-500" />
+                      {flag}
+                    </li>
+                  ))}
+                </ul>
             </div>
           )}
         </Card>
@@ -288,13 +295,13 @@ Return ONLY a valid JSON object:
               <div className="space-y-4">
                 <div>
                   <div className="text-sm font-medium mb-2">🎯 Reframed Problem:</div>
-                  <p className="text-sm text-muted-foreground">{analysis.problem}</p>
+                  <p className="text-sm text-muted-foreground">{analysis?.problem || '—'}</p>
                 </div>
 
                 <div>
                   <div className="text-sm font-medium mb-2">👥 Personas:</div>
                   <div className="space-y-1">
-                    {analysis.personas.map((persona, idx) => (
+                    {(Array.isArray(analysis?.personas) ? analysis!.personas : []).map((persona, idx) => (
                       <Badge key={idx} variant="secondary" className="text-xs">
                         {persona}
                       </Badge>
@@ -305,7 +312,7 @@ Return ONLY a valid JSON object:
                 <div>
                   <div className="text-sm font-medium mb-2">📈 Analytics:</div>
                   <ul className="space-y-1 text-sm text-muted-foreground">
-                    {analysis.analytics.map((metric, idx) => (
+                    {(Array.isArray(analysis?.analytics) ? analysis!.analytics : []).map((metric, idx) => (
                       <li key={idx}>• {metric}</li>
                     ))}
                   </ul>
