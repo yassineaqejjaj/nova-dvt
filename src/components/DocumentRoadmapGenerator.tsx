@@ -206,43 +206,44 @@ export const DocumentRoadmapGenerator: React.FC = () => {
   const handleDownloadPDF = () => {
     if (!roadmap) return;
 
-    const doc = new jsPDF();
-    const pageWidth = doc.internal.pageSize.getWidth();
-    
-    // Title
-    const pdfSourceName = inputMode === 'file' ? file?.name : 'Texte collé';
-    doc.setFontSize(20);
-    doc.setFont('helvetica', 'bold');
-    const formatLabels = {
-      chronological: 'Chronologique',
-      thematic: 'Thématique',
-      'now-next-later': 'Now/Next/Later',
-      okr: 'OKR'
-    };
-    doc.text(`Roadmap ${formatLabels[roadmapFormat]} - ${pdfSourceName || 'Document'}`, pageWidth / 2, 20, { align: 'center' });
-    
-    let yPos = 30;
-
-    // Summary
-    if (roadmap.summary) {
-      doc.setFontSize(14);
-      doc.setFont('helvetica', 'bold');
-      doc.text('Résumé', 15, yPos);
-      yPos += 8;
+    try {
+      const doc = new jsPDF();
+      const pageWidth = doc.internal.pageSize.getWidth();
       
-      doc.setFontSize(10);
-      doc.setFont('helvetica', 'normal');
-      const summaryLines = doc.splitTextToSize(roadmap.summary, pageWidth - 30);
-      doc.text(summaryLines, 15, yPos);
-      yPos += summaryLines.length * 5 + 10;
-    }
+      // Title
+      const pdfSourceName = inputMode === 'file' ? file?.name : 'Texte collé';
+      doc.setFontSize(20);
+      doc.setFont('helvetica', 'bold');
+      const formatLabels = {
+        chronological: 'Chronologique',
+        thematic: 'Thématique',
+        'now-next-later': 'Now/Next/Later',
+        okr: 'OKR'
+      };
+      doc.text(`Roadmap ${formatLabels[roadmapFormat]} - ${pdfSourceName || 'Document'}`, pageWidth / 2, 20, { align: 'center' });
+      
+      let yPos = 30;
 
-    // Format-specific content
-    if (roadmapFormat === 'chronological' && roadmap.items) {
-      // Chronological format
-      const quarters = generateQuarters();
-      quarters.forEach((quarter) => {
-        const quarterItems = roadmap.items!.filter(item => item.quarter === quarter);
+      // Summary
+      if (roadmap.summary && typeof roadmap.summary === 'string') {
+        doc.setFontSize(14);
+        doc.setFont('helvetica', 'bold');
+        doc.text('Résumé', 15, yPos);
+        yPos += 8;
+        
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'normal');
+        const summaryLines = doc.splitTextToSize(roadmap.summary, pageWidth - 30);
+        doc.text(summaryLines, 15, yPos);
+        yPos += summaryLines.length * 5 + 10;
+      }
+
+      // Format-specific content
+      if (roadmapFormat === 'chronological' && roadmap.items && Array.isArray(roadmap.items)) {
+        // Chronological format
+        const quarters = generateQuarters();
+        quarters.forEach((quarter) => {
+          const quarterItems = roadmap.items!.filter(item => item && item.quarter === quarter);
         
         if (yPos > 250) {
           doc.addPage();
@@ -296,9 +297,10 @@ export const DocumentRoadmapGenerator: React.FC = () => {
           yPos += 10;
         }
       });
-    } else if (roadmapFormat === 'thematic' && roadmap.pillars) {
-      // Thematic format
-      roadmap.pillars.forEach((pillar, index) => {
+      } else if (roadmapFormat === 'thematic' && roadmap.pillars && Array.isArray(roadmap.pillars)) {
+        // Thematic format
+        roadmap.pillars.forEach((pillar, index) => {
+          if (!pillar || typeof pillar.name !== 'string') return;
         if (yPos > 250) {
           doc.addPage();
           yPos = 20;
@@ -313,10 +315,10 @@ export const DocumentRoadmapGenerator: React.FC = () => {
         doc.setFont('helvetica', 'italic');
         const descLines = doc.splitTextToSize(pillar.description, pageWidth - 30);
         doc.text(descLines, 15, yPos);
-        yPos += descLines.length * 5 + 5;
+          yPos += descLines.length * 5 + 5;
 
-        if (pillar.initiatives.length > 0) {
-          const tableData = pillar.initiatives.map(item => [
+          if (Array.isArray(pillar.initiatives) && pillar.initiatives.length > 0) {
+            const tableData = pillar.initiatives.filter(item => item && item.title).map(item => [
             item.title,
             item.description,
             item.priority,
@@ -349,18 +351,18 @@ export const DocumentRoadmapGenerator: React.FC = () => {
             }
           });
 
-          yPos = (doc as any).lastAutoTable.finalY + 15;
-        }
-      });
-    } else if (roadmapFormat === 'now-next-later' && roadmap.now && roadmap.next && roadmap.later) {
-      // Now/Next/Later format
-      const sections = [
-        { title: 'NOW - En cours (0-3 mois)', items: roadmap.now, color: [34, 197, 94] as [number, number, number] },
-        { title: 'NEXT - À venir (3-6 mois)', items: roadmap.next, color: [59, 130, 246] as [number, number, number] },
-        { title: 'LATER - Futur (6+ mois)', items: roadmap.later, color: [168, 85, 247] as [number, number, number] }
-      ];
+            yPos = (doc as any).lastAutoTable.finalY + 15;
+          }
+        });
+      } else if (roadmapFormat === 'now-next-later' && roadmap.now && roadmap.next && roadmap.later) {
+        // Now/Next/Later format
+        const sections = [
+          { title: 'NOW - En cours (0-3 mois)', items: Array.isArray(roadmap.now) ? roadmap.now : [], color: [34, 197, 94] as [number, number, number] },
+          { title: 'NEXT - À venir (3-6 mois)', items: Array.isArray(roadmap.next) ? roadmap.next : [], color: [59, 130, 246] as [number, number, number] },
+          { title: 'LATER - Futur (6+ mois)', items: Array.isArray(roadmap.later) ? roadmap.later : [], color: [168, 85, 247] as [number, number, number] }
+        ];
 
-      sections.forEach((section) => {
+        sections.forEach((section) => {
         if (yPos > 250) {
           doc.addPage();
           yPos = 20;
@@ -370,11 +372,11 @@ export const DocumentRoadmapGenerator: React.FC = () => {
         doc.setFont('helvetica', 'bold');
         doc.setTextColor(section.color[0], section.color[1], section.color[2]);
         doc.text(section.title, 15, yPos);
-        doc.setTextColor(0, 0, 0);
-        yPos += 8;
+          doc.setTextColor(0, 0, 0);
+          yPos += 8;
 
-        if (section.items.length > 0) {
-          const tableData = section.items.map(item => [
+          if (section.items.length > 0) {
+            const tableData = section.items.filter(item => item && item.title).map(item => [
             item.title,
             item.description,
             item.priority,
@@ -412,12 +414,13 @@ export const DocumentRoadmapGenerator: React.FC = () => {
           doc.setFontSize(10);
           doc.setFont('helvetica', 'italic');
           doc.text('Aucun item', 15, yPos);
-          yPos += 10;
-        }
-      });
-    } else if (roadmapFormat === 'okr' && roadmap.okrs) {
-      // OKR format
-      roadmap.okrs.forEach((okr, index) => {
+            yPos += 10;
+          }
+        });
+      } else if (roadmapFormat === 'okr' && roadmap.okrs && Array.isArray(roadmap.okrs)) {
+        // OKR format
+        roadmap.okrs.forEach((okr, index) => {
+          if (!okr || typeof okr.objective !== 'string') return;
         if (yPos > 240) {
           doc.addPage();
           yPos = 20;
@@ -434,23 +437,27 @@ export const DocumentRoadmapGenerator: React.FC = () => {
         doc.text('Résultats Clés:', 15, yPos);
         yPos += 6;
 
-        doc.setFontSize(9);
-        doc.setFont('helvetica', 'normal');
-        okr.keyResults.forEach((kr) => {
-          const krLines = doc.splitTextToSize(`• ${kr}`, pageWidth - 35);
-          doc.text(krLines, 20, yPos);
-          yPos += krLines.length * 5;
-        });
-        yPos += 3;
+          doc.setFontSize(9);
+          doc.setFont('helvetica', 'normal');
+          if (Array.isArray(okr.keyResults)) {
+            okr.keyResults.forEach((kr) => {
+              if (typeof kr === 'string') {
+                const krLines = doc.splitTextToSize(`• ${kr}`, pageWidth - 35);
+                doc.text(krLines, 20, yPos);
+                yPos += krLines.length * 5;
+              }
+            });
+          }
+          yPos += 3;
 
-        // Initiatives
-        if (okr.initiatives.length > 0) {
-          doc.setFontSize(11);
-          doc.setFont('helvetica', 'bold');
-          doc.text('Initiatives:', 15, yPos);
-          yPos += 6;
+          // Initiatives
+          if (Array.isArray(okr.initiatives) && okr.initiatives.length > 0) {
+            doc.setFontSize(11);
+            doc.setFont('helvetica', 'bold');
+            doc.text('Initiatives:', 15, yPos);
+            yPos += 6;
 
-          const tableData = okr.initiatives.map(item => [
+            const tableData = okr.initiatives.filter(item => item && item.title).map(item => [
             item.title,
             item.description,
             item.priority
@@ -481,15 +488,19 @@ export const DocumentRoadmapGenerator: React.FC = () => {
             }
           });
 
-          yPos = (doc as any).lastAutoTable.finalY + 15;
-        }
-      });
-    }
+            yPos = (doc as any).lastAutoTable.finalY + 15;
+          }
+        });
+      }
 
-    // Save
-    const downloadFileName = inputMode === 'file' ? file?.name : 'texte-colle';
-    doc.save(`Roadmap-${roadmapFormat}-${downloadFileName || 'document'}.pdf`);
-    toast.success('PDF téléchargé avec succès !');
+      // Save
+      const downloadFileName = inputMode === 'file' ? file?.name : 'texte-colle';
+      doc.save(`Roadmap-${roadmapFormat}-${downloadFileName || 'document'}.pdf`);
+      toast.success('PDF téléchargé avec succès !');
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      toast.error('Erreur lors de la génération du PDF');
+    }
   };
 
   const getPriorityColor = (priority: string) => {

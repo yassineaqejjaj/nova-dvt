@@ -230,15 +230,64 @@ Répartis intelligemment les éléments identifiés dans le document selon leur 
       // Remove markdown code blocks if present
       const cleanedContent = generatedContent.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
       roadmapData = JSON.parse(cleanedContent);
+      
+      // Validate structure based on format
+      if (!roadmapData || typeof roadmapData !== 'object') {
+        throw new Error('Invalid response structure');
+      }
+
+      // Ensure summary exists
+      if (!roadmapData.summary || typeof roadmapData.summary !== 'string') {
+        roadmapData.summary = "Roadmap générée automatiquement";
+      }
+
+      // Validate format-specific structures
+      if (roadmapFormat === 'chronological') {
+        if (!Array.isArray(roadmapData.items)) {
+          roadmapData.items = [];
+        }
+      } else if (roadmapFormat === 'thematic') {
+        if (!Array.isArray(roadmapData.pillars)) {
+          roadmapData.pillars = [];
+        }
+      } else if (roadmapFormat === 'now-next-later') {
+        if (!Array.isArray(roadmapData.now)) roadmapData.now = [];
+        if (!Array.isArray(roadmapData.next)) roadmapData.next = [];
+        if (!Array.isArray(roadmapData.later)) roadmapData.later = [];
+      } else if (roadmapFormat === 'okr') {
+        if (!Array.isArray(roadmapData.okrs)) {
+          roadmapData.okrs = [];
+        }
+      }
+
     } catch (parseError) {
       console.error('Error parsing AI response:', parseError);
       console.error('Raw response:', generatedContent);
       
-      // Return a fallback structure
-      roadmapData = {
-        summary: "Impossible de parser la réponse IA. Veuillez réessayer.",
-        items: []
-      };
+      // Return a fallback structure based on format
+      if (roadmapFormat === 'thematic') {
+        roadmapData = {
+          summary: "Erreur lors de la génération. Veuillez réessayer.",
+          pillars: []
+        };
+      } else if (roadmapFormat === 'now-next-later') {
+        roadmapData = {
+          summary: "Erreur lors de la génération. Veuillez réessayer.",
+          now: [],
+          next: [],
+          later: []
+        };
+      } else if (roadmapFormat === 'okr') {
+        roadmapData = {
+          summary: "Erreur lors de la génération. Veuillez réessayer.",
+          okrs: []
+        };
+      } else {
+        roadmapData = {
+          summary: "Erreur lors de la génération. Veuillez réessayer.",
+          items: []
+        };
+      }
     }
 
     return new Response(
