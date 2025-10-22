@@ -104,7 +104,10 @@ EXAMPLE OUTPUT:
 
       if (error) throw error;
 
-      const analysisData = typeof data === 'string' ? JSON.parse(data) : data;
+      // Extract the response content - chat-ai wraps it in a response field
+      const responseContent = data?.response || data;
+      const analysisData = typeof responseContent === 'string' ? JSON.parse(responseContent) : responseContent;
+      
       const normalized: AnalysisResult = {
         problem: typeof analysisData?.problem === 'string' ? analysisData.problem : '',
         personas: Array.isArray(analysisData?.personas) ? analysisData.personas : [],
@@ -237,7 +240,9 @@ EXAMPLE OUTPUT:
 
       if (error) throw error;
 
-      const solutionsData = typeof data === 'string' ? JSON.parse(data) : data;
+      // Extract the response content
+      const responseContent = data?.response || data;
+      const solutionsData = typeof responseContent === 'string' ? JSON.parse(responseContent) : responseContent;
       setSolutions(solutionsData.solutions || []);
     } catch (error) {
       console.error('Solutions generation error:', error);
@@ -308,7 +313,9 @@ EXAMPLE OUTPUT:
 
       if (error) throw error;
 
-      const epicData = typeof data === 'string' ? JSON.parse(data) : data;
+      // Extract the response content
+      const responseContent = data?.response || data;
+      const epicData = typeof responseContent === 'string' ? JSON.parse(responseContent) : responseContent;
       setEpic(epicData);
       toast.success("Epic généré !");
     } catch (error) {
