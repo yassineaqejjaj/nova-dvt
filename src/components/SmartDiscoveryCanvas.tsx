@@ -50,6 +50,10 @@ export const SmartDiscoveryCanvas = () => {
   const [isGeneratingEpic, setIsGeneratingEpic] = useState(false);
   const [confidence, setConfidence] = useState(0);
   const [timeSpent, setTimeSpent] = useState(0);
+  const [isDiggingDeeper, setIsDiggingDeeper] = useState(false);
+  const [isGeneratingMore, setIsGeneratingMore] = useState(false);
+  const [isBuildingTestPlan, setIsBuildingTestPlan] = useState(false);
+  const [testPlan, setTestPlan] = useState<string | null>(null);
 
   const handleAnalyze = async () => {
     if (!initialInput.trim()) {
@@ -326,6 +330,194 @@ EXAMPLE OUTPUT:
     }
   };
 
+  const handleDigDeeper = async () => {
+    if (!analysis) return;
+    
+    setIsDiggingDeeper(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('chat-ai', {
+        body: {
+          message: `You are a Product Discovery expert. Expand on the following problem analysis with deeper insights.
+
+CURRENT ANALYSIS:
+Problem: "${analysis.problem}"
+Personas: ${analysis.personas.join(', ')}
+Competitors: "${analysis.competitors}"
+
+YOUR TASK:
+Provide deeper analysis including:
+1. Root cause analysis - dig into the "why" behind this problem
+2. Detailed persona pain points - specific challenges each persona faces
+3. Market opportunity sizing - TAM/SAM/SOM estimates if applicable
+4. Competitive gaps - specific weaknesses in competitor solutions
+5. Strategic implications - how solving this aligns with broader business goals
+
+Return ONLY valid JSON (no markdown):
+{
+  "rootCause": "2-3 sentence analysis of the underlying root cause",
+  "personaDetails": {
+    "${analysis.personas[0] || 'Persona 1'}": "Specific pain points and context",
+    "${analysis.personas[1] || 'Persona 2'}": "Specific pain points and context"
+  },
+  "marketOpportunity": "1-2 sentences on market size and growth potential",
+  "competitiveGaps": ["Specific gap 1", "Specific gap 2", "Specific gap 3"],
+  "strategicValue": "Why this matters for the business strategy"
+}`,
+          mode: 'simple'
+        }
+      });
+
+      if (error) throw error;
+
+      const responseContent = data?.response || data;
+      const deeperAnalysis = typeof responseContent === 'string' ? JSON.parse(responseContent) : responseContent;
+      
+      // Enhance the existing analysis with deeper insights
+      setAnalysis(prev => prev ? {
+        ...prev,
+        competitors: deeperAnalysis.competitiveGaps?.join(', ') || prev.competitors,
+        redFlags: [...(prev.redFlags || []), ...(deeperAnalysis.competitiveGaps || [])]
+      } : prev);
+      
+      toast.success("Analysis enrichie avec plus de détails !");
+    } catch (error) {
+      console.error('Dig deeper error:', error);
+      toast.error("Erreur lors de l'analyse approfondie");
+    } finally {
+      setIsDiggingDeeper(false);
+    }
+  };
+
+  const handleGenerateMoreSolutions = async () => {
+    if (!analysis) return;
+    
+    setIsGeneratingMore(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('chat-ai', {
+        body: {
+          message: `You are a Product Innovation expert. Generate 3 additional creative solution options for this problem.
+
+PROBLEM: "${analysis.problem}"
+EXISTING SOLUTIONS: ${solutions.length} options already generated
+
+YOUR TASK:
+Generate 3 NEW, creative solution approaches that are different from typical solutions. Consider:
+- Unconventional approaches
+- Partnership/ecosystem plays
+- Technology innovations
+- Process innovations
+- Business model innovations
+
+Return ONLY valid JSON (no markdown):
+{
+  "solutions": [
+    {
+      "id": "creative_1",
+      "title": "Innovative solution title",
+      "description": "One-line creative approach",
+      "effort": 5,
+      "impact": "medium",
+      "details": "Explanation of why this is innovative and its unique value"
+    },
+    {
+      "id": "creative_2",
+      "title": "Partnership-based solution",
+      "description": "Ecosystem or integration approach",
+      "effort": 3,
+      "impact": "medium",
+      "details": "How partnerships reduce effort and increase value"
+    },
+    {
+      "id": "creative_3",
+      "title": "Future-forward solution",
+      "description": "Emerging tech or trend-based",
+      "effort": 8,
+      "impact": "high",
+      "details": "Long-term strategic value and differentiation"
+    }
+  ]
+}`,
+          mode: 'simple'
+        }
+      });
+
+      if (error) throw error;
+
+      const responseContent = data?.response || data;
+      const newSolutions = typeof responseContent === 'string' ? JSON.parse(responseContent) : responseContent;
+      
+      setSolutions(prev => [...prev, ...(newSolutions.solutions || [])]);
+      toast.success(`${newSolutions.solutions?.length || 0} nouvelles options ajoutées !`);
+    } catch (error) {
+      console.error('Generate more solutions error:', error);
+      toast.error("Erreur lors de la génération de solutions");
+    } finally {
+      setIsGeneratingMore(false);
+    }
+  };
+
+  const handleBuildTestPlan = async () => {
+    if (!validation || !analysis) return;
+    
+    setIsBuildingTestPlan(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('chat-ai', {
+        body: {
+          message: `You are a Product Validation expert. Create a comprehensive test plan for validating this problem and solution.
+
+PROBLEM: "${analysis.problem}"
+DATA POINTS: ${validation.userComplaints} complaints, ${validation.competitorAdoption} competitor adoption
+
+YOUR TASK:
+Create a detailed, actionable test plan with:
+1. Research objectives - what we need to learn
+2. Test methods - specific approaches (surveys, interviews, A/B tests, etc.)
+3. Success criteria - how we'll measure validation
+4. Timeline - realistic phases and durations
+5. Required resources - team, budget, tools
+6. Risk mitigation - what could go wrong and contingencies
+
+Return ONLY valid JSON (no markdown):
+{
+  "objectives": ["Specific learning objective 1", "Specific learning objective 2", "Specific learning objective 3"],
+  "methods": [
+    {
+      "name": "User Interviews",
+      "details": "20 interviews with target personas, 30min each",
+      "timeline": "Week 1-2",
+      "cost": "$2,000"
+    },
+    {
+      "name": "A/B Test",
+      "details": "Test core hypothesis with 1000 users",
+      "timeline": "Week 3-4",
+      "cost": "$5,000"
+    }
+  ],
+  "successCriteria": "70% of users confirm problem exists, 60% willing to pay, NPS >50",
+  "timeline": "4-6 weeks total",
+  "budget": "$10,000-15,000",
+  "risks": ["Low response rate → use incentives", "Biased feedback → use neutral language"]
+}`,
+          mode: 'simple'
+        }
+      });
+
+      if (error) throw error;
+
+      const responseContent = data?.response || data;
+      const plan = typeof responseContent === 'string' ? JSON.parse(responseContent) : responseContent;
+      
+      setTestPlan(JSON.stringify(plan, null, 2));
+      toast.success("Plan de test créé !");
+    } catch (error) {
+      console.error('Build test plan error:', error);
+      toast.error("Erreur lors de la création du plan de test");
+    } finally {
+      setIsBuildingTestPlan(false);
+    }
+  };
+
   const getImpactColor = (impact: string) => {
     switch (impact) {
       case "high": return "text-green-500";
@@ -442,7 +634,14 @@ EXAMPLE OUTPUT:
                   </ul>
                 </div>
 
-                <Button variant="outline" size="sm" className="w-full">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="w-full"
+                  onClick={handleDigDeeper}
+                  disabled={isDiggingDeeper}
+                >
+                  {isDiggingDeeper && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
                   <Sparkles className="w-4 h-4 mr-2" />
                   Dig Deeper
                 </Button>
@@ -480,7 +679,14 @@ EXAMPLE OUTPUT:
                   </div>
                 ))}
 
-                <Button variant="outline" size="sm" className="w-full">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="w-full"
+                  onClick={handleGenerateMoreSolutions}
+                  disabled={isGeneratingMore}
+                >
+                  {isGeneratingMore && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
                   <Sparkles className="w-4 h-4 mr-2" />
                   Generate More
                 </Button>
@@ -519,10 +725,26 @@ EXAMPLE OUTPUT:
                     </ul>
                   </div>
 
-                  <Button variant="outline" size="sm" className="w-full">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="w-full"
+                    onClick={handleBuildTestPlan}
+                    disabled={isBuildingTestPlan}
+                  >
+                    {isBuildingTestPlan && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
                     <Sparkles className="w-4 h-4 mr-2" />
                     Build Test Plan
                   </Button>
+                  
+                  {testPlan && (
+                    <div className="mt-4 p-3 bg-muted rounded-lg">
+                      <div className="text-xs font-medium mb-2">📋 Test Plan Generated</div>
+                      <pre className="text-xs whitespace-pre-wrap overflow-auto max-h-40">
+                        {testPlan}
+                      </pre>
+                    </div>
+                  )}
                 </div>
               )}
             </Card>
