@@ -63,17 +63,40 @@ export const SmartDiscoveryCanvas = () => {
     try {
       const { data, error } = await supabase.functions.invoke('chat-ai', {
         body: {
-          message: `Analyze this product request and provide a structured response in JSON format:
+          message: `You are an expert Product Manager conducting a Smart Discovery analysis. Analyze the following product request and provide a structured, actionable response.
 
-INPUT: "${initialInput}"
+STAKEHOLDER INPUT:
+"${initialInput}"
 
-Return ONLY a valid JSON object with this exact structure:
+YOUR TASK:
+1. Reframe the problem statement to be user-centric, unbiased, and focused on the root cause rather than the solution
+2. Identify 2-3 specific user personas who would be affected (with job titles or roles)
+3. List 3-4 key metrics that should be tracked to measure success
+4. Provide a brief competitive landscape analysis (1-2 sentences)
+5. Identify potential red flags or risks (2-3 items)
+
+IMPORTANT GUIDELINES:
+- Focus on "why" not "what" when reframing the problem
+- Be specific with persona names (e.g., "Marketing Manager", "Sales Executive")
+- Metrics should be measurable and business-relevant (e.g., "Conversion rate", "User retention", "Time to value")
+- Red flags should highlight risks like scope creep, technical complexity, or market misalignment
+
+Return ONLY a valid JSON object with this exact structure (no markdown, no code blocks):
 {
-  "problem": "Reframed problem statement (user-centric, unbiased)",
-  "personas": ["Persona 1", "Persona 2"],
-  "analytics": ["Metric 1", "Metric 2", "Metric 3"],
-  "competitors": "Brief competitor analysis",
-  "redFlags": ["Red flag 1", "Red flag 2"]
+  "problem": "Clear, user-centric problem statement that avoids mentioning specific solutions",
+  "personas": ["Specific Persona 1 (e.g., Product Manager)", "Specific Persona 2 (e.g., Data Analyst)", "Specific Persona 3 (optional)"],
+  "analytics": ["Measurable Metric 1", "Measurable Metric 2", "Measurable Metric 3", "Measurable Metric 4 (optional)"],
+  "competitors": "Brief 1-2 sentence analysis of how competitors handle this problem",
+  "redFlags": ["Specific Risk 1", "Specific Risk 2", "Specific Risk 3 (optional)"]
+}
+
+EXAMPLE OUTPUT:
+{
+  "problem": "Users struggle to find relevant insights in complex datasets, leading to missed opportunities and delayed decision-making",
+  "personas": ["Data Analyst", "Product Manager", "Business Intelligence Lead"],
+  "analytics": ["Time spent searching for data", "Number of insights discovered per session", "User satisfaction score", "Decision velocity"],
+  "competitors": "Tableau offers visual analytics but lacks AI-powered recommendations. Looker provides strong BI but has a steep learning curve.",
+  "redFlags": ["High technical complexity may increase development time", "Requires significant data infrastructure investment", "User adoption depends on data quality"]
 }`,
           mode: 'simple'
         }
@@ -117,34 +140,94 @@ Return ONLY a valid JSON object with this exact structure:
     try {
       const { data, error } = await supabase.functions.invoke('chat-ai', {
         body: {
-          message: `Based on this problem: "${problem}"
+          message: `You are a Product Strategy expert. Generate 3 distinct solution options for the following problem, ranging from comprehensive to minimal.
 
-Generate 3 solution options in JSON format with this exact structure:
+PROBLEM STATEMENT:
+"${problem}"
+
+YOUR TASK:
+Generate exactly 3 solution options with different effort/impact profiles:
+
+OPTION A - COMPREHENSIVE SOLUTION (High Impact, High Effort)
+- Full-featured implementation addressing all aspects of the problem
+- Effort: 8-13 story points
+- Impact: "high"
+- Should include advanced features, scalability, and polish
+
+OPTION B - VIABLE SOLUTION (Medium Impact, Medium Effort)  
+- Core functionality that solves the main problem
+- Effort: 3-8 story points
+- Impact: "medium"
+- Should be production-ready but with limited scope
+
+OPTION C - QUICK WIN (Low-Medium Impact, Low Effort)
+- Minimal implementation or workaround
+- Effort: 1-3 story points
+- Impact: "low"
+- Should provide immediate value with minimal investment
+
+GUIDELINES:
+- Each solution should be distinct and realistic
+- Effort should be estimated in story points (1-13 range)
+- Details should explain key features, technical approach, and tradeoffs
+- Focus on business value and user impact
+
+Return ONLY a valid JSON object (no markdown, no code blocks):
 {
   "solutions": [
     {
       "id": "option_a",
-      "title": "Full Feature",
-      "description": "Complete implementation",
-      "effort": 13,
+      "title": "Concise, descriptive title (3-5 words)",
+      "description": "One-line summary of the approach",
+      "effort": 10,
       "impact": "high",
-      "details": "Detailed description"
+      "details": "2-3 sentences explaining what this includes, why it's valuable, and key tradeoffs"
     },
     {
-      "id": "option_b", 
-      "title": "Lite Version",
-      "description": "Minimal viable",
+      "id": "option_b",
+      "title": "Concise, descriptive title",
+      "description": "One-line summary",
       "effort": 5,
       "impact": "medium",
-      "details": "Detailed description"
+      "details": "2-3 sentences with specifics"
     },
     {
       "id": "option_c",
-      "title": "Workaround",
-      "description": "Quick fix",
+      "title": "Concise, descriptive title",
+      "description": "One-line summary",
       "effort": 2,
-      "impact": "low", 
-      "details": "Detailed description"
+      "impact": "low",
+      "details": "2-3 sentences with specifics"
+    }
+  ]
+}
+
+EXAMPLE OUTPUT:
+{
+  "solutions": [
+    {
+      "id": "option_a",
+      "title": "AI-Powered Analytics Hub",
+      "description": "Full-featured intelligent data platform",
+      "effort": 13,
+      "impact": "high",
+      "details": "Build a comprehensive analytics platform with AI recommendations, custom dashboards, real-time alerts, and collaborative features. Includes advanced filtering, export capabilities, and mobile app. Highest user satisfaction but requires 3-4 months development."
+    },
+    {
+      "id": "option_b",
+      "title": "Smart Search & Filters",
+      "description": "Enhanced search with basic recommendations",
+      "effort": 5,
+      "impact": "medium",
+      "details": "Add intelligent search, key metrics dashboard, and basic AI suggestions. Covers 80% of use cases with 40% of the effort. Can be delivered in 4-6 weeks and iterated based on feedback."
+    },
+    {
+      "id": "option_c",
+      "title": "Quick Insights Widget",
+      "description": "Lightweight recommendation panel",
+      "effort": 2,
+      "impact": "low",
+      "details": "Add a simple insights sidebar showing top 5 recommendations based on user behavior. Minimal development overhead, can ship in 1-2 weeks. Good for validating user interest before bigger investment."
     }
   ]
 }`,
@@ -174,16 +257,50 @@ Generate 3 solution options in JSON format with this exact structure:
       
       const { data, error } = await supabase.functions.invoke('chat-ai', {
         body: {
-          message: `Generate an Epic for this solution: "${selectedSolution?.title}"
+          message: `You are a Senior Product Manager creating an Epic breakdown. Generate a detailed Epic specification for the following solution.
 
-Return ONLY a valid JSON object:
+SELECTED SOLUTION:
+Title: "${selectedSolution?.title}"
+Description: ${selectedSolution?.description}
+Effort: ${selectedSolution?.effort} story points
+Impact: ${selectedSolution?.impact}
+Details: ${selectedSolution?.details}
+
+YOUR TASK:
+Create a comprehensive Epic that includes:
+
+1. EPIC TITLE: Clear, action-oriented title that describes the outcome (not the feature)
+2. USER STORIES: Realistic estimate of how many user stories this would break down into (typically 3-8)
+3. STORY POINTS: Total effort estimate aligned with the solution's effort score (should be similar or slightly higher)
+4. SUCCESS METRICS: 3-4 specific, measurable KPIs to track success
+5. BUSINESS CASE: Clear ROI explanation including revenue impact, cost savings, or strategic value
+6. VALIDATION PLAN: Concrete approach to validate success (A/B tests, beta program, phased rollout, etc.)
+
+GUIDELINES:
+- Epic title should focus on user outcomes, not implementation
+- User stories count should reflect the scope realistically
+- Metrics must be measurable and time-bound
+- Business case should include quantifiable benefits
+- Validation plan should be actionable and specific
+
+Return ONLY a valid JSON object (no markdown, no code blocks):
 {
-  "title": "Epic title",
-  "userStories": 5,
-  "storyPoints": 21,
-  "metrics": "Success metrics description",
-  "businessCase": "ROI and business value",
-  "validationPlan": "Validation approach"
+  "title": "User-centric epic title describing the outcome",
+  "userStories": 6,
+  "storyPoints": 13,
+  "metrics": "3-4 specific metrics to track (e.g., '50% reduction in search time', '30% increase in insights discovered', 'NPS improvement from 40 to 60')",
+  "businessCase": "Clear ROI statement with quantifiable benefits (e.g., 'Expected to save 20 hours/week across 50 analysts = $200K annual productivity gain. Reduces time-to-insight from 3 days to 3 hours, accelerating decision-making.')",
+  "validationPlan": "Specific validation approach (e.g., '3-week beta with 20 power users → measure time savings and satisfaction → phased rollout to 50% → full launch based on NPS >60')"
+}
+
+EXAMPLE OUTPUT:
+{
+  "title": "Enable data analysts to discover insights 10x faster",
+  "userStories": 7,
+  "storyPoints": 13,
+  "metrics": "Time-to-insight reduced from 3 days to 3 hours, 50% increase in insights discovered per week, User satisfaction score >4.5/5, 80% feature adoption rate within 30 days",
+  "businessCase": "Estimated $250K annual productivity savings across 60 analysts. Faster insights enable 2x more A/B tests per quarter, projected to increase conversion rate by 0.5% ($400K additional annual revenue). Strategic advantage in data-driven decision making.",
+  "validationPlan": "Phase 1: 2-week beta with 10 power users, measure time savings and satisfaction. Phase 2: Expand to 30 users if time-to-insight improves by >50%. Phase 3: Full rollout if NPS >65 and 70% daily active usage. Include weekly check-ins and feedback sessions."
 }`,
           mode: 'simple'
         }
