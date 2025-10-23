@@ -155,7 +155,19 @@ export const TestCaseGenerator = () => {
         }
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase function error:', error);
+        throw new Error(error.message || 'Erreur lors de l\'appel à la fonction');
+      }
+
+      if (data?.error) {
+        console.error('Function returned error:', data.error);
+        throw new Error(data.error);
+      }
+
+      if (!data?.testCases || data.testCases.length === 0) {
+        throw new Error('Aucun cas de test généré. Veuillez réessayer.');
+      }
 
       setTestCases(data.testCases || []);
       setCoverageAnalysis(data.coverageAnalysis || null);
@@ -164,7 +176,20 @@ export const TestCaseGenerator = () => {
       toast.success(`${data.testCases?.length || 0} cas de test générés avec succès!`);
     } catch (error: any) {
       console.error('Error generating test cases:', error);
-      toast.error(error.message || 'Erreur lors de la génération des cas de test');
+      
+      let errorMessage = 'Erreur lors de la génération des cas de test';
+      
+      if (error.message?.includes('too large')) {
+        errorMessage = 'Le contenu sélectionné est trop volumineux. Veuillez sélectionner moins d\'artefacts.';
+      } else if (error.message?.includes('Rate limit')) {
+        errorMessage = 'Limite de taux dépassée. Veuillez réessayer dans quelques instants.';
+      } else if (error.message?.includes('usage limit')) {
+        errorMessage = 'Limite d\'utilisation atteinte. Veuillez ajouter des crédits.';
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      toast.error(errorMessage);
     } finally {
       setIsGenerating(false);
     }

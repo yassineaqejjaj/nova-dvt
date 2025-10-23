@@ -12,7 +12,29 @@ serve(async (req) => {
   }
 
   try {
+    console.log('Received request to generate test cases');
     const { artifactContent, artifactType, testLevels, context } = await req.json();
+    
+    console.log('Request details:', {
+      artifactType,
+      testLevels,
+      contentLength: artifactContent?.length || 0,
+      hasContext: !!context
+    });
+
+    if (!artifactContent || artifactContent.trim().length === 0) {
+      throw new Error('Artifact content is required');
+    }
+
+    if (!testLevels || testLevels.length === 0) {
+      throw new Error('At least one test level must be selected');
+    }
+
+    // Limit content size to prevent timeouts (100KB max)
+    const MAX_CONTENT_SIZE = 100000;
+    if (artifactContent.length > MAX_CONTENT_SIZE) {
+      throw new Error(`Content too large. Maximum size is ${MAX_CONTENT_SIZE} characters. Current size: ${artifactContent.length}`);
+    }
 
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
     if (!LOVABLE_API_KEY) {
@@ -68,6 +90,7 @@ ${artifactContent}
 
 Generate comprehensive test cases covering all test levels requested. Include edge cases and suggest automation scripts where applicable.`;
 
+    console.log('Calling AI Gateway...');
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -141,24 +164,37 @@ Generate comprehensive test cases covering all test levels requested. Include ed
       console.error('AI Gateway error:', response.status, errorText);
       
       if (response.status === 429) {
-        throw new Error('Rate limit exceeded. Please try again later.');
+        return new Response(
+          JSON.stringify({ error: 'Limite de taux dépassée. Veuillez réessayer dans quelques instants.' }),
+          { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
       }
       if (response.status === 402) {
-        throw new Error('AI usage limit reached. Please add credits to your Lovable AI workspace.');
+        return new Response(
+          JSON.stringify({ error: 'Limite d\'utilisation atteinte. Veuillez ajouter des crédits à votre espace Lovable AI.' }),
+          { status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
       }
       
-      throw new Error(`AI Gateway error: ${response.status}`);
+      throw new Error(`AI Gateway error: ${response.status} - ${errorText}`);
     }
 
+    console.log('AI Gateway response received, parsing...');
     const data = await response.json();
-    console.log('AI Response:', JSON.stringify(data, null, 2));
 
     const toolCall = data.choices?.[0]?.message?.tool_calls?.[0];
     if (!toolCall) {
-      throw new Error('No tool call in AI response');
+      console.error('No tool call in response:', JSON.stringify(data, null, 2));
+      throw new Error('Invalid AI response format: no tool call found');
     }
 
+    console.log('Parsing tool call arguments...');
     const result = JSON.parse(toolCall.function.arguments);
+    
+    console.log('Test cases generated successfully:', {
+      totalCases: result.testCases?.length || 0,
+      coverageScore: result.coverageAnalysis?.coverageScore || 0
+    });
 
     return new Response(JSON.stringify(result), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -166,13 +202,17 @@ Generate comprehensive test cases covering all test levels requested. Include ed
 
   } catch (error) {
     console.error('Error in generate-test-cases:', error);
+    
+    const errorMessage = error instanceof Error ? error.message : 'Une erreur inconnue est survenue';
+    const statusCode = error.message?.includes('too large') ? 413 : 500;
+    
     return new Response(
       JSON.stringify({ 
-        error: error.message || 'Failed to generate test cases',
+        error: errorMessage,
         details: error.toString()
       }), 
       {
-        status: 500,
+        status: statusCode,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       }
     );
