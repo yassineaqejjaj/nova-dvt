@@ -242,6 +242,9 @@ export const NovaChat: React.FC<NovaChatProps> = ({
       content: welcomeMessage,
       suggestions
     }]);
+
+    // Save the conversation immediately so it appears in history
+    await saveConversation();
   };
 
   const generateSuggestions = async (currentPage: string = 'unknown') => {

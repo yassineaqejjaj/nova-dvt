@@ -11,8 +11,7 @@ import {
   Database,
   Workflow,
   MessageSquare,
-  Sparkles,
-  X
+  Sparkles
 } from 'lucide-react';
 
 interface InteractiveTutorialProps {
@@ -108,15 +107,10 @@ export function InteractiveTutorial({ open, onClose, onNavigate }: InteractiveTu
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <div className="flex items-center justify-between">
-            <DialogTitle className="text-2xl font-bold flex items-center gap-2">
-              <Sparkles className="w-6 h-6 text-primary" />
-              Tour Guidé Nova
-            </DialogTitle>
-            <Button variant="ghost" size="icon" onClick={onClose}>
-              <X className="w-4 h-4" />
-            </Button>
-          </div>
+          <DialogTitle className="text-2xl font-bold flex items-center gap-2">
+            <Sparkles className="w-6 h-6 text-primary" />
+            Tour Guidé Nova
+          </DialogTitle>
         </DialogHeader>
 
         <div className="space-y-6 py-4">

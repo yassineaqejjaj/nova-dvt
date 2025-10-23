@@ -64,6 +64,8 @@ export const ProductContextManager = ({ open, onOpenChange, onContextSelected }:
 
   const [newObjective, setNewObjective] = useState('');
   const [newKPI, setNewKPI] = useState('');
+  const [editingObjectiveIndex, setEditingObjectiveIndex] = useState<number | null>(null);
+  const [editingKPIIndex, setEditingKPIIndex] = useState<number | null>(null);
 
   useEffect(() => {
     if (open) {
@@ -454,6 +456,17 @@ export const ProductContextManager = ({ open, onOpenChange, onContextSelected }:
     setIsEditing(true);
   };
 
+  const updateObjective = (index: number, newValue: string) => {
+    if (newValue.trim()) {
+      setFormData(prev => ({
+        ...prev,
+        objectives: prev.objectives.map((obj, i) => i === index ? newValue.trim() : obj)
+      }));
+      setIsEditing(true);
+    }
+    setEditingObjectiveIndex(null);
+  };
+
   const addKPI = () => {
     if (newKPI.trim()) {
       setFormData(prev => ({
@@ -471,6 +484,17 @@ export const ProductContextManager = ({ open, onOpenChange, onContextSelected }:
       target_kpis: prev.target_kpis.filter((_, i) => i !== index)
     }));
     setIsEditing(true);
+  };
+
+  const updateKPI = (index: number, newValue: string) => {
+    if (newValue.trim()) {
+      setFormData(prev => ({
+        ...prev,
+        target_kpis: prev.target_kpis.map((kpi, i) => i === index ? newValue.trim() : kpi)
+      }));
+      setIsEditing(true);
+    }
+    setEditingKPIIndex(null);
   };
 
   const filteredContexts = contexts.filter(c =>
@@ -645,9 +669,29 @@ export const ProductContextManager = ({ open, onOpenChange, onContextSelected }:
                         <div className="space-y-1">
                           {formData.objectives.map((obj, idx) => (
                             <div key={idx} className="flex items-center gap-2 text-sm">
-                              <Badge variant="secondary" className="flex-1">
-                                {obj}
-                              </Badge>
+                              {editingObjectiveIndex === idx ? (
+                                <Input
+                                  defaultValue={obj}
+                                  autoFocus
+                                  onBlur={(e) => updateObjective(idx, e.target.value)}
+                                  onKeyPress={(e) => {
+                                    if (e.key === 'Enter') {
+                                      updateObjective(idx, e.currentTarget.value);
+                                    } else if (e.key === 'Escape') {
+                                      setEditingObjectiveIndex(null);
+                                    }
+                                  }}
+                                  className="flex-1"
+                                />
+                              ) : (
+                                <Badge 
+                                  variant="secondary" 
+                                  className="flex-1 cursor-pointer hover:bg-secondary/80"
+                                  onClick={() => setEditingObjectiveIndex(idx)}
+                                >
+                                  {obj}
+                                </Badge>
+                              )}
                               <Button
                                 variant="ghost"
                                 size="sm"
@@ -676,9 +720,29 @@ export const ProductContextManager = ({ open, onOpenChange, onContextSelected }:
                         <div className="space-y-1">
                           {formData.target_kpis.map((kpi, idx) => (
                             <div key={idx} className="flex items-center gap-2 text-sm">
-                              <Badge variant="secondary" className="flex-1">
-                                {kpi}
-                              </Badge>
+                              {editingKPIIndex === idx ? (
+                                <Input
+                                  defaultValue={kpi}
+                                  autoFocus
+                                  onBlur={(e) => updateKPI(idx, e.target.value)}
+                                  onKeyPress={(e) => {
+                                    if (e.key === 'Enter') {
+                                      updateKPI(idx, e.currentTarget.value);
+                                    } else if (e.key === 'Escape') {
+                                      setEditingKPIIndex(null);
+                                    }
+                                  }}
+                                  className="flex-1"
+                                />
+                              ) : (
+                                <Badge 
+                                  variant="secondary" 
+                                  className="flex-1 cursor-pointer hover:bg-secondary/80"
+                                  onClick={() => setEditingKPIIndex(idx)}
+                                >
+                                  {kpi}
+                                </Badge>
+                              )}
                               <Button
                                 variant="ghost"
                                 size="sm"
@@ -706,6 +770,21 @@ export const ProductContextManager = ({ open, onOpenChange, onContextSelected }:
                       </div>
 
                       <div className="space-y-2">
+                        <Label htmlFor="industry_sector">
+                          Secteur d'activité
+                        </Label>
+                        <Input
+                          id="industry_sector"
+                          value={formData.industry_sector}
+                          onChange={(e) => {
+                            setFormData({ ...formData, industry_sector: e.target.value });
+                            setIsEditing(true);
+                          }}
+                          placeholder="Ex: E-commerce, SaaS, FinTech, HealthTech..."
+                        />
+                      </div>
+
+                      <div className="space-y-2">
                         <Label htmlFor="target_audience">
                           Public cible
                         </Label>
@@ -718,21 +797,6 @@ export const ProductContextManager = ({ open, onOpenChange, onContextSelected }:
                           }}
                           placeholder="Qui sont vos utilisateurs cibles ?"
                           rows={2}
-                        />
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label htmlFor="industry_sector">
-                          Secteur d'activité
-                        </Label>
-                        <Input
-                          id="industry_sector"
-                          value={formData.industry_sector}
-                          onChange={(e) => {
-                            setFormData({ ...formData, industry_sector: e.target.value });
-                            setIsEditing(true);
-                          }}
-                          placeholder="Ex: E-commerce, SaaS, FinTech, HealthTech..."
                         />
                       </div>
                     </div>
