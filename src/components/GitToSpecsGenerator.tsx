@@ -1159,7 +1159,7 @@ export const GitToSpecsGenerator = () => {
                                     ))}
                                   </ul>
                                 </div>
-                                {comp.dependencies.length > 0 && (
+                                {comp.dependencies?.length > 0 && (
                                   <div>
                                     <span className="font-medium">Dependencies:</span>
                                     <div className="flex flex-wrap gap-1 mt-1">
@@ -1442,7 +1442,7 @@ export const GitToSpecsGenerator = () => {
                             <div>
                               <span className="font-medium">Mitigation:</span> {risk.mitigation}
                             </div>
-                            {risk.dependencies.length > 0 && (
+                            {risk.dependencies?.length > 0 && (
                               <div>
                                 <span className="font-medium">Dependencies:</span>
                                 <div className="flex flex-wrap gap-1 mt-1">

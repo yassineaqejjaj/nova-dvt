@@ -294,7 +294,7 @@ Ex:
                     <p className="text-sm text-muted-foreground">{estimation.reasoning}</p>
                   </div>
 
-                  {estimation.dependencies.length > 0 && (
+                  {estimation.dependencies?.length > 0 && (
                     <div>
                       <h4 className="text-sm font-semibold mb-2">Dépendances</h4>
                       <ul className="text-sm space-y-1">

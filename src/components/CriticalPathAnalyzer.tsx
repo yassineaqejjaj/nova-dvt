@@ -374,7 +374,7 @@ export const CriticalPathAnalyzer = () => {
                         </div>
                       </div>
 
-                      {path.dependencies.length > 0 && (
+                      {path.dependencies?.length > 0 && (
                         <div>
                           <h4 className="text-sm font-semibold mb-2">Dépendances</h4>
                           <div className="flex flex-wrap gap-2">

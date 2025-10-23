@@ -24,6 +24,7 @@ interface UserStory {
   acceptanceCriteria: string[];
   priority: 'high' | 'medium' | 'low';
   estimatedEffort: string;
+  dependencies: string[];
 }
 
 export const StoryWriter: React.FC<StoryWriterProps> = ({ open, onClose }) => {
@@ -67,7 +68,8 @@ export const StoryWriter: React.FC<StoryWriterProps> = ({ open, onClose }) => {
           'Tests are passing'
         ],
         priority: data.content.priority || 'medium',
-        estimatedEffort: data.content.estimatedEffort || 'TBD'
+        estimatedEffort: data.content.estimatedEffort || 'TBD',
+        dependencies: data.content.dependencies || []
       };
 
       setGeneratedStory(story);

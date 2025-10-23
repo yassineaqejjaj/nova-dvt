@@ -108,7 +108,7 @@ const StoryCard = ({
                 spacing: { after: 200 }
               })
             ] : []),
-            ...(story.dependencies.length > 0 ? [
+            ...(story.dependencies?.length > 0 ? [
               new Paragraph({
                 children: [
                   new TextRun({ text: 'Dépendances: ', bold: true }),
@@ -204,7 +204,7 @@ const StoryCard = ({
                   </div>
                 )}
 
-                {story.dependencies.length > 0 && (
+                {story.dependencies?.length > 0 && (
                   <div>
                     <p className="text-sm font-medium mb-1">Dépendances :</p>
                     <div className="flex flex-wrap gap-1">
