@@ -202,7 +202,6 @@ export const TestCaseGenerator = () => {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="user-story">User Story</SelectItem>
-                  <SelectItem value="tech-spec">Spécification Technique</SelectItem>
                   <SelectItem value="epic">Epic</SelectItem>
                 </SelectContent>
               </Select>
