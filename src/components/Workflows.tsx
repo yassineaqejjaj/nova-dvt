@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -742,16 +742,15 @@ export const Workflows: React.FC = () => {
   
   // Workflow progress management
   const [activeWorkflow, setActiveWorkflow] = useState<{ type: string; currentStep: number } | null>(null);
-  const { workflowContext, setWorkflowContext } = useWorkflowProgress(
-    activeWorkflow,
-    (nextStep, context) => {
-      setCurrentStep(nextStep);
-      setWorkflowContext(context);
-      if (selectedWorkflow && nextStep >= selectedWorkflow.steps.length) {
-        handleCompleteWorkflow();
-      }
-    }
-  );
+  const [workflowContext, setWorkflowContext] = useState<Record<string, any>>({});
+  
+  // Mémoriser le callback pour éviter les re-renders infinis
+  const handleStepComplete = useCallback((nextStep: number, context: any) => {
+    setCurrentStep(nextStep);
+    setWorkflowContext(context);
+  }, []);
+  
+  useWorkflowProgress(activeWorkflow, handleStepComplete);
   
   // Framework filtering
   const {
@@ -962,12 +961,19 @@ export const Workflows: React.FC = () => {
     }
   };
 
-  const handleCompleteWorkflow = () => {
+  const handleCompleteWorkflow = useCallback(() => {
     toast.success(`Completed ${selectedWorkflow?.name} workflow!`, {
       description: 'Great work! Your workflow is complete.',
     });
     handleBackToWorkflows();
-  };
+  }, [selectedWorkflow]);
+  
+  // Vérifier si le workflow est terminé
+  React.useEffect(() => {
+    if (selectedWorkflow && currentStep >= selectedWorkflow.steps.length) {
+      handleCompleteWorkflow();
+    }
+  }, [currentStep, selectedWorkflow, handleCompleteWorkflow]);
 
   const categories = Array.from(new Set(workflows.map(w => w.category)));
   const allTags = Array.from(new Set(workflows.flatMap(w => w.tags)));

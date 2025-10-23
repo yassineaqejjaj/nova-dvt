@@ -17,14 +17,12 @@ interface WorkflowState {
 
 export const useWorkflowProgress = (
   activeWorkflow: { type: string; currentStep: number } | null,
-  onStepComplete: (newStep: number, context: any) => void
+  onStepComplete?: (newStep: number, context: any) => void
 ) => {
-  const [workflowContext, setWorkflowContext] = useState<Record<string, any>>({});
   const [lastArtifactCount, setLastArtifactCount] = useState(0);
 
   useEffect(() => {
     if (!activeWorkflow) {
-      setWorkflowContext({});
       setLastArtifactCount(0);
       return;
     }
@@ -46,23 +44,16 @@ export const useWorkflowProgress = (
       if (!artifacts || artifacts.length === 0) return;
 
       const currentCount = artifacts.length;
-      if (currentCount > lastCount && lastCount > 0) {
+      if (currentCount > lastCount && lastCount > 0 && onStepComplete) {
         // New artifact created!
         const newArtifact = artifacts[0];
+        const updatedContext = {
+          [`step_${activeWorkflow.currentStep}`]: newArtifact,
+          lastArtifact: newArtifact
+        };
         
-        // Add to workflow context using functional update
-        setWorkflowContext(prev => {
-          const updatedContext = {
-            ...prev,
-            [`step_${activeWorkflow.currentStep}`]: newArtifact,
-            lastArtifact: newArtifact
-          };
-          
-          // Auto-advance to next step
-          onStepComplete(activeWorkflow.currentStep + 1, updatedContext);
-          
-          return updatedContext;
-        });
+        // Auto-advance to next step
+        onStepComplete(activeWorkflow.currentStep + 1, updatedContext);
       }
       
       lastCount = currentCount;
@@ -90,6 +81,7 @@ export const useWorkflowProgress = (
 
     return () => clearInterval(interval);
   }, [activeWorkflow, onStepComplete]);
-
-  return { workflowContext, setWorkflowContext };
+  
+  // Return empty workflowContext for compatibility
+  return { workflowContext: {} };
 };

@@ -119,7 +119,8 @@ export const NovaChat: React.FC<NovaChatProps> = ({
     await saveConversation();
   }, [activeWorkflow]);
 
-  const { workflowContext } = useWorkflowProgress(activeWorkflow, handleWorkflowStepComplete);
+  useWorkflowProgress(activeWorkflow, handleWorkflowStepComplete);
+  const [localWorkflowContext, setLocalWorkflowContext] = useState<Record<string, any>>({});
 
   useEffect(() => {
     if (open) {
@@ -451,7 +452,7 @@ Soyez concis (2-4 phrases), amical, et proposez des actions suivantes basées su
           return;
         } else if (userMessage.toLowerCase().includes('next') || userMessage.toLowerCase().includes('continue')) {
           // Manually advance workflow (in addition to auto-advance)
-          await handleWorkflowStepComplete(activeWorkflow.currentStep + 1, workflowContext);
+          await handleWorkflowStepComplete(activeWorkflow.currentStep + 1, localWorkflowContext);
           setIsLoading(false);
           return;
         }
@@ -468,11 +469,11 @@ Artéfacts récents: ${workspaceContext.recentArtifacts?.length || 0}
 Contextes actifs: ${workspaceContext.activeContexts?.length || 0}
 Squads: ${workspaceContext.squads?.length || 0}
 
-${activeWorkflow && workflowContext.lastArtifact ? `
+${activeWorkflow && localWorkflowContext.lastArtifact ? `
 WORKFLOW EN COURS - Contexte de l'étape précédente:
-Dernier artéfact créé: ${workflowContext.lastArtifact.title}
-Type: ${workflowContext.lastArtifact.artifact_type}
-Contenu: ${JSON.stringify(workflowContext.lastArtifact.content).substring(0, 200)}...
+Dernier artéfact créé: ${localWorkflowContext.lastArtifact.title}
+Type: ${localWorkflowContext.lastArtifact.artifact_type}
+Contenu: ${JSON.stringify(localWorkflowContext.lastArtifact.content).substring(0, 200)}...
 
 Utilisez ce contexte pour guider l'utilisateur dans l'étape actuelle.
 ` : ''}
