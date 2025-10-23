@@ -20,11 +20,10 @@ import { TechnicalSpecification } from './TechnicalSpecification';
 import { SmartDiscoveryCanvas } from './SmartDiscoveryCanvas';
 import EpicToUserStories from './EpicToUserStories';
 import { GitToSpecsGenerator } from './GitToSpecsGenerator';
-import { TestCaseGenerator } from './TestCaseGenerator';
 import { AcceptanceCriteriaValidator } from './AcceptanceCriteriaValidator';
-import { CriticalPathAnalyzer } from './CriticalPathAnalyzer';
 import { FrameworkFilter } from './FrameworkFilter';
 import { useFrameworkFilter } from '@/hooks/useFrameworkFilter';
+import { useNavigate } from 'react-router-dom';
 import {
   Rocket,
   Target,
@@ -734,6 +733,7 @@ const workflows: Workflow[] = [
 ];
 
 export const Workflows: React.FC = () => {
+  const navigate = useNavigate();
   const [selectedWorkflow, setSelectedWorkflow] = useState<Workflow | null>(null);
   const [currentStep, setCurrentStep] = useState(0);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
@@ -764,10 +764,8 @@ export const Workflows: React.FC = () => {
   const [showTechnicalSpec, setShowTechnicalSpec] = useState(false);
   const [showSmartDiscovery, setShowSmartDiscovery] = useState(false);
   const [showEpicToStories, setShowEpicToStories] = useState(false);
-  const [showTestCaseGenerator, setShowTestCaseGenerator] = useState(false);
   const [showACValidator, setShowACValidator] = useState(false);
   const [showGitToSpecs, setShowGitToSpecs] = useState(false);
-  const [showCriticalPathAnalyzer, setShowCriticalPathAnalyzer] = useState(false);
 
   const [activeContext, setActiveContext] = useState<{
     name: string;
@@ -873,10 +871,6 @@ export const Workflows: React.FC = () => {
       setShowEpicToStories(true);
       return;
     }
-    if (workflow.id === 'test-case-generator') {
-      setShowTestCaseGenerator(true);
-      return;
-    }
     if (workflow.id === 'acceptance-criteria-validator') {
       setShowACValidator(true);
       return;
@@ -929,10 +923,7 @@ export const Workflows: React.FC = () => {
         setShowEpicToStories(true);
         break;
       case 'test-generator':
-        setShowTestCaseGenerator(true);
-        setTimeout(() => {
-          document.getElementById('test-generator-anchor')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }, 0);
+        navigate('/test-generator');
         break;
       case 'ac-validator':
         setShowACValidator(true);
@@ -941,10 +932,7 @@ export const Workflows: React.FC = () => {
         setShowGitToSpecs(true);
         break;
       case 'critical-path-analyzer':
-        setShowCriticalPathAnalyzer(true);
-        setTimeout(() => {
-          document.getElementById('critical-path-anchor')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }, 0);
+        navigate('/critical-path-analyzer');
         break;
       default:
         console.warn('Unknown tool:', tool);
@@ -1132,18 +1120,6 @@ export const Workflows: React.FC = () => {
           onOpenChange={setShowContextManager}
           onContextSelected={loadActiveContext}
         />
-
-        {showCriticalPathAnalyzer && (
-          <div className="mt-6">
-            <CriticalPathAnalyzer />
-          </div>
-        )}
-
-        {showTestCaseGenerator && (
-          <div className="mt-6">
-            <TestCaseGenerator />
-          </div>
-        )}
       </div>
     );
   }
@@ -1381,24 +1357,18 @@ export const Workflows: React.FC = () => {
         </div>
       )}
       
-      {showTestCaseGenerator && (
-        <div id="test-generator-anchor" className="mt-6">
-          <TestCaseGenerator />
-        </div>
-      )}
-      
-      {showACValidator && (
+      {showGitToSpecs && (
         <div className="fixed inset-0 z-50 bg-background overflow-auto">
           <Button
             variant="ghost"
             size="sm"
             className="absolute top-4 right-4 z-50"
-            onClick={() => setShowACValidator(false)}
+            onClick={() => setShowGitToSpecs(false)}
           >
             ✕ Fermer
           </Button>
           <div className="container mx-auto p-6">
-            <AcceptanceCriteriaValidator />
+            <GitToSpecsGenerator />
           </div>
         </div>
       )}
@@ -1419,9 +1389,19 @@ export const Workflows: React.FC = () => {
         </div>
       )}
       
-      {showCriticalPathAnalyzer && (
-        <div id="critical-path-anchor" className="mt-6">
-          <CriticalPathAnalyzer />
+      {showACValidator && (
+        <div className="fixed inset-0 z-50 bg-background overflow-auto">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="absolute top-4 right-4 z-50"
+            onClick={() => setShowACValidator(false)}
+          >
+            ✕ Fermer
+          </Button>
+          <div className="container mx-auto p-6">
+            <AcceptanceCriteriaValidator />
+          </div>
         </div>
       )}
     </div>
