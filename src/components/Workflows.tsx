@@ -23,6 +23,7 @@ import { GitToSpecsGenerator } from './GitToSpecsGenerator';
 import { AcceptanceCriteriaValidator } from './AcceptanceCriteriaValidator';
 import { FrameworkFilter } from './FrameworkFilter';
 import { useFrameworkFilter } from '@/hooks/useFrameworkFilter';
+import { useWorkflowProgress } from '@/hooks/useWorkflowProgress';
 import { useNavigate } from 'react-router-dom';
 import {
   Rocket,
@@ -739,6 +740,19 @@ export const Workflows: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [selectedTag, setSelectedTag] = useState<string>('all');
   
+  // Workflow progress management
+  const [activeWorkflow, setActiveWorkflow] = useState<{ type: string; currentStep: number } | null>(null);
+  const { workflowContext, setWorkflowContext } = useWorkflowProgress(
+    activeWorkflow,
+    (nextStep, context) => {
+      setCurrentStep(nextStep);
+      setWorkflowContext(context);
+      if (selectedWorkflow && nextStep >= selectedWorkflow.steps.length) {
+        handleCompleteWorkflow();
+      }
+    }
+  );
+  
   // Framework filtering
   const {
     frameworks,
@@ -878,11 +892,15 @@ export const Workflows: React.FC = () => {
     
     setSelectedWorkflow(workflow);
     setCurrentStep(0);
+    setActiveWorkflow({ type: workflow.id, currentStep: 0 });
+    setWorkflowContext({});
   };
 
   const handleBackToWorkflows = () => {
     setSelectedWorkflow(null);
     setCurrentStep(0);
+    setActiveWorkflow(null);
+    setWorkflowContext({});
   };
 
   const handleToolLaunch = (tool: string) => {
@@ -1036,7 +1054,16 @@ export const Workflows: React.FC = () => {
               >
                 ✕
               </Button>
-              <MarketResearch />
+              <MarketResearch 
+                activeWorkflow={activeWorkflow}
+                onStepComplete={(nextStep, context) => {
+                  setCurrentStep(nextStep);
+                  setWorkflowContext(context);
+                  setActiveWorkflow(prev => prev ? { ...prev, currentStep: nextStep } : null);
+                  setShowMarketResearch(false);
+                }}
+                workflowContext={workflowContext}
+              />
             </div>
           </div>
         )}

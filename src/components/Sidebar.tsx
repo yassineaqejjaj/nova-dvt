@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { TabType } from '@/types';
@@ -49,6 +50,7 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
   onCreateCanvas,
   onManageContexts
 }) => {
+  const navigate = useNavigate();
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({
     quickAccess: true,
     core: false,
@@ -125,10 +127,12 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
       title: 'Discovery & Strategy',
       items: [
         {
-          id: 'user-persona-builder' as TabType,
-          label: 'User Personas',
+          id: 'user-research' as TabType,
+          label: 'Recherche Utilisateur',
           icon: Users,
-          description: 'Personas utilisateur'
+          description: 'Personas & Market Research',
+          isRoute: true,
+          route: '/user-research'
         },
         {
           label: 'Canvas Generator',
@@ -407,14 +411,22 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
                     
                     {isSegmentExpanded && segment.items.map((item) => {
                       const Icon = item.icon;
-                      const isActive = !(item as any).isAction && activeTab === item.id;
+                      const isActive = !(item as any).isAction && !(item as any).isRoute && activeTab === item.id;
                       
                       return (
                         <SidebarMenuItem key={item.label}>
                           <SidebarMenuButton asChild>
                             <Button
                               variant="ghost"
-                              onClick={() => (item as any).isAction ? (item as any).onClick?.() : onTabChange(item.id as TabType)}
+                              onClick={() => {
+                                if ((item as any).isAction) {
+                                  (item as any).onClick?.();
+                                } else if ((item as any).isRoute) {
+                                  navigate((item as any).route);
+                                } else {
+                                  onTabChange(item.id as TabType);
+                                }
+                              }}
                               className={`w-full justify-start h-9 px-3 ${getNavClass(isActive)}`}
                             >
                               <Icon className="w-4 h-4 mr-3 flex-shrink-0" />

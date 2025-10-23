@@ -25,7 +25,17 @@ interface Persona {
   preferredChannels: string[];
 }
 
-export const UserPersonaBuilder = () => {
+interface UserPersonaBuilderProps {
+  activeWorkflow?: { type: string; currentStep: number } | null;
+  onStepComplete?: (nextStep: number, context: any) => void;
+  workflowContext?: Record<string, any>;
+}
+
+export const UserPersonaBuilder = ({ 
+  activeWorkflow, 
+  onStepComplete, 
+  workflowContext 
+}: UserPersonaBuilderProps = {}) => {
   const [productDescription, setProductDescription] = useState("");
   const [targetAudience, setTargetAudience] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
@@ -86,7 +96,7 @@ Génère 3 personas utilisateur détaillées et réalistes (JSON uniquement):
     }
   };
 
-  const saveAsArtifact = async () => {
+  const saveAsArtifact = async (andContinue: boolean = false) => {
     if (!personas.length) {
       toast.error("Aucune persona à sauvegarder");
       return;
@@ -97,16 +107,30 @@ Génère 3 personas utilisateur détaillées et réalistes (JSON uniquement):
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("User not authenticated");
 
-      const { error } = await supabase.from('artifacts').insert({
+      const { data: savedArtifact, error } = await supabase.from('artifacts').insert({
         user_id: user.id,
         artifact_type: 'canvas' as const,
         title: `Personas Utilisateur - ${new Date().toLocaleDateString('fr-FR')}`,
         content: { personas, productDescription, targetAudience },
-        metadata: { type: 'user-personas', generatedAt: new Date().toISOString() }
-      } as any);
+        metadata: { 
+          type: 'user-personas', 
+          generatedAt: new Date().toISOString(),
+          workflowStep: activeWorkflow?.currentStep
+        }
+      } as any).select().single();
 
       if (error) throw error;
       toast.success("Personas sauvegardées dans les artifacts!");
+      
+      // If in a workflow and continuing to next step
+      if (andContinue && activeWorkflow && onStepComplete && savedArtifact) {
+        const updatedContext = {
+          ...workflowContext,
+          [`step_${activeWorkflow.currentStep}`]: savedArtifact,
+          personas_artifact: savedArtifact
+        };
+        onStepComplete(activeWorkflow.currentStep + 1, updatedContext);
+      }
     } catch (error) {
       console.error('Error saving artifact:', error);
       toast.error("Erreur lors de la sauvegarde");
@@ -194,10 +218,16 @@ Génère 3 personas utilisateur détaillées et réalistes (JSON uniquement):
       {personas.length > 0 && (
         <>
           <div className="flex gap-2">
-            <Button onClick={saveAsArtifact} disabled={isSaving} variant="outline">
+            <Button onClick={() => saveAsArtifact(false)} disabled={isSaving} variant="outline">
               {isSaving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
               Sauvegarder
             </Button>
+            {activeWorkflow && onStepComplete && (
+              <Button onClick={() => saveAsArtifact(true)} disabled={isSaving}>
+                {isSaving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
+                Étape suivante
+              </Button>
+            )}
           </div>
 
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">

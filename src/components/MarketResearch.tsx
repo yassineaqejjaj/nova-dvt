@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { Search, Globe, TrendingUp, Users, AlertCircle, Loader2 } from 'lucide-react';
+import { Search, Globe, TrendingUp, Users, AlertCircle, Loader2, Save } from 'lucide-react';
 
 interface ResearchResult {
   competitors?: Array<{
@@ -22,10 +22,21 @@ interface ResearchResult {
   summary?: string;
 }
 
-export const MarketResearch: React.FC = () => {
+interface MarketResearchProps {
+  activeWorkflow?: { type: string; currentStep: number } | null;
+  onStepComplete?: (nextStep: number, context: any) => void;
+  workflowContext?: Record<string, any>;
+}
+
+export const MarketResearch: React.FC<MarketResearchProps> = ({ 
+  activeWorkflow, 
+  onStepComplete, 
+  workflowContext 
+}) => {
   const [query, setQuery] = useState('');
   const [context, setContext] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [results, setResults] = useState<ResearchResult | null>(null);
 
   const handleResearch = async (e: React.FormEvent) => {
@@ -55,6 +66,49 @@ export const MarketResearch: React.FC = () => {
       });
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const saveAsArtifact = async (andContinue: boolean = false) => {
+    if (!results) {
+      toast.error("Aucun résultat à sauvegarder");
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("User not authenticated");
+
+      const { data: savedArtifact, error } = await supabase.from('artifacts').insert({
+        user_id: user.id,
+        artifact_type: 'canvas' as const,
+        title: `Étude de Marché - ${query} - ${new Date().toLocaleDateString('fr-FR')}`,
+        content: { query, context, results },
+        metadata: { 
+          type: 'market-research', 
+          generatedAt: new Date().toISOString(),
+          workflowStep: activeWorkflow?.currentStep
+        }
+      } as any).select().single();
+
+      if (error) throw error;
+      toast.success("Étude de marché sauvegardée!");
+      
+      // If in a workflow and continuing to next step
+      if (andContinue && activeWorkflow && onStepComplete && savedArtifact) {
+        const updatedContext = {
+          ...workflowContext,
+          [`step_${activeWorkflow.currentStep}`]: savedArtifact,
+          market_research_artifact: savedArtifact
+        };
+        onStepComplete(activeWorkflow.currentStep + 1, updatedContext);
+      }
+    } catch (error) {
+      console.error('Error saving artifact:', error);
+      toast.error("Erreur lors de la sauvegarde");
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -120,6 +174,19 @@ export const MarketResearch: React.FC = () => {
 
       {results && (
         <div className="space-y-4">
+          <div className="flex gap-2">
+            <Button onClick={() => saveAsArtifact(false)} disabled={isSaving} variant="outline">
+              {isSaving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
+              Sauvegarder
+            </Button>
+            {activeWorkflow && onStepComplete && (
+              <Button onClick={() => saveAsArtifact(true)} disabled={isSaving}>
+                {isSaving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
+                Étape suivante
+              </Button>
+            )}
+          </div>
+
           {results.summary && (
             <Card>
               <CardHeader>

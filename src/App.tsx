@@ -11,6 +11,7 @@ import NotFound from "./pages/NotFound";
 import { InstantPRD } from "./components/InstantPRD";
 import TestCaseGeneratorPage from "./pages/TestCaseGenerator";
 import CriticalPathAnalyzerPage from "./pages/CriticalPathAnalyzer";
+import { UserResearch } from "./pages/UserResearch";
 
 const queryClient = new QueryClient();
 
@@ -27,6 +28,7 @@ const App = () => (
             <Route path="/instant-prd" element={<InstantPRD />} />
             <Route path="/test-generator" element={<TestCaseGeneratorPage />} />
             <Route path="/critical-path-analyzer" element={<CriticalPathAnalyzerPage />} />
+            <Route path="/user-research" element={<UserResearch />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
