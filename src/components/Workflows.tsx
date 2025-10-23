@@ -36,6 +36,8 @@ import {
   Settings2,
   FileCode,
   Sparkles,
+  CheckCircle2,
+  ListTree,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
@@ -55,7 +57,7 @@ interface Workflow {
     id: string;
     title: string;
     description: string;
-    tool?: 'canvas' | 'story' | 'impact' | 'research' | 'design' | 'code' | 'roadmap' | 'launch' | 'sprint' | 'kpi' | 'epic-stories';
+    tool?: 'canvas' | 'story' | 'impact' | 'research' | 'design' | 'code' | 'roadmap' | 'launch' | 'sprint' | 'kpi' | 'epic-stories' | 'test-generator' | 'ac-validator';
     completed?: boolean;
   }>;
 }
@@ -686,6 +688,44 @@ const workflows: Workflow[] = [
       },
     ],
   },
+  {
+    id: 'test-planning-automation',
+    name: 'Test Planning & Automation Setup',
+    description: 'Workflow QA complet: définir le scope, identifier les chemins critiques, générer des tests automatisés',
+    icon: <CheckCircle2 className="w-6 h-6" />,
+    category: 'QA & Testing',
+    tags: ['QA', 'Testing', 'Automation', 'AI', 'Test-Cases'],
+    frameworks: ['scrum', 'safe', 'waterfall', 'less'],
+    difficulty: 'Intermediate',
+    estimatedTime: '45-60 min',
+    steps: [
+      {
+        id: 'qa-scope',
+        title: 'Définir le Scope QA',
+        description: 'Identifier les niveaux de test nécessaires (unit, API, UI, load)',
+        completed: false,
+      },
+      {
+        id: 'critical-paths',
+        title: 'Identifier les Chemins Critiques',
+        description: 'Analyser les Epics et détecter les flux à risque',
+        completed: false,
+      },
+      {
+        id: 'generate-tests',
+        title: 'Générer Tests Automatisés',
+        description: 'Créer des templates de test pour Playwright/Jest/Postman',
+        tool: 'test-generator',
+        completed: false,
+      },
+      {
+        id: 'qa-dashboard',
+        title: 'Setup QA Dashboard',
+        description: 'Connecter aux métriques de test via API',
+        completed: false,
+      },
+    ],
+  },
 ];
 
 export const Workflows: React.FC = () => {
@@ -719,6 +759,8 @@ export const Workflows: React.FC = () => {
   const [showTechnicalSpec, setShowTechnicalSpec] = useState(false);
   const [showSmartDiscovery, setShowSmartDiscovery] = useState(false);
   const [showEpicToStories, setShowEpicToStories] = useState(false);
+  const [showTestCaseGenerator, setShowTestCaseGenerator] = useState(false);
+  const [showACValidator, setShowACValidator] = useState(false);
 
   const [activeContext, setActiveContext] = useState<{
     name: string;
@@ -824,6 +866,14 @@ export const Workflows: React.FC = () => {
       setShowEpicToStories(true);
       return;
     }
+    if (workflow.id === 'test-case-generator') {
+      setShowTestCaseGenerator(true);
+      return;
+    }
+    if (workflow.id === 'acceptance-criteria-validator') {
+      setShowACValidator(true);
+      return;
+    }
     
     setSelectedWorkflow(workflow);
     setCurrentStep(0);
@@ -868,6 +918,12 @@ export const Workflows: React.FC = () => {
         break;
       case 'epic-stories':
         setShowEpicToStories(true);
+        break;
+      case 'test-generator':
+        setShowTestCaseGenerator(true);
+        break;
+      case 'ac-validator':
+        setShowACValidator(true);
         break;
     }
   };
@@ -1282,6 +1338,42 @@ export const Workflows: React.FC = () => {
             ✕ Fermer
           </Button>
           <EpicToUserStories />
+        </div>
+      )}
+      
+      {showTestCaseGenerator && (
+        <div className="fixed inset-0 z-50 bg-background overflow-auto">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="absolute top-4 right-4 z-50"
+            onClick={() => setShowTestCaseGenerator(false)}
+          >
+            ✕ Fermer
+          </Button>
+          <div className="container mx-auto p-6">
+            {React.createElement(
+              React.lazy(() => import('@/components/TestCaseGenerator').then(m => ({ default: m.TestCaseGenerator })))
+            )}
+          </div>
+        </div>
+      )}
+      
+      {showACValidator && (
+        <div className="fixed inset-0 z-50 bg-background overflow-auto">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="absolute top-4 right-4 z-50"
+            onClick={() => setShowACValidator(false)}
+          >
+            ✕ Fermer
+          </Button>
+          <div className="container mx-auto p-6">
+            {React.createElement(
+              React.lazy(() => import('@/components/AcceptanceCriteriaValidator').then(m => ({ default: m.AcceptanceCriteriaValidator })))
+            )}
+          </div>
         </div>
       )}
     </div>
