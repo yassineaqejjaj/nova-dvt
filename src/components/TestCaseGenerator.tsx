@@ -528,7 +528,7 @@ export const TestCaseGenerator = () => {
                       </div>
                     </CardHeader>
                     <CardContent className="space-y-3">
-                      {testCase.preconditions.length > 0 && (
+                      {testCase.preconditions && testCase.preconditions.length > 0 && (
                         <div>
                           <h4 className="text-sm font-semibold mb-1">Préconditions</h4>
                           <ul className="text-sm space-y-1">
@@ -545,7 +545,7 @@ export const TestCaseGenerator = () => {
                       <div>
                         <h4 className="text-sm font-semibold mb-1">Étapes</h4>
                         <ol className="text-sm space-y-1">
-                          {testCase.steps.map((step, i) => (
+                          {(testCase.steps || []).map((step, i) => (
                             <li key={i} className="flex items-start gap-2">
                               <span className="text-primary font-medium">{i + 1}.</span>
                               <span>{step}</span>
