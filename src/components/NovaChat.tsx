@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,6 +10,7 @@ import { TabType } from '@/types';
 import { VoiceInput } from '@/components/nova/VoiceInput';
 import { ArtifactPreview } from '@/components/nova/ArtifactPreview';
 import { ConversationHistory } from '@/components/nova/ConversationHistory';
+import { useWorkflowProgress } from '@/hooks/useWorkflowProgress';
 import { cn } from '@/lib/utils';
 
 interface Message {
@@ -72,6 +73,53 @@ export const NovaChat: React.FC<NovaChatProps> = ({
   const [showHistory, setShowHistory] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
+
+  // Workflow progress hook
+  const handleWorkflowStepComplete = useCallback(async (newStep: number, context: any) => {
+    if (!activeWorkflow) return;
+
+    const workflow = WORKFLOWS[activeWorkflow.type as keyof typeof WORKFLOWS];
+    
+    if (newStep >= workflow.steps.length) {
+      // Workflow complete
+      setActiveWorkflow(null);
+      const completionSuggestions = await generateSuggestions();
+      setMessages(prev => [...prev, {
+        role: 'assistant',
+        content: `🎉 Workflow "${workflow.name}" terminé ! Vous avez créé ${Object.keys(context).length} artéfacts. Que voulez-vous faire ensuite ?`,
+        suggestions: completionSuggestions
+      }]);
+      await saveConversation();
+      return;
+    }
+
+    // Move to next step
+    setActiveWorkflow({ ...activeWorkflow, currentStep: newStep });
+    const step = workflow.steps[newStep];
+    
+    // Build context message
+    const previousArtifact = context.lastArtifact;
+    const contextMessage = previousArtifact 
+      ? `J'ai détecté que vous avez créé "${previousArtifact.title}". ` 
+      : '';
+
+    setMessages(prev => [...prev, {
+      role: 'assistant',
+      content: `${contextMessage}Étape ${newStep + 1}/${workflow.steps.length}: ${step.label}`,
+      workflowStep: { 
+        current: step.label, 
+        total: workflow.steps.length, 
+        progress: Math.round((newStep / workflow.steps.length) * 100) 
+      },
+      suggestions: [
+        { label: step.label, action: step.action, type: 'tool' }
+      ]
+    }]);
+    
+    await saveConversation();
+  }, [activeWorkflow]);
+
+  const { workflowContext } = useWorkflowProgress(activeWorkflow, handleWorkflowStepComplete);
 
   useEffect(() => {
     if (open) {
@@ -391,7 +439,7 @@ Soyez concis (2-4 phrases), amical, et proposez des actions suivantes basées su
           
           setMessages(prev => [...prev, {
             role: 'assistant',
-            content: `Commençons le workflow "${workflow.name}". Étape 1/${workflow.steps.length}: ${step.label}`,
+            content: `Commençons le workflow "${workflow.name}". Étape 1/${workflow.steps.length}: ${step.label}\n\nCette étape va créer le contexte de base pour les étapes suivantes. Une fois que vous aurez créé cet artéfact, je vous guiderai automatiquement vers l'étape suivante.`,
             workflowStep: { current: step.label, total: workflow.steps.length, progress: 0 },
             suggestions: [
               { label: step.label, action: step.action, type: 'tool' }
@@ -401,45 +449,11 @@ Soyez concis (2-4 phrases), amical, et proposez des actions suivantes basées su
           setIsLoading(false);
           await saveConversation();
           return;
-        } else {
-          // Next workflow step
-          const workflow = WORKFLOWS[activeWorkflow.type as keyof typeof WORKFLOWS];
-          const nextStep = activeWorkflow.currentStep + 1;
-          
-          if (nextStep < workflow.steps.length) {
-            setActiveWorkflow({ ...activeWorkflow, currentStep: nextStep });
-            const step = workflow.steps[nextStep];
-            
-            setMessages(prev => [...prev, {
-              role: 'assistant',
-              content: `Étape ${nextStep + 1}/${workflow.steps.length}: ${step.label}`,
-              workflowStep: { 
-                current: step.label, 
-                total: workflow.steps.length, 
-                progress: Math.round((nextStep / workflow.steps.length) * 100) 
-              },
-              suggestions: [
-                { label: step.label, action: step.action, type: 'tool' }
-              ]
-            }]);
-            
-            setIsLoading(false);
-            await saveConversation();
-            return;
-          } else {
-            // Workflow complete
-            setActiveWorkflow(null);
-            const completionSuggestions = await generateSuggestions();
-            setMessages(prev => [...prev, {
-              role: 'assistant',
-              content: `🎉 Workflow "${workflow.name}" terminé ! Que voulez-vous faire ensuite ?`,
-              suggestions: completionSuggestions
-            }]);
-            
-            setIsLoading(false);
-            await saveConversation();
-            return;
-          }
+        } else if (userMessage.toLowerCase().includes('next') || userMessage.toLowerCase().includes('continue')) {
+          // Manually advance workflow (in addition to auto-advance)
+          await handleWorkflowStepComplete(activeWorkflow.currentStep + 1, workflowContext);
+          setIsLoading(false);
+          return;
         }
       }
 
@@ -453,6 +467,15 @@ Soyez concis (2-4 phrases), amical, et proposez des actions suivantes basées su
 Artéfacts récents: ${workspaceContext.recentArtifacts?.length || 0}
 Contextes actifs: ${workspaceContext.activeContexts?.length || 0}
 Squads: ${workspaceContext.squads?.length || 0}
+
+${activeWorkflow && workflowContext.lastArtifact ? `
+WORKFLOW EN COURS - Contexte de l'étape précédente:
+Dernier artéfact créé: ${workflowContext.lastArtifact.title}
+Type: ${workflowContext.lastArtifact.artifact_type}
+Contenu: ${JSON.stringify(workflowContext.lastArtifact.content).substring(0, 200)}...
+
+Utilisez ce contexte pour guider l'utilisateur dans l'étape actuelle.
+` : ''}
       ` : 'Nouveau utilisateur';
 
       if (intent !== 'none') {
@@ -516,31 +539,109 @@ Squads: ${workspaceContext.squads?.length || 0}
     }
   };
 
-  const handleSuggestionClick = (action: string, type: string) => {
+  const handleSuggestionClick = useCallback((action: string, type: string) => {
+    console.log('Suggestion clicked:', action, type);
+    
+    // Handle workflow-specific actions
+    if (action.includes('workflow')) {
+      setInput(`Start ${action.replace('workflow_', '').replace('_', ' ')} workflow`);
+      handleSendMessage();
+      return;
+    }
+
+    // Handle analyze actions
+    if (action.includes('analyze')) {
+      setInput(action === 'analyze_artifacts' ? 'Analyze my artifacts' : 'Analyze');
+      handleSendMessage();
+      return;
+    }
+
     const toolMapping: Record<string, () => void> = {
-      canvas_generator: () => onAction?.('create_canvas'),
-      instant_prd: () => onAction?.('generate_prd'),
-      test_generator: () => onNavigate('test-generator' as TabType),
-      critical_path_analyzer: () => onNavigate('critical-path' as TabType),
-      story_writer: () => onAction?.('create_story'),
-      roadmap_planner: () => onNavigate('roadmap' as TabType),
-      sprint_planner: () => onNavigate('sprint' as TabType),
-      squad_builder: () => onNavigate('squads' as TabType),
-      dashboard: () => onNavigate('dashboard' as TabType),
-      artifacts_view: () => onNavigate('artifacts' as TabType),
-      analyze_artifacts: () => setInput('Analyze my artifacts'),
-      workflow_discovery: () => setInput('Start feature discovery workflow'),
-      fill_gaps: () => setInput('Help me fill the gaps in my artifacts')
+      canvas_generator: () => {
+        console.log('Canvas generator action triggered');
+        onAction?.('create_canvas');
+        onOpenChange(false);
+      },
+      instant_prd: () => {
+        console.log('Instant PRD action triggered');
+        onAction?.('generate_prd');
+        onOpenChange(false);
+      },
+      test_generator: () => {
+        console.log('Test generator navigation');
+        onNavigate('test-generator' as TabType);
+        onOpenChange(false);
+      },
+      critical_path_analyzer: () => {
+        onNavigate('critical-path' as TabType);
+        onOpenChange(false);
+      },
+      story_writer: () => {
+        onAction?.('create_story');
+        onOpenChange(false);
+      },
+      epic_to_stories: () => {
+        onAction?.('epic_to_stories');
+        onOpenChange(false);
+      },
+      roadmap_planner: () => {
+        onNavigate('roadmap' as TabType);
+        onOpenChange(false);
+      },
+      sprint_planner: () => {
+        onNavigate('sprint' as TabType);
+        onOpenChange(false);
+      },
+      kpi_generator: () => {
+        onAction?.('generate_kpis');
+        onOpenChange(false);
+      },
+      raci_matrix: () => {
+        onAction?.('create_raci');
+        onOpenChange(false);
+      },
+      meeting_minutes: () => {
+        onAction?.('extract_minutes');
+        onOpenChange(false);
+      },
+      squad_builder: () => {
+        onNavigate('squads' as TabType);
+        onOpenChange(false);
+      },
+      dashboard: () => {
+        onNavigate('dashboard' as TabType);
+        onOpenChange(false);
+      },
+      artifacts_view: () => {
+        onNavigate('artifacts' as TabType);
+        onOpenChange(false);
+      },
+      show_analysis: () => {
+        // Show detailed analysis in a new message
+        toast({
+          title: "Analyse disponible",
+          description: "Les détails de l'analyse sont affichés ci-dessus."
+        });
+      },
+      fill_gaps: () => {
+        setInput('Help me fill the gaps in my artifacts');
+        handleSendMessage();
+      }
     };
 
     const handler = toolMapping[action];
     if (handler) {
+      console.log('Executing handler for:', action);
       handler();
-      if (!action.includes('workflow') && !action.includes('analyze')) {
-        onOpenChange(false);
-      }
+    } else {
+      console.warn('No handler found for action:', action);
+      toast({
+        title: "Action non disponible",
+        description: `L'action "${action}" n'est pas encore implémentée.`,
+        variant: "destructive"
+      });
     }
-  };
+  }, [onAction, onNavigate, onOpenChange, toast]);
 
   const handleFeedback = async (messageIndex: number, rating: number) => {
     if (!currentConversationId) return;
