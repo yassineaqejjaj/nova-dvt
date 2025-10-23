@@ -964,7 +964,7 @@ export const GitToSpecsGenerator = () => {
                               <div>
                                 <h5 className="font-medium mb-1">Actions</h5>
                                 <ul className="list-disc list-inside space-y-1">
-                                  {journey.actions.map((action, aIdx) => (
+                                  {(journey.actions || []).map((action, aIdx) => (
                                     <li key={aIdx} className="text-muted-foreground">{action}</li>
                                   ))}
                                 </ul>
@@ -972,7 +972,7 @@ export const GitToSpecsGenerator = () => {
                               <div>
                                 <h5 className="font-medium mb-1">Thoughts</h5>
                                 <ul className="list-disc list-inside space-y-1">
-                                  {journey.thoughts.map((thought, tIdx) => (
+                                  {(journey.thoughts || []).map((thought, tIdx) => (
                                     <li key={tIdx} className="text-muted-foreground">{thought}</li>
                                   ))}
                                 </ul>
@@ -980,7 +980,7 @@ export const GitToSpecsGenerator = () => {
                               <div>
                                 <h5 className="font-medium mb-1">Pain Points</h5>
                                 <ul className="list-disc list-inside space-y-1">
-                                  {journey.painPoints.map((pain, pIdx) => (
+                                  {(journey.painPoints || []).map((pain, pIdx) => (
                                     <li key={pIdx} className="text-muted-foreground">{pain}</li>
                                   ))}
                                 </ul>
@@ -988,7 +988,7 @@ export const GitToSpecsGenerator = () => {
                               <div>
                                 <h5 className="font-medium mb-1">Opportunities</h5>
                                 <ul className="list-disc list-inside space-y-1">
-                                  {journey.opportunities.map((opp, oIdx) => (
+                                  {(journey.opportunities || []).map((opp, oIdx) => (
                                     <li key={oIdx} className="text-muted-foreground">{opp}</li>
                                   ))}
                                 </ul>
