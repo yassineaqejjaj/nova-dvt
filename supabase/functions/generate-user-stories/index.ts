@@ -25,16 +25,50 @@ serve(async (req) => {
 
     TASK: Analyze the Epic and generate ${options?.storyCount || '3-7'} detailed User Stories.
 
-    RULES:
-    1. Each story must be independent and deliverable
-    2. Stories should follow "As a [role], I want [action], so that [benefit]" format
-    3. Each story needs 2-4 specific acceptance criteria
-    4. Estimate effort using Fibonacci: 1, 2, 3, 5, 8, or 13 points
-    5. Max complexity: ${options?.maxComplexity || 8} points (split if larger)
-    6. Priority: high (must-have), medium (should-have), or low (nice-to-have)
-    ${options?.focusAreas?.length ? `7. Focus on these areas: ${options.focusAreas.join(', ')}` : ''}
+    CRITICAL FORMAT RULES FOR USER STORIES:
+    Each story object MUST have this exact JSON structure:
+    {
+      "id": "US-001",
+      "title": "Titre court et descriptif",
+      "story": {
+        "asA": "type d'utilisateur SEULEMENT (ex: 'utilisateur authentifié', 'administrateur', 'client premium')",
+        "iWant": "action voulue SEULEMENT (ex: 'me déconnecter de l'application', 'voir mon historique', 'modifier mes paramètres')",
+        "soThat": "bénéfice obtenu SEULEMENT (ex: 'sécuriser ma session', 'suivre mes activités', 'personnaliser mon expérience')"
+      },
+      "acceptanceCriteria": ["Critère 1", "Critère 2", "Critère 3"],
+      "effortPoints": 3,
+      "priority": "high",
+      "dependencies": [],
+      "status": "draft",
+      "tags": ["tag1"]
+    }
 
-    OUTPUT: Return valid JSON matching this structure.`;
+    CRITICAL: Ne mets JAMAIS "En tant que", "Je veux", ou "Afin de" dans les champs asA, iWant, soThat !
+    Ces champs doivent contenir UNIQUEMENT le contenu, pas la structure de la phrase.
+
+    EXAMPLE - CORRECT ✅:
+    "story": {
+      "asA": "utilisateur authentifié",
+      "iWant": "me déconnecter rapidement",
+      "soThat": "sécuriser ma session et protéger mes données"
+    }
+
+    EXAMPLE - WRONG ❌:
+    "story": {
+      "asA": "En tant qu'utilisateur authentifié",  // NE PAS FAIRE
+      "iWant": "Je veux me déconnecter",  // NE PAS FAIRE
+      "soThat": "Afin de sécuriser ma session"  // NE PAS FAIRE
+    }
+
+    OTHER RULES:
+    1. Each story must be independent and deliverable
+    2. Each story needs 2-4 specific acceptance criteria in French
+    3. Estimate effort using Fibonacci: 1, 2, 3, 5, 8, or 13 points
+    4. Max complexity: ${options?.maxComplexity || 8} points (split if larger)
+    5. Priority: high (must-have), medium (should-have), or low (nice-to-have)
+    ${options?.focusAreas?.length ? `6. Focus on these areas: ${options.focusAreas.join(', ')}` : ''}
+
+    OUTPUT: Return valid JSON with top-level {"stories": [...]} containing an array of story objects.`;
 
     const userPrompt = `Epic Title: ${epic.title}
 
