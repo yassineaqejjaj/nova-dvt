@@ -892,6 +892,7 @@ export const Workflows: React.FC = () => {
   };
 
   const handleToolLaunch = (tool: string) => {
+    console.log('🔧 Launching tool:', tool);
     switch (tool) {
       case 'canvas':
         setShowCanvasGenerator(true);
@@ -927,6 +928,7 @@ export const Workflows: React.FC = () => {
         setShowEpicToStories(true);
         break;
       case 'test-generator':
+        console.log('✅ Setting showTestCaseGenerator to true');
         setShowTestCaseGenerator(true);
         break;
       case 'ac-validator':
@@ -936,8 +938,11 @@ export const Workflows: React.FC = () => {
         setShowGitToSpecs(true);
         break;
       case 'critical-path-analyzer':
+        console.log('✅ Setting showCriticalPathAnalyzer to true');
         setShowCriticalPathAnalyzer(true);
         break;
+      default:
+        console.warn('Unknown tool:', tool);
     }
   };
 
@@ -1360,7 +1365,10 @@ export const Workflows: React.FC = () => {
             variant="ghost"
             size="sm"
             className="absolute top-4 right-4 z-50"
-            onClick={() => setShowTestCaseGenerator(false)}
+            onClick={() => {
+              console.log('❌ Closing TestCaseGenerator');
+              setShowTestCaseGenerator(false);
+            }}
           >
             ✕ Fermer
           </Button>
@@ -1408,7 +1416,10 @@ export const Workflows: React.FC = () => {
             variant="ghost"
             size="sm"
             className="absolute top-4 right-4 z-50"
-            onClick={() => setShowCriticalPathAnalyzer(false)}
+            onClick={() => {
+              console.log('❌ Closing CriticalPathAnalyzer');
+              setShowCriticalPathAnalyzer(false);
+            }}
           >
             ✕ Fermer
           </Button>
