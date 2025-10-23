@@ -151,19 +151,22 @@ export const AgentGallery: React.FC<AgentGalleryProps> = ({
           })}
         </div>
 
-        {/* Additional Filters */}
-        <div className="flex flex-wrap gap-2">
-          <Button
-            variant={showUnlockedOnly ? "default" : "outline"}
-            size="sm"
-            onClick={() => setShowUnlockedOnly(!showUnlockedOnly)}
-            className="flex items-center space-x-2"
-          >
-            <Filter className="w-4 h-4" />
-            <span>Débloqués Uniquement</span>
-          </Button>
+          {/* Additional Filters - Visually distinct */}
+          <div className="flex items-center gap-2 pt-2 border-t">
+            <Badge 
+              variant={showUnlockedOnly ? "default" : "outline"}
+              className="cursor-pointer hover:opacity-80 transition-opacity px-3 py-1"
+              onClick={() => setShowUnlockedOnly(!showUnlockedOnly)}
+            >
+              <Filter className="w-3 h-3 mr-1" />
+              <span>Filtre additionnel: Débloqués uniquement</span>
+              {showUnlockedOnly && <X className="w-3 h-3 ml-1" />}
+            </Badge>
+            <span className="text-xs text-muted-foreground italic">
+              (s'ajoute aux catégories ci-dessus)
+            </span>
+          </div>
         </div>
-      </div>
 
       {/* Results Count */}
       <div className="flex items-center justify-between">

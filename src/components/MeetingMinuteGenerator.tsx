@@ -560,7 +560,7 @@ export const MeetingMinuteGenerator: React.FC = () => {
         }}>
           Traiter une autre réunion
         </Button>
-        <Button variant="outline">
+        <Button variant="outline" onClick={() => window.location.href = '/artifacts'}>
           Voir les artefacts
         </Button>
       </div>

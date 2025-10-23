@@ -7,14 +7,14 @@ export const ConfidentialityBanner: React.FC = () => {
   const [isVisible, setIsVisible] = useState(true);
   const [reminderCount, setReminderCount] = useState(0);
 
-  // Show periodic reminders every 30 minutes
+  // Show periodic reminders every 2 hours
   useEffect(() => {
     const interval = setInterval(() => {
       if (!isVisible) {
         setIsVisible(true);
         setReminderCount(prev => prev + 1);
       }
-    }, 30 * 60 * 1000); // 30 minutes
+    }, 2 * 60 * 60 * 1000); // 2 hours
 
     return () => clearInterval(interval);
   }, [isVisible]);

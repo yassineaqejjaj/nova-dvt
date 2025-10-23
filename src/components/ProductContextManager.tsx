@@ -21,6 +21,7 @@ interface ProductContext {
   target_kpis: string[];
   constraints: string | null;
   target_audience: string | null;
+  industry_sector?: string | null;
   is_active: boolean;
   created_at: string;
   updated_at: string;
@@ -57,7 +58,8 @@ export const ProductContextManager = ({ open, onOpenChange, onContextSelected }:
     objectives: [] as string[],
     target_kpis: [] as string[],
     constraints: '',
-    target_audience: ''
+    target_audience: '',
+    industry_sector: ''
   });
 
   const [newObjective, setNewObjective] = useState('');
@@ -128,7 +130,8 @@ export const ProductContextManager = ({ open, onOpenChange, onContextSelected }:
           objectives: activeContext.objectives || [],
           target_kpis: activeContext.target_kpis || [],
           constraints: activeContext.constraints || '',
-          target_audience: activeContext.target_audience || ''
+          target_audience: activeContext.target_audience || '',
+          industry_sector: activeContext.industry_sector || ''
         });
       }
     } catch (error: any) {
@@ -185,7 +188,8 @@ export const ProductContextManager = ({ open, onOpenChange, onContextSelected }:
         objectives: formData.objectives.filter(o => o.trim()),
         target_kpis: formData.target_kpis.filter(k => k.trim()),
         constraints: formData.constraints.trim() || null,
-        target_audience: formData.target_audience.trim() || null
+        target_audience: formData.target_audience.trim() || null,
+        industry_sector: formData.industry_sector.trim() || null
       };
 
       if (selectedContext) {
@@ -334,7 +338,8 @@ export const ProductContextManager = ({ open, onOpenChange, onContextSelected }:
           objectives: [],
           target_kpis: [],
           constraints: '',
-          target_audience: ''
+          target_audience: '',
+          industry_sector: ''
         });
       }
 
@@ -381,7 +386,8 @@ export const ProductContextManager = ({ open, onOpenChange, onContextSelected }:
         objectives: snapshot.objectives || [],
         target_kpis: snapshot.target_kpis || [],
         constraints: snapshot.constraints || '',
-        target_audience: snapshot.target_audience || ''
+        target_audience: snapshot.target_audience || '',
+        industry_sector: snapshot.industry_sector || ''
       });
 
       toast({
@@ -409,7 +415,8 @@ export const ProductContextManager = ({ open, onOpenChange, onContextSelected }:
       objectives: context.objectives || [],
       target_kpis: context.target_kpis || [],
       constraints: context.constraints || '',
-      target_audience: context.target_audience || ''
+      target_audience: context.target_audience || '',
+      industry_sector: context.industry_sector || ''
     });
     setIsEditing(false);
   };
@@ -422,7 +429,8 @@ export const ProductContextManager = ({ open, onOpenChange, onContextSelected }:
       objectives: [],
       target_kpis: [],
       constraints: '',
-      target_audience: ''
+      target_audience: '',
+      industry_sector: ''
     });
     setIsEditing(true);
   };
@@ -698,7 +706,9 @@ export const ProductContextManager = ({ open, onOpenChange, onContextSelected }:
                       </div>
 
                       <div className="space-y-2">
-                        <Label htmlFor="target_audience">Public cible</Label>
+                        <Label htmlFor="target_audience">
+                          Public cible
+                        </Label>
                         <Textarea
                           id="target_audience"
                           value={formData.target_audience}
@@ -708,6 +718,21 @@ export const ProductContextManager = ({ open, onOpenChange, onContextSelected }:
                           }}
                           placeholder="Qui sont vos utilisateurs cibles ?"
                           rows={2}
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="industry_sector">
+                          Secteur d'activité
+                        </Label>
+                        <Input
+                          id="industry_sector"
+                          value={formData.industry_sector}
+                          onChange={(e) => {
+                            setFormData({ ...formData, industry_sector: e.target.value });
+                            setIsEditing(true);
+                          }}
+                          placeholder="Ex: E-commerce, SaaS, FinTech, HealthTech..."
                         />
                       </div>
                     </div>

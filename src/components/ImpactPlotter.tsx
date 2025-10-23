@@ -357,19 +357,35 @@ ${index + 1}. **${item.name}**
                   </div>
 
                   {/* Items */}
-                  {items.map(item => {
+                  {items.map((item, index) => {
                     const x = (item.effort / 10) * 100;
                     const y = 100 - (item.impact / 10) * 100;
                     const quadrant = getQuadrant(item.impact, item.effort);
+                    
+                    // Calculate offset for overlapping items
+                    const overlappingItems = items.slice(0, index).filter(otherItem => {
+                      const otherX = (otherItem.effort / 10) * 100;
+                      const otherY = 100 - (otherItem.impact / 10) * 100;
+                      return Math.abs(otherX - x) < 8 && Math.abs(otherY - y) < 8;
+                    });
+                    const offsetX = overlappingItems.length * 2;
+                    const offsetY = overlappingItems.length * 2;
 
                     return (
                       <div
                         key={item.id}
-                        className="absolute transform -translate-x-1/2 -translate-y-1/2"
-                        style={{ left: `${x}%`, top: `${y}%` }}
+                        className="absolute transform -translate-x-1/2 -translate-y-1/2 group"
+                        style={{ 
+                          left: `calc(${x}% + ${offsetX}px)`, 
+                          top: `calc(${y}% + ${offsetY}px)`,
+                          zIndex: index
+                        }}
                       >
-                        <div className={`${quadrant.color} text-white px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap shadow-lg`}>
+                        <div className={`${quadrant.color} text-white px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap shadow-lg hover:shadow-xl transition-shadow cursor-pointer`}>
                           {item.name}
+                        </div>
+                        <div className="hidden group-hover:block absolute top-full mt-1 left-1/2 transform -translate-x-1/2 bg-popover text-popover-foreground px-2 py-1 rounded text-xs whitespace-nowrap shadow-lg border z-50">
+                          Impact: {item.impact}/10 • Effort: {item.effort}/10
                         </div>
                       </div>
                     );

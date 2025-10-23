@@ -18,10 +18,10 @@ export const DailyMissionsCard = ({ missions }: DailyMissionsCardProps) => {
 
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty) {
-      case 'easy': return 'bg-green-500/10 text-green-500';
-      case 'medium': return 'bg-yellow-500/10 text-yellow-500';
-      case 'hard': return 'bg-red-500/10 text-red-500';
-      default: return 'bg-gray-500/10 text-gray-500';
+      case 'easy': return 'bg-green-500/20 text-green-700 dark:text-green-400 border-green-500/30';
+      case 'medium': return 'bg-yellow-500/20 text-yellow-700 dark:text-yellow-400 border-yellow-500/30';
+      case 'hard': return 'bg-red-500/20 text-red-700 dark:text-red-400 border-red-500/30';
+      default: return 'bg-gray-500/20 text-gray-700 dark:text-gray-400 border-gray-500/30';
     }
   };
 
@@ -76,11 +76,11 @@ export const DailyMissionsCard = ({ missions }: DailyMissionsCardProps) => {
                     <Clock className="w-3 h-3" />
                     {mission.estimatedTime}
                   </span>
-                  <span className="flex items-center gap-1 text-primary">
+                  <span className="flex items-center gap-1 text-primary font-medium">
                     <Zap className="w-3 h-3" />
                     {mission.xpReward} XP
                   </span>
-                  <span className="flex items-center gap-1 text-amber-500">
+                  <span className="flex items-center gap-1 text-amber-600 dark:text-amber-400 font-medium">
                     <Star className="w-3 h-3" />
                     {mission.coinsReward} coins
                   </span>

@@ -451,30 +451,32 @@ export const SquadManager: React.FC<SquadManagerProps> = ({
                       
                       <div className="space-y-2 mt-3">
                         <Label className="text-xs">Recommended Agents ({recommendations.recommendedAgents.length})</Label>
-                        <div className="grid grid-cols-1 gap-2">
-                          {recommendations.recommendedAgents.map((agentId) => {
-                            const agent = allAgents.find(a => a.id === agentId);
-                            if (!agent) return null;
-                            
-                            return (
-                              <div key={agent.id} className="flex items-center space-x-3 p-2 bg-background rounded border">
-                                <Avatar className="w-10 h-10">
-                                  <AvatarImage src={agent.avatar} />
-                                  <AvatarFallback className="text-xs">
-                                    {agent.name.split(' ').map(n => n[0]).join('')}
-                                  </AvatarFallback>
-                                </Avatar>
-                                <div className="flex-1 min-w-0">
-                                  <p className="font-medium text-sm truncate">{agent.name}</p>
-                                  <p className="text-xs text-muted-foreground truncate">{agent.specialty}</p>
+                        <ScrollArea className="h-64">
+                          <div className="grid grid-cols-1 gap-2 pr-4">
+                            {recommendations.recommendedAgents.map((agentId) => {
+                              const agent = allAgents.find(a => a.id === agentId);
+                              if (!agent) return null;
+                              
+                              return (
+                                <div key={agent.id} className="flex items-center space-x-3 p-2 bg-background rounded border">
+                                  <Avatar className="w-10 h-10 flex-shrink-0">
+                                    <AvatarImage src={agent.avatar} />
+                                    <AvatarFallback className="text-xs">
+                                      {agent.name.split(' ').map(n => n[0]).join('')}
+                                    </AvatarFallback>
+                                  </Avatar>
+                                  <div className="flex-1 min-w-0">
+                                    <p className="font-medium text-sm truncate">{agent.name}</p>
+                                    <p className="text-xs text-muted-foreground truncate">{agent.specialty}</p>
+                                  </div>
+                                  <Badge variant="secondary" className="text-xs flex-shrink-0">
+                                    {agent.familyColor}
+                                  </Badge>
                                 </div>
-                                <Badge variant="secondary" className="text-xs">
-                                  {agent.familyColor}
-                                </Badge>
-                              </div>
-                            );
-                          })}
-                        </div>
+                              );
+                            })}
+                          </div>
+                        </ScrollArea>
                       </div>
                     </div>
                   </div>

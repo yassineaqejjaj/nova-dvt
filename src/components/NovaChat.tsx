@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/compone
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Sparkles, Send, Loader2, Wand2, Users, Layout, ThumbsUp, ThumbsDown, Share2, BarChart, FileSearch } from 'lucide-react';
+import { Sparkles, Send, Loader2, Wand2, Users, Layout, ThumbsUp, ThumbsDown, Share2, BarChart, FileSearch, Plus } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { TabType } from '@/types';
@@ -73,6 +73,16 @@ export const NovaChat: React.FC<NovaChatProps> = ({
   const [showHistory, setShowHistory] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
+
+  // Auto-scroll to bottom when messages change
+  useEffect(() => {
+    if (scrollRef.current) {
+      const scrollElement = scrollRef.current.querySelector('[data-radix-scroll-area-viewport]');
+      if (scrollElement) {
+        scrollElement.scrollTop = scrollElement.scrollHeight;
+      }
+    }
+  }, [messages, isLoading]);
 
   // Workflow progress hook
   const handleWorkflowStepComplete = useCallback(async (newStep: number, context: any) => {
@@ -734,8 +744,17 @@ Utilisez ce contexte pour guider l'utilisateur dans l'étape actuelle.
                 variant="ghost"
                 size="icon"
                 onClick={() => setShowHistory(!showHistory)}
+                title="Historique des conversations"
               >
                 <Layout className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={handleNewConversation}
+                title="Nouvelle conversation"
+              >
+                <Plus className="h-4 w-4" />
               </Button>
               
               <div className="h-10 w-10 rounded-full bg-primary/20 flex items-center justify-center">
@@ -790,7 +809,17 @@ Utilisez ce contexte pour guider l'utilisateur dans l'étape actuelle.
                             : 'bg-muted'
                         }`}
                       >
-                        <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                        <div className="text-sm whitespace-pre-wrap prose prose-sm max-w-none dark:prose-invert">
+                          {message.content.split('\n').map((line, idx) => {
+                            // Handle bold text
+                            const boldFormatted = line.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+                            // Handle lists
+                            if (line.trim().startsWith('- ') || line.trim().startsWith('* ')) {
+                              return <li key={idx} dangerouslySetInnerHTML={{ __html: boldFormatted.replace(/^[-*]\s/, '') }} />;
+                            }
+                            return <p key={idx} dangerouslySetInnerHTML={{ __html: boldFormatted }} />;
+                          })}
+                        </div>
                         
                         {/* Workflow Progress */}
                         {message.workflowStep && (

@@ -31,47 +31,47 @@ interface TutorialStep {
   features: string[];
 }
 
-const tutorialSteps: TutorialStep[] = [
+  const tutorialSteps: TutorialStep[] = [
   {
     id: 'core',
     module: 'NOVA CORE',
     title: 'Fondations & Gouvernance',
-    description: 'Centralisez vos contextes produit et gérez tous vos artefacts',
+    description: 'Centralisez vos contextes produit et gérez tous vos artefacts de manière structurée',
     icon: <Database className="w-8 h-8" />,
     action: 'dashboard',
     features: [
-      'Context Persistence - Gérez multiples contextes',
-      'Artefacts Engine - Versionnement automatique',
-      'Dashboard centralisé avec recherche Full-Text',
-      'Admin Panel pour la gouvernance'
+      '📋 Context Manager - Créez et gérez multiples contextes produit avec secteur d\'activité',
+      '🗂️ Artefacts Engine - Versionnement automatique et historique complet',
+      '🔍 Dashboard centralisé avec recherche full-text performante',
+      '⚙️ Admin Panel pour la gouvernance et les paramètres'
     ]
   },
   {
     id: 'workflows',
     module: 'NOVA WORKFLOWS',
     title: 'Processus IA-Guidés',
-    description: 'Créez vos livrables en 4 étapes max avec validation humaine',
+    description: 'Créez vos livrables en 4 étapes maximum avec validation humaine à chaque étape',
     icon: <Workflow className="w-8 h-8" />,
     action: 'workflows',
     features: [
-      'Feature Discovery - De l\'idée à l\'Epic',
-      'Strategic Roadmap Planning',
-      'Sprint Planning avec priorisation',
-      'KPI Generator intégré (SMART)'
+      '🚀 Feature Discovery - De l\'idée à l\'Epic complet avec roadmap',
+      '🗺️ Strategic Roadmap Planning avec vision produit intégrée',
+      '⏱️ Sprint Planning avec priorisation et estimation automatiques',
+      '📊 KPI Generator intégré avec métriques SMART et OKRs'
     ]
   },
   {
     id: 'agent',
     module: 'NOVA AGENT',
     title: 'Assistant IA Adaptatif',
-    description: 'Un agent qui s\'adapte à votre rôle et connaît votre contexte',
+    description: 'Un agent contextuel qui s\'adapte à votre rôle et connaît votre historique de projet',
     icon: <MessageSquare className="w-8 h-8" />,
     action: 'chat',
     features: [
-      'Multi-Rôle (PM, Designer, Dev)',
-      'Conscience du contexte (RAG)',
-      'Suggestions d\'actions intelligentes',
-      'Citations des sources'
+      '🎭 Multi-Rôle (PM, Designer, Dev) avec suggestions personnalisées',
+      '🧠 Conscience du contexte (RAG) et mémoire conversationnelle',
+      '💡 Suggestions d\'actions intelligentes et proactives',
+      '📚 Citations des sources et traçabilité des recommandations'
     ]
   }
 ];

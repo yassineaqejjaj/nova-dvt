@@ -50,7 +50,11 @@ export const Header: React.FC<HeaderProps> = ({ user, onOpenProfile }) => {
           </div>
 
           {/* Streak Badge */}
-          <Badge variant="secondary" className="hidden sm:flex items-center space-x-1">
+          <Badge 
+            variant="secondary" 
+            className="hidden sm:flex items-center space-x-1 cursor-pointer hover:bg-secondary/80"
+            title="Revoir le tutoriel - Cliquez pour relancer le guide interactif"
+          >
             <span>🔥</span>
             <span>{user.streak} day streak</span>
           </Badge>
