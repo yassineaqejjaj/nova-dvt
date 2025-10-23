@@ -17,16 +17,22 @@ interface Props {
   showHistory: boolean;
   newObjective: string;
   newKPI: string;
+  editingObjectiveIndex: number | null;
+  editingKPIIndex: number | null;
   setFormData: (v: ContextFormData) => void;
   setIsEditing: (v: boolean) => void;
   setShowHistory: (v: boolean) => void;
   setNewObjective: (v: string) => void;
   setNewKPI: (v: string) => void;
+  setEditingObjectiveIndex: (v: number | null) => void;
+  setEditingKPIIndex: (v: number | null) => void;
   onSave: () => void;
   onAddObjective: () => void;
   onRemoveObjective: (i: number) => void;
   onAddKPI: () => void;
   onRemoveKPI: (i: number) => void;
+  updateObjective: (i: number, v: string) => void;
+  updateKPI: (i: number, v: string) => void;
 }
 
 export const ContextEditor: React.FC<Props> = ({
@@ -36,16 +42,22 @@ export const ContextEditor: React.FC<Props> = ({
   showHistory,
   newObjective,
   newKPI,
+  editingObjectiveIndex,
+  editingKPIIndex,
   setFormData,
   setIsEditing,
   setShowHistory,
   setNewObjective,
   setNewKPI,
+  setEditingObjectiveIndex,
+  setEditingKPIIndex,
   onSave,
   onAddObjective,
   onRemoveObjective,
   onAddKPI,
   onRemoveKPI,
+  updateObjective,
+  updateKPI,
 }) => {
   return (
     <Card>
@@ -157,6 +169,7 @@ export const ContextEditor: React.FC<Props> = ({
 
             <div>
               <Label>Objectifs</Label>
+              <p className="text-xs text-muted-foreground mb-2">Astuce: cliquez sur un objectif pour l'éditer.</p>
               <div className="flex gap-2 mb-2">
                 <Input
                   placeholder="Ajouter un objectif..."
@@ -170,9 +183,31 @@ export const ContextEditor: React.FC<Props> = ({
               </div>
               <div className="space-y-2">
                 {formData.objectives.map((obj, index) => (
-                  <div key={index} className="flex items-center gap-2 p-2 bg-muted rounded-md">
-                    <Badge variant="secondary" className="flex-1">{obj}</Badge>
-                    <Button variant="ghost" size="icon" onClick={() => onRemoveObjective(index)} className="h-6 w-6">
+                  <div key={index} className="flex items-center gap-2 text-sm">
+                    {editingObjectiveIndex === index ? (
+                      <Input
+                        defaultValue={obj}
+                        autoFocus
+                        onBlur={(e) => updateObjective(index, e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            updateObjective(index, e.currentTarget.value);
+                          } else if (e.key === 'Escape') {
+                            setEditingObjectiveIndex(null);
+                          }
+                        }}
+                        className="flex-1"
+                      />
+                    ) : (
+                      <Badge
+                        variant="secondary"
+                        className="flex-1 cursor-pointer hover:bg-secondary/80"
+                        onClick={() => setEditingObjectiveIndex(index)}
+                      >
+                        {obj}
+                      </Badge>
+                    )}
+                    <Button variant="ghost" size="sm" onClick={() => onRemoveObjective(index)}>
                       <Trash2 className="h-3 w-3" />
                     </Button>
                   </div>
@@ -182,6 +217,7 @@ export const ContextEditor: React.FC<Props> = ({
 
             <div>
               <Label>KPIs cibles</Label>
+              <p className="text-xs text-muted-foreground mb-2">Astuce: cliquez sur un KPI pour l'éditer.</p>
               <div className="flex gap-2 mb-2">
                 <Input
                   placeholder="Ajouter un KPI..."
@@ -195,9 +231,31 @@ export const ContextEditor: React.FC<Props> = ({
               </div>
               <div className="space-y-2">
                 {formData.target_kpis.map((kpi, index) => (
-                  <div key={index} className="flex items-center gap-2 p-2 bg-muted rounded-md">
-                    <Badge variant="secondary" className="flex-1">{kpi}</Badge>
-                    <Button variant="ghost" size="icon" onClick={() => onRemoveKPI(index)} className="h-6 w-6">
+                  <div key={index} className="flex items-center gap-2 text-sm">
+                    {editingKPIIndex === index ? (
+                      <Input
+                        defaultValue={kpi}
+                        autoFocus
+                        onBlur={(e) => updateKPI(index, e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            updateKPI(index, e.currentTarget.value);
+                          } else if (e.key === 'Escape') {
+                            setEditingKPIIndex(null);
+                          }
+                        }}
+                        className="flex-1"
+                      />
+                    ) : (
+                      <Badge
+                        variant="secondary"
+                        className="flex-1 cursor-pointer hover:bg-secondary/80"
+                        onClick={() => setEditingKPIIndex(index)}
+                      >
+                        {kpi}
+                      </Badge>
+                    )}
+                    <Button variant="ghost" size="sm" onClick={() => onRemoveKPI(index)}>
                       <Trash2 className="h-3 w-3" />
                     </Button>
                   </div>

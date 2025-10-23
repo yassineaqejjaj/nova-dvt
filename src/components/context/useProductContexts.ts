@@ -71,6 +71,8 @@ export function useProductContexts() {
 
   const [newObjective, setNewObjective] = useState('');
   const [newKPI, setNewKPI] = useState('');
+  const [editingObjectiveIndex, setEditingObjectiveIndex] = useState<number | null>(null);
+  const [editingKPIIndex, setEditingKPIIndex] = useState<number | null>(null);
 
   useEffect(() => {
     loadContexts();
@@ -324,14 +326,37 @@ export function useProductContexts() {
     setIsEditing(true);
   };
 
+  const updateObjective = (index: number, newValue: string) => {
+    if (newValue.trim()) {
+      setFormData(prev => ({
+        ...prev,
+        objectives: prev.objectives.map((obj, i) => i === index ? newValue.trim() : obj)
+      }));
+      setIsEditing(true);
+    }
+    setEditingObjectiveIndex(null);
+  };
+
+  const updateKPI = (index: number, newValue: string) => {
+    if (newValue.trim()) {
+      setFormData(prev => ({
+        ...prev,
+        target_kpis: prev.target_kpis.map((kpi, i) => i === index ? newValue.trim() : kpi)
+      }));
+      setIsEditing(true);
+    }
+    setEditingKPIIndex(null);
+  };
+
   return {
     // state
     contexts, selectedContext, contextHistory, isLoading, isSaving, showHistory, deleteContextId, searchQuery, isEditing,
-    formData, newObjective, newKPI,
+    formData, newObjective, newKPI, editingObjectiveIndex, editingKPIIndex,
     // setters
     setSearchQuery, setShowHistory, setDeleteContextId, setFormData, setNewObjective, setNewKPI, setIsEditing,
+    setEditingObjectiveIndex, setEditingKPIIndex,
     // actions
     loadContexts, loadContextHistory, handleSave, handleDeleteContext, handleNewContext, handleSelectContext, handleSetActive,
-    handleAddObjective, handleRemoveObjective, handleAddKPI, handleRemoveKPI,
+    handleAddObjective, handleRemoveObjective, handleAddKPI, handleRemoveKPI, updateObjective, updateKPI,
   };
 }

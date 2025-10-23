@@ -33,16 +33,22 @@ export const ProductContextPage = () => {
           showHistory={ctx.showHistory}
           newObjective={ctx.newObjective}
           newKPI={ctx.newKPI}
+          editingObjectiveIndex={ctx.editingObjectiveIndex}
+          editingKPIIndex={ctx.editingKPIIndex}
           setFormData={ctx.setFormData}
           setIsEditing={ctx.setIsEditing}
           setShowHistory={ctx.setShowHistory}
           setNewObjective={ctx.setNewObjective}
           setNewKPI={ctx.setNewKPI}
+          setEditingObjectiveIndex={ctx.setEditingObjectiveIndex}
+          setEditingKPIIndex={ctx.setEditingKPIIndex}
           onSave={() => ctx.handleSave(false)}
           onAddObjective={ctx.handleAddObjective}
           onRemoveObjective={ctx.handleRemoveObjective}
           onAddKPI={ctx.handleAddKPI}
           onRemoveKPI={ctx.handleRemoveKPI}
+          updateObjective={ctx.updateObjective}
+          updateKPI={ctx.updateKPI}
         />
       </div>
 
