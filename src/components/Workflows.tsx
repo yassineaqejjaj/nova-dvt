@@ -58,7 +58,7 @@ interface Workflow {
     id: string;
     title: string;
     description: string;
-    tool?: 'canvas' | 'story' | 'impact' | 'research' | 'design' | 'code' | 'roadmap' | 'launch' | 'sprint' | 'kpi' | 'epic-stories' | 'test-generator' | 'ac-validator' | 'git-to-specs';
+    tool?: 'canvas' | 'story' | 'impact' | 'research' | 'design' | 'code' | 'roadmap' | 'launch' | 'sprint' | 'kpi' | 'epic-stories' | 'test-generator' | 'ac-validator' | 'git-to-specs' | 'critical-path-analyzer';
     completed?: boolean;
   }>;
 }
@@ -710,6 +710,7 @@ const workflows: Workflow[] = [
         id: 'critical-paths',
         title: 'Identifier les Chemins Critiques',
         description: 'Analyser les Epics et détecter les flux à risque',
+        tool: 'critical-path-analyzer',
         completed: false,
       },
       {
@@ -763,6 +764,7 @@ export const Workflows: React.FC = () => {
   const [showTestCaseGenerator, setShowTestCaseGenerator] = useState(false);
   const [showACValidator, setShowACValidator] = useState(false);
   const [showGitToSpecs, setShowGitToSpecs] = useState(false);
+  const [showCriticalPathAnalyzer, setShowCriticalPathAnalyzer] = useState(false);
 
   const [activeContext, setActiveContext] = useState<{
     name: string;
@@ -929,6 +931,9 @@ export const Workflows: React.FC = () => {
         break;
       case 'git-to-specs':
         setShowGitToSpecs(true);
+        break;
+      case 'critical-path-analyzer':
+        setShowCriticalPathAnalyzer(true);
         break;
     }
   };
@@ -1394,6 +1399,24 @@ export const Workflows: React.FC = () => {
           </Button>
           <div className="container mx-auto p-6">
             <GitToSpecsGenerator />
+          </div>
+        </div>
+      )}
+      
+      {showCriticalPathAnalyzer && (
+        <div className="fixed inset-0 z-50 bg-background overflow-auto">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="absolute top-4 right-4 z-50"
+            onClick={() => setShowCriticalPathAnalyzer(false)}
+          >
+            ✕ Fermer
+          </Button>
+          <div className="container mx-auto p-6">
+            {React.createElement(
+              React.lazy(() => import('@/components/CriticalPathAnalyzer').then(m => ({ default: m.CriticalPathAnalyzer })))
+            )}
           </div>
         </div>
       )}

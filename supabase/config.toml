@@ -3,6 +3,9 @@ project_id = "pwjuvfclcltphuuwlsdr"
 [functions.analyze-git-repo]
 verify_jwt = false
 
+[functions.analyze-critical-paths]
+verify_jwt = true
+
 [functions.deploy-mystery-box]
 verify_jwt = false
 
@@ -47,6 +50,9 @@ verify_jwt = true
 
 [functions.generate-user-stories]
 verify_jwt = false
+
+[functions.generate-test-cases]
+verify_jwt = true
 
 [functions.generate-roadmap-from-document]
 verify_jwt = false
