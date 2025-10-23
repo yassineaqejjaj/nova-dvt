@@ -136,7 +136,8 @@ export const ProductContextPage = () => {
           teamRoles: metadata.teamRoles || [],
           techStack: metadata.techStack || [],
           budget: metadata.budget || '',
-          timeline: metadata.timeline || ''
+          timeline: metadata.timeline || '',
+          industrySector: metadata.industrySector || ''
         });
       }
     } catch (error: any) {
@@ -335,7 +336,8 @@ export const ProductContextPage = () => {
           teamRoles: [],
           techStack: [],
           budget: '',
-          timeline: ''
+          timeline: '',
+          industrySector: ''
         });
         setIsEditing(false);
       }
@@ -372,7 +374,8 @@ export const ProductContextPage = () => {
       teamRoles: [],
       techStack: [],
       budget: '',
-      timeline: ''
+      timeline: '',
+      industrySector: ''
     });
     setIsEditing(false);
   };
@@ -392,7 +395,8 @@ export const ProductContextPage = () => {
       teamRoles: metadata.teamRoles || [],
       techStack: metadata.techStack || [],
       budget: metadata.budget || '',
-      timeline: metadata.timeline || ''
+      timeline: metadata.timeline || '',
+      industrySector: metadata.industrySector || ''
     });
     setIsEditing(false);
   };
