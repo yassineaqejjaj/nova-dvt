@@ -8,6 +8,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Calculator, Sparkles, Loader2, Save, Clock, Zap, TrendingUp } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { ContextSelector } from "@/components/ContextSelector";
 
 interface Estimation {
   feature: string;
@@ -155,10 +156,29 @@ Utilise le T-shirt sizing et les story points:
 
       <Card>
         <CardHeader>
-          <CardTitle>Informations à Estimer</CardTitle>
-          <CardDescription>
-            Décrivez les fonctionnalités que vous souhaitez estimer
-          </CardDescription>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>Informations à Estimer</CardTitle>
+              <CardDescription>
+                Décrivez les fonctionnalités que vous souhaitez estimer
+              </CardDescription>
+            </div>
+            <ContextSelector
+              onContextSelected={(context) => {
+                const contextText = `Vision: ${context.vision || 'Non spécifié'}
+Objectifs: ${context.objectives.join(', ') || 'Non spécifié'}
+Audience: ${context.target_audience || 'Non spécifié'}
+Contraintes: ${context.constraints || 'Non spécifié'}`;
+                setContext(contextText);
+                
+                if (context.objectives.length > 0) {
+                  setFeatures(context.objectives.join('\n'));
+                }
+                
+                toast.success('Contexte importé avec succès');
+              }}
+            />
+          </div>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">

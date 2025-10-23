@@ -19,6 +19,7 @@ import {
   MessageCircle,
   UserCheck
 } from 'lucide-react';
+import { ContextSelector } from '@/components/ContextSelector';
 
 interface Stakeholder {
   id: string;
@@ -212,17 +213,28 @@ export const RACIGenerator: React.FC = () => {
           {/* Project Info */}
           <Card>
             <CardHeader>
-              <CardTitle>Informations du projet</CardTitle>
-              <CardDescription>
-                Décrivez votre projet pour aider l’IA à comprendre le contexte
-              </CardDescription>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle>Informations du projet</CardTitle>
+                  <CardDescription>
+                    Décrivez votre projet pour aider l'IA à comprendre le contexte
+                  </CardDescription>
+                </div>
+                <ContextSelector
+                  onContextSelected={(context) => {
+                    setProjectName(context.name);
+                    setProjectDescription(context.vision || '');
+                    toast.success('Contexte importé avec succès');
+                  }}
+                />
+              </div>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="project-name">Nom du projet</Label>
                 <Input
                   id="project-name"
-                  placeholder="Ex.: Refonte de l’application mobile"
+                  placeholder="Ex.: Refonte de l'application mobile"
                   value={projectName}
                   onChange={(e) => setProjectName(e.target.value)}
                 />
@@ -249,7 +261,7 @@ export const RACIGenerator: React.FC = () => {
                 Intervenants
               </CardTitle>
               <CardDescription>
-                Ajoutez les membres de l’équipe et parties prenantes impliqués
+                Ajoutez les membres de l'équipe et parties prenantes impliqués
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">

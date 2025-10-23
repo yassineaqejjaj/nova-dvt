@@ -9,6 +9,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Users, Sparkles, Loader2, Save, Download, Target, Heart, Frown, Calendar, Briefcase } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { ContextSelector } from "@/components/ContextSelector";
 
 interface Persona {
   name: string;
@@ -134,10 +135,21 @@ Génère 3 personas utilisateur détaillées et réalistes (JSON uniquement):
 
       <Card>
         <CardHeader>
-          <CardTitle>Informations Produit</CardTitle>
-          <CardDescription>
-            Décrivez votre produit et votre audience cible pour générer des personas pertinentes
-          </CardDescription>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>Informations Produit</CardTitle>
+              <CardDescription>
+                Décrivez votre produit et votre audience cible pour générer des personas pertinentes
+              </CardDescription>
+            </div>
+            <ContextSelector
+              onContextSelected={(context) => {
+                setProductDescription(context.vision || '');
+                setTargetAudience(context.target_audience || '');
+                toast.success('Contexte importé avec succès');
+              }}
+            />
+          </div>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
