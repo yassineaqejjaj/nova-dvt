@@ -11,6 +11,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface ProductContext {
   id: string;
@@ -56,7 +57,8 @@ export const ProductContextPage = () => {
     teamRoles: [] as string[],
     techStack: [] as string[],
     budget: '',
-    timeline: ''
+    timeline: '',
+    industrySector: ''
   });
 
   const [newObjective, setNewObjective] = useState('');
@@ -198,7 +200,8 @@ export const ProductContextPage = () => {
           teamRoles: formData.teamRoles.filter(r => r.trim()),
           techStack: formData.techStack.filter(t => t.trim()),
           budget: formData.budget,
-          timeline: formData.timeline
+          timeline: formData.timeline,
+          industrySector: formData.industrySector
         }
       } as any;
 
