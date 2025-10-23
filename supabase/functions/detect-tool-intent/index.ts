@@ -73,7 +73,20 @@ serve(async (req) => {
     const detectedIntent = aiResponse.choices[0]?.message?.content?.trim().toLowerCase() || "none";
 
     // Validate and sanitize the response
-    const validIntents = ["canvas_generator", "instant_prd", "none"];
+    const validIntents = [
+      "canvas_generator", 
+      "instant_prd", 
+      "test_generator",
+      "critical_path_analyzer",
+      "story_writer",
+      "epic_to_stories",
+      "roadmap_planner",
+      "sprint_planner",
+      "kpi_generator",
+      "raci_matrix",
+      "meeting_minutes",
+      "none"
+    ];
     const finalIntent = validIntents.includes(detectedIntent) ? detectedIntent : "none";
 
     return new Response(

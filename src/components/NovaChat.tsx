@@ -3,11 +3,10 @@ import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/compone
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Sparkles, Send, Loader2, Wand2, Users, Layout, FileText } from 'lucide-react';
+import { Sparkles, Send, Loader2, Wand2, Users, Layout } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { TabType } from '@/types';
-import { Badge } from '@/components/ui/badge';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -15,7 +14,7 @@ interface Message {
   suggestions?: Array<{
     label: string;
     action: string;
-    type: 'tool' | 'workflow' | 'squad';
+    type: 'tool' | 'workflow' | 'navigation';
   }>;
 }
 
@@ -32,22 +31,20 @@ export const NovaChat: React.FC<NovaChatProps> = ({
   onNavigate,
   onAction 
 }) => {
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      role: 'assistant',
-      content: "Bonjour ! Je suis Nova, votre assistant IA produit. Je peux vous aider à :\n\n• Créer des canvases et des PRD\n• Construire et optimiser des squads\n• Naviguer dans les workflows\n• Études de marché et analytics\n\nQue souhaitez-vous faire aujourd’hui ?",
-      suggestions: [
-        { label: 'Créer un Canvas', action: 'canvas', type: 'tool' },
-        { label: 'Construire une Squad', action: 'squad', type: 'squad' },
-        { label: 'Générer un PRD', action: 'prd', type: 'tool' },
-        { label: 'Démarrer la Discovery', action: 'discovery', type: 'workflow' }
-      ]
-    }
-  ]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [workspaceContext, setWorkspaceContext] = useState<any>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
+
+  // Load workspace context when dialog opens
+  useEffect(() => {
+    if (open) {
+      loadWorkspaceContext();
+      initializeChat();
+    }
+  }, [open]);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -55,12 +52,72 @@ export const NovaChat: React.FC<NovaChatProps> = ({
     }
   }, [messages]);
 
+  const loadWorkspaceContext = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      // Fetch workspace data in parallel
+      const [artifacts, contexts, squads, pinnedItems] = await Promise.all([
+        supabase.from('artifacts').select('*').eq('user_id', user.id).order('created_at', { ascending: false }).limit(5),
+        supabase.from('product_contexts').select('*').eq('user_id', user.id).eq('is_active', true),
+        supabase.from('squads').select('*').eq('user_id', user.id).eq('is_active', true),
+        supabase.from('pinned_items').select('*').eq('user_id', user.id).order('position')
+      ]);
+
+      setWorkspaceContext({
+        recentArtifacts: artifacts.data || [],
+        activeContexts: contexts.data || [],
+        squads: squads.data || [],
+        pinnedItems: pinnedItems.data || []
+      });
+    } catch (error) {
+      console.error('Failed to load workspace context:', error);
+    }
+  };
+
+  const initializeChat = async () => {
+    // Generate dynamic initial suggestions based on workspace state
+    const suggestions = await generateSuggestions('dashboard');
+    
+    setMessages([{
+      role: 'assistant',
+      content: "Bonjour ! Je suis Nova, votre assistant IA produit. J'ai analysé votre espace de travail et je peux vous aider avec vos projets en cours.\n\nQue souhaitez-vous faire aujourd'hui ?",
+      suggestions
+    }]);
+  };
+
+  const generateSuggestions = async (currentPage: string = 'unknown') => {
+    try {
+      const { data, error } = await supabase.functions.invoke('generate-suggestions', {
+        body: { 
+          workspaceContext,
+          currentPage,
+          recentActivity: messages.length > 0 ? messages[messages.length - 1].content : null
+        }
+      });
+
+      if (error) throw error;
+      return data?.suggestions || getDefaultSuggestions();
+    } catch (error) {
+      console.error('Suggestion generation failed:', error);
+      return getDefaultSuggestions();
+    }
+  };
+
+  const getDefaultSuggestions = () => [
+    { label: 'Créer un Canvas', action: 'canvas_generator', type: 'tool' as const },
+    { label: 'Construire une Squad', action: 'squad_builder', type: 'workflow' as const },
+    { label: 'Générer un PRD', action: 'instant_prd', type: 'tool' as const },
+    { label: 'Voir mes Projets', action: 'dashboard', type: 'navigation' as const }
+  ];
+
   const detectIntent = async (userMessage: string) => {
     try {
       const { data, error } = await supabase.functions.invoke('detect-tool-intent', {
         body: { 
           message: userMessage,
-          conversationHistory: messages.slice(-3).map(m => ({
+          conversationHistory: messages.slice(-5).map(m => ({
             role: m.role,
             content: m.content
           }))
@@ -75,31 +132,84 @@ export const NovaChat: React.FC<NovaChatProps> = ({
     }
   };
 
-  const suggestSquad = async (context: string) => {
-    try {
-      // Get available agents (you'll need to fetch this from your agents data)
-      const availableAgents = [
-        {
-          id: 'sarah-chen',
-          name: 'Sarah Chen',
-          specialty: 'Product Strategy',
-          capabilities: ['Market Analysis', 'Roadmapping', 'Stakeholder Management'],
-          tags: ['strategy', 'planning', 'vision'],
-          backstory: 'Former startup founder turned product strategist'
-        },
-        // Add more agents...
-      ];
+  const streamResponse = async (userMessage: string, contextData: string) => {
+    const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat-ai`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`
+      },
+      body: JSON.stringify({
+        message: userMessage,
+        stream: true,
+        systemPrompt: `Vous êtes Nova, assistant IA de product management.
 
-      const { data, error } = await supabase.functions.invoke('suggest-squad', {
-        body: { context, availableAgents }
-      });
+CONTEXTE UTILISATEUR:
+${contextData}
 
-      if (error) throw error;
-      return data;
-    } catch (error) {
-      console.error('Squad suggestion failed:', error);
-      return null;
+Vous aidez avec:
+- Stratégie produit et planification
+- Création de canvases, PRD, user stories
+- Construction d'équipes efficaces
+- Guidance sur les workflows
+- Analyses et recommandations personnalisées
+
+Soyez concis (2-4 phrases), amical, et proposez des actions suivantes basées sur leur contexte actuel.`
+      })
+    });
+
+    if (!response.ok || !response.body) throw new Error('Stream failed');
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let textBuffer = '';
+    let assistantMessage = '';
+
+    // Add empty assistant message that we'll update
+    setMessages(prev => [...prev, { role: 'assistant', content: '' }]);
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      textBuffer += decoder.decode(value, { stream: true });
+
+      let newlineIndex: number;
+      while ((newlineIndex = textBuffer.indexOf('\n')) !== -1) {
+        let line = textBuffer.slice(0, newlineIndex);
+        textBuffer = textBuffer.slice(newlineIndex + 1);
+
+        if (line.endsWith('\r')) line = line.slice(0, -1);
+        if (line.startsWith(':') || line.trim() === '') continue;
+        if (!line.startsWith('data: ')) continue;
+
+        const jsonStr = line.slice(6).trim();
+        if (jsonStr === '[DONE]') break;
+
+        try {
+          const parsed = JSON.parse(jsonStr);
+          const content = parsed.choices?.[0]?.delta?.content as string | undefined;
+          if (content) {
+            assistantMessage += content;
+            // Update the last message with accumulated content
+            setMessages(prev => {
+              const newMessages = [...prev];
+              newMessages[newMessages.length - 1] = {
+                ...newMessages[newMessages.length - 1],
+                content: assistantMessage
+              };
+              return newMessages;
+            });
+          }
+        } catch (e) {
+          // Partial JSON, buffer it
+          textBuffer = line + '\n' + textBuffer;
+          break;
+        }
+      }
     }
+
+    return assistantMessage;
   };
 
   const handleSendMessage = async () => {
@@ -108,7 +218,6 @@ export const NovaChat: React.FC<NovaChatProps> = ({
     const userMessage = input.trim();
     setInput('');
     
-    // Add user message
     setMessages(prev => [...prev, { role: 'user', content: userMessage }]);
     setIsLoading(true);
 
@@ -116,105 +225,96 @@ export const NovaChat: React.FC<NovaChatProps> = ({
       // Detect intent
       const intent = await detectIntent(userMessage);
       
-      // Check for squad building intent
-      const isSquadIntent = userMessage.toLowerCase().includes('squad') || 
-                           userMessage.toLowerCase().includes('team') ||
-                           userMessage.toLowerCase().includes('agents');
-
-      let response = '';
+      let responseContent = '';
       let suggestions: Message['suggestions'] = [];
 
-      if (isSquadIntent) {
-        // Squad building flow
-        const squadSuggestion = await suggestSquad(userMessage);
+      // Build context string
+      const contextData = workspaceContext ? `
+Artéfacts récents: ${workspaceContext.recentArtifacts?.length || 0}
+Contextes actifs: ${workspaceContext.activeContexts?.length || 0}
+Squads: ${workspaceContext.squads?.length || 0}
+      ` : 'Nouveau utilisateur';
+
+      if (intent !== 'none') {
+        // Tool-specific responses
+        const toolResponses: Record<string, string> = {
+          canvas_generator: "Je vous aide à créer un canvas stratégique. Quel type souhaitez-vous ?",
+          instant_prd: "Je vais générer un PRD détaillé pour vous avec spécifications et user stories.",
+          test_generator: "Je peux générer des test cases pour vos stories. Sélectionnez les artéfacts à tester.",
+          critical_path_analyzer: "J'analyse les chemins critiques de votre projet pour identifier les dépendances.",
+          story_writer: "Créons une user story avec critères d'acceptation détaillés.",
+          epic_to_stories: "Je décompose votre epic en user stories atomiques et testables.",
+          roadmap_planner: "Planifions votre roadmap produit avec priorités et timelines.",
+          sprint_planner: "Organisons votre sprint avec estimation et capacité d'équipe.",
+          kpi_generator: "Définissons des KPIs mesurables et alignés avec vos objectifs.",
+          raci_matrix: "Créons une matrice RACI pour clarifier les responsabilités.",
+          meeting_minutes: "J'extrais les éléments clés et action items de votre réunion."
+        };
         
-        if (squadSuggestion) {
-          response = `${squadSuggestion.reasoning}\n\nJe recommande la squad \"${squadSuggestion.squadName}\". Voulez‑vous que je la crée pour vous ?`;
-          suggestions = [
-            { label: 'Créer cette Squad', action: 'create_squad', type: 'squad' },
-            { label: 'Suggérer une autre Squad', action: 'suggest_different', type: 'squad' },
-            { label: 'Voir tous les agents', action: 'agents', type: 'workflow' }
-          ];
-        } else {
-          response = "Je peux vous aider à construire l’équipe idéale. Dites‑moi vos objectifs de projet et je recommanderai les meilleurs agents pour votre squad.";
-        }
-      } else if (intent === 'canvas_generator') {
-        // Canvas tool flow
-        response = "Je vous aide à créer un canvas. Quel type de canvas souhaitez‑vous ? Business Model, Lean, Value Proposition, etc.";
+        responseContent = toolResponses[intent] || "Je peux vous aider avec cet outil.";
         suggestions = [
-          { label: 'Ouvrir le Canvas Generator', action: 'canvas', type: 'tool' },
-          { label: 'Business Model Canvas', action: 'canvas_business', type: 'tool' }
-        ];
-      } else if (intent === 'instant_prd') {
-        // PRD tool flow
-        response = "Je vous aide à créer un PRD (Product Requirements Document). Je peux générer des user stories, des spécifications et des exigences techniques.";
-        suggestions = [
-          { label: 'Générer un PRD', action: 'prd', type: 'tool' },
-          { label: 'Créer une User Story', action: 'user_story', type: 'tool' }
+          { label: `Ouvrir ${intent.replace('_', ' ')}`, action: intent, type: 'tool' }
         ];
       } else {
-        // General conversation
-        const { data, error } = await supabase.functions.invoke('chat-ai', {
-          body: { 
-            message: userMessage,
-            systemPrompt: `Vous êtes Nova, un assistant IA de product management.\n            Vous aidez les utilisateurs à :\n            - Stratégie produit et planification\n            - Création de canvases et PRD\n            - Construction d'équipes efficaces\n            - Guidance sur les workflows\n            \n            Soyez concis (2-3 phrases), amical, et proposez toujours des actions suivantes.`
-          }
-        });
-
-        if (error) throw error;
-        response = data.response;
-
-        // Add contextual suggestions
-        if (userMessage.toLowerCase().includes('start') || userMessage.toLowerCase().includes('begin')) {
-          suggestions = [
-            { label: 'Workflow Discovery', action: 'discovery', type: 'workflow' },
-            { label: 'Créer un Canvas', action: 'canvas', type: 'tool' }
-          ];
-        }
+        // Stream general conversation with context
+        responseContent = await streamResponse(userMessage, contextData);
       }
 
-      // Add assistant response
-      setMessages(prev => [...prev, { 
-        role: 'assistant', 
-        content: response,
-        suggestions 
-      }]);
+      // Generate contextual suggestions if not from tool intent
+      if (suggestions.length === 0) {
+        suggestions = await generateSuggestions();
+      }
+
+      // Add or update assistant message with suggestions
+      setMessages(prev => {
+        const lastMsg = prev[prev.length - 1];
+        if (lastMsg.role === 'assistant' && !lastMsg.suggestions) {
+          // Update existing message with suggestions
+          return [
+            ...prev.slice(0, -1),
+            { ...lastMsg, suggestions }
+          ];
+        }
+        // Intent-based response, add new message
+        if (intent !== 'none') {
+          return [...prev, { role: 'assistant', content: responseContent, suggestions }];
+        }
+        return prev;
+      });
 
     } catch (error: any) {
       console.error('Chat error:', error);
       toast({
         title: "Erreur",
-        description: error.message || "Échec de l’envoi du message. Réessayez.",
+        description: error.message || "Échec de l'envoi du message. Réessayez.",
         variant: "destructive"
       });
+      // Remove empty assistant message on error
+      setMessages(prev => prev.filter((msg, idx) => !(idx === prev.length - 1 && msg.role === 'assistant' && !msg.content)));
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleSuggestionClick = (action: string, type: string) => {
-    if (type === 'tool') {
-      if (action === 'canvas' || action.startsWith('canvas_')) {
-        onAction?.('create_canvas');
-      } else if (action === 'prd' || action === 'user_story') {
-        onAction?.('generate_prd');
-      }
-    } else if (type === 'workflow') {
-      if (action === 'discovery') {
-        onNavigate('dashboard');
-      } else if (action === 'agents') {
-        onNavigate('agents');
-      }
-    } else if (type === 'squad') {
-      if (action === 'create_squad') {
-        onNavigate('squads');
-        onAction?.('create_squad');
-      } else if (action === 'suggest_different') {
-        setInput('Suggest a different squad composition');
-      }
+    const toolMapping: Record<string, () => void> = {
+      canvas_generator: () => onAction?.('create_canvas'),
+      instant_prd: () => onAction?.('generate_prd'),
+      test_generator: () => onNavigate('test-generator' as TabType),
+      critical_path_analyzer: () => onNavigate('critical-path' as TabType),
+      story_writer: () => onAction?.('create_story'),
+      roadmap_planner: () => onNavigate('roadmap' as TabType),
+      sprint_planner: () => onNavigate('sprint' as TabType),
+      squad_builder: () => onNavigate('squads' as TabType),
+      dashboard: () => onNavigate('dashboard' as TabType),
+      artifacts_view: () => onNavigate('artifacts' as TabType)
+    };
+
+    const handler = toolMapping[action];
+    if (handler) {
+      handler();
+      onOpenChange(false);
     }
-    
-    onOpenChange(false);
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -239,7 +339,9 @@ export const NovaChat: React.FC<NovaChatProps> = ({
           </div>
           <div>
             <h2 className="text-lg font-semibold">Assistant IA Nova</h2>
-            <p className="text-sm text-muted-foreground">Votre compagnon produit intelligent</p>
+            <p className="text-sm text-muted-foreground">
+              {workspaceContext ? 'Analyse de votre espace en cours...' : 'Votre compagnon produit intelligent'}
+            </p>
           </div>
         </div>
 
@@ -267,7 +369,7 @@ export const NovaChat: React.FC<NovaChatProps> = ({
                     <div className="flex flex-wrap gap-2">
                       {message.suggestions.map((suggestion, idx) => {
                         const Icon = suggestion.type === 'tool' ? Wand2 :
-                                   suggestion.type === 'squad' ? Users : Layout;
+                                   suggestion.type === 'workflow' ? Users : Layout;
                         return (
                           <Button
                             key={idx}
@@ -320,9 +422,9 @@ export const NovaChat: React.FC<NovaChatProps> = ({
               )}
             </Button>
           </div>
-            <p className="text-xs text-muted-foreground mt-2">
-              Appuyez sur Entrée pour envoyer • Shift+Entrée pour une nouvelle ligne
-            </p>
+          <p className="text-xs text-muted-foreground mt-2">
+            Appuyez sur Entrée pour envoyer • Shift+Entrée pour une nouvelle ligne
+          </p>
         </div>
       </DialogContent>
     </Dialog>

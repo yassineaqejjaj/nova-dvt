@@ -56,3 +56,6 @@ verify_jwt = true
 
 [functions.generate-roadmap-from-document]
 verify_jwt = false
+
+[functions.generate-suggestions]
+verify_jwt = false

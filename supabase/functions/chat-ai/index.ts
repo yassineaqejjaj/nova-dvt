@@ -30,6 +30,9 @@ serve(async (req) => {
       const defaultSystemPrompt = 'You are a helpful AI assistant specialized in product management and technical specifications. Provide clear, structured, and actionable responses.';
       const finalSystemPrompt = systemPrompt || defaultSystemPrompt;
       
+      // Check if streaming is requested
+      const { stream } = body;
+      
       const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
         method: 'POST',
         headers: {
@@ -44,6 +47,7 @@ serve(async (req) => {
           ],
           max_tokens: 4000,
           temperature: 0.7,
+          stream: stream || false,
         }),
       });
 
@@ -58,6 +62,13 @@ serve(async (req) => {
           throw new Error('AI credits exhausted. Please add funds to your workspace.');
         }
         throw new Error(`AI gateway error: ${response.status}`);
+      }
+
+      // If streaming, return the stream directly
+      if (stream) {
+        return new Response(response.body, {
+          headers: { ...corsHeaders, 'Content-Type': 'text/event-stream' },
+        });
       }
 
       const data = await response.json();

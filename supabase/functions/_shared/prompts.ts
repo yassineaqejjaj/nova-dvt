@@ -275,16 +275,78 @@ Use when user wants to:
 - Visualize strategy or business models
 - Generate structured strategic documents
 - Build product canvases
-Keywords: canvas, framework, business model, strategy visualization, lean canvas, value proposition
+Keywords: canvas, framework, business model, strategy, lean canvas, value proposition
 
 TOOL: "instant_prd"  
 Use when user wants to:
 - Create PRD (Product Requirements Document)
 - Write product specifications or requirements
-- Generate user stories or acceptance criteria
 - Document features or product functionality
 - Create technical specifications
-Keywords: PRD, product requirements, specifications, user stories, features, documentation, requirements doc
+Keywords: PRD, product requirements, specifications, features, documentation, requirements doc
+
+TOOL: "test_generator"
+Use when user wants to:
+- Generate test cases for features or stories
+- Create test scenarios or test plans
+- Define testing criteria or QA specifications
+Keywords: test, test cases, QA, testing, test scenarios, quality assurance, test plan
+
+TOOL: "critical_path_analyzer"
+Use when user wants to:
+- Analyze critical paths in projects
+- Identify dependencies and blockers
+- Optimize project timelines
+Keywords: critical path, dependencies, timeline, project analysis, blockers, bottlenecks
+
+TOOL: "story_writer"
+Use when user wants to:
+- Create user stories with acceptance criteria
+- Break down features into stories
+- Write detailed story descriptions
+Keywords: user story, story, acceptance criteria, as a user, user stories
+
+TOOL: "epic_to_stories"
+Use when user wants to:
+- Break down epics into user stories
+- Decompose large features
+- Split epics into smaller chunks
+Keywords: epic, break down epic, split epic, epic to stories, decompose
+
+TOOL: "roadmap_planner"
+Use when user wants to:
+- Create product roadmaps
+- Plan releases or quarters
+- Visualize product timeline
+Keywords: roadmap, release plan, product timeline, quarterly planning, roadmap planning
+
+TOOL: "sprint_planner"
+Use when user wants to:
+- Plan sprints
+- Organize sprint backlog
+- Estimate sprint capacity
+Keywords: sprint, sprint planning, backlog, sprint capacity, iteration
+
+TOOL: "kpi_generator"
+Use when user wants to:
+- Define KPIs or metrics
+- Create measurement frameworks
+- Set success criteria
+Keywords: KPI, metrics, success metrics, measurement, indicators, performance
+
+TOOL: "raci_matrix"
+Use when user wants to:
+- Create RACI matrix
+- Define roles and responsibilities
+- Clarify stakeholder involvement
+Keywords: RACI, roles, responsibilities, stakeholders, accountability
+
+TOOL: "meeting_minutes"
+Use when user wants to:
+- Generate meeting notes or minutes
+- Extract action items from discussions
+- Summarize meetings
+Keywords: meeting, meeting notes, minutes, action items, meeting summary
 
 TOOL: "none"
 Use when:
@@ -299,7 +361,7 @@ DECISION PROCESS:
 3. Consider if the request fits tool capabilities
 4. If uncertain, choose "none"
 
-Respond ONLY with one of: "canvas_generator", "instant_prd", or "none"
+Respond ONLY with one of: "canvas_generator", "instant_prd", "test_generator", "critical_path_analyzer", "story_writer", "epic_to_stories", "roadmap_planner", "sprint_planner", "kpi_generator", "raci_matrix", "meeting_minutes", or "none"
 
 Do not explain, just return the tool identifier.`
 };
