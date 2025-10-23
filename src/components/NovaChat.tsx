@@ -429,10 +429,11 @@ Soyez concis (2-4 phrases), amical, et proposez des actions suivantes basées su
           } else {
             // Workflow complete
             setActiveWorkflow(null);
+            const completionSuggestions = await generateSuggestions();
             setMessages(prev => [...prev, {
               role: 'assistant',
               content: `🎉 Workflow "${workflow.name}" terminé ! Que voulez-vous faire ensuite ?`,
-              suggestions: await generateSuggestions()
+              suggestions: completionSuggestions
             }]);
             
             setIsLoading(false);
