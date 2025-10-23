@@ -523,7 +523,7 @@ Utilisez ce contexte pour guider l'utilisateur dans l'étape actuelle.
 
       setMessages(prev => {
         const lastMsg = prev[prev.length - 1];
-        if (lastMsg.role === 'assistant' && !lastMsg.suggestions) {
+        if (lastMsg && lastMsg.role === 'assistant' && !lastMsg.suggestions) {
           return [
             ...prev.slice(0, -1),
             { ...lastMsg, suggestions, artifacts }
