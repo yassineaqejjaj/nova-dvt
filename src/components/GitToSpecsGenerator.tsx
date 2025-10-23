@@ -351,7 +351,7 @@ export const GitToSpecsGenerator = () => {
             heading: HeadingLevel.HEADING_2,
             spacing: { before: 200, after: 100 }
           }),
-          ...analysis.context.constraints.map(c => new Paragraph({
+          ...( analysis.context?.constraints || []).map(c => new Paragraph({
             text: `• ${c}`,
             spacing: { after: 100 }
           })),
@@ -360,7 +360,7 @@ export const GitToSpecsGenerator = () => {
             heading: HeadingLevel.HEADING_2,
             spacing: { before: 200, after: 100 }
           }),
-          ...analysis.context.assumptions.map(a => new Paragraph({
+          ...(analysis.context?.assumptions || []).map(a => new Paragraph({
             text: `• ${a}`,
             spacing: { after: 100 }
           })),
@@ -376,7 +376,7 @@ export const GitToSpecsGenerator = () => {
             heading: HeadingLevel.HEADING_2,
             spacing: { before: 200, after: 100 }
           }),
-          ...analysis.personas.flatMap(persona => [
+          ...(analysis.personas || []).flatMap(persona => [
             new Paragraph({
               text: `${persona.name} - ${persona.role}`,
               heading: HeadingLevel.HEADING_3,
@@ -405,7 +405,7 @@ export const GitToSpecsGenerator = () => {
             heading: HeadingLevel.HEADING_1,
             spacing: { before: 400, after: 200 }
           }),
-          ...analysis.features.flatMap(feature => [
+          ...(analysis.features || []).flatMap(feature => [
             new Paragraph({
               text: `${feature.name} [${feature.priority.toUpperCase()}]`,
               heading: HeadingLevel.HEADING_2,
@@ -451,7 +451,7 @@ export const GitToSpecsGenerator = () => {
             spacing: { before: 200, after: 100 }
           }),
           new Paragraph({
-            text: analysis.techSpec.architecture.overview,
+            text: analysis.techSpec?.architecture?.overview || 'No architecture overview available',
             spacing: { after: 200 }
           }),
           new Paragraph({
@@ -459,7 +459,7 @@ export const GitToSpecsGenerator = () => {
             heading: HeadingLevel.HEADING_2,
             spacing: { before: 200, after: 100 }
           }),
-          ...analysis.techSpec.frameworks.map(f => new Paragraph({
+          ...(analysis.techSpec?.frameworks || []).map(f => new Paragraph({
             text: `• ${f.name} (${f.version}): ${f.purpose}`,
             spacing: { after: 100 }
           })),
@@ -476,15 +476,15 @@ export const GitToSpecsGenerator = () => {
             spacing: { before: 200, after: 100 }
           }),
           new Paragraph({
-            text: analysis.testPlan.strategy,
+            text: analysis.testPlan?.strategy || 'No test strategy available',
             spacing: { after: 200 }
           }),
           new Paragraph({
-            text: `Coverage Score: ${analysis.testPlan.coverageScore}%`,
+            text: `Coverage Score: ${analysis.testPlan?.coverageScore || 0}%`,
             spacing: { after: 100 }
           }),
           new Paragraph({
-            text: `Tested Endpoints: ${analysis.testPlan.testedEndpoints}/${analysis.testPlan.totalEndpoints}`,
+            text: `Tested Endpoints: ${analysis.testPlan?.testedEndpoints || 0}/${analysis.testPlan?.totalEndpoints || 0}`,
             spacing: { after: 200 }
           }),
 
@@ -494,7 +494,7 @@ export const GitToSpecsGenerator = () => {
             heading: HeadingLevel.HEADING_1,
             spacing: { before: 400, after: 200 }
           }),
-          ...analysis.riskRegister.map(risk => [
+          ...(analysis.riskRegister || []).map(risk => [
             new Paragraph({
               text: `${risk.type} [${risk.severity.toUpperCase()}]`,
               heading: HeadingLevel.HEADING_3,
@@ -511,7 +511,7 @@ export const GitToSpecsGenerator = () => {
             heading: HeadingLevel.HEADING_1,
             spacing: { before: 400, after: 200 }
           }),
-          ...analysis.roadmap.flatMap(phase => [
+          ...(analysis.roadmap || []).flatMap(phase => [
             new Paragraph({
               text: `${phase.phase} - ${phase.timeline}`,
               heading: HeadingLevel.HEADING_2,
@@ -535,7 +535,7 @@ export const GitToSpecsGenerator = () => {
             heading: HeadingLevel.HEADING_1,
             spacing: { before: 400, after: 200 }
           }),
-          ...analysis.kpis.map(kpi => [
+          ...(analysis.kpis || []).map(kpi => [
             new Paragraph({
               text: kpi.name,
               heading: HeadingLevel.HEADING_3,
@@ -803,18 +803,18 @@ export const GitToSpecsGenerator = () => {
                     <div>
                       <h4 className="font-semibold mb-2">Constraints</h4>
                       <ul className="list-disc list-inside space-y-1">
-                        {analysis.context.constraints.map((constraint, idx) => (
+                        {analysis.context?.constraints?.map((constraint, idx) => (
                           <li key={idx} className="text-sm text-muted-foreground">{constraint}</li>
-                        ))}
+                        )) || <li className="text-sm text-muted-foreground">No constraints specified</li>}
                       </ul>
                     </div>
                     <Separator />
                     <div>
                       <h4 className="font-semibold mb-2">Assumptions</h4>
                       <ul className="list-disc list-inside space-y-1">
-                        {analysis.context.assumptions.map((assumption, idx) => (
+                        {analysis.context?.assumptions?.map((assumption, idx) => (
                           <li key={idx} className="text-sm text-muted-foreground">{assumption}</li>
-                        ))}
+                        )) || <li className="text-sm text-muted-foreground">No assumptions specified</li>}
                       </ul>
                     </div>
                   </CardContent>
@@ -824,38 +824,42 @@ export const GitToSpecsGenerator = () => {
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                       <Calendar className="h-5 w-5" />
-                      Roadmap ({analysis.roadmap.length} phases)
+                      Roadmap ({analysis.roadmap?.length || 0} phases)
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-3">
-                    {analysis.roadmap.map((phase, idx) => (
-                      <Card key={idx}>
-                        <CardContent className="pt-4">
-                          <div className="flex justify-between items-start mb-2">
-                            <h4 className="font-semibold">{phase.phase}</h4>
-                            <Badge variant="outline">{phase.timeline}</Badge>
-                          </div>
-                          <div className="space-y-2 text-sm">
-                            <div>
-                              <span className="font-medium">Goals:</span>
-                              <ul className="list-disc list-inside ml-2">
-                                {phase.goals.map((goal, gIdx) => (
-                                  <li key={gIdx}>{goal}</li>
-                                ))}
-                              </ul>
+                    {analysis.roadmap && analysis.roadmap.length > 0 ? (
+                      analysis.roadmap.map((phase, idx) => (
+                        <Card key={idx}>
+                          <CardContent className="pt-4">
+                            <div className="flex justify-between items-start mb-2">
+                              <h4 className="font-semibold">{phase.phase}</h4>
+                              <Badge variant="outline">{phase.timeline}</Badge>
                             </div>
-                            <div>
-                              <span className="font-medium">Deliverables:</span>
-                              <ul className="list-disc list-inside ml-2">
-                                {phase.deliverables.map((deliverable, dIdx) => (
-                                  <li key={dIdx}>{deliverable}</li>
-                                ))}
-                              </ul>
+                            <div className="space-y-2 text-sm">
+                              <div>
+                                <span className="font-medium">Goals:</span>
+                                <ul className="list-disc list-inside ml-2">
+                                  {phase.goals.map((goal, gIdx) => (
+                                    <li key={gIdx}>{goal}</li>
+                                  ))}
+                                </ul>
+                              </div>
+                              <div>
+                                <span className="font-medium">Deliverables:</span>
+                                <ul className="list-disc list-inside ml-2">
+                                  {phase.deliverables.map((deliverable, dIdx) => (
+                                    <li key={dIdx}>{deliverable}</li>
+                                  ))}
+                                </ul>
+                              </div>
                             </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
+                          </CardContent>
+                        </Card>
+                      ))
+                    ) : (
+                      <p className="text-sm text-muted-foreground">No roadmap data available</p>
+                    )}
                   </CardContent>
                 </Card>
 
@@ -863,26 +867,30 @@ export const GitToSpecsGenerator = () => {
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                       <BarChart className="h-5 w-5" />
-                      Success Metrics ({analysis.kpis.length} KPIs)
+                      Success Metrics ({analysis.kpis?.length || 0} KPIs)
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-2">
-                    {analysis.kpis.map((kpi, idx) => (
-                      <Card key={idx}>
-                        <CardContent className="pt-4">
-                          <h4 className="font-semibold mb-1">{kpi.name}</h4>
-                          <p className="text-sm text-muted-foreground mb-2">{kpi.description}</p>
-                          <div className="flex gap-4 text-sm">
-                            <div>
-                              <span className="font-medium">Target:</span> {kpi.target}
+                    {analysis.kpis && analysis.kpis.length > 0 ? (
+                      analysis.kpis.map((kpi, idx) => (
+                        <Card key={idx}>
+                          <CardContent className="pt-4">
+                            <h4 className="font-semibold mb-1">{kpi.name}</h4>
+                            <p className="text-sm text-muted-foreground mb-2">{kpi.description}</p>
+                            <div className="flex gap-4 text-sm">
+                              <div>
+                                <span className="font-medium">Target:</span> {kpi.target}
+                              </div>
+                              <div>
+                                <span className="font-medium">Measurement:</span> {kpi.measurement}
+                              </div>
                             </div>
-                            <div>
-                              <span className="font-medium">Measurement:</span> {kpi.measurement}
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
+                          </CardContent>
+                        </Card>
+                      ))
+                    ) : (
+                      <p className="text-sm text-muted-foreground">No KPIs available</p>
+                    )}
                   </CardContent>
                 </Card>
               </TabsContent>
@@ -891,13 +899,14 @@ export const GitToSpecsGenerator = () => {
               <TabsContent value="users" className="space-y-4">
                 <Card>
                   <CardHeader>
-                    <CardTitle>User Personas ({analysis.personas.length})</CardTitle>
+                    <CardTitle>User Personas ({analysis.personas?.length || 0})</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-3">
-                    {analysis.personas.map((persona, idx) => (
-                      <Card key={idx}>
-                        <CardContent className="pt-4">
-                          <div className="flex items-start justify-between mb-3">
+                    {analysis.personas && analysis.personas.length > 0 ? (
+                      analysis.personas.map((persona, idx) => (
+                        <Card key={idx}>
+                          <CardContent className="pt-4">
+                            <div className="flex items-start justify-between mb-3">
                             <div>
                               <h4 className="font-semibold text-lg">{persona.name}</h4>
                               <p className="text-sm text-muted-foreground">{persona.role}</p>
@@ -928,62 +937,69 @@ export const GitToSpecsGenerator = () => {
                                 ))}
                               </ul>
                             </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))
+                    ) : (
+                      <p className="text-sm text-muted-foreground">No user personas available</p>
+                    )}
                   </CardContent>
                 </Card>
 
                 <Card>
                   <CardHeader>
-                    <CardTitle>User Journeys ({analysis.userJourneys.length})</CardTitle>
+                    <CardTitle>User Journeys ({analysis.userJourneys?.length || 0})</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-3">
-                    {analysis.userJourneys.map((journey, idx) => (
-                      <Card key={idx}>
-                        <CardContent className="pt-4">
-                          <div className="mb-3">
-                            <Badge variant="outline" className="mb-2">{journey.persona}</Badge>
-                            <h4 className="font-semibold">{journey.stage}</h4>
-                          </div>
-                          <div className="grid md:grid-cols-2 gap-4 text-sm">
-                            <div>
-                              <h5 className="font-medium mb-1">Actions</h5>
-                              <ul className="list-disc list-inside space-y-1">
-                                {journey.actions.map((action, aIdx) => (
-                                  <li key={aIdx} className="text-muted-foreground">{action}</li>
-                                ))}
-                              </ul>
+                    {analysis.userJourneys && analysis.userJourneys.length > 0 ? (
+                      analysis.userJourneys.map((journey, idx) => (
+                        <Card key={idx}>
+                          <CardContent className="pt-4">
+                            <div className="mb-3">
+                              <Badge variant="outline" className="mb-2">{journey.persona}</Badge>
+                              <h4 className="font-semibold">{journey.stage}</h4>
                             </div>
-                            <div>
-                              <h5 className="font-medium mb-1">Thoughts</h5>
-                              <ul className="list-disc list-inside space-y-1">
-                                {journey.thoughts.map((thought, tIdx) => (
-                                  <li key={tIdx} className="text-muted-foreground">{thought}</li>
-                                ))}
-                              </ul>
+                            <div className="grid md:grid-cols-2 gap-4 text-sm">
+                              <div>
+                                <h5 className="font-medium mb-1">Actions</h5>
+                                <ul className="list-disc list-inside space-y-1">
+                                  {journey.actions.map((action, aIdx) => (
+                                    <li key={aIdx} className="text-muted-foreground">{action}</li>
+                                  ))}
+                                </ul>
+                              </div>
+                              <div>
+                                <h5 className="font-medium mb-1">Thoughts</h5>
+                                <ul className="list-disc list-inside space-y-1">
+                                  {journey.thoughts.map((thought, tIdx) => (
+                                    <li key={tIdx} className="text-muted-foreground">{thought}</li>
+                                  ))}
+                                </ul>
+                              </div>
+                              <div>
+                                <h5 className="font-medium mb-1">Pain Points</h5>
+                                <ul className="list-disc list-inside space-y-1">
+                                  {journey.painPoints.map((pain, pIdx) => (
+                                    <li key={pIdx} className="text-muted-foreground">{pain}</li>
+                                  ))}
+                                </ul>
+                              </div>
+                              <div>
+                                <h5 className="font-medium mb-1">Opportunities</h5>
+                                <ul className="list-disc list-inside space-y-1">
+                                  {journey.opportunities.map((opp, oIdx) => (
+                                    <li key={oIdx} className="text-muted-foreground">{opp}</li>
+                                  ))}
+                                </ul>
+                              </div>
                             </div>
-                            <div>
-                              <h5 className="font-medium mb-1">Pain Points</h5>
-                              <ul className="list-disc list-inside space-y-1">
-                                {journey.painPoints.map((pain, pIdx) => (
-                                  <li key={pIdx} className="text-muted-foreground">{pain}</li>
-                                ))}
-                              </ul>
-                            </div>
-                            <div>
-                              <h5 className="font-medium mb-1">Opportunities</h5>
-                              <ul className="list-disc list-inside space-y-1">
-                                {journey.opportunities.map((opp, oIdx) => (
-                                  <li key={oIdx} className="text-muted-foreground">{opp}</li>
-                                ))}
-                              </ul>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
+                          </CardContent>
+                        </Card>
+                      ))
+                    ) : (
+                      <p className="text-sm text-muted-foreground">No user journeys available</p>
+                    )}
                   </CardContent>
                 </Card>
               </TabsContent>
@@ -992,10 +1008,11 @@ export const GitToSpecsGenerator = () => {
               <TabsContent value="features" className="space-y-4">
                 <Card>
                   <CardHeader>
-                    <CardTitle>Features ({analysis.features.length})</CardTitle>
+                    <CardTitle>Features ({analysis.features?.length || 0})</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-3">
-                    {analysis.features.map((feature) => (
+                    {analysis.features && analysis.features.length > 0 ? (
+                      analysis.features.map((feature) => (
                       <Card key={feature.id}>
                         <CardContent className="pt-4">
                           <div className="flex items-start justify-between mb-2">
@@ -1038,16 +1055,20 @@ export const GitToSpecsGenerator = () => {
                           )}
                         </CardContent>
                       </Card>
-                    ))}
+                      ))
+                    ) : (
+                      <p className="text-sm text-muted-foreground">No features available</p>
+                    )}
                   </CardContent>
                 </Card>
 
                 <Card>
                   <CardHeader>
-                    <CardTitle>Functional Requirements ({analysis.functionalRequirements.length})</CardTitle>
+                    <CardTitle>Functional Requirements ({analysis.functionalRequirements?.length || 0})</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-2">
-                    {analysis.functionalRequirements.map((req) => (
+                    {analysis.functionalRequirements && analysis.functionalRequirements.length > 0 ? (
+                      analysis.functionalRequirements.map((req) => (
                       <div key={req.id} className="flex items-start gap-2 text-sm border rounded p-2">
                         <Badge variant={getPriorityColor(req.priority) as any}>{req.priority}</Badge>
                         <div className="flex-1">
@@ -1061,16 +1082,20 @@ export const GitToSpecsGenerator = () => {
                           )}
                         </div>
                       </div>
-                    ))}
+                      ))
+                    ) : (
+                      <p className="text-sm text-muted-foreground">No functional requirements available</p>
+                    )}
                   </CardContent>
                 </Card>
 
                 <Card>
                   <CardHeader>
-                    <CardTitle>Non-Functional Requirements ({analysis.nonFunctionalRequirements.length})</CardTitle>
+                    <CardTitle>Non-Functional Requirements ({analysis.nonFunctionalRequirements?.length || 0})</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-2">
-                    {analysis.nonFunctionalRequirements.map((req) => (
+                    {analysis.nonFunctionalRequirements && analysis.nonFunctionalRequirements.length > 0 ? (
+                      analysis.nonFunctionalRequirements.map((req) => (
                       <Card key={req.id}>
                         <CardContent className="pt-3">
                           <div className="flex items-start justify-between mb-1">
@@ -1084,7 +1109,10 @@ export const GitToSpecsGenerator = () => {
                           </div>
                         </CardContent>
                       </Card>
-                    ))}
+                      ))
+                    ) : (
+                      <p className="text-sm text-muted-foreground">No non-functional requirements available</p>
+                    )}
                   </CardContent>
                 </Card>
               </TabsContent>
@@ -1098,22 +1126,23 @@ export const GitToSpecsGenerator = () => {
                   <CardContent className="space-y-4">
                     <div>
                       <h4 className="font-semibold mb-2">Overview</h4>
-                      <p className="text-sm text-muted-foreground">{analysis.techSpec.architecture.overview}</p>
+                      <p className="text-sm text-muted-foreground">{analysis.techSpec?.architecture?.overview || 'No overview available'}</p>
                     </div>
                     <Separator />
                     <div>
                       <h4 className="font-semibold mb-2">Patterns</h4>
                       <div className="flex flex-wrap gap-2">
-                        {analysis.techSpec.architecture.patterns.map((pattern, idx) => (
+                        {analysis.techSpec?.architecture?.patterns?.map((pattern, idx) => (
                           <Badge key={idx} variant="outline">{pattern}</Badge>
-                        ))}
+                        )) || <span className="text-sm text-muted-foreground">No patterns available</span>}
                       </div>
                     </div>
                     <Separator />
                     <div>
-                      <h4 className="font-semibold mb-2">Components ({analysis.techSpec.architecture.components.length})</h4>
+                      <h4 className="font-semibold mb-2">Components ({analysis.techSpec?.architecture?.components?.length || 0})</h4>
                       <div className="space-y-2">
-                        {analysis.techSpec.architecture.components.map((comp, idx) => (
+                        {analysis.techSpec?.architecture?.components && analysis.techSpec.architecture.components.length > 0 ? (
+                          analysis.techSpec.architecture.components.map((comp, idx) => (
                           <Card key={idx}>
                             <CardContent className="pt-3">
                               <div className="flex items-start justify-between mb-1">
@@ -1143,7 +1172,10 @@ export const GitToSpecsGenerator = () => {
                               </div>
                             </CardContent>
                           </Card>
-                        ))}
+                          ))
+                        ) : (
+                          <p className="text-sm text-muted-foreground">No components available</p>
+                        )}
                       </div>
                     </div>
                   </CardContent>
@@ -1154,22 +1186,27 @@ export const GitToSpecsGenerator = () => {
                     <CardTitle>Frameworks & Technologies</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-2">
-                    {analysis.techSpec.frameworks.map((fw, idx) => (
+                    {analysis.techSpec?.frameworks && analysis.techSpec.frameworks.length > 0 ? (
+                      analysis.techSpec.frameworks.map((fw, idx) => (
                       <div key={idx} className="flex items-center gap-2 text-sm border rounded p-2">
                         <Badge variant="outline">{fw.name}</Badge>
                         <span className="text-muted-foreground text-xs">v{fw.version}</span>
                         <span className="text-sm flex-1">{fw.purpose}</span>
                       </div>
-                    ))}
+                      ))
+                    ) : (
+                      <p className="text-sm text-muted-foreground">No frameworks data available</p>
+                    )}
                   </CardContent>
                 </Card>
 
                 <Card>
                   <CardHeader>
-                    <CardTitle>Data Models ({analysis.techSpec.dataModels.length})</CardTitle>
+                    <CardTitle>Data Models ({analysis.techSpec?.dataModels?.length || 0})</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-2">
-                    {analysis.techSpec.dataModels.map((model, idx) => (
+                    {analysis.techSpec?.dataModels && analysis.techSpec.dataModels.length > 0 ? (
+                      analysis.techSpec.dataModels.map((model, idx) => (
                       <Card key={idx}>
                         <CardContent className="pt-3">
                           <h5 className="font-semibold mb-1">{model.name}</h5>
@@ -1200,16 +1237,20 @@ export const GitToSpecsGenerator = () => {
                           </div>
                         </CardContent>
                       </Card>
-                    ))}
+                      ))
+                    ) : (
+                      <p className="text-sm text-muted-foreground">No data models available</p>
+                    )}
                   </CardContent>
                 </Card>
 
                 <Card>
                   <CardHeader>
-                    <CardTitle>API Catalog ({analysis.apiCatalog.length} endpoints)</CardTitle>
+                    <CardTitle>API Catalog ({analysis.apiCatalog?.length || 0} endpoints)</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-2">
-                    {analysis.apiCatalog.map((api, idx) => (
+                    {analysis.apiCatalog && analysis.apiCatalog.length > 0 ? (
+                      analysis.apiCatalog.map((api, idx) => (
                       <Card key={idx}>
                         <CardContent className="pt-3">
                           <div className="flex items-center gap-2 mb-2">
@@ -1246,11 +1287,14 @@ export const GitToSpecsGenerator = () => {
                           )}
                         </CardContent>
                       </Card>
-                    ))}
+                      ))
+                    ) : (
+                      <p className="text-sm text-muted-foreground">No API endpoints available</p>
+                    )}
                   </CardContent>
                 </Card>
 
-                {analysis.techSpec.integrations.length > 0 && (
+                {analysis.techSpec?.integrations && analysis.techSpec.integrations.length > 0 && (
                   <Card>
                     <CardHeader>
                       <CardTitle>Integrations ({analysis.techSpec.integrations.length})</CardTitle>
@@ -1281,92 +1325,103 @@ export const GitToSpecsGenerator = () => {
 
               {/* QA Tab */}
               <TabsContent value="qa" className="space-y-4">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Test Plan</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div>
-                      <h4 className="font-semibold mb-2">Strategy</h4>
-                      <p className="text-sm text-muted-foreground">{analysis.testPlan.strategy}</p>
-                    </div>
-                    <Separator />
-                    <div className="grid grid-cols-3 gap-4">
-                      <Card>
-                        <CardContent className="pt-6 text-center">
-                          <div className="text-3xl font-bold text-primary">{analysis.testPlan.coverageScore}%</div>
-                          <div className="text-sm text-muted-foreground">Coverage Score</div>
-                        </CardContent>
-                      </Card>
-                      <Card>
-                        <CardContent className="pt-6 text-center">
-                          <div className="text-3xl font-bold">{analysis.testPlan.testedEndpoints}</div>
-                          <div className="text-sm text-muted-foreground">Tested Endpoints</div>
-                        </CardContent>
-                      </Card>
-                      <Card>
-                        <CardContent className="pt-6 text-center">
-                          <div className="text-3xl font-bold">{analysis.testPlan.totalEndpoints}</div>
-                          <div className="text-sm text-muted-foreground">Total Endpoints</div>
-                        </CardContent>
-                      </Card>
-                    </div>
-                    <Separator />
-                    <div>
-                      <h4 className="font-semibold mb-2">Test Types</h4>
-                      <div className="space-y-2">
-                        {analysis.testPlan.testTypes.map((testType, idx) => (
-                          <Card key={idx}>
-                            <CardContent className="pt-3">
-                              <div className="flex items-center justify-between mb-1">
-                                <h5 className="font-medium">{testType.type}</h5>
-                                <Badge variant="outline">{testType.coverage}%</Badge>
-                              </div>
-                              <p className="text-sm text-muted-foreground">{testType.description}</p>
+                {analysis.testPlan ? (
+                  <>
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>Test Plan</CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        <div>
+                          <h4 className="font-semibold mb-2">Strategy</h4>
+                          <p className="text-sm text-muted-foreground">{analysis.testPlan.strategy}</p>
+                        </div>
+                        <Separator />
+                        <div className="grid grid-cols-3 gap-4">
+                          <Card>
+                            <CardContent className="pt-6 text-center">
+                              <div className="text-3xl font-bold text-primary">{analysis.testPlan.coverageScore}%</div>
+                              <div className="text-sm text-muted-foreground">Coverage Score</div>
                             </CardContent>
                           </Card>
-                        ))}
-                      </div>
-                    </div>
-                    <Separator />
-                    <div>
-                      <h4 className="font-semibold mb-2">Critical Paths</h4>
-                      <ul className="list-disc list-inside space-y-1">
-                        {analysis.testPlan.criticalPaths.map((path, idx) => (
-                          <li key={idx} className="text-sm text-muted-foreground">{path}</li>
-                        ))}
-                      </ul>
-                    </div>
-                    <Separator />
-                    <div>
-                      <h4 className="font-semibold mb-2">Coverage Gaps</h4>
-                      <ul className="list-disc list-inside space-y-1">
-                        {analysis.testPlan.gaps.map((gap, idx) => (
-                          <li key={idx} className="text-sm text-muted-foreground">{gap}</li>
-                        ))}
-                      </ul>
-                    </div>
-                    <Separator />
-                    <div>
-                      <h4 className="font-semibold mb-2">Suggestions</h4>
-                      <ul className="list-disc list-inside space-y-1">
-                        {analysis.testPlan.suggestions.map((suggestion, idx) => (
-                          <li key={idx} className="text-sm text-muted-foreground">{suggestion}</li>
-                        ))}
-                      </ul>
-                    </div>
-                  </CardContent>
-                </Card>
+                          <Card>
+                            <CardContent className="pt-6 text-center">
+                              <div className="text-3xl font-bold">{analysis.testPlan.testedEndpoints}</div>
+                              <div className="text-sm text-muted-foreground">Tested Endpoints</div>
+                            </CardContent>
+                          </Card>
+                          <Card>
+                            <CardContent className="pt-6 text-center">
+                              <div className="text-3xl font-bold">{analysis.testPlan.totalEndpoints}</div>
+                              <div className="text-sm text-muted-foreground">Total Endpoints</div>
+                            </CardContent>
+                          </Card>
+                        </div>
+                        <Separator />
+                        <div>
+                          <h4 className="font-semibold mb-2">Test Types</h4>
+                          <div className="space-y-2">
+                            {analysis.testPlan.testTypes?.map((testType, idx) => (
+                              <Card key={idx}>
+                                <CardContent className="pt-3">
+                                  <div className="flex items-center justify-between mb-1">
+                                    <h5 className="font-medium">{testType.type}</h5>
+                                    <Badge variant="outline">{testType.coverage}%</Badge>
+                                  </div>
+                                  <p className="text-sm text-muted-foreground">{testType.description}</p>
+                                </CardContent>
+                              </Card>
+                            ))}
+                          </div>
+                        </div>
+                        <Separator />
+                        <div>
+                          <h4 className="font-semibold mb-2">Critical Paths</h4>
+                          <ul className="list-disc list-inside space-y-1">
+                            {analysis.testPlan.criticalPaths?.map((path, idx) => (
+                              <li key={idx} className="text-sm text-muted-foreground">{path}</li>
+                            ))}
+                          </ul>
+                        </div>
+                        <Separator />
+                        <div>
+                          <h4 className="font-semibold mb-2">Coverage Gaps</h4>
+                          <ul className="list-disc list-inside space-y-1">
+                            {analysis.testPlan.gaps?.map((gap, idx) => (
+                              <li key={idx} className="text-sm text-muted-foreground">{gap}</li>
+                            ))}
+                          </ul>
+                        </div>
+                        <Separator />
+                        <div>
+                          <h4 className="font-semibold mb-2">Suggestions</h4>
+                          <ul className="list-disc list-inside space-y-1">
+                            {analysis.testPlan.suggestions?.map((suggestion, idx) => (
+                              <li key={idx} className="text-sm text-muted-foreground">{suggestion}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </>
+                ) : (
+                  <Card>
+                    <CardContent className="pt-6">
+                      <p className="text-sm text-muted-foreground text-center">No test plan data available</p>
+                    </CardContent>
+                  </Card>
+                )}
 
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                       <Shield className="h-5 w-5" />
-                      Risk Register ({analysis.riskRegister.length} items)
+                      Risk Register ({analysis.riskRegister?.length || 0} items)
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-2">
-                    {analysis.riskRegister.map((risk, idx) => (
+                    {analysis.riskRegister && analysis.riskRegister.length > 0 ? (
+                      analysis.riskRegister.map((risk, idx) => (
                       <Card key={idx}>
                         <CardContent className="pt-4">
                           <div className="flex items-start justify-between mb-2">
@@ -1400,7 +1455,10 @@ export const GitToSpecsGenerator = () => {
                           </div>
                         </CardContent>
                       </Card>
-                    ))}
+                      ))
+                    ) : (
+                      <p className="text-sm text-muted-foreground">No risk data available</p>
+                    )}
                   </CardContent>
                 </Card>
               </TabsContent>
