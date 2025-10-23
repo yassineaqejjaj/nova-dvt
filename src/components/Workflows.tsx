@@ -893,56 +893,60 @@ export const Workflows: React.FC = () => {
 
   const handleToolLaunch = (tool: string) => {
     console.log('🔧 Launching tool:', tool);
-    switch (tool) {
-      case 'canvas':
-        setShowCanvasGenerator(true);
-        break;
-      case 'story':
-        setShowStoryWriter(true);
-        break;
-      case 'impact':
-        setShowImpactPlotter(true);
-        break;
-      case 'research':
-        setShowMarketResearch(true);
-        break;
-      case 'design':
-        setShowDesignTool(true);
-        break;
-      case 'code':
-        setShowCodeGenerator(true);
-        break;
-      case 'roadmap':
-        setShowRoadmapPlanner(true);
-        break;
-      case 'launch':
-        setShowProductLaunch(true);
-        break;
-      case 'sprint':
-        setShowSprintPlanner(true);
-        break;
-      case 'kpi':
-        setShowKPIGenerator(true);
-        break;
-      case 'epic-stories':
-        setShowEpicToStories(true);
-        break;
-      case 'test-generator':
-        console.log('✅ Setting showTestCaseGenerator to true');
-        setShowTestCaseGenerator(true);
-        break;
-      case 'ac-validator':
-        setShowACValidator(true);
-        break;
-      case 'git-to-specs':
-        setShowGitToSpecs(true);
-        break;
-      case 'critical-path-analyzer':
-        console.log('✅ Setting showCriticalPathAnalyzer to true');
-        setShowCriticalPathAnalyzer(true);
-        break;
-      default:
-        console.warn('Unknown tool:', tool);
+    try {
+      switch (tool) {
+        case 'canvas':
+          setShowCanvasGenerator(true);
+          break;
+        case 'story':
+          setShowStoryWriter(true);
+          break;
+        case 'impact':
+          setShowImpactPlotter(true);
+          break;
+        case 'research':
+          setShowMarketResearch(true);
+          break;
+        case 'design':
+          setShowDesignTool(true);
+          break;
+        case 'code':
+          setShowCodeGenerator(true);
+          break;
+        case 'roadmap':
+          setShowRoadmapPlanner(true);
+          break;
+        case 'launch':
+          setShowProductLaunch(true);
+          break;
+        case 'sprint':
+          setShowSprintPlanner(true);
+          break;
+        case 'kpi':
+          setShowKPIGenerator(true);
+          break;
+        case 'epic-stories':
+          setShowEpicToStories(true);
+          break;
+        case 'test-generator':
+          setShowTestCaseGenerator(true);
+          break;
+        case 'ac-validator':
+          setShowACValidator(true);
+          break;
+        case 'git-to-specs':
+          setShowGitToSpecs(true);
+          break;
+        case 'critical-path-analyzer':
+          setShowCriticalPathAnalyzer(true);
+          break;
+        default:
+          console.warn('Unknown tool:', tool);
+      }
+      toast.success(`Ouverture de l'outil: ${tool}`);
+    } catch (e) {
+      console.error('Tool launch error', e);
+      toast.error("Impossible d'ouvrir l'outil");
     }
   };
 
@@ -1360,21 +1364,8 @@ export const Workflows: React.FC = () => {
       )}
       
       {showTestCaseGenerator && (
-        <div className="fixed inset-0 z-50 bg-background overflow-auto">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="absolute top-4 right-4 z-50"
-            onClick={() => {
-              console.log('❌ Closing TestCaseGenerator');
-              setShowTestCaseGenerator(false);
-            }}
-          >
-            ✕ Fermer
-          </Button>
-          <div className="container mx-auto p-6">
-            <TestCaseGenerator />
-          </div>
+        <div className="mt-6">
+          <TestCaseGenerator />
         </div>
       )}
       
@@ -1411,21 +1402,8 @@ export const Workflows: React.FC = () => {
       )}
       
       {showCriticalPathAnalyzer && (
-        <div className="fixed inset-0 z-50 bg-background overflow-auto">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="absolute top-4 right-4 z-50"
-            onClick={() => {
-              console.log('❌ Closing CriticalPathAnalyzer');
-              setShowCriticalPathAnalyzer(false);
-            }}
-          >
-            ✕ Fermer
-          </Button>
-          <div className="container mx-auto p-6">
-            <CriticalPathAnalyzer />
-          </div>
+        <div className="mt-6">
+          <CriticalPathAnalyzer />
         </div>
       )}
     </div>
