@@ -15,6 +15,8 @@ import {
   GitBranch, FolderGit2, Loader2, Download, Code, FileText, Bug, Shield,
   Target, Users, Lightbulb, TrendingUp, Calendar, BarChart
 } from "lucide-react";
+import { Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType, UnderlineType } from "docx";
+import { saveAs } from "file-saver";
 
 interface GitRepoAnalysis {
   // Executive Summary
@@ -239,20 +241,322 @@ export const GitToSpecsGenerator = () => {
     }
   };
 
-  const exportArtifact = (type: string, content: any) => {
-    const blob = new Blob([JSON.stringify(content, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${type}-${Date.now()}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-    toast.success(`${type} exported successfully!`);
-  };
-
-  const exportAllArtifacts = () => {
+  const exportAsDocument = async () => {
     if (!analysis) return;
-    exportArtifact('complete-analysis', analysis);
+
+    const doc = new Document({
+      sections: [{
+        properties: {},
+        children: [
+          // Title
+          new Paragraph({
+            text: "Comprehensive Repository Specifications",
+            heading: HeadingLevel.TITLE,
+            alignment: AlignmentType.CENTER,
+            spacing: { after: 400 }
+          }),
+          new Paragraph({
+            text: `Generated on ${new Date().toLocaleDateString()}`,
+            alignment: AlignmentType.CENTER,
+            spacing: { after: 600 }
+          }),
+
+          // Executive Summary Section
+          new Paragraph({
+            text: "EXECUTIVE SUMMARY",
+            heading: HeadingLevel.HEADING_1,
+            spacing: { before: 400, after: 200 }
+          }),
+          new Paragraph({
+            text: "Overview",
+            heading: HeadingLevel.HEADING_2,
+            spacing: { before: 200, after: 100 }
+          }),
+          new Paragraph({
+            text: analysis.executive.overview,
+            spacing: { after: 200 }
+          }),
+          new Paragraph({
+            text: "Product Vision",
+            heading: HeadingLevel.HEADING_2,
+            spacing: { before: 200, after: 100 }
+          }),
+          new Paragraph({
+            text: analysis.executive.productVision,
+            spacing: { after: 200 }
+          }),
+          new Paragraph({
+            text: "Problem Statement",
+            heading: HeadingLevel.HEADING_2,
+            spacing: { before: 200, after: 100 }
+          }),
+          new Paragraph({
+            text: analysis.executive.problemStatement,
+            spacing: { after: 200 }
+          }),
+          new Paragraph({
+            text: "Target Audience",
+            heading: HeadingLevel.HEADING_2,
+            spacing: { before: 200, after: 100 }
+          }),
+          new Paragraph({
+            text: analysis.executive.targetAudience,
+            spacing: { after: 200 }
+          }),
+          new Paragraph({
+            text: "Value Proposition",
+            heading: HeadingLevel.HEADING_2,
+            spacing: { before: 200, after: 100 }
+          }),
+          new Paragraph({
+            text: analysis.executive.valueProposition,
+            spacing: { after: 400 }
+          }),
+
+          // Product Context Section
+          new Paragraph({
+            text: "PRODUCT CONTEXT",
+            heading: HeadingLevel.HEADING_1,
+            spacing: { before: 400, after: 200 }
+          }),
+          new Paragraph({
+            text: "Business Context",
+            heading: HeadingLevel.HEADING_2,
+            spacing: { before: 200, after: 100 }
+          }),
+          new Paragraph({
+            text: analysis.context.businessContext,
+            spacing: { after: 200 }
+          }),
+          new Paragraph({
+            text: "Market Analysis",
+            heading: HeadingLevel.HEADING_2,
+            spacing: { before: 200, after: 100 }
+          }),
+          new Paragraph({
+            text: analysis.context.marketAnalysis,
+            spacing: { after: 200 }
+          }),
+          new Paragraph({
+            text: "Competitive Landscape",
+            heading: HeadingLevel.HEADING_2,
+            spacing: { before: 200, after: 100 }
+          }),
+          new Paragraph({
+            text: analysis.context.competitiveLandscape,
+            spacing: { after: 200 }
+          }),
+          new Paragraph({
+            text: "Constraints",
+            heading: HeadingLevel.HEADING_2,
+            spacing: { before: 200, after: 100 }
+          }),
+          ...analysis.context.constraints.map(c => new Paragraph({
+            text: `• ${c}`,
+            spacing: { after: 100 }
+          })),
+          new Paragraph({
+            text: "Assumptions",
+            heading: HeadingLevel.HEADING_2,
+            spacing: { before: 200, after: 100 }
+          }),
+          ...analysis.context.assumptions.map(a => new Paragraph({
+            text: `• ${a}`,
+            spacing: { after: 100 }
+          })),
+
+          // User Research Section
+          new Paragraph({
+            text: "USER RESEARCH",
+            heading: HeadingLevel.HEADING_1,
+            spacing: { before: 400, after: 200 }
+          }),
+          new Paragraph({
+            text: "User Personas",
+            heading: HeadingLevel.HEADING_2,
+            spacing: { before: 200, after: 100 }
+          }),
+          ...analysis.personas.flatMap(persona => [
+            new Paragraph({
+              text: `${persona.name} - ${persona.role}`,
+              heading: HeadingLevel.HEADING_3,
+              spacing: { before: 200, after: 100 }
+            }),
+            new Paragraph({ 
+              children: [new TextRun({ text: "Goals:", bold: true })],
+              spacing: { after: 50 } 
+            }),
+            ...persona.goals.map(g => new Paragraph({ text: `• ${g}`, spacing: { after: 50 } })),
+            new Paragraph({ 
+              children: [new TextRun({ text: "Pain Points:", bold: true })],
+              spacing: { before: 100, after: 50 } 
+            }),
+            ...persona.painPoints.map(p => new Paragraph({ text: `• ${p}`, spacing: { after: 50 } })),
+            new Paragraph({ 
+              children: [new TextRun({ text: "Behaviors:", bold: true })],
+              spacing: { before: 100, after: 50 } 
+            }),
+            ...persona.behaviors.map(b => new Paragraph({ text: `• ${b}`, spacing: { after: 100 } }))
+          ]),
+
+          // Features & Requirements Section
+          new Paragraph({
+            text: "FEATURES & REQUIREMENTS",
+            heading: HeadingLevel.HEADING_1,
+            spacing: { before: 400, after: 200 }
+          }),
+          ...analysis.features.flatMap(feature => [
+            new Paragraph({
+              text: `${feature.name} [${feature.priority.toUpperCase()}]`,
+              heading: HeadingLevel.HEADING_2,
+              spacing: { before: 200, after: 100 }
+            }),
+            new Paragraph({
+              text: feature.description,
+              spacing: { after: 100 }
+            }),
+            new Paragraph({
+              children: [new TextRun({ text: "User Stories:", bold: true })],
+              spacing: { before: 100, after: 50 }
+            }),
+            ...feature.userStories.flatMap(story => [
+              new Paragraph({
+                text: `${story.id}: ${story.title} (${story.complexity})`,
+                spacing: { before: 100, after: 50 }
+              }),
+              new Paragraph({
+                text: story.description,
+                spacing: { after: 50 }
+              }),
+              new Paragraph({
+                children: [new TextRun({ text: "Acceptance Criteria:", italics: true })],
+                spacing: { after: 50 }
+              }),
+              ...story.acceptanceCriteria.map(ac => new Paragraph({
+                text: `  • ${ac}`,
+                spacing: { after: 50 }
+              }))
+            ])
+          ]),
+
+          // Technical Specifications Section
+          new Paragraph({
+            text: "TECHNICAL SPECIFICATIONS",
+            heading: HeadingLevel.HEADING_1,
+            spacing: { before: 400, after: 200 }
+          }),
+          new Paragraph({
+            text: "Architecture Overview",
+            heading: HeadingLevel.HEADING_2,
+            spacing: { before: 200, after: 100 }
+          }),
+          new Paragraph({
+            text: analysis.techSpec.architecture.overview,
+            spacing: { after: 200 }
+          }),
+          new Paragraph({
+            text: "Frameworks & Technologies",
+            heading: HeadingLevel.HEADING_2,
+            spacing: { before: 200, after: 100 }
+          }),
+          ...analysis.techSpec.frameworks.map(f => new Paragraph({
+            text: `• ${f.name} (${f.version}): ${f.purpose}`,
+            spacing: { after: 100 }
+          })),
+
+          // Quality Assurance Section
+          new Paragraph({
+            text: "QUALITY ASSURANCE",
+            heading: HeadingLevel.HEADING_1,
+            spacing: { before: 400, after: 200 }
+          }),
+          new Paragraph({
+            text: "Test Strategy",
+            heading: HeadingLevel.HEADING_2,
+            spacing: { before: 200, after: 100 }
+          }),
+          new Paragraph({
+            text: analysis.testPlan.strategy,
+            spacing: { after: 200 }
+          }),
+          new Paragraph({
+            text: `Coverage Score: ${analysis.testPlan.coverageScore}%`,
+            spacing: { after: 100 }
+          }),
+          new Paragraph({
+            text: `Tested Endpoints: ${analysis.testPlan.testedEndpoints}/${analysis.testPlan.totalEndpoints}`,
+            spacing: { after: 200 }
+          }),
+
+          // Risk Management Section
+          new Paragraph({
+            text: "RISK MANAGEMENT",
+            heading: HeadingLevel.HEADING_1,
+            spacing: { before: 400, after: 200 }
+          }),
+          ...analysis.riskRegister.map(risk => [
+            new Paragraph({
+              text: `${risk.type} [${risk.severity.toUpperCase()}]`,
+              heading: HeadingLevel.HEADING_3,
+              spacing: { before: 200, after: 100 }
+            }),
+            new Paragraph({ text: risk.description, spacing: { after: 100 } }),
+            new Paragraph({ text: `Impact: ${risk.impact}`, spacing: { after: 50 } }),
+            new Paragraph({ text: `Mitigation: ${risk.mitigation}`, spacing: { after: 200 } })
+          ]).flat(),
+
+          // Roadmap Section
+          new Paragraph({
+            text: "ROADMAP",
+            heading: HeadingLevel.HEADING_1,
+            spacing: { before: 400, after: 200 }
+          }),
+          ...analysis.roadmap.flatMap(phase => [
+            new Paragraph({
+              text: `${phase.phase} - ${phase.timeline}`,
+              heading: HeadingLevel.HEADING_2,
+              spacing: { before: 200, after: 100 }
+            }),
+            new Paragraph({ 
+              children: [new TextRun({ text: "Goals:", bold: true })],
+              spacing: { after: 50 } 
+            }),
+            ...phase.goals.map(g => new Paragraph({ text: `• ${g}`, spacing: { after: 50 } })),
+            new Paragraph({ 
+              children: [new TextRun({ text: "Deliverables:", bold: true })],
+              spacing: { before: 100, after: 50 } 
+            }),
+            ...phase.deliverables.map(d => new Paragraph({ text: `• ${d}`, spacing: { after: 100 } }))
+          ]),
+
+          // KPIs Section
+          new Paragraph({
+            text: "KEY PERFORMANCE INDICATORS",
+            heading: HeadingLevel.HEADING_1,
+            spacing: { before: 400, after: 200 }
+          }),
+          ...analysis.kpis.map(kpi => [
+            new Paragraph({
+              text: kpi.name,
+              heading: HeadingLevel.HEADING_3,
+              spacing: { before: 200, after: 100 }
+            }),
+            new Paragraph({ text: kpi.description, spacing: { after: 50 } }),
+            new Paragraph({ text: `Target: ${kpi.target}`, spacing: { after: 50 } }),
+            new Paragraph({ text: `Measurement: ${kpi.measurement}`, spacing: { after: 200 } })
+          ]).flat()
+        ]
+      }]
+    });
+
+    try {
+      const blob = await Packer.toBlob(doc);
+      saveAs(blob, `repository-specifications-${Date.now()}.docx`);
+      toast.success("Document exported successfully!");
+    } catch (error) {
+      console.error("Export error:", error);
+      toast.error("Failed to export document");
+    }
   };
 
   const getSeverityColor = (severity: string) => {
@@ -425,8 +729,8 @@ export const GitToSpecsGenerator = () => {
           <div className="space-y-4">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-lg font-semibold">Comprehensive Documentation</h3>
-              <Button size="sm" onClick={exportAllArtifacts}>
-                <Download className="h-4 w-4 mr-1" />Export All
+              <Button size="sm" onClick={exportAsDocument}>
+                <Download className="h-4 w-4 mr-1" />Export as Document
               </Button>
             </div>
 
@@ -1106,7 +1410,7 @@ export const GitToSpecsGenerator = () => {
               <Button variant="outline" onClick={() => { setStep(1); setAnalysis(null); }}>
                 New Analysis
               </Button>
-              <Button onClick={exportAllArtifacts}>
+              <Button onClick={exportAsDocument}>
                 <Download className="h-4 w-4 mr-2" />
                 Export Complete Documentation
               </Button>
