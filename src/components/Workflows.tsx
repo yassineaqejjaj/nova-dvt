@@ -1126,6 +1126,18 @@ export const Workflows: React.FC = () => {
           onOpenChange={setShowContextManager}
           onContextSelected={loadActiveContext}
         />
+
+        {showCriticalPathAnalyzer && (
+          <div className="mt-6">
+            <CriticalPathAnalyzer />
+          </div>
+        )}
+
+        {showTestCaseGenerator && (
+          <div className="mt-6">
+            <TestCaseGenerator />
+          </div>
+        )}
       </div>
     );
   }
