@@ -3,10 +3,14 @@ import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/compone
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Sparkles, Send, Loader2, Wand2, Users, Layout } from 'lucide-react';
+import { Sparkles, Send, Loader2, Wand2, Users, Layout, ThumbsUp, ThumbsDown, Share2, BarChart, FileSearch } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { TabType } from '@/types';
+import { VoiceInput } from '@/components/nova/VoiceInput';
+import { ArtifactPreview } from '@/components/nova/ArtifactPreview';
+import { ConversationHistory } from '@/components/nova/ConversationHistory';
+import { cn } from '@/lib/utils';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -16,6 +20,13 @@ interface Message {
     action: string;
     type: 'tool' | 'workflow' | 'navigation';
   }>;
+  artifacts?: any[];
+  analysis?: any;
+  workflowStep?: {
+    current: string;
+    total: number;
+    progress: number;
+  };
 }
 
 interface NovaChatProps {
@@ -24,6 +35,27 @@ interface NovaChatProps {
   onNavigate: (tab: TabType) => void;
   onAction?: (action: string, data?: any) => void;
 }
+
+const WORKFLOWS = {
+  feature_discovery: {
+    name: 'Feature Discovery',
+    steps: [
+      { id: 'context', label: 'Définir le contexte produit', action: 'create_context' },
+      { id: 'research', label: 'Étude de marché', action: 'market_research' },
+      { id: 'canvas', label: 'Créer un canvas stratégique', action: 'canvas_generator' },
+      { id: 'roadmap', label: 'Planifier la roadmap', action: 'roadmap_planner' },
+      { id: 'squad', label: 'Construire la squad', action: 'squad_builder' }
+    ]
+  },
+  story_to_test: {
+    name: 'Story to Test',
+    steps: [
+      { id: 'story', label: 'Créer user story', action: 'story_writer' },
+      { id: 'acceptance', label: 'Critères d\'acceptation', action: 'story_writer' },
+      { id: 'tests', label: 'Générer test cases', action: 'test_generator' }
+    ]
+  }
+};
 
 export const NovaChat: React.FC<NovaChatProps> = ({ 
   open, 
@@ -35,16 +67,22 @@ export const NovaChat: React.FC<NovaChatProps> = ({
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [workspaceContext, setWorkspaceContext] = useState<any>(null);
+  const [currentConversationId, setCurrentConversationId] = useState<string | null>(null);
+  const [activeWorkflow, setActiveWorkflow] = useState<{ type: string; currentStep: number } | null>(null);
+  const [showHistory, setShowHistory] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
-  // Load workspace context when dialog opens
   useEffect(() => {
     if (open) {
       loadWorkspaceContext();
-      initializeChat();
+      if (!currentConversationId) {
+        initializeChat();
+      } else {
+        loadConversation(currentConversationId);
+      }
     }
-  }, [open]);
+  }, [open, currentConversationId]);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -57,15 +95,15 @@ export const NovaChat: React.FC<NovaChatProps> = ({
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      // Fetch workspace data in parallel
       const [artifacts, contexts, squads, pinnedItems] = await Promise.all([
-        supabase.from('artifacts').select('*').eq('user_id', user.id).order('created_at', { ascending: false }).limit(5),
+        supabase.from('artifacts').select('*').eq('user_id', user.id).order('created_at', { ascending: false }).limit(10),
         supabase.from('product_contexts').select('*').eq('user_id', user.id).eq('is_active', true),
         supabase.from('squads').select('*').eq('user_id', user.id).eq('is_active', true),
         supabase.from('pinned_items').select('*').eq('user_id', user.id).order('position')
       ]);
 
       setWorkspaceContext({
+        userId: user.id,
         recentArtifacts: artifacts.data || [],
         activeContexts: contexts.data || [],
         squads: squads.data || [],
@@ -76,13 +114,73 @@ export const NovaChat: React.FC<NovaChatProps> = ({
     }
   };
 
+  const saveConversation = async () => {
+    if (!workspaceContext?.userId || messages.length === 0) return;
+
+    try {
+      const title = messages[0]?.role === 'user' 
+        ? messages[0].content.substring(0, 50) 
+        : 'Conversation Nova';
+
+      const conversationData = {
+        user_id: workspaceContext.userId,
+        title,
+        messages: JSON.stringify(messages),
+        context_snapshot: JSON.stringify(workspaceContext),
+        workflow_state: JSON.stringify(activeWorkflow || {}),
+        updated_at: new Date().toISOString()
+      };
+
+      if (currentConversationId) {
+        await supabase
+          .from('nova_conversations')
+          .update(conversationData)
+          .eq('id', currentConversationId);
+      } else {
+        const { data } = await supabase
+          .from('nova_conversations')
+          .insert([conversationData])
+          .select()
+          .single();
+        
+        if (data) {
+          setCurrentConversationId(data.id);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to save conversation:', error);
+    }
+  };
+
+  const loadConversation = async (conversationId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('nova_conversations')
+        .select('*')
+        .eq('id', conversationId)
+        .single();
+
+      if (error) throw error;
+
+      if (data) {
+        setMessages(JSON.parse(data.messages as string));
+        setActiveWorkflow(JSON.parse(data.workflow_state as string));
+      }
+    } catch (error) {
+      console.error('Failed to load conversation:', error);
+    }
+  };
+
   const initializeChat = async () => {
-    // Generate dynamic initial suggestions based on workspace state
     const suggestions = await generateSuggestions('dashboard');
     
+    const welcomeMessage = workspaceContext?.recentArtifacts?.length > 0
+      ? `Bonjour ! J'ai analysé votre espace de travail. Vous avez ${workspaceContext.recentArtifacts.length} artéfacts récents. Je peux vous aider à les analyser ou créer de nouveaux éléments.`
+      : "Bonjour ! Je suis Nova, votre assistant IA produit. Commençons par créer votre premier projet !";
+
     setMessages([{
       role: 'assistant',
-      content: "Bonjour ! Je suis Nova, votre assistant IA produit. J'ai analysé votre espace de travail et je peux vous aider avec vos projets en cours.\n\nQue souhaitez-vous faire aujourd'hui ?",
+      content: welcomeMessage,
       suggestions
     }]);
   };
@@ -107,9 +205,8 @@ export const NovaChat: React.FC<NovaChatProps> = ({
 
   const getDefaultSuggestions = () => [
     { label: 'Créer un Canvas', action: 'canvas_generator', type: 'tool' as const },
-    { label: 'Construire une Squad', action: 'squad_builder', type: 'workflow' as const },
-    { label: 'Générer un PRD', action: 'instant_prd', type: 'tool' as const },
-    { label: 'Voir mes Projets', action: 'dashboard', type: 'navigation' as const }
+    { label: 'Analyser mes Artéfacts', action: 'analyze_artifacts', type: 'tool' as const },
+    { label: 'Workflow Discovery', action: 'workflow_discovery', type: 'workflow' as const }
   ];
 
   const detectIntent = async (userMessage: string) => {
@@ -132,6 +229,37 @@ export const NovaChat: React.FC<NovaChatProps> = ({
     }
   };
 
+  const analyzeArtifact = async (artifactId: string, analysisType: string = 'quality') => {
+    try {
+      const { data, error } = await supabase.functions.invoke('analyze-document', {
+        body: { artifactId, analysisType }
+      });
+
+      if (error) throw error;
+      return data;
+    } catch (error) {
+      console.error('Artifact analysis failed:', error);
+      return null;
+    }
+  };
+
+  const analyzeCrossArtifacts = async () => {
+    try {
+      const { data, error } = await supabase.functions.invoke('analyze-cross-artifacts', {
+        body: { 
+          userId: workspaceContext?.userId,
+          contextId: workspaceContext?.activeContexts?.[0]?.id
+        }
+      });
+
+      if (error) throw error;
+      return data;
+    } catch (error) {
+      console.error('Cross-artifact analysis failed:', error);
+      return null;
+    }
+  };
+
   const streamResponse = async (userMessage: string, contextData: string) => {
     const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat-ai`, {
       method: 'POST',
@@ -147,11 +275,17 @@ export const NovaChat: React.FC<NovaChatProps> = ({
 CONTEXTE UTILISATEUR:
 ${contextData}
 
+${activeWorkflow ? `
+WORKFLOW EN COURS: ${WORKFLOWS[activeWorkflow.type as keyof typeof WORKFLOWS]?.name}
+Étape actuelle: ${activeWorkflow.currentStep + 1}/${WORKFLOWS[activeWorkflow.type as keyof typeof WORKFLOWS]?.steps.length}
+` : ''}
+
 Vous aidez avec:
 - Stratégie produit et planification
 - Création de canvases, PRD, user stories
+- Analyse d'artéfacts et intelligence cross-artifact
 - Construction d'équipes efficaces
-- Guidance sur les workflows
+- Guidance sur les workflows multi-étapes
 - Analyses et recommandations personnalisées
 
 Soyez concis (2-4 phrases), amical, et proposez des actions suivantes basées sur leur contexte actuel.`
@@ -165,7 +299,6 @@ Soyez concis (2-4 phrases), amical, et proposez des actions suivantes basées su
     let textBuffer = '';
     let assistantMessage = '';
 
-    // Add empty assistant message that we'll update
     setMessages(prev => [...prev, { role: 'assistant', content: '' }]);
 
     while (true) {
@@ -191,7 +324,6 @@ Soyez concis (2-4 phrases), amical, et proposez des actions suivantes basées su
           const content = parsed.choices?.[0]?.delta?.content as string | undefined;
           if (content) {
             assistantMessage += content;
-            // Update the last message with accumulated content
             setMessages(prev => {
               const newMessages = [...prev];
               newMessages[newMessages.length - 1] = {
@@ -202,7 +334,6 @@ Soyez concis (2-4 phrases), amical, et proposez des actions suivantes basées su
             });
           }
         } catch (e) {
-          // Partial JSON, buffer it
           textBuffer = line + '\n' + textBuffer;
           break;
         }
@@ -222,13 +353,101 @@ Soyez concis (2-4 phrases), amical, et proposez des actions suivantes basées su
     setIsLoading(true);
 
     try {
-      // Detect intent
+      // Check for special commands
+      if (userMessage.toLowerCase().includes('analyze') && userMessage.toLowerCase().includes('artifact')) {
+        // Cross-artifact analysis
+        const analysis = await analyzeCrossArtifacts();
+        
+        if (analysis) {
+          const responseMsg: Message = {
+            role: 'assistant',
+            content: `J'ai analysé ${analysis.artifactCount} artéfacts. Voici ce que j'ai trouvé :\n\n**Lacunes identifiées:** ${analysis.analysis.gaps?.length || 0}\n**Relations détectées:** ${analysis.analysis.relationships?.length || 0}\n\nVoulez-vous voir les détails ?`,
+            analysis: analysis.analysis,
+            suggestions: [
+              { label: 'Voir les détails', action: 'show_analysis', type: 'tool' },
+              { label: 'Combler les lacunes', action: 'fill_gaps', type: 'workflow' }
+            ]
+          };
+          
+          setMessages(prev => [...prev, responseMsg]);
+          setIsLoading(false);
+          await saveConversation();
+          return;
+        }
+      }
+
+      // Workflow handling
+      if (userMessage.toLowerCase().includes('workflow') || activeWorkflow) {
+        if (!activeWorkflow) {
+          // Start workflow
+          const workflowType = userMessage.toLowerCase().includes('discovery') 
+            ? 'feature_discovery' 
+            : 'story_to_test';
+          
+          setActiveWorkflow({ type: workflowType, currentStep: 0 });
+          
+          const workflow = WORKFLOWS[workflowType as keyof typeof WORKFLOWS];
+          const step = workflow.steps[0];
+          
+          setMessages(prev => [...prev, {
+            role: 'assistant',
+            content: `Commençons le workflow "${workflow.name}". Étape 1/${workflow.steps.length}: ${step.label}`,
+            workflowStep: { current: step.label, total: workflow.steps.length, progress: 0 },
+            suggestions: [
+              { label: step.label, action: step.action, type: 'tool' }
+            ]
+          }]);
+          
+          setIsLoading(false);
+          await saveConversation();
+          return;
+        } else {
+          // Next workflow step
+          const workflow = WORKFLOWS[activeWorkflow.type as keyof typeof WORKFLOWS];
+          const nextStep = activeWorkflow.currentStep + 1;
+          
+          if (nextStep < workflow.steps.length) {
+            setActiveWorkflow({ ...activeWorkflow, currentStep: nextStep });
+            const step = workflow.steps[nextStep];
+            
+            setMessages(prev => [...prev, {
+              role: 'assistant',
+              content: `Étape ${nextStep + 1}/${workflow.steps.length}: ${step.label}`,
+              workflowStep: { 
+                current: step.label, 
+                total: workflow.steps.length, 
+                progress: Math.round((nextStep / workflow.steps.length) * 100) 
+              },
+              suggestions: [
+                { label: step.label, action: step.action, type: 'tool' }
+              ]
+            }]);
+            
+            setIsLoading(false);
+            await saveConversation();
+            return;
+          } else {
+            // Workflow complete
+            setActiveWorkflow(null);
+            setMessages(prev => [...prev, {
+              role: 'assistant',
+              content: `🎉 Workflow "${workflow.name}" terminé ! Que voulez-vous faire ensuite ?`,
+              suggestions: await generateSuggestions()
+            }]);
+            
+            setIsLoading(false);
+            await saveConversation();
+            return;
+          }
+        }
+      }
+
       const intent = await detectIntent(userMessage);
       
       let responseContent = '';
       let suggestions: Message['suggestions'] = [];
+      let artifacts: any[] = [];
 
-      // Build context string
       const contextData = workspaceContext ? `
 Artéfacts récents: ${workspaceContext.recentArtifacts?.length || 0}
 Contextes actifs: ${workspaceContext.activeContexts?.length || 0}
@@ -236,7 +455,6 @@ Squads: ${workspaceContext.squads?.length || 0}
       ` : 'Nouveau utilisateur';
 
       if (intent !== 'none') {
-        // Tool-specific responses
         const toolResponses: Record<string, string> = {
           canvas_generator: "Je vous aide à créer un canvas stratégique. Quel type souhaitez-vous ?",
           instant_prd: "Je vais générer un PRD détaillé pour vous avec spécifications et user stories.",
@@ -255,32 +473,34 @@ Squads: ${workspaceContext.squads?.length || 0}
         suggestions = [
           { label: `Ouvrir ${intent.replace('_', ' ')}`, action: intent, type: 'tool' }
         ];
+
+        // Add recent artifacts if relevant
+        if (['test_generator', 'story_writer'].includes(intent) && workspaceContext?.recentArtifacts) {
+          artifacts = workspaceContext.recentArtifacts.slice(0, 3);
+        }
       } else {
-        // Stream general conversation with context
         responseContent = await streamResponse(userMessage, contextData);
       }
 
-      // Generate contextual suggestions if not from tool intent
       if (suggestions.length === 0) {
         suggestions = await generateSuggestions();
       }
 
-      // Add or update assistant message with suggestions
       setMessages(prev => {
         const lastMsg = prev[prev.length - 1];
         if (lastMsg.role === 'assistant' && !lastMsg.suggestions) {
-          // Update existing message with suggestions
           return [
             ...prev.slice(0, -1),
-            { ...lastMsg, suggestions }
+            { ...lastMsg, suggestions, artifacts }
           ];
         }
-        // Intent-based response, add new message
         if (intent !== 'none') {
-          return [...prev, { role: 'assistant', content: responseContent, suggestions }];
+          return [...prev, { role: 'assistant', content: responseContent, suggestions, artifacts }];
         }
         return prev;
       });
+
+      await saveConversation();
 
     } catch (error: any) {
       console.error('Chat error:', error);
@@ -289,7 +509,6 @@ Squads: ${workspaceContext.squads?.length || 0}
         description: error.message || "Échec de l'envoi du message. Réessayez.",
         variant: "destructive"
       });
-      // Remove empty assistant message on error
       setMessages(prev => prev.filter((msg, idx) => !(idx === prev.length - 1 && msg.role === 'assistant' && !msg.content)));
     } finally {
       setIsLoading(false);
@@ -307,14 +526,49 @@ Squads: ${workspaceContext.squads?.length || 0}
       sprint_planner: () => onNavigate('sprint' as TabType),
       squad_builder: () => onNavigate('squads' as TabType),
       dashboard: () => onNavigate('dashboard' as TabType),
-      artifacts_view: () => onNavigate('artifacts' as TabType)
+      artifacts_view: () => onNavigate('artifacts' as TabType),
+      analyze_artifacts: () => setInput('Analyze my artifacts'),
+      workflow_discovery: () => setInput('Start feature discovery workflow'),
+      fill_gaps: () => setInput('Help me fill the gaps in my artifacts')
     };
 
     const handler = toolMapping[action];
     if (handler) {
       handler();
-      onOpenChange(false);
+      if (!action.includes('workflow') && !action.includes('analyze')) {
+        onOpenChange(false);
+      }
     }
+  };
+
+  const handleFeedback = async (messageIndex: number, rating: number) => {
+    if (!currentConversationId) return;
+
+    try {
+      await supabase.from('nova_feedback').insert([{
+        conversation_id: currentConversationId,
+        message_index: messageIndex,
+        rating
+      }]);
+
+      toast({
+        title: "Merci !",
+        description: "Votre feedback nous aide à améliorer Nova."
+      });
+    } catch (error) {
+      console.error('Failed to save feedback:', error);
+    }
+  };
+
+  const handleVoiceTranscript = (text: string) => {
+    setInput(text);
+  };
+
+  const handleNewConversation = () => {
+    setCurrentConversationId(null);
+    setMessages([]);
+    setActiveWorkflow(null);
+    initializeChat();
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -326,105 +580,209 @@ Squads: ${workspaceContext.squads?.length || 0}
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl h-[600px] flex flex-col p-0">
+      <DialogContent className="max-w-5xl h-[700px] flex flex-col p-0">
         <DialogTitle className="sr-only">Nova AI Assistant</DialogTitle>
         <DialogDescription className="sr-only">
           Chat with Nova to get help with product management, create canvases, build squads, and navigate workflows.
         </DialogDescription>
         
-        {/* Header */}
-        <div className="flex items-center gap-3 px-6 py-4 border-b bg-gradient-to-r from-primary/10 to-primary/5">
-          <div className="h-10 w-10 rounded-full bg-primary/20 flex items-center justify-center">
-            <Sparkles className="h-5 w-5 text-primary" />
-          </div>
-          <div>
-            <h2 className="text-lg font-semibold">Assistant IA Nova</h2>
-            <p className="text-sm text-muted-foreground">
-              {workspaceContext ? 'Analyse de votre espace en cours...' : 'Votre compagnon produit intelligent'}
-            </p>
-          </div>
-        </div>
+        <div className="flex h-full">
+          {/* Conversation History Sidebar */}
+          {showHistory && (
+            <div className="w-64 shrink-0">
+              <ConversationHistory
+                currentConversationId={currentConversationId || undefined}
+                onSelectConversation={setCurrentConversationId}
+                onNewConversation={handleNewConversation}
+              />
+            </div>
+          )}
 
-        {/* Messages */}
-        <ScrollArea className="flex-1 px-6 py-4" ref={scrollRef}>
-          <div className="space-y-4">
-            {messages.map((message, index) => (
-              <div
-                key={index}
-                className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
+          {/* Main Chat Area */}
+          <div className="flex-1 flex flex-col min-w-0">
+            {/* Header */}
+            <div className="flex items-center gap-3 px-6 py-4 border-b bg-gradient-to-r from-primary/10 to-primary/5">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setShowHistory(!showHistory)}
               >
-                <div className="max-w-[80%] space-y-2">
-                  <div
-                    className={`rounded-lg px-4 py-3 ${
-                      message.role === 'user'
-                        ? 'bg-primary text-primary-foreground'
-                        : 'bg-muted'
-                    }`}
-                  >
-                    <p className="text-sm whitespace-pre-wrap">{message.content}</p>
-                  </div>
-                  
-                  {/* Suggestions */}
-                  {message.suggestions && message.suggestions.length > 0 && (
-                    <div className="flex flex-wrap gap-2">
-                      {message.suggestions.map((suggestion, idx) => {
-                        const Icon = suggestion.type === 'tool' ? Wand2 :
-                                   suggestion.type === 'workflow' ? Users : Layout;
-                        return (
-                          <Button
-                            key={idx}
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleSuggestionClick(suggestion.action, suggestion.type)}
-                            className="text-xs"
-                          >
-                            <Icon className="h-3 w-3 mr-1" />
-                            {suggestion.label}
-                          </Button>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
+                <Layout className="h-4 w-4" />
+              </Button>
+              
+              <div className="h-10 w-10 rounded-full bg-primary/20 flex items-center justify-center">
+                <Sparkles className="h-5 w-5 text-primary" />
               </div>
-            ))}
-            
-            {isLoading && (
-              <div className="flex justify-start">
-                <div className="bg-muted rounded-lg px-4 py-3">
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                </div>
+              
+              <div className="flex-1">
+                <h2 className="text-lg font-semibold">Assistant IA Nova</h2>
+                <p className="text-sm text-muted-foreground">
+                  {activeWorkflow 
+                    ? `Workflow: ${WORKFLOWS[activeWorkflow.type as keyof typeof WORKFLOWS]?.name}`
+                    : workspaceContext ? 'Analyse de votre espace en cours...' : 'Votre compagnon produit intelligent'
+                  }
+                </p>
               </div>
-            )}
-          </div>
-        </ScrollArea>
 
-        {/* Input */}
-        <div className="px-6 py-4 border-t bg-muted/30">
-          <div className="flex gap-2">
-            <Input
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyPress={handleKeyPress}
-              placeholder="Demandez tout à Nova..."
-              disabled={isLoading}
-              className="flex-1"
-            />
-            <Button 
-              onClick={handleSendMessage} 
-              disabled={!input.trim() || isLoading}
-              size="icon"
-            >
-              {isLoading ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Send className="h-4 w-4" />
+              {workspaceContext?.recentArtifacts?.length > 0 && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    analyzeCrossArtifacts().then((analysis) => {
+                      if (analysis) {
+                        setMessages(prev => [...prev, {
+                          role: 'assistant',
+                          content: `Analyse de ${analysis.artifactCount} artéfacts terminée !`,
+                          analysis: analysis.analysis
+                        }]);
+                      }
+                    });
+                  }}
+                >
+                  <BarChart className="h-4 w-4 mr-2" />
+                  Analyser
+                </Button>
               )}
-            </Button>
+            </div>
+
+            {/* Messages */}
+            <ScrollArea className="flex-1 px-6 py-4" ref={scrollRef}>
+              <div className="space-y-4">
+                {messages.map((message, index) => (
+                  <div
+                    key={index}
+                    className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                  >
+                    <div className="max-w-[80%] space-y-2">
+                      <div
+                        className={`rounded-lg px-4 py-3 ${
+                          message.role === 'user'
+                            ? 'bg-primary text-primary-foreground'
+                            : 'bg-muted'
+                        }`}
+                      >
+                        <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                        
+                        {/* Workflow Progress */}
+                        {message.workflowStep && (
+                          <div className="mt-3 p-2 bg-background/50 rounded">
+                            <div className="flex items-center justify-between text-xs mb-1">
+                              <span>Étape: {message.workflowStep.current}</span>
+                              <span>{message.workflowStep.progress}%</span>
+                            </div>
+                            <div className="h-1 bg-background rounded-full overflow-hidden">
+                              <div 
+                                className="h-full bg-primary transition-all"
+                                style={{ width: `${message.workflowStep.progress}%` }}
+                              />
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                      
+                      {/* Artifact Previews */}
+                      {message.artifacts && message.artifacts.length > 0 && (
+                        <div className="grid grid-cols-2 gap-2">
+                          {message.artifacts.map((artifact) => (
+                            <ArtifactPreview
+                              key={artifact.id}
+                              artifact={artifact}
+                              onView={() => onNavigate('artifacts' as TabType)}
+                            />
+                          ))}
+                        </div>
+                      )}
+                      
+                      {/* Suggestions */}
+                      {message.suggestions && message.suggestions.length > 0 && (
+                        <div className="flex flex-wrap gap-2">
+                          {message.suggestions.map((suggestion, idx) => {
+                            const Icon = suggestion.type === 'tool' ? Wand2 :
+                                       suggestion.type === 'workflow' ? Users : Layout;
+                            return (
+                              <Button
+                                key={idx}
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleSuggestionClick(suggestion.action, suggestion.type)}
+                                className="text-xs"
+                              >
+                                <Icon className="h-3 w-3 mr-1" />
+                                {suggestion.label}
+                              </Button>
+                            );
+                          })}
+                        </div>
+                      )}
+
+                      {/* Feedback buttons for assistant messages */}
+                      {message.role === 'assistant' && message.content && (
+                        <div className="flex gap-1">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6"
+                            onClick={() => handleFeedback(index, 1)}
+                          >
+                            <ThumbsUp className="h-3 w-3" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6"
+                            onClick={() => handleFeedback(index, -1)}
+                          >
+                            <ThumbsDown className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+                
+                {isLoading && (
+                  <div className="flex justify-start">
+                    <div className="bg-muted rounded-lg px-4 py-3">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    </div>
+                  </div>
+                )}
+              </div>
+            </ScrollArea>
+
+            {/* Input */}
+            <div className="px-6 py-4 border-t bg-muted/30">
+              <div className="flex gap-2">
+                <VoiceInput 
+                  onTranscript={handleVoiceTranscript}
+                  disabled={isLoading}
+                />
+                <Input
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  onKeyPress={handleKeyPress}
+                  placeholder="Demandez tout à Nova..."
+                  disabled={isLoading}
+                  className="flex-1"
+                />
+                <Button 
+                  onClick={handleSendMessage} 
+                  disabled={!input.trim() || isLoading}
+                  size="icon"
+                >
+                  {isLoading ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Send className="h-4 w-4" />
+                  )}
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground mt-2">
+                Appuyez sur Entrée pour envoyer • Shift+Entrée pour une nouvelle ligne
+              </p>
+            </div>
           </div>
-          <p className="text-xs text-muted-foreground mt-2">
-            Appuyez sur Entrée pour envoyer • Shift+Entrée pour une nouvelle ligne
-          </p>
         </div>
       </DialogContent>
     </Dialog>

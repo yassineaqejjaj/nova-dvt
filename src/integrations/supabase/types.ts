@@ -444,6 +444,112 @@ export type Database = {
         }
         Relationships: []
       }
+      nova_conversations: {
+        Row: {
+          context_snapshot: Json | null
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          messages: Json
+          title: string
+          updated_at: string | null
+          user_id: string
+          workflow_state: Json | null
+        }
+        Insert: {
+          context_snapshot?: Json | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          messages?: Json
+          title: string
+          updated_at?: string | null
+          user_id: string
+          workflow_state?: Json | null
+        }
+        Update: {
+          context_snapshot?: Json | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          messages?: Json
+          title?: string
+          updated_at?: string | null
+          user_id?: string
+          workflow_state?: Json | null
+        }
+        Relationships: []
+      }
+      nova_feedback: {
+        Row: {
+          conversation_id: string | null
+          created_at: string | null
+          feedback_text: string | null
+          id: string
+          message_index: number
+          rating: number | null
+        }
+        Insert: {
+          conversation_id?: string | null
+          created_at?: string | null
+          feedback_text?: string | null
+          id?: string
+          message_index: number
+          rating?: number | null
+        }
+        Update: {
+          conversation_id?: string | null
+          created_at?: string | null
+          feedback_text?: string | null
+          id?: string
+          message_index?: number
+          rating?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nova_feedback_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "nova_conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      nova_shared_conversations: {
+        Row: {
+          conversation_id: string
+          created_at: string | null
+          id: string
+          permission: string
+          shared_by_user_id: string
+          shared_with_user_id: string
+        }
+        Insert: {
+          conversation_id: string
+          created_at?: string | null
+          id?: string
+          permission: string
+          shared_by_user_id: string
+          shared_with_user_id: string
+        }
+        Update: {
+          conversation_id?: string
+          created_at?: string | null
+          id?: string
+          permission?: string
+          shared_by_user_id?: string
+          shared_with_user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nova_shared_conversations_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "nova_conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pinned_items: {
         Row: {
           created_at: string
