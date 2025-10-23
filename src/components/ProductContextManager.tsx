@@ -12,6 +12,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface ProductContext {
   id: string;
@@ -108,7 +109,8 @@ export const ProductContextManager = ({ open, onOpenChange, onContextSelected }:
       const typedContexts: ProductContext[] = (data || []).map(item => ({
         ...item,
         objectives: Array.isArray(item.objectives) ? item.objectives as string[] : [],
-        target_kpis: Array.isArray(item.target_kpis) ? item.target_kpis as string[] : []
+        target_kpis: Array.isArray(item.target_kpis) ? item.target_kpis as string[] : [],
+        industry_sector: (item as any).industry_sector ?? ((item as any).metadata?.industry_sector ?? '')
       }));
       
       setContexts(typedContexts);
@@ -183,20 +185,28 @@ export const ProductContextManager = ({ open, onOpenChange, onContextSelected }:
       }
       if (!user) throw new Error('Vous devez être connecté pour sauvegarder un contexte');
 
-      const contextData = {
+      const sectorVal = formData.industry_sector.trim() || null;
+
+      const baseData = {
         user_id: user.id,
         name: formData.name.trim(),
         vision: formData.vision.trim() || null,
         objectives: formData.objectives.filter(o => o.trim()),
         target_kpis: formData.target_kpis.filter(k => k.trim()),
         constraints: formData.constraints.trim() || null,
-        target_audience: formData.target_audience.trim() || null,
-        industry_sector: formData.industry_sector.trim() || null
+        target_audience: formData.target_audience.trim() || null
       };
 
       if (selectedContext) {
         // Update existing (do not update user_id on UPDATE to satisfy RLS WITH CHECK)
-        const { user_id, ...updateData } = contextData as any;
+        const { user_id, ...rest } = baseData as any;
+        const updateData = {
+          ...rest,
+          metadata: {
+            ...(((selectedContext as any)?.metadata) || {}),
+            industry_sector: sectorVal
+          }
+        };
         const { error } = await supabase
           .from('product_contexts')
           .update(updateData)
@@ -222,9 +232,14 @@ export const ProductContextManager = ({ open, onOpenChange, onContextSelected }:
           return;
         }
 
+        const insertData = {
+          ...baseData,
+          metadata: { industry_sector: sectorVal }
+        };
+
         const { data, error } = await supabase
           .from('product_contexts')
-          .insert(contextData)
+          .insert(insertData)
           .select()
           .single();
 
@@ -626,6 +641,35 @@ export const ProductContextManager = ({ open, onOpenChange, onContextSelected }:
 
                   <ScrollArea className="flex-1">
                     <div className="space-y-4 pr-4">
+                      <div className="space-y-2">
+                        <Label>Secteur d'activité</Label>
+                        <Select
+                          value={formData.industry_sector}
+                          onValueChange={(v) => {
+                            setFormData({ ...formData, industry_sector: v });
+                            setIsEditing(true);
+                          }}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Sélectionnez un secteur" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="E-commerce">E-commerce</SelectItem>
+                            <SelectItem value="SaaS">SaaS</SelectItem>
+                            <SelectItem value="FinTech">FinTech</SelectItem>
+                            <SelectItem value="HealthTech">HealthTech</SelectItem>
+                            <SelectItem value="EdTech">EdTech</SelectItem>
+                            <SelectItem value="Retail">Retail</SelectItem>
+                            <SelectItem value="Media">Media</SelectItem>
+                            <SelectItem value="Télécom">Télécom</SelectItem>
+                            <SelectItem value="Industrie">Industrie</SelectItem>
+                            <SelectItem value="Énergie">Énergie</SelectItem>
+                            <SelectItem value="Secteur public">Secteur public</SelectItem>
+                            <SelectItem value="Autre">Autre</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
                       <div className="space-y-2">
                         <Label htmlFor="name">Nom du produit *</Label>
                         <Input
