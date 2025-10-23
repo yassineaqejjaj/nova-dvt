@@ -19,6 +19,7 @@ import { FeatureDiscoveryWorkflow } from './FeatureDiscoveryWorkflow';
 import { TechnicalSpecification } from './TechnicalSpecification';
 import { SmartDiscoveryCanvas } from './SmartDiscoveryCanvas';
 import EpicToUserStories from './EpicToUserStories';
+import { GitToSpecsGenerator } from './GitToSpecsGenerator';
 import { FrameworkFilter } from './FrameworkFilter';
 import { useFrameworkFilter } from '@/hooks/useFrameworkFilter';
 import {
@@ -57,7 +58,7 @@ interface Workflow {
     id: string;
     title: string;
     description: string;
-    tool?: 'canvas' | 'story' | 'impact' | 'research' | 'design' | 'code' | 'roadmap' | 'launch' | 'sprint' | 'kpi' | 'epic-stories' | 'test-generator' | 'ac-validator';
+    tool?: 'canvas' | 'story' | 'impact' | 'research' | 'design' | 'code' | 'roadmap' | 'launch' | 'sprint' | 'kpi' | 'epic-stories' | 'test-generator' | 'ac-validator' | 'git-to-specs';
     completed?: boolean;
   }>;
 }
@@ -761,6 +762,7 @@ export const Workflows: React.FC = () => {
   const [showEpicToStories, setShowEpicToStories] = useState(false);
   const [showTestCaseGenerator, setShowTestCaseGenerator] = useState(false);
   const [showACValidator, setShowACValidator] = useState(false);
+  const [showGitToSpecs, setShowGitToSpecs] = useState(false);
 
   const [activeContext, setActiveContext] = useState<{
     name: string;
@@ -924,6 +926,9 @@ export const Workflows: React.FC = () => {
         break;
       case 'ac-validator':
         setShowACValidator(true);
+        break;
+      case 'git-to-specs':
+        setShowGitToSpecs(true);
         break;
     }
   };
@@ -1373,6 +1378,22 @@ export const Workflows: React.FC = () => {
             {React.createElement(
               React.lazy(() => import('@/components/AcceptanceCriteriaValidator').then(m => ({ default: m.AcceptanceCriteriaValidator })))
             )}
+          </div>
+        </div>
+      )}
+      
+      {showGitToSpecs && (
+        <div className="fixed inset-0 z-50 bg-background overflow-auto">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="absolute top-4 right-4 z-50"
+            onClick={() => setShowGitToSpecs(false)}
+          >
+            ✕ Fermer
+          </Button>
+          <div className="container mx-auto p-6">
+            <GitToSpecsGenerator />
           </div>
         </div>
       )}

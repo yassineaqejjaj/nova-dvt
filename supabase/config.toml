@@ -1,5 +1,8 @@
 project_id = "pwjuvfclcltphuuwlsdr"
 
+[functions.analyze-git-repo]
+verify_jwt = false
+
 [functions.deploy-mystery-box]
 verify_jwt = false
 
