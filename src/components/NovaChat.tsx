@@ -542,9 +542,18 @@ Utilisez ce contexte pour guider l'utilisateur dans l'étape actuelle.
   const handleSuggestionClick = useCallback((action: string, type: string) => {
     console.log('Suggestion clicked:', action, type);
     
-    // Handle workflow-specific actions
-    if (action.includes('workflow')) {
-      setInput(`Start ${action.replace('workflow_', '').replace('_', ' ')} workflow`);
+    // Handle workflow suggestions by type or action key
+    if (type === 'workflow' || action in WORKFLOWS) {
+      const wfKey = (action in WORKFLOWS)
+        ? action
+        : action.includes('discovery')
+          ? 'feature_discovery'
+          : action.includes('story') || action.includes('test')
+            ? 'story_to_test'
+            : 'feature_discovery';
+
+      // Reuse existing workflow-start flow via input to keep logic centralized
+      setInput(`Start ${wfKey.replace(/_/g, ' ')} workflow`);
       handleSendMessage();
       return;
     }
@@ -643,6 +652,13 @@ Utilisez ce contexte pour guider l'utilisateur dans l'étape actuelle.
       console.log('Executing handler for:', action);
       handler();
     } else {
+      // Fallbacks based on suggestion type
+      if (type === 'tool') {
+        setInput(action.replace(/_/g, ' '));
+        handleSendMessage();
+        return;
+      }
+
       console.warn('No handler found for action:', action);
       toast({
         title: "Action non disponible",
