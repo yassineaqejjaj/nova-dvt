@@ -29,6 +29,8 @@ export const useWorkflowProgress = (
       return;
     }
 
+    let lastCount = 0;
+
     // Watch for new artifacts to auto-advance workflow
     const checkForNewArtifacts = async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -44,23 +46,26 @@ export const useWorkflowProgress = (
       if (!artifacts || artifacts.length === 0) return;
 
       const currentCount = artifacts.length;
-      if (currentCount > lastArtifactCount && lastArtifactCount > 0) {
+      if (currentCount > lastCount && lastCount > 0) {
         // New artifact created!
         const newArtifact = artifacts[0];
         
-        // Add to workflow context
-        const updatedContext = {
-          ...workflowContext,
-          [`step_${activeWorkflow.currentStep}`]: newArtifact,
-          lastArtifact: newArtifact
-        };
-        
-        setWorkflowContext(updatedContext);
-        
-        // Auto-advance to next step
-        onStepComplete(activeWorkflow.currentStep + 1, updatedContext);
+        // Add to workflow context using functional update
+        setWorkflowContext(prev => {
+          const updatedContext = {
+            ...prev,
+            [`step_${activeWorkflow.currentStep}`]: newArtifact,
+            lastArtifact: newArtifact
+          };
+          
+          // Auto-advance to next step
+          onStepComplete(activeWorkflow.currentStep + 1, updatedContext);
+          
+          return updatedContext;
+        });
       }
       
+      lastCount = currentCount;
       setLastArtifactCount(currentCount);
     };
 
@@ -74,6 +79,7 @@ export const useWorkflowProgress = (
         .select('*', { count: 'exact', head: true })
         .eq('user_id', user.id);
 
+      lastCount = count || 0;
       setLastArtifactCount(count || 0);
     };
 
@@ -83,7 +89,7 @@ export const useWorkflowProgress = (
     const interval = setInterval(checkForNewArtifacts, 2000);
 
     return () => clearInterval(interval);
-  }, [activeWorkflow, lastArtifactCount, workflowContext, onStepComplete]);
+  }, [activeWorkflow, onStepComplete]);
 
   return { workflowContext, setWorkflowContext };
 };
