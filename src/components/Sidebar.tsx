@@ -159,6 +159,12 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
           label: 'Epic → Stories',
           icon: Sparkles,
           description: 'Découpage Auto'
+        },
+        {
+          id: 'git-to-specs' as TabType,
+          label: 'Git → Specs',
+          icon: FileText,
+          description: 'Analyse repo → docs'
         }
       ]
     },
