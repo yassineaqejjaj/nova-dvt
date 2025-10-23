@@ -41,7 +41,7 @@ export const ConversationHistory: React.FC<ConversationHistoryProps> = ({
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      // Load owned and shared conversations
+      // Load only owned conversations (no recursion)
       const { data: ownedConvs, error: ownedError } = await supabase
         .from('nova_conversations')
         .select('*')
@@ -51,22 +51,42 @@ export const ConversationHistory: React.FC<ConversationHistoryProps> = ({
 
       if (ownedError) throw ownedError;
 
-      const { data: sharedConvs, error: sharedError } = await supabase
+      // Load shared conversation IDs separately
+      const { data: sharedIds, error: sharedError } = await supabase
         .from('nova_shared_conversations')
-        .select('conversation_id, permission, nova_conversations(*)')
+        .select('conversation_id, permission')
         .eq('shared_with_user_id', user.id);
 
-      if (sharedError) throw sharedError;
+      if (sharedError) {
+        console.error('Error loading shared conversations:', sharedError);
+        // Continue without shared conversations
+      }
+
+      // For each shared ID, load the conversation details
+      const sharedConvs = [];
+      if (sharedIds && sharedIds.length > 0) {
+        const sharedConvIds = sharedIds.map(s => s.conversation_id);
+        
+        const { data: sharedConvDetails, error: detailsError } = await supabase
+          .from('nova_conversations')
+          .select('*')
+          .in('id', sharedConvIds)
+          .eq('is_active', true);
+
+        if (!detailsError && sharedConvDetails) {
+          sharedConvs.push(
+            ...sharedConvDetails.map(c => ({
+              ...c,
+              isShared: true,
+              permission: sharedIds.find(s => s.conversation_id === c.id)?.permission
+            }))
+          );
+        }
+      }
 
       const allConversations = [
         ...(ownedConvs || []).map(c => ({ ...c, isShared: false })),
-        ...(sharedConvs || [])
-          .filter(s => s.nova_conversations)
-          .map(s => ({ 
-            ...(s.nova_conversations as any), 
-            isShared: true, 
-            permission: s.permission 
-          }))
+        ...sharedConvs
       ];
 
       setConversations(allConversations);
