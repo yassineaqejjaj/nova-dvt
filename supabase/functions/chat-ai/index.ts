@@ -1,5 +1,6 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from 'jsr:@supabase/supabase-js@2';
 import { multiAgentPrompts } from "../_shared/prompts.ts";
 
 const lovableApiKey = Deno.env.get('LOVABLE_API_KEY');
@@ -10,12 +11,34 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
+    // Authentication check
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
+    const supabaseClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      { global: { headers: { Authorization: authHeader } } }
+    );
+
+    const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
+    if (authError || !user) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
     if (!lovableApiKey) {
       throw new Error('Lovable API key not configured');
     }
@@ -23,14 +46,21 @@ serve(async (req) => {
     const body = await req.json();
     const { messages, agents, mentionedAgents, message, systemPrompt } = body;
 
-    // Simple mode: single message with optional system prompt (for tools like KPI Generator, Epic Generator, Tech Spec)
+    // Input validation
+    if (message && typeof message === 'string' && message.length > 50000) {
+      return new Response(JSON.stringify({ error: 'Message too long (max 50000 characters)' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
+    // Simple mode: single message with optional system prompt
     if (message && !agents) {
       console.log('Simple mode: generating response with Lovable AI');
       
       const defaultSystemPrompt = 'You are a helpful AI assistant specialized in product management and technical specifications. Provide clear, structured, and actionable responses.';
       const finalSystemPrompt = systemPrompt || defaultSystemPrompt;
       
-      // Check if streaming is requested
       const { stream } = body;
       
       const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
@@ -52,19 +82,26 @@ serve(async (req) => {
       });
 
       if (!response.ok) {
-        const errorText = await response.text();
-        console.error('Lovable AI API error:', response.status, errorText);
+        console.error('Lovable AI API error:', response.status);
         
         if (response.status === 429) {
-          throw new Error('Rate limit exceeded. Please try again in a moment.');
+          return new Response(JSON.stringify({ error: 'Rate limit exceeded' }), {
+            status: 429,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          });
         }
         if (response.status === 402) {
-          throw new Error('AI credits exhausted. Please add funds to your workspace.');
+          return new Response(JSON.stringify({ error: 'Payment required' }), {
+            status: 402,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          });
         }
-        throw new Error(`AI gateway error: ${response.status}`);
+        return new Response(JSON.stringify({ error: 'AI gateway error' }), {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
       }
 
-      // If streaming, return the stream directly
       if (stream) {
         return new Response(response.body, {
           headers: { ...corsHeaders, 'Content-Type': 'text/event-stream' },
@@ -83,26 +120,22 @@ serve(async (req) => {
       });
     }
 
-    // Multi-agent mode: original functionality
+    // Multi-agent mode
     if (!agents || !Array.isArray(agents)) {
       throw new Error('Agents array is required for multi-agent mode');
     }
 
-    // Determine which agents should respond
     const respondingAgents = mentionedAgents && mentionedAgents.length > 0 
       ? agents.filter((agent: any) => mentionedAgents.some((mention: string) => 
           agent.name.toLowerCase().includes(mention.toLowerCase()) || 
           agent.specialty.toLowerCase().includes(mention.toLowerCase())))
-      : agents.slice(0, Math.min(2, agents.length)); // Default to first 2 agents
+      : agents.slice(0, Math.min(2, agents.length));
 
     const responses = [];
 
-    // Generate response for each responding agent
     for (const agent of respondingAgents) {
-      // Check if this agent has special tool capabilities
       const toolInstructions = getToolInstructions(agent);
       
-      // Use centralized prompt builder with agent context
       const systemMessage = {
         role: 'system',
         content: multiAgentPrompts.buildSystemPrompt(agent) + `\n\n${toolInstructions}`
@@ -123,16 +156,8 @@ serve(async (req) => {
       });
 
       if (!response.ok) {
-        const errorText = await response.text();
-        console.error(`Lovable AI API error for ${agent.name}:`, response.status, errorText);
-        
-        if (response.status === 429) {
-          throw new Error('Rate limit exceeded. Please try again in a moment.');
-        }
-        if (response.status === 402) {
-          throw new Error('AI credits exhausted. Please add funds to your workspace.');
-        }
-        throw new Error(`AI gateway error for ${agent.name}: ${response.status}`);
+        console.error(`AI error for ${agent.name}:`, response.status);
+        continue;
       }
 
       const data = await response.json();
@@ -141,7 +166,6 @@ serve(async (req) => {
         message: data.choices[0].message.content
       };
       
-      // Add tool suggestion if agent has special capabilities
       const toolSuggestion = getToolSuggestion(agent, messages);
       if (toolSuggestion) {
         responseData.toolSuggestion = toolSuggestion;
@@ -154,15 +178,15 @@ serve(async (req) => {
       const agentId = agent.id.toLowerCase();
       
       if (agentId.includes('story-writer') || agent.specialty.toLowerCase().includes('user story')) {
-        return 'When discussing features or requirements, suggest creating user stories. Mention that you can help generate detailed user stories with acceptance criteria.';
+        return 'When discussing features or requirements, suggest creating user stories.';
       }
       
-      if (agentId.includes('impact-effort') || agentId.includes('plotter') || agent.specialty.toLowerCase().includes('priority matrix')) {
-        return 'When discussing prioritization or feature planning, suggest using an impact vs effort analysis. Offer to help plot items on a priority matrix.';
+      if (agentId.includes('impact-effort') || agentId.includes('plotter')) {
+        return 'When discussing prioritization, suggest impact vs effort analysis.';
       }
       
-      if (agentId.includes('canvas') || agent.specialty.toLowerCase().includes('strategy') || agent.name.toLowerCase().includes('sarah')) {
-        return 'When discussing product strategy, planning, or frameworks, suggest using strategic canvases like SWOT, Business Model Canvas, or MoSCoW prioritization.';
+      if (agentId.includes('canvas') || agent.specialty.toLowerCase().includes('strategy')) {
+        return 'When discussing product strategy, suggest using strategic canvases.';
       }
       
       return '';
@@ -172,25 +196,16 @@ serve(async (req) => {
       const agentId = agent.id.toLowerCase();
       const lastMessage = messages[messages.length - 1]?.content?.toLowerCase() || '';
       
-      // Story Writer agent
-      if (agentId.includes('story-writer') || agent.specialty.toLowerCase().includes('user story')) {
-        if (lastMessage.includes('feature') || lastMessage.includes('requirement') || lastMessage.includes('story')) {
-          return { type: 'story', label: 'Generate User Story' };
-        }
+      if (agentId.includes('story-writer') && lastMessage.includes('feature')) {
+        return { type: 'story', label: 'Generate User Story' };
       }
       
-      // Impact Effort Plotter agent
-      if (agentId.includes('impact-effort') || agentId.includes('plotter')) {
-        if (lastMessage.includes('priorit') || lastMessage.includes('feature') || lastMessage.includes('backlog')) {
-          return { type: 'impact', label: 'Create Impact Plot' };
-        }
+      if (agentId.includes('impact-effort') && lastMessage.includes('priorit')) {
+        return { type: 'impact', label: 'Create Impact Plot' };
       }
       
-      // Canvas/Strategy agents
-      if (agentId.includes('sarah') || agent.specialty.toLowerCase().includes('strategy')) {
-        if (lastMessage.includes('strategy') || lastMessage.includes('plan') || lastMessage.includes('canvas')) {
-          return { type: 'canvas', label: 'Generate Canvas' };
-        }
+      if (agentId.includes('sarah') && lastMessage.includes('strategy')) {
+        return { type: 'canvas', label: 'Generate Canvas' };
       }
       
       return null;
@@ -201,7 +216,7 @@ serve(async (req) => {
     });
   } catch (error) {
     console.error('Error in chat-ai function:', error);
-    return new Response(JSON.stringify({ error: error.message }), {
+    return new Response(JSON.stringify({ error: 'Internal server error' }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
