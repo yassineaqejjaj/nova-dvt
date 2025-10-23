@@ -699,12 +699,13 @@ export const ProductContextManager = ({ open, onOpenChange, onContextSelected }:
 
                       <div className="space-y-2">
                         <Label>Objectifs</Label>
+                        <p className="text-xs text-muted-foreground">Astuce: cliquez sur un objectif pour l'éditer.</p>
                         <div className="flex gap-2">
                           <Input
                             value={newObjective}
                             onChange={(e) => setNewObjective(e.target.value)}
                             placeholder="Ajouter un objectif"
-                            onKeyPress={(e) => e.key === 'Enter' && addObjective()}
+                            onKeyDown={(e) => e.key === 'Enter' && addObjective()}
                           />
                           <Button onClick={addObjective} size="icon" variant="outline">
                             <Plus className="h-4 w-4" />
@@ -718,7 +719,7 @@ export const ProductContextManager = ({ open, onOpenChange, onContextSelected }:
                                   defaultValue={obj}
                                   autoFocus
                                   onBlur={(e) => updateObjective(idx, e.target.value)}
-                                  onKeyPress={(e) => {
+                                  onKeyDown={(e) => {
                                     if (e.key === 'Enter') {
                                       updateObjective(idx, e.currentTarget.value);
                                     } else if (e.key === 'Escape') {
@@ -750,12 +751,13 @@ export const ProductContextManager = ({ open, onOpenChange, onContextSelected }:
 
                       <div className="space-y-2">
                         <Label>KPIs Cibles</Label>
+                        <p className="text-xs text-muted-foreground">Astuce: cliquez sur un KPI pour l'éditer.</p>
                         <div className="flex gap-2">
                           <Input
                             value={newKPI}
                             onChange={(e) => setNewKPI(e.target.value)}
                             placeholder="Ajouter un KPI"
-                            onKeyPress={(e) => e.key === 'Enter' && addKPI()}
+                            onKeyDown={(e) => e.key === 'Enter' && addKPI()}
                           />
                           <Button onClick={addKPI} size="icon" variant="outline">
                             <Plus className="h-4 w-4" />
@@ -769,7 +771,7 @@ export const ProductContextManager = ({ open, onOpenChange, onContextSelected }:
                                   defaultValue={kpi}
                                   autoFocus
                                   onBlur={(e) => updateKPI(idx, e.target.value)}
-                                  onKeyPress={(e) => {
+                                  onKeyDown={(e) => {
                                     if (e.key === 'Enter') {
                                       updateKPI(idx, e.currentTarget.value);
                                     } else if (e.key === 'Escape') {
@@ -813,20 +815,6 @@ export const ProductContextManager = ({ open, onOpenChange, onContextSelected }:
                         />
                       </div>
 
-                      <div className="space-y-2">
-                        <Label htmlFor="industry_sector">
-                          Secteur d'activité
-                        </Label>
-                        <Input
-                          id="industry_sector"
-                          value={formData.industry_sector}
-                          onChange={(e) => {
-                            setFormData({ ...formData, industry_sector: e.target.value });
-                            setIsEditing(true);
-                          }}
-                          placeholder="Ex: E-commerce, SaaS, FinTech, HealthTech..."
-                        />
-                      </div>
 
                       <div className="space-y-2">
                         <Label htmlFor="target_audience">
