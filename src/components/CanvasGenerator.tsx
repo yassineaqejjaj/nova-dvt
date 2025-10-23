@@ -31,6 +31,7 @@ import {
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { ConfidentialityDialog } from './ConfidentialityDialog';
+import { ContextSelector } from './ContextSelector';
 
 interface CanvasGeneratorProps {
   open: boolean;
@@ -479,6 +480,7 @@ export const CanvasGenerator: React.FC<CanvasGeneratorProps> = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [showConfidentialityDialog, setShowConfidentialityDialog] = useState(false);
   const [pendingFiles, setPendingFiles] = useState<FileList | null>(null);
+  const [importedContext, setImportedContext] = useState<any>(null);
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
@@ -704,6 +706,16 @@ export const CanvasGenerator: React.FC<CanvasGeneratorProps> = ({
               <div className="space-y-6">
                 <div className="space-y-2">
                   <Label htmlFor="context">Contexte Projet</Label>
+                  <div className="flex gap-2 mb-2">
+                    <ContextSelector
+                      onContextSelected={(context) => {
+                        setImportedContext(context);
+                        const contextInfo = `Contexte: ${context.name}\nVision: ${context.vision || 'Non définie'}\nObjectifs: ${context.objectives.join(', ')}\nAudience: ${context.target_audience || 'Non définie'}`;
+                        setProjectContext(prev => prev ? `${prev}\n\n${contextInfo}` : contextInfo);
+                      }}
+                      selectedContextId={importedContext?.id}
+                    />
+                  </div>
                   <Textarea
                     id="context"
                     placeholder="Décrivez votre projet, produit ou initiative que vous souhaitez analyser avec ce framework..."

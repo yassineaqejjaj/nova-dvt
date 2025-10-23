@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Loader2, Share2, Download, Edit, Sparkles, Target, Users, TrendingUp, AlertTriangle, Lightbulb, BarChart3, FlaskConical, CheckCircle2, Rocket, Save, Send } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { ContextSelector } from "./ContextSelector";
 
 interface AnalysisResult {
   problem: string;
@@ -54,6 +55,7 @@ export const SmartDiscoveryCanvas = () => {
   const [isGeneratingMore, setIsGeneratingMore] = useState(false);
   const [isBuildingTestPlan, setIsBuildingTestPlan] = useState(false);
   const [testPlan, setTestPlan] = useState<string | null>(null);
+  const [importedContext, setImportedContext] = useState<any>(null);
 
   const handleAnalyze = async () => {
     if (!initialInput.trim()) {
@@ -566,6 +568,23 @@ Return ONLY valid JSON (no markdown):
             onChange={(e) => setInitialInput(e.target.value)}
             className="min-h-[120px] mb-4"
           />
+
+          <div className="flex items-center gap-2 mb-4">
+            <ContextSelector
+              onContextSelected={(context) => {
+                setImportedContext(context);
+                // Pre-fill with context information
+                const contextInfo = `
+Contexte: ${context.name}
+Vision: ${context.vision || 'Non définie'}
+Objectifs: ${context.objectives.join(', ')}
+Audience: ${context.target_audience || 'Non définie'}
+`;
+                setInitialInput(prev => prev ? `${prev}\n\n${contextInfo}` : contextInfo);
+              }}
+              selectedContextId={importedContext?.id}
+            />
+          </div>
 
           {!analysis && (
             <Button onClick={handleAnalyze} disabled={isAnalyzing || !initialInput.trim()}>

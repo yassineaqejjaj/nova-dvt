@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Loader2, Target, TrendingUp, Calculator, Clock, BarChart3 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { ContextSelector } from './ContextSelector';
 
 interface KPI {
   name: string;
@@ -42,6 +43,7 @@ export const KPIGenerator = ({ open, onOpenChange, context, activeContext }: KPI
   const { toast } = useToast();
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedKPIs, setGeneratedKPIs] = useState<KPI[]>([]);
+  const [importedContext, setImportedContext] = useState<any>(activeContext || null);
   
   const [formData, setFormData] = useState({
     projectContext: context?.projectContext || activeContext?.name || '',
@@ -206,6 +208,21 @@ Format ta réponse en JSON :
         </DialogHeader>
 
         <div className="space-y-6">
+          <div className="flex gap-2 mb-4">
+            <ContextSelector
+              onContextSelected={(context) => {
+                setImportedContext(context);
+                setFormData({
+                  projectContext: context.name,
+                  featureDescription: formData.featureDescription,
+                  objective: context.vision || '',
+                  existingOKRs: context.target_kpis.join(', ')
+                });
+              }}
+              selectedContextId={importedContext?.id}
+            />
+          </div>
+          
           <div className="grid gap-4">
             <div className="space-y-2">
               <Label htmlFor="projectContext">Contexte du projet</Label>
