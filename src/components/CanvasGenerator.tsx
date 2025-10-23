@@ -679,7 +679,17 @@ Features: ${prdContent.features?.map((f: any) => f.name).join(', ') || ''}`;
                   <Card 
                     key={template.id} 
                     className="cursor-pointer hover:shadow-md transition-all duration-200 hover:scale-105"
-                    onClick={() => setSelectedTemplate(template)}
+                    onClick={() => {
+                      setSelectedTemplate(template);
+                      setGeneratedCanvas({});
+                      setFormData({});
+                      setDocuments([]);
+                      setImportedContext(null);
+                      setProjectContext(prdContent ? `PRD Context:
+Vision: ${prdContent.vision || ''}
+Problem: ${prdContent.problem || ''}
+Features: ${prdContent.features?.map((f: any) => f.name).join(', ') || ''}` : '');
+                    }}
                   >
                     <CardHeader>
                       <div className="flex items-center space-x-3">
@@ -725,7 +735,13 @@ Features: ${prdContent.features?.map((f: any) => f.name).join(', ') || ''}`;
                   <p className="text-muted-foreground">{selectedTemplate.description}</p>
                 </div>
               </div>
-              <Button variant="outline" onClick={() => setSelectedTemplate(null)}>
+              <Button variant="outline" onClick={() => {
+                setSelectedTemplate(null);
+                setGeneratedCanvas({});
+                setFormData({});
+                setDocuments([]);
+                setImportedContext(null);
+              }}>
                 Retour aux Templates
               </Button>
             </div>
