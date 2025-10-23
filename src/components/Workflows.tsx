@@ -19,6 +19,8 @@ import { FeatureDiscoveryWorkflow } from './FeatureDiscoveryWorkflow';
 import { TechnicalSpecification } from './TechnicalSpecification';
 import { SmartDiscoveryCanvas } from './SmartDiscoveryCanvas';
 import EpicToUserStories from './EpicToUserStories';
+import { FrameworkFilter } from './FrameworkFilter';
+import { useFrameworkFilter } from '@/hooks/useFrameworkFilter';
 import {
   Rocket,
   Target,
@@ -46,6 +48,7 @@ interface Workflow {
   icon: React.ReactNode;
   category: string;
   tags: string[];
+  frameworks?: string[]; // Framework IDs this workflow supports
   estimatedTime: string;
   difficulty: 'Beginner' | 'Intermediate' | 'Advanced';
   steps: Array<{
@@ -65,6 +68,7 @@ const workflows: Workflow[] = [
     icon: <Sparkles className="w-6 h-6" />,
     category: 'Discovery',
     tags: ['AI', 'Discovery', 'Validation', 'Fast'],
+    frameworks: ['scrum', 'less', 'spotify', 'lean'],
     difficulty: 'Beginner',
     estimatedTime: '30 min',
     steps: [
@@ -84,6 +88,7 @@ const workflows: Workflow[] = [
     icon: <TrendingUp className="w-6 h-6" />,
     category: 'Discovery',
     tags: ['Stratégie', 'Roadmap', 'Planification', 'Long-terme'],
+    frameworks: ['safe', 'waterfall', 'spotify', 'lean'],
     difficulty: 'Advanced',
     estimatedTime: '60-90 min',
     steps: [
@@ -129,6 +134,7 @@ const workflows: Workflow[] = [
     icon: <Target className="w-6 h-6" />,
     category: 'Discovery',
     tags: ['Discovery', 'Validation', 'Epic', 'User Stories'],
+    frameworks: ['scrum', 'less', 'spotify', 'lean'],
     difficulty: 'Intermediate',
     estimatedTime: '45-60 min',
     steps: [
@@ -166,6 +172,7 @@ const workflows: Workflow[] = [
     icon: <Users className="w-6 h-6" />,
     category: 'Discovery',
     tags: ['Recherche', 'Utilisateurs', 'Interviews', 'Insights', 'UX'],
+    frameworks: ['scrum', 'less', 'spotify', 'lean'],
     difficulty: 'Intermediate',
     estimatedTime: '45-60 min',
     steps: [
@@ -205,6 +212,7 @@ const workflows: Workflow[] = [
     icon: <Calendar className="w-6 h-6" />,
     category: 'Cadrage',
     tags: ['Agile', 'Sprint', 'Scrum', 'Planification', 'Kanban'],
+    frameworks: ['scrum', 'less', 'safe'],
     difficulty: 'Beginner',
     estimatedTime: '45-60 min',
     steps: [
@@ -250,6 +258,7 @@ const workflows: Workflow[] = [
     icon: <FileText className="w-6 h-6" />,
     category: 'Cadrage',
     tags: ['Exigences', 'Documentation', 'Planification', 'Parties Prenantes'],
+    frameworks: ['waterfall', 'safe'],
     difficulty: 'Intermediate',
     estimatedTime: '45-60 min',
     steps: [
@@ -288,6 +297,7 @@ const workflows: Workflow[] = [
     icon: <FileCode className="w-6 h-6" />,
     category: 'Cadrage',
     tags: ['Développement', 'Technique', 'Architecture', 'Testing', 'Spécification'],
+    frameworks: ['scrum', 'less', 'waterfall', 'safe'],
     difficulty: 'Advanced',
     estimatedTime: '45-60 min',
     steps: [
@@ -326,6 +336,7 @@ const workflows: Workflow[] = [
     icon: <FileText className="w-6 h-6" />,
     category: 'Comitologie',
     tags: ['Comité', 'Projet', 'Gouvernance', 'Suivi', 'Décision'],
+    frameworks: ['waterfall', 'safe'],
     difficulty: 'Intermediate',
     estimatedTime: '45-60 min',
     steps: [
@@ -372,6 +383,7 @@ const workflows: Workflow[] = [
     icon: <TrendingUp className="w-6 h-6" />,
     category: 'Comitologie',
     tags: ['COPIL', 'Stratégie', 'Gouvernance', 'Direction', 'Exécutif'],
+    frameworks: ['safe', 'waterfall'],
     difficulty: 'Advanced',
     estimatedTime: '60-90 min',
     steps: [
@@ -425,6 +437,7 @@ const workflows: Workflow[] = [
     icon: <Rocket className="w-6 h-6" />,
     category: 'Comitologie',
     tags: ['Lancement', 'GTM', 'Marketing', 'Exécution', 'Checklist'],
+    frameworks: ['waterfall', 'safe', 'spotify'],
     difficulty: 'Advanced',
     estimatedTime: '60-90 min',
     steps: [
@@ -464,6 +477,7 @@ const workflows: Workflow[] = [
     icon: <FileCode className="w-6 h-6" />,
     category: 'Comitologie',
     tags: ['Technique', 'Architecture', 'Risques', 'Validation', 'Tests'],
+    frameworks: ['waterfall', 'safe', 'scrum'],
     difficulty: 'Advanced',
     estimatedTime: '60-90 min',
     steps: [
@@ -510,6 +524,7 @@ const workflows: Workflow[] = [
     icon: <Sparkles className="w-6 h-6" />,
     category: 'Comitologie',
     tags: ['Innovation', 'POC', 'Business Case', 'Transformation', 'R&D'],
+    frameworks: ['spotify', 'lean', 'safe'],
     difficulty: 'Advanced',
     estimatedTime: '90-120 min',
     steps: [
@@ -558,6 +573,7 @@ const workflows: Workflow[] = [
     icon: <FileText className="w-6 h-6" />,
     category: 'Mon Quotidien',
     tags: ['Epic', 'User Stories', 'Agile', 'Backlog', 'AI'],
+    frameworks: ['scrum', 'less', 'safe', 'spotify'],
     difficulty: 'Beginner',
     estimatedTime: '20-30 min',
     steps: [
@@ -597,6 +613,7 @@ const workflows: Workflow[] = [
     icon: <Palette className="w-6 h-6" />,
     category: 'Mon Quotidien',
     tags: ['Design', 'UI', 'Marque', 'Composants', 'System'],
+    frameworks: ['spotify', 'lean'],
     difficulty: 'Advanced',
     estimatedTime: '60-90 min',
     steps: [
@@ -636,6 +653,7 @@ const workflows: Workflow[] = [
     icon: <Code2 className="w-6 h-6" />,
     category: 'Mon Quotidien',
     tags: ['Développement', 'Code', 'Composants', 'Testing', 'TypeScript'],
+    frameworks: ['scrum', 'spotify', 'lean'],
     difficulty: 'Intermediate',
     estimatedTime: '45-60 min',
     steps: [
@@ -675,6 +693,16 @@ export const Workflows: React.FC = () => {
   const [currentStep, setCurrentStep] = useState(0);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [selectedTag, setSelectedTag] = useState<string>('all');
+  
+  // Framework filtering
+  const {
+    frameworks,
+    selectedFrameworks,
+    toggleFramework,
+    clearFrameworks,
+    selectAllFrameworks,
+    filterWorkflows: applyFrameworkFilter,
+  } = useFrameworkFilter();
   
   const [showCanvasGenerator, setShowCanvasGenerator] = useState(false);
   const [showStoryWriter, setShowStoryWriter] = useState(false);
@@ -854,11 +882,13 @@ export const Workflows: React.FC = () => {
   const categories = Array.from(new Set(workflows.map(w => w.category)));
   const allTags = Array.from(new Set(workflows.flatMap(w => w.tags)));
 
-  const filteredWorkflows = workflows.filter(w => {
-    const categoryMatch = selectedCategory === 'all' || w.category === selectedCategory;
-    const tagMatch = selectedTag === 'all' || w.tags.includes(selectedTag);
-    return categoryMatch && tagMatch;
-  });
+  const filteredWorkflows = applyFrameworkFilter(
+    workflows.filter(w => {
+      const categoryMatch = selectedCategory === 'all' || w.category === selectedCategory;
+      const tagMatch = selectedTag === 'all' || w.tags.includes(selectedTag);
+      return categoryMatch && tagMatch;
+    })
+  );
 
   if (selectedWorkflow) {
     return (
@@ -1050,60 +1080,71 @@ export const Workflows: React.FC = () => {
       </div>
 
       {/* Filters */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center space-x-2 text-base">
-            <Filter className="w-4 h-4" />
-            <span>Filter Workflows</span>
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label className="text-sm font-medium">Category</Label>
-            <div className="flex flex-wrap gap-2">
-              <Badge
-                variant={selectedCategory === 'all' ? 'default' : 'outline'}
-                className="cursor-pointer"
-                onClick={() => setSelectedCategory('all')}
-              >
-                All
-              </Badge>
-              {categories.map(category => (
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center space-x-2 text-base">
+              <Filter className="w-4 h-4" />
+              <span>Filter Workflows</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Category</Label>
+              <div className="flex flex-wrap gap-2">
                 <Badge
-                  key={category}
-                  variant={selectedCategory === category ? 'default' : 'outline'}
+                  variant={selectedCategory === 'all' ? 'default' : 'outline'}
                   className="cursor-pointer"
-                  onClick={() => setSelectedCategory(category)}
+                  onClick={() => setSelectedCategory('all')}
                 >
-                  {category}
+                  All
                 </Badge>
-              ))}
+                {categories.map(category => (
+                  <Badge
+                    key={category}
+                    variant={selectedCategory === category ? 'default' : 'outline'}
+                    className="cursor-pointer"
+                    onClick={() => setSelectedCategory(category)}
+                  >
+                    {category}
+                  </Badge>
+                ))}
+              </div>
             </div>
-          </div>
-          <div className="space-y-2">
-            <Label className="text-sm font-medium">Tags</Label>
-            <div className="flex flex-wrap gap-2">
-              <Badge
-                variant={selectedTag === 'all' ? 'default' : 'outline'}
-                className="cursor-pointer text-xs"
-                onClick={() => setSelectedTag('all')}
-              >
-                All
-              </Badge>
-              {allTags.map(tag => (
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Tags</Label>
+              <div className="flex flex-wrap gap-2">
                 <Badge
-                  key={tag}
-                  variant={selectedTag === tag ? 'default' : 'outline'}
+                  variant={selectedTag === 'all' ? 'default' : 'outline'}
                   className="cursor-pointer text-xs"
-                  onClick={() => setSelectedTag(tag)}
+                  onClick={() => setSelectedTag('all')}
                 >
-                  {tag}
+                  All
                 </Badge>
-              ))}
+                {allTags.map(tag => (
+                  <Badge
+                    key={tag}
+                    variant={selectedTag === tag ? 'default' : 'outline'}
+                    className="cursor-pointer text-xs"
+                    onClick={() => setSelectedTag(tag)}
+                  >
+                    {tag}
+                  </Badge>
+                ))}
+              </div>
             </div>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+
+        {/* Framework Filter */}
+        <FrameworkFilter
+          frameworks={frameworks}
+          selectedFrameworks={selectedFrameworks}
+          onToggleFramework={toggleFramework}
+          onClearAll={clearFrameworks}
+          onSelectAll={selectAllFrameworks}
+        />
+      </div>
 
       {/* Workflows by Category */}
       {categories.filter(cat => filteredWorkflows.some(w => w.category === cat)).map(category => (

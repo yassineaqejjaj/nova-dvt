@@ -1,0 +1,210 @@
+{
+  "frameworks": [
+    {
+      "id": "scrum",
+      "name": "Scrum",
+      "shortName": "Scrum",
+      "emoji": "🧩",
+      "philosophy": "Itération courte, feedback continu, valeur incrémentale. Livrer rapidement et s'adapter en continu.",
+      "description": "L'agilité cadencée par excellence",
+      "deliverables": [
+        "Product Backlog",
+        "Sprint Backlog",
+        "Burndown Chart",
+        "Definition of Done",
+        "Sprint Review",
+        "Sprint Retrospective",
+        "Increment"
+      ],
+      "tools": [
+        "canvas",
+        "story",
+        "sprint",
+        "impact",
+        "kpi"
+      ],
+      "rituals": [
+        "Daily Standup",
+        "Sprint Planning",
+        "Sprint Review",
+        "Sprint Retrospective",
+        "Backlog Refinement"
+      ],
+      "best_for": "Petites/moyennes équipes, produits évolutifs, forte collaboration",
+      "team_size": "5-9 personnes",
+      "cadence": "1-4 semaines",
+      "color": "agent-blue"
+    },
+    {
+      "id": "safe",
+      "name": "SAFe",
+      "shortName": "SAFe",
+      "emoji": "🚀",
+      "philosophy": "Coordination d'équipes multiples autour d'objectifs partagés avec une gouvernance alignée.",
+      "description": "L'agilité à grande échelle",
+      "deliverables": [
+        "PI Objectives",
+        "ART",
+        "Portfolio Kanban",
+        "Solution Intent",
+        "Lean Business Case",
+        "Program Board",
+        "Value Stream Map"
+      ],
+      "tools": [
+        "roadmap",
+        "kpi",
+        "impact",
+        "canvas",
+        "sprint"
+      ],
+      "rituals": [
+        "PI Planning",
+        "System Demo",
+        "Inspect & Adapt",
+        "ART Sync",
+        "Portfolio Sync"
+      ],
+      "best_for": "Grands programmes, gouvernance forte, alignement stratégique",
+      "team_size": "50-125+ personnes",
+      "cadence": "8-12 semaines (PI)",
+      "color": "agent-purple"
+    },
+    {
+      "id": "waterfall",
+      "name": "Waterfall",
+      "shortName": "Waterfall",
+      "emoji": "🧱",
+      "philosophy": "Processus linéaire, planification complète avant exécution. Chaque phase doit être terminée avant de passer à la suivante.",
+      "description": "La méthode séquentielle",
+      "deliverables": [
+        "Cahier des charges",
+        "Gantt Chart",
+        "Design Documents",
+        "Test Plans",
+        "Requirements Specification",
+        "Architecture Diagrams",
+        "UAT Reports"
+      ],
+      "tools": [
+        "roadmap",
+        "design",
+        "code",
+        "launch"
+      ],
+      "rituals": [
+        "Phase Gate Reviews",
+        "Requirements Review",
+        "Design Review",
+        "Testing Phase",
+        "Deployment Go/No-Go"
+      ],
+      "best_for": "Projets stables, réglementés, à contraintes contractuelles",
+      "team_size": "Variable",
+      "cadence": "Phases séquentielles (mois/années)",
+      "color": "agent-orange"
+    },
+    {
+      "id": "less",
+      "name": "LeSS",
+      "shortName": "LeSS",
+      "emoji": "🌍",
+      "philosophy": "Extension de Scrum à plusieurs équipes sans lourdeur. Maximiser la simplicité et minimiser les rôles.",
+      "description": "La simplicité à l'échelle",
+      "deliverables": [
+        "Product Backlog unique",
+        "Sprint commun",
+        "Overall Retrospective",
+        "Feature Teams",
+        "Definition of Done (partagée)",
+        "Sprint Review (commune)"
+      ],
+      "tools": [
+        "canvas",
+        "story",
+        "sprint",
+        "impact"
+      ],
+      "rituals": [
+        "Overall Sprint Planning (Part 1)",
+        "Team Sprint Planning (Part 2)",
+        "Overall Sprint Review",
+        "Overall Retrospective",
+        "Product Backlog Refinement"
+      ],
+      "best_for": "Organisations déjà agiles souhaitant scaler simplement",
+      "team_size": "2-8 équipes (10-50 personnes)",
+      "cadence": "1-4 semaines",
+      "color": "agent-green"
+    },
+    {
+      "id": "spotify",
+      "name": "Spotify Model",
+      "shortName": "Spotify",
+      "emoji": "🧬",
+      "philosophy": "Structure décentralisée favorisant autonomie et innovation. Culture avant processus.",
+      "description": "La culture des tribus",
+      "deliverables": [
+        "Squad Mission",
+        "Tribe Board",
+        "Health Check",
+        "Chapter Guidelines",
+        "Guild Knowledge Base",
+        "OKRs",
+        "Squad Canvas"
+      ],
+      "tools": [
+        "canvas",
+        "story",
+        "roadmap",
+        "kpi",
+        "impact"
+      ],
+      "rituals": [
+        "Squad Sync",
+        "Chapter Meetings",
+        "Guild Gatherings",
+        "Health Check Sessions",
+        "Squad Retrospectives"
+      ],
+      "best_for": "Entreprises produits tech, scale-ups, forte culture d'innovation",
+      "team_size": "Squads (5-9), Tribes (40-150)",
+      "cadence": "Autonome par squad",
+      "color": "primary"
+    },
+    {
+      "id": "lean",
+      "name": "Lean",
+      "shortName": "Lean",
+      "emoji": "⚙️",
+      "philosophy": "Maximiser la valeur, minimiser le gaspillage. Amélioration continue du flux de valeur.",
+      "description": "La philosophie du flux et de la valeur",
+      "deliverables": [
+        "Value Stream Map",
+        "Kanban Board",
+        "A3 Report",
+        "Kaizen Plan",
+        "5 Whys Analysis",
+        "Gemba Walk Report",
+        "Cycle Time Metrics"
+      ],
+      "tools": [
+        "canvas",
+        "impact",
+        "kpi",
+        "roadmap"
+      ],
+      "rituals": [
+        "Kaizen Events",
+        "Gemba Walks",
+        "Daily Huddles",
+        "Value Stream Mapping Sessions",
+        "Retrospectives"
+      ],
+      "best_for": "Environnements orientés amélioration continue, optimisation du flux",
+      "team_size": "Variable",
+      "cadence": "Continu",
+      "color": "agent-green"
+    }
+  ]
+}
