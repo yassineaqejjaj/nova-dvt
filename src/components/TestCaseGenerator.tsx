@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
@@ -15,7 +15,8 @@ import {
   Code,
   FileText,
   TrendingUp,
-  AlertTriangle
+  AlertTriangle,
+  Import
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -47,6 +48,14 @@ interface CoverageAnalysis {
   missingScenarios: string[];
 }
 
+interface SavedArtifact {
+  id: string;
+  title: string;
+  artifact_type: string;
+  content: any;
+  created_at: string;
+}
+
 export const TestCaseGenerator = () => {
   const [artifactContent, setArtifactContent] = useState('');
   const [artifactType, setArtifactType] = useState<'user-story' | 'tech-spec' | 'epic'>('user-story');
@@ -57,6 +66,64 @@ export const TestCaseGenerator = () => {
   const [coverageAnalysis, setCoverageAnalysis] = useState<CoverageAnalysis | null>(null);
   const [automationScript, setAutomationScript] = useState('');
   const [isSaving, setIsSaving] = useState(false);
+  const [savedArtifacts, setSavedArtifacts] = useState<SavedArtifact[]>([]);
+  const [selectedArtifacts, setSelectedArtifacts] = useState<string[]>([]);
+  const [isLoadingArtifacts, setIsLoadingArtifacts] = useState(false);
+  const [showArtifactSelector, setShowArtifactSelector] = useState(false);
+
+  useEffect(() => {
+    loadSavedArtifacts();
+  }, []);
+
+  const loadSavedArtifacts = async () => {
+    setIsLoadingArtifacts(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data, error } = await supabase
+        .from('artifacts')
+        .select('id, title, artifact_type, content, created_at')
+        .eq('user_id', user.id)
+        .in('artifact_type', ['story', 'epic'])
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setSavedArtifacts(data || []);
+    } catch (error: any) {
+      console.error('Error loading artifacts:', error);
+      toast.error('Erreur lors du chargement des artefacts');
+    } finally {
+      setIsLoadingArtifacts(false);
+    }
+  };
+
+  const handleArtifactToggle = (artifactId: string) => {
+    setSelectedArtifacts(prev =>
+      prev.includes(artifactId)
+        ? prev.filter(id => id !== artifactId)
+        : [...prev, artifactId]
+    );
+  };
+
+  const handleImportArtifacts = () => {
+    if (selectedArtifacts.length === 0) {
+      toast.error('Sélectionnez au moins un artefact');
+      return;
+    }
+
+    const selected = savedArtifacts.filter(a => selectedArtifacts.includes(a.id));
+    const combinedContent = selected.map(artifact => {
+      const content = typeof artifact.content === 'string' 
+        ? artifact.content 
+        : JSON.stringify(artifact.content, null, 2);
+      return `=== ${artifact.title} ===\n${content}`;
+    }).join('\n\n');
+
+    setArtifactContent(combinedContent);
+    setShowArtifactSelector(false);
+    toast.success(`${selectedArtifacts.length} artefact(s) importé(s)`);
+  };
 
   const handleTestLevelToggle = (level: string) => {
     setTestLevels(prev => 
@@ -193,6 +260,90 @@ export const TestCaseGenerator = () => {
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
+          <div className="flex gap-2 mb-4">
+            <Button
+              variant="outline"
+              onClick={() => setShowArtifactSelector(!showArtifactSelector)}
+              className="flex items-center gap-2"
+            >
+              <Import className="w-4 h-4" />
+              Importer depuis mes artefacts
+            </Button>
+          </div>
+
+          {showArtifactSelector && (
+            <Card className="mb-4">
+              <CardHeader>
+                <CardTitle className="text-base">Sélectionner des artefacts</CardTitle>
+                <CardDescription>
+                  Choisissez un ou plusieurs artefacts à tester
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {isLoadingArtifacts ? (
+                  <div className="flex items-center justify-center p-4">
+                    <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+                  </div>
+                ) : savedArtifacts.length === 0 ? (
+                  <p className="text-sm text-muted-foreground text-center p-4">
+                    Aucun artefact disponible (User Stories ou Epics)
+                  </p>
+                ) : (
+                  <>
+                    <ScrollArea className="h-[200px] mb-4">
+                      <div className="space-y-2">
+                        {savedArtifacts.map((artifact) => (
+                          <div
+                            key={artifact.id}
+                            className="flex items-start gap-3 p-3 border rounded-lg hover:bg-accent/50 transition-colors"
+                          >
+                            <Checkbox
+                              checked={selectedArtifacts.includes(artifact.id)}
+                              onCheckedChange={() => handleArtifactToggle(artifact.id)}
+                              id={artifact.id}
+                            />
+                            <label
+                              htmlFor={artifact.id}
+                              className="flex-1 cursor-pointer"
+                            >
+                              <div className="flex items-center gap-2 mb-1">
+                                <span className="font-medium text-sm">{artifact.title}</span>
+                                <Badge variant="outline" className="text-xs">
+                                  {artifact.artifact_type === 'story' ? 'User Story' : 'Epic'}
+                                </Badge>
+                              </div>
+                              <p className="text-xs text-muted-foreground">
+                                Créé le {new Date(artifact.created_at).toLocaleDateString('fr-FR')}
+                              </p>
+                            </label>
+                          </div>
+                        ))}
+                      </div>
+                    </ScrollArea>
+                    <div className="flex gap-2">
+                      <Button
+                        onClick={handleImportArtifacts}
+                        disabled={selectedArtifacts.length === 0}
+                        className="flex-1"
+                      >
+                        Importer {selectedArtifacts.length > 0 && `(${selectedArtifacts.length})`}
+                      </Button>
+                      <Button
+                        variant="outline"
+                        onClick={() => {
+                          setShowArtifactSelector(false);
+                          setSelectedArtifacts([]);
+                        }}
+                      >
+                        Annuler
+                      </Button>
+                    </div>
+                  </>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <label className="text-sm font-medium">Type d'artefact</label>
