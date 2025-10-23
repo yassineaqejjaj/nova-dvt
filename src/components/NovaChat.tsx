@@ -557,6 +557,16 @@ Utilisez ce contexte pour guider l'utilisateur dans l'étape actuelle.
     }
 
     const toolMapping: Record<string, () => void> = {
+      create_context: () => {
+        console.log('Create context action triggered');
+        onNavigate('context' as TabType);
+        onOpenChange(false);
+      },
+      market_research: () => {
+        console.log('Market research action triggered');
+        onNavigate('research' as TabType);
+        onOpenChange(false);
+      },
       canvas_generator: () => {
         console.log('Canvas generator action triggered');
         onAction?.('create_canvas');
@@ -617,7 +627,6 @@ Utilisez ce contexte pour guider l'utilisateur dans l'étape actuelle.
         onOpenChange(false);
       },
       show_analysis: () => {
-        // Show detailed analysis in a new message
         toast({
           title: "Analyse disponible",
           description: "Les détails de l'analyse sont affichés ci-dessus."
