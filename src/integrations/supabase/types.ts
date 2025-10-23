@@ -78,6 +78,7 @@ export type Database = {
           created_at: string | null
           id: string
           metadata: Json | null
+          prd_id: string | null
           squad_id: string | null
           title: string
           updated_at: string | null
@@ -89,6 +90,7 @@ export type Database = {
           created_at?: string | null
           id?: string
           metadata?: Json | null
+          prd_id?: string | null
           squad_id?: string | null
           title: string
           updated_at?: string | null
@@ -100,12 +102,20 @@ export type Database = {
           created_at?: string | null
           id?: string
           metadata?: Json | null
+          prd_id?: string | null
           squad_id?: string | null
           title?: string
           updated_at?: string | null
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "artifacts_prd_id_fkey"
+            columns: ["prd_id"]
+            isOneToOne: false
+            referencedRelation: "prds"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "artifacts_squad_id_fkey"
             columns: ["squad_id"]
@@ -453,6 +463,47 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      prds: {
+        Row: {
+          created_at: string
+          document_content: Json
+          id: string
+          idea_description: string
+          product_context_id: string | null
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          document_content: Json
+          id?: string
+          idea_description: string
+          product_context_id?: string | null
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          document_content?: Json
+          id?: string
+          idea_description?: string
+          product_context_id?: string | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prds_product_context_id_fkey"
+            columns: ["product_context_id"]
+            isOneToOne: false
+            referencedRelation: "product_contexts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       product_contexts: {
         Row: {
@@ -1092,10 +1143,7 @@ export type Database = {
         }
         Returns: boolean
       }
-      soft_delete_context: {
-        Args: { context_id: string }
-        Returns: undefined
-      }
+      soft_delete_context: { Args: { context_id: string }; Returns: undefined }
     }
     Enums: {
       app_role: "admin" | "moderator" | "user"

@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -36,6 +36,8 @@ import { ContextSelector } from './ContextSelector';
 interface CanvasGeneratorProps {
   open: boolean;
   onClose: () => void;
+  prdId?: string | null;
+  prdContent?: any;
 }
 
 interface CanvasTemplate {
@@ -468,7 +470,9 @@ canvasSegments.development.templates = canvasTemplates.filter(t =>
 
 export const CanvasGenerator: React.FC<CanvasGeneratorProps> = ({
   open,
-  onClose
+  onClose,
+  prdId,
+  prdContent
 }) => {
   const [selectedTemplate, setSelectedTemplate] = useState<CanvasTemplate | null>(null);
   const [projectContext, setProjectContext] = useState('');
@@ -481,6 +485,17 @@ export const CanvasGenerator: React.FC<CanvasGeneratorProps> = ({
   const [showConfidentialityDialog, setShowConfidentialityDialog] = useState(false);
   const [pendingFiles, setPendingFiles] = useState<FileList | null>(null);
   const [importedContext, setImportedContext] = useState<any>(null);
+
+  // Pre-fill with PRD content if provided
+  useEffect(() => {
+    if (prdContent && open) {
+      const contextFromPRD = `PRD Context:
+Vision: ${prdContent.vision || ''}
+Problem: ${prdContent.problem || ''}
+Features: ${prdContent.features?.map((f: any) => f.name).join(', ') || ''}`;
+      setProjectContext(contextFromPRD);
+    }
+  }, [prdContent, open]);
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
@@ -569,6 +584,7 @@ export const CanvasGenerator: React.FC<CanvasGeneratorProps> = ({
             artifact_type: 'canvas',
             title: `${selectedTemplate.name} - ${new Date().toLocaleDateString()}`,
             content: data.canvas as any,
+            prd_id: prdId || null,
             metadata: { template: selectedTemplate.id, formData } as any
           }]);
 

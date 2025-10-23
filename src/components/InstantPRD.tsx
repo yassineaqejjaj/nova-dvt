@@ -30,6 +30,8 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { CanvasGenerator } from "./CanvasGenerator";
+import { PRDArtifacts } from "./PRDArtifacts";
 
 interface PRDSection {
   id: string;
@@ -103,6 +105,8 @@ export const InstantPRD = () => {
   const [activeContext, setActiveContext] = useState<any>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [editedDocument, setEditedDocument] = useState<PRDDocument | null>(null);
+  const [savedPrdId, setSavedPrdId] = useState<string | null>(null);
+  const [showArtifactCreator, setShowArtifactCreator] = useState(false);
 
   // Load active product context
   useEffect(() => {
@@ -839,23 +843,25 @@ Génère 3-4 références/annexes (JSON uniquement):
 
         const contentToSave = isEditMode ? editedDocument : prdDocument;
 
-        const { error } = await supabase
-          .from('artifacts')
+        // Save PRD to prds table
+        const { data: prdData, error: prdError } = await supabase
+          .from('prds')
           .insert([{
             user_id: user.id,
-            artifact_type: 'prd' as any,
             title: `PRD - ${idea}`,
-            content: contentToSave as any,
-            metadata: {
-              generatedAt: new Date().toISOString(),
-              idea: idea,
-              sectionsCount: sections.length
-            } as any
-          }]);
+            idea_description: idea,
+            document_content: contentToSave as any,
+            product_context_id: activeContext?.id || null
+          }])
+          .select()
+          .single();
 
-        if (error) throw error;
+        if (prdError) throw prdError;
 
-        toast.success("PRD sauvegardé dans vos artefacts !");
+        if (prdData) {
+          setSavedPrdId(prdData.id);
+          toast.success("PRD sauvegardé avec succès !");
+        }
       } catch (error) {
         console.error('Error saving PRD:', error);
         toast.error("Erreur lors de la sauvegarde");
@@ -939,17 +945,24 @@ Génère 3-4 références/annexes (JSON uniquement):
                       <Edit className="w-4 h-4 mr-2" />
                       Edit
                     </Button>
+                    {savedPrdId && (
+                      <Button 
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => setShowArtifactCreator(true)}
+                      >
+                        <Sparkles className="w-4 h-4 mr-2" />
+                        Créer un artefact
+                      </Button>
+                    )}
                     <Button 
                       size="sm"
                       onClick={handleSavePRD}
-                      disabled={isSaving}
+                      disabled={isSaving || !!savedPrdId}
                     >
-                      {isSaving ? (
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      ) : (
-                        <Save className="w-4 h-4 mr-2" />
-                      )}
-                      Enregistrer PRD
+                      {isSaving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                      <Save className="w-4 h-4 mr-2" />
+                      {savedPrdId ? 'Sauvegardé' : 'Sauvegarder'}
                     </Button>
                   </>
                 )}
@@ -1589,6 +1602,11 @@ Génère 3-4 références/annexes (JSON uniquement):
                   </ul>
                 </CardContent>
               </Card>
+
+              {/* PRD Artifacts Section */}
+              {savedPrdId && (
+                <PRDArtifacts prdId={savedPrdId} />
+              )}
             </div>
           </div>
         </div>
@@ -1597,7 +1615,17 @@ Génère 3-4 références/annexes (JSON uniquement):
   };
 
   if (showDocument) {
-    return renderDocumentScreen();
+    return (
+      <>
+        {renderDocumentScreen()}
+        <CanvasGenerator 
+          open={showArtifactCreator} 
+          onClose={() => setShowArtifactCreator(false)}
+          prdId={savedPrdId}
+          prdContent={prdDocument}
+        />
+      </>
+    );
   }
 
   if (isGenerating) {
