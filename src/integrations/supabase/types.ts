@@ -79,6 +79,7 @@ export type Database = {
           id: string
           metadata: Json | null
           prd_id: string | null
+          product_context_id: string | null
           squad_id: string | null
           title: string
           updated_at: string | null
@@ -91,6 +92,7 @@ export type Database = {
           id?: string
           metadata?: Json | null
           prd_id?: string | null
+          product_context_id?: string | null
           squad_id?: string | null
           title: string
           updated_at?: string | null
@@ -103,6 +105,7 @@ export type Database = {
           id?: string
           metadata?: Json | null
           prd_id?: string | null
+          product_context_id?: string | null
           squad_id?: string | null
           title?: string
           updated_at?: string | null
@@ -114,6 +117,13 @@ export type Database = {
             columns: ["prd_id"]
             isOneToOne: false
             referencedRelation: "prds"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "artifacts_product_context_id_fkey"
+            columns: ["product_context_id"]
+            isOneToOne: false
+            referencedRelation: "product_contexts"
             referencedColumns: ["id"]
           },
           {

@@ -579,12 +579,24 @@ Features: ${prdContent.features?.map((f: any) => f.name).join(', ') || ''}`;
         // Save artifact to database
         const { data: { user } } = await supabase.auth.getUser();
         if (user) {
+          // Load product context ID from PRD if available
+          let contextId = null;
+          if (prdId) {
+            const { data: prdData } = await supabase
+              .from('prds')
+              .select('product_context_id')
+              .eq('id', prdId)
+              .single();
+            contextId = prdData?.product_context_id || null;
+          }
+
           await supabase.from('artifacts').insert([{
             user_id: user.id,
             artifact_type: 'canvas',
             title: `${selectedTemplate.name} - ${new Date().toLocaleDateString()}`,
             content: data.canvas as any,
             prd_id: prdId || null,
+            product_context_id: contextId,
             metadata: { template: selectedTemplate.id, formData } as any
           }]);
 
