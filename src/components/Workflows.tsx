@@ -20,6 +20,9 @@ import { TechnicalSpecification } from './TechnicalSpecification';
 import { SmartDiscoveryCanvas } from './SmartDiscoveryCanvas';
 import EpicToUserStories from './EpicToUserStories';
 import { GitToSpecsGenerator } from './GitToSpecsGenerator';
+import { TestCaseGenerator } from './TestCaseGenerator';
+import { AcceptanceCriteriaValidator } from './AcceptanceCriteriaValidator';
+import { CriticalPathAnalyzer } from './CriticalPathAnalyzer';
 import { FrameworkFilter } from './FrameworkFilter';
 import { useFrameworkFilter } from '@/hooks/useFrameworkFilter';
 import {
@@ -1362,9 +1365,7 @@ export const Workflows: React.FC = () => {
             ✕ Fermer
           </Button>
           <div className="container mx-auto p-6">
-            {React.createElement(
-              React.lazy(() => import('@/components/TestCaseGenerator').then(m => ({ default: m.TestCaseGenerator })))
-            )}
+            <TestCaseGenerator />
           </div>
         </div>
       )}
@@ -1380,9 +1381,7 @@ export const Workflows: React.FC = () => {
             ✕ Fermer
           </Button>
           <div className="container mx-auto p-6">
-            {React.createElement(
-              React.lazy(() => import('@/components/AcceptanceCriteriaValidator').then(m => ({ default: m.AcceptanceCriteriaValidator })))
-            )}
+            <AcceptanceCriteriaValidator />
           </div>
         </div>
       )}
@@ -1414,9 +1413,7 @@ export const Workflows: React.FC = () => {
             ✕ Fermer
           </Button>
           <div className="container mx-auto p-6">
-            {React.createElement(
-              React.lazy(() => import('@/components/CriticalPathAnalyzer').then(m => ({ default: m.CriticalPathAnalyzer })))
-            )}
+            <CriticalPathAnalyzer />
           </div>
         </div>
       )}
