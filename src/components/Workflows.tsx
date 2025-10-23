@@ -922,28 +922,34 @@ export const Workflows: React.FC = () => {
         case 'sprint':
           setShowSprintPlanner(true);
           break;
-        case 'kpi':
-          setShowKPIGenerator(true);
-          break;
-        case 'epic-stories':
-          setShowEpicToStories(true);
-          break;
-        case 'test-generator':
-          setShowTestCaseGenerator(true);
-          break;
-        case 'ac-validator':
-          setShowACValidator(true);
-          break;
-        case 'git-to-specs':
-          setShowGitToSpecs(true);
-          break;
-        case 'critical-path-analyzer':
-          setShowCriticalPathAnalyzer(true);
-          break;
-        default:
-          console.warn('Unknown tool:', tool);
-      }
-      toast.success(`Ouverture de l'outil: ${tool}`);
+      case 'kpi':
+        setShowKPIGenerator(true);
+        break;
+      case 'epic-stories':
+        setShowEpicToStories(true);
+        break;
+      case 'test-generator':
+        setShowTestCaseGenerator(true);
+        setTimeout(() => {
+          document.getElementById('test-generator-anchor')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 0);
+        break;
+      case 'ac-validator':
+        setShowACValidator(true);
+        break;
+      case 'git-to-specs':
+        setShowGitToSpecs(true);
+        break;
+      case 'critical-path-analyzer':
+        setShowCriticalPathAnalyzer(true);
+        setTimeout(() => {
+          document.getElementById('critical-path-anchor')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 0);
+        break;
+      default:
+        console.warn('Unknown tool:', tool);
+    }
+    toast.success(`Ouverture de l'outil: ${tool}`);
     } catch (e) {
       console.error('Tool launch error', e);
       toast.error("Impossible d'ouvrir l'outil");
@@ -1376,7 +1382,7 @@ export const Workflows: React.FC = () => {
       )}
       
       {showTestCaseGenerator && (
-        <div className="mt-6">
+        <div id="test-generator-anchor" className="mt-6">
           <TestCaseGenerator />
         </div>
       )}
@@ -1414,7 +1420,7 @@ export const Workflows: React.FC = () => {
       )}
       
       {showCriticalPathAnalyzer && (
-        <div className="mt-6">
+        <div id="critical-path-anchor" className="mt-6">
           <CriticalPathAnalyzer />
         </div>
       )}
