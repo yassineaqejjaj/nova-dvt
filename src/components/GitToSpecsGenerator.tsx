@@ -8,32 +8,168 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { GitBranch, FolderGit2, Loader2, Download, CheckCircle2, AlertCircle, Code, FileText, Bug, Shield } from "lucide-react";
+import { 
+  GitBranch, FolderGit2, Loader2, Download, Code, FileText, Bug, Shield,
+  Target, Users, Lightbulb, TrendingUp, Calendar, BarChart
+} from "lucide-react";
 
 interface GitRepoAnalysis {
-  specDoc: {
+  // Executive Summary
+  executive: {
     overview: string;
-    functionalRequirements: Array<{ id: string; description: string; priority: string }>;
-    nonFunctionalRequirements: Array<{ id: string; type: string; description: string; metric: string }>;
-    acceptanceCriteria: Array<{ requirement: string; criteria: string[] }>;
+    productVision: string;
+    problemStatement: string;
+    targetAudience: string;
+    valueProposition: string;
   };
+  
+  // Product Context
+  context: {
+    businessContext: string;
+    marketAnalysis: string;
+    competitiveLandscape: string;
+    constraints: string[];
+    assumptions: string[];
+  };
+  
+  // User Research
+  personas: Array<{
+    name: string;
+    role: string;
+    goals: string[];
+    painPoints: string[];
+    behaviors: string[];
+  }>;
+  
+  userJourneys: Array<{
+    persona: string;
+    stage: string;
+    actions: string[];
+    thoughts: string[];
+    painPoints: string[];
+    opportunities: string[];
+  }>;
+  
+  // Features & Requirements
+  features: Array<{
+    id: string;
+    name: string;
+    description: string;
+    category: string;
+    priority: 'must' | 'should' | 'could' | 'wont';
+    userStories: Array<{
+      id: string;
+      title: string;
+      description: string;
+      acceptanceCriteria: string[];
+      complexity: 'XS' | 'S' | 'M' | 'L' | 'XL';
+    }>;
+  }>;
+  
+  functionalRequirements: Array<{
+    id: string;
+    description: string;
+    priority: 'must' | 'should' | 'could' | 'wont';
+    relatedFeatures: string[];
+  }>;
+  
+  nonFunctionalRequirements: Array<{
+    id: string;
+    type: string;
+    description: string;
+    metric: string;
+    target: string;
+  }>;
+  
+  // Technical Specifications
   techSpec: {
-    architecture: string;
-    frameworks: string[];
-    components: Array<{ name: string; type: string; description: string; dependencies: string[] }>;
-    dataModels: Array<{ name: string; fields: string[]; relationships: string[] }>;
+    architecture: {
+      overview: string;
+      patterns: string[];
+      components: Array<{
+        name: string;
+        type: string;
+        description: string;
+        responsibilities: string[];
+        dependencies: string[];
+      }>;
+    };
+    frameworks: Array<{
+      name: string;
+      version: string;
+      purpose: string;
+    }>;
+    dataModels: Array<{
+      name: string;
+      description: string;
+      fields: Array<{ name: string; type: string; required: boolean }>;
+      relationships: string[];
+    }>;
+    integrations: Array<{
+      name: string;
+      type: string;
+      description: string;
+      apis: string[];
+    }>;
   };
-  apiCatalog: Array<{ method: string; path: string; description: string; parameters: string[]; authentication: boolean }>;
+  
+  // API Documentation
+  apiCatalog: Array<{
+    method: string;
+    path: string;
+    description: string;
+    parameters: Array<{ name: string; type: string; required: boolean }>;
+    authentication: boolean;
+    responses: Array<{ code: number; description: string }>;
+  }>;
+  
+  // Quality Assurance
   testPlan: {
+    strategy: string;
     coverageScore: number;
     testedEndpoints: number;
     totalEndpoints: number;
+    testTypes: Array<{
+      type: string;
+      coverage: number;
+      description: string;
+    }>;
     gaps: string[];
     suggestions: string[];
+    criticalPaths: string[];
   };
-  riskRegister: Array<{ type: string; severity: string; description: string; location: string; recommendation: string }>;
+  
+  // Risk Management
+  riskRegister: Array<{
+    type: string;
+    severity: 'low' | 'medium' | 'high' | 'critical';
+    description: string;
+    location: string;
+    impact: string;
+    probability: string;
+    mitigation: string;
+    dependencies: string[];
+  }>;
+  
+  // Roadmap & Planning
+  roadmap: Array<{
+    phase: string;
+    timeline: string;
+    goals: string[];
+    deliverables: string[];
+    dependencies: string[];
+  }>;
+  
+  // Success Metrics
+  kpis: Array<{
+    name: string;
+    description: string;
+    target: string;
+    measurement: string;
+  }>;
 }
 
 export const GitToSpecsGenerator = () => {
@@ -93,7 +229,7 @@ export const GitToSpecsGenerator = () => {
       toast.success("Repository analyzed successfully!");
       setTimeout(() => setStep(4), 500);
 
-    } catch (error) {
+    } catch (error: any) {
       console.error('Analysis error:', error);
       toast.error(error.message || "Failed to analyze repository");
       clearInterval(progressInterval);
@@ -114,6 +250,11 @@ export const GitToSpecsGenerator = () => {
     toast.success(`${type} exported successfully!`);
   };
 
+  const exportAllArtifacts = () => {
+    if (!analysis) return;
+    exportArtifact('complete-analysis', analysis);
+  };
+
   const getSeverityColor = (severity: string) => {
     switch (severity) {
       case 'critical': return 'destructive';
@@ -124,15 +265,25 @@ export const GitToSpecsGenerator = () => {
     }
   };
 
+  const getPriorityColor = (priority: string) => {
+    switch (priority) {
+      case 'must': return 'default';
+      case 'should': return 'secondary';
+      case 'could': return 'outline';
+      case 'wont': return 'outline';
+      default: return 'outline';
+    }
+  };
+
   return (
     <Card className="w-full">
       <CardHeader>
         <div className="flex items-center gap-2">
           <FolderGit2 className="h-6 w-6 text-primary" />
           <div>
-            <CardTitle>Git Repository → Specs</CardTitle>
+            <CardTitle>Git Repository → Comprehensive Specs</CardTitle>
             <CardDescription>
-              Generate comprehensive documentation from your codebase
+              Generate detailed product & technical documentation from your codebase
             </CardDescription>
           </div>
         </div>
@@ -261,7 +412,7 @@ export const GitToSpecsGenerator = () => {
               <p className="text-sm text-muted-foreground mb-4">
                 {progress < 30 && "Connecting to repository..."}
                 {progress >= 30 && progress < 60 && "Scanning codebase structure..."}
-                {progress >= 60 && progress < 90 && "Generating documentation artifacts..."}
+                {progress >= 60 && progress < 90 && "Generating comprehensive documentation..."}
                 {progress >= 90 && "Finalizing analysis..."}
               </p>
               <Progress value={progress} className="w-full max-w-md mx-auto" />
@@ -272,172 +423,692 @@ export const GitToSpecsGenerator = () => {
         {/* Step 4: Review & Export */}
         {step === 4 && analysis && (
           <div className="space-y-4">
-            <Tabs defaultValue="spec" className="w-full">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold">Comprehensive Documentation</h3>
+              <Button size="sm" onClick={exportAllArtifacts}>
+                <Download className="h-4 w-4 mr-1" />Export All
+              </Button>
+            </div>
+
+            <Tabs defaultValue="executive" className="w-full">
               <TabsList className="grid w-full grid-cols-5">
-                <TabsTrigger value="spec"><FileText className="h-4 w-4 mr-1" />Spec Doc</TabsTrigger>
-                <TabsTrigger value="tech"><Code className="h-4 w-4 mr-1" />Tech Spec</TabsTrigger>
-                <TabsTrigger value="api"><GitBranch className="h-4 w-4 mr-1" />APIs</TabsTrigger>
-                <TabsTrigger value="test"><Bug className="h-4 w-4 mr-1" />Tests</TabsTrigger>
-                <TabsTrigger value="risk"><Shield className="h-4 w-4 mr-1" />Risks</TabsTrigger>
+                <TabsTrigger value="executive"><Target className="h-4 w-4 mr-1" />Executive</TabsTrigger>
+                <TabsTrigger value="users"><Users className="h-4 w-4 mr-1" />Users</TabsTrigger>
+                <TabsTrigger value="features"><Lightbulb className="h-4 w-4 mr-1" />Features</TabsTrigger>
+                <TabsTrigger value="tech"><Code className="h-4 w-4 mr-1" />Tech</TabsTrigger>
+                <TabsTrigger value="qa"><Bug className="h-4 w-4 mr-1" />QA</TabsTrigger>
               </TabsList>
 
-              <TabsContent value="spec" className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <h3 className="text-lg font-semibold">Specification Document</h3>
-                  <Button size="sm" onClick={() => exportArtifact('spec-doc', analysis.specDoc)}>
-                    <Download className="h-4 w-4 mr-1" />Export
-                  </Button>
-                </div>
-                <div className="space-y-3">
-                  <div>
-                    <h4 className="font-medium mb-2">Overview</h4>
-                    <p className="text-sm text-muted-foreground">{analysis.specDoc.overview}</p>
-                  </div>
-                  <div>
-                    <h4 className="font-medium mb-2">Functional Requirements ({analysis.specDoc.functionalRequirements.length})</h4>
-                    <div className="space-y-2">
-                      {analysis.specDoc.functionalRequirements.map((req) => (
-                        <div key={req.id} className="flex items-start gap-2 text-sm">
-                          <Badge variant={req.priority === 'must' ? 'default' : 'secondary'}>{req.priority}</Badge>
-                          <span>{req.id}: {req.description}</span>
-                        </div>
-                      ))}
+              {/* Executive Summary Tab */}
+              <TabsContent value="executive" className="space-y-4">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Target className="h-5 w-5" />
+                      Executive Summary
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div>
+                      <h4 className="font-semibold mb-2">Overview</h4>
+                      <p className="text-sm text-muted-foreground">{analysis.executive.overview}</p>
                     </div>
-                  </div>
-                </div>
-              </TabsContent>
-
-              <TabsContent value="tech" className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <h3 className="text-lg font-semibold">Technical Specification</h3>
-                  <Button size="sm" onClick={() => exportArtifact('tech-spec', analysis.techSpec)}>
-                    <Download className="h-4 w-4 mr-1" />Export
-                  </Button>
-                </div>
-                <div className="space-y-3">
-                  <div>
-                    <h4 className="font-medium mb-2">Architecture</h4>
-                    <p className="text-sm text-muted-foreground">{analysis.techSpec.architecture}</p>
-                  </div>
-                  <div>
-                    <h4 className="font-medium mb-2">Frameworks</h4>
-                    <div className="flex flex-wrap gap-2">
-                      {analysis.techSpec.frameworks.map((fw) => (
-                        <Badge key={fw} variant="outline">{fw}</Badge>
-                      ))}
+                    <Separator />
+                    <div>
+                      <h4 className="font-semibold mb-2">Product Vision</h4>
+                      <p className="text-sm text-muted-foreground">{analysis.executive.productVision}</p>
                     </div>
-                  </div>
-                  <div>
-                    <h4 className="font-medium mb-2">Components ({analysis.techSpec.components.length})</h4>
-                    <div className="space-y-2">
-                      {analysis.techSpec.components.map((comp) => (
-                        <div key={comp.name} className="text-sm">
-                          <span className="font-medium">{comp.name}</span> - {comp.description}
-                        </div>
-                      ))}
+                    <Separator />
+                    <div>
+                      <h4 className="font-semibold mb-2">Problem Statement</h4>
+                      <p className="text-sm text-muted-foreground">{analysis.executive.problemStatement}</p>
                     </div>
-                  </div>
-                </div>
-              </TabsContent>
-
-              <TabsContent value="api" className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <h3 className="text-lg font-semibold">API Catalog ({analysis.apiCatalog.length} endpoints)</h3>
-                  <Button size="sm" onClick={() => exportArtifact('api-catalog', analysis.apiCatalog)}>
-                    <Download className="h-4 w-4 mr-1" />Export
-                  </Button>
-                </div>
-                <div className="space-y-2">
-                  {analysis.apiCatalog.map((api, idx) => (
-                    <div key={idx} className="flex items-center gap-2 text-sm border rounded p-2">
-                      <Badge variant="outline">{api.method}</Badge>
-                      <code className="flex-1">{api.path}</code>
-                      {api.authentication && <Badge variant="secondary">Auth</Badge>}
+                    <Separator />
+                    <div>
+                      <h4 className="font-semibold mb-2">Target Audience</h4>
+                      <p className="text-sm text-muted-foreground">{analysis.executive.targetAudience}</p>
                     </div>
-                  ))}
-                </div>
-              </TabsContent>
+                    <Separator />
+                    <div>
+                      <h4 className="font-semibold mb-2">Value Proposition</h4>
+                      <p className="text-sm text-muted-foreground">{analysis.executive.valueProposition}</p>
+                    </div>
+                  </CardContent>
+                </Card>
 
-              <TabsContent value="test" className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <h3 className="text-lg font-semibold">Test Plan</h3>
-                  <Button size="sm" onClick={() => exportArtifact('test-plan', analysis.testPlan)}>
-                    <Download className="h-4 w-4 mr-1" />Export
-                  </Button>
-                </div>
-                <div className="space-y-3">
-                  <div className="grid grid-cols-3 gap-4">
-                    <Card>
-                      <CardContent className="pt-6 text-center">
-                        <div className="text-3xl font-bold text-primary">{analysis.testPlan.coverageScore}%</div>
-                        <div className="text-sm text-muted-foreground">Coverage Score</div>
-                      </CardContent>
-                    </Card>
-                    <Card>
-                      <CardContent className="pt-6 text-center">
-                        <div className="text-3xl font-bold">{analysis.testPlan.testedEndpoints}</div>
-                        <div className="text-sm text-muted-foreground">Tested Endpoints</div>
-                      </CardContent>
-                    </Card>
-                    <Card>
-                      <CardContent className="pt-6 text-center">
-                        <div className="text-3xl font-bold">{analysis.testPlan.totalEndpoints}</div>
-                        <div className="text-sm text-muted-foreground">Total Endpoints</div>
-                      </CardContent>
-                    </Card>
-                  </div>
-                  <div>
-                    <h4 className="font-medium mb-2 flex items-center gap-2">
-                      <AlertCircle className="h-4 w-4" />Coverage Gaps
-                    </h4>
-                    <ul className="space-y-1 text-sm text-muted-foreground">
-                      {analysis.testPlan.gaps.map((gap, idx) => (
-                        <li key={idx}>• {gap}</li>
-                      ))}
-                    </ul>
-                  </div>
-                </div>
-              </TabsContent>
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Product Context</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div>
+                      <h4 className="font-semibold mb-2">Business Context</h4>
+                      <p className="text-sm text-muted-foreground">{analysis.context.businessContext}</p>
+                    </div>
+                    <Separator />
+                    <div>
+                      <h4 className="font-semibold mb-2">Market Analysis</h4>
+                      <p className="text-sm text-muted-foreground">{analysis.context.marketAnalysis}</p>
+                    </div>
+                    <Separator />
+                    <div>
+                      <h4 className="font-semibold mb-2">Competitive Landscape</h4>
+                      <p className="text-sm text-muted-foreground">{analysis.context.competitiveLandscape}</p>
+                    </div>
+                    <Separator />
+                    <div>
+                      <h4 className="font-semibold mb-2">Constraints</h4>
+                      <ul className="list-disc list-inside space-y-1">
+                        {analysis.context.constraints.map((constraint, idx) => (
+                          <li key={idx} className="text-sm text-muted-foreground">{constraint}</li>
+                        ))}
+                      </ul>
+                    </div>
+                    <Separator />
+                    <div>
+                      <h4 className="font-semibold mb-2">Assumptions</h4>
+                      <ul className="list-disc list-inside space-y-1">
+                        {analysis.context.assumptions.map((assumption, idx) => (
+                          <li key={idx} className="text-sm text-muted-foreground">{assumption}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  </CardContent>
+                </Card>
 
-              <TabsContent value="risk" className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <h3 className="text-lg font-semibold">Risk Register ({analysis.riskRegister.length} items)</h3>
-                  <Button size="sm" onClick={() => exportArtifact('risk-register', analysis.riskRegister)}>
-                    <Download className="h-4 w-4 mr-1" />Export
-                  </Button>
-                </div>
-                <div className="space-y-2">
-                  {analysis.riskRegister.map((risk, idx) => (
-                    <Card key={idx}>
-                      <CardContent className="pt-4">
-                        <div className="flex items-start justify-between mb-2">
-                          <div className="flex items-center gap-2">
-                            <Badge variant={getSeverityColor(risk.severity) as any}>{risk.severity}</Badge>
-                            <Badge variant="outline">{risk.type}</Badge>
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Calendar className="h-5 w-5" />
+                      Roadmap ({analysis.roadmap.length} phases)
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    {analysis.roadmap.map((phase, idx) => (
+                      <Card key={idx}>
+                        <CardContent className="pt-4">
+                          <div className="flex justify-between items-start mb-2">
+                            <h4 className="font-semibold">{phase.phase}</h4>
+                            <Badge variant="outline">{phase.timeline}</Badge>
                           </div>
+                          <div className="space-y-2 text-sm">
+                            <div>
+                              <span className="font-medium">Goals:</span>
+                              <ul className="list-disc list-inside ml-2">
+                                {phase.goals.map((goal, gIdx) => (
+                                  <li key={gIdx}>{goal}</li>
+                                ))}
+                              </ul>
+                            </div>
+                            <div>
+                              <span className="font-medium">Deliverables:</span>
+                              <ul className="list-disc list-inside ml-2">
+                                {phase.deliverables.map((deliverable, dIdx) => (
+                                  <li key={dIdx}>{deliverable}</li>
+                                ))}
+                              </ul>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <BarChart className="h-5 w-5" />
+                      Success Metrics ({analysis.kpis.length} KPIs)
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-2">
+                    {analysis.kpis.map((kpi, idx) => (
+                      <Card key={idx}>
+                        <CardContent className="pt-4">
+                          <h4 className="font-semibold mb-1">{kpi.name}</h4>
+                          <p className="text-sm text-muted-foreground mb-2">{kpi.description}</p>
+                          <div className="flex gap-4 text-sm">
+                            <div>
+                              <span className="font-medium">Target:</span> {kpi.target}
+                            </div>
+                            <div>
+                              <span className="font-medium">Measurement:</span> {kpi.measurement}
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              {/* Users Tab */}
+              <TabsContent value="users" className="space-y-4">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>User Personas ({analysis.personas.length})</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    {analysis.personas.map((persona, idx) => (
+                      <Card key={idx}>
+                        <CardContent className="pt-4">
+                          <div className="flex items-start justify-between mb-3">
+                            <div>
+                              <h4 className="font-semibold text-lg">{persona.name}</h4>
+                              <p className="text-sm text-muted-foreground">{persona.role}</p>
+                            </div>
+                          </div>
+                          <div className="grid md:grid-cols-3 gap-4 text-sm">
+                            <div>
+                              <h5 className="font-medium mb-1">Goals</h5>
+                              <ul className="list-disc list-inside space-y-1">
+                                {persona.goals.map((goal, gIdx) => (
+                                  <li key={gIdx} className="text-muted-foreground">{goal}</li>
+                                ))}
+                              </ul>
+                            </div>
+                            <div>
+                              <h5 className="font-medium mb-1">Pain Points</h5>
+                              <ul className="list-disc list-inside space-y-1">
+                                {persona.painPoints.map((pain, pIdx) => (
+                                  <li key={pIdx} className="text-muted-foreground">{pain}</li>
+                                ))}
+                              </ul>
+                            </div>
+                            <div>
+                              <h5 className="font-medium mb-1">Behaviors</h5>
+                              <ul className="list-disc list-inside space-y-1">
+                                {persona.behaviors.map((behavior, bIdx) => (
+                                  <li key={bIdx} className="text-muted-foreground">{behavior}</li>
+                                ))}
+                              </ul>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle>User Journeys ({analysis.userJourneys.length})</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    {analysis.userJourneys.map((journey, idx) => (
+                      <Card key={idx}>
+                        <CardContent className="pt-4">
+                          <div className="mb-3">
+                            <Badge variant="outline" className="mb-2">{journey.persona}</Badge>
+                            <h4 className="font-semibold">{journey.stage}</h4>
+                          </div>
+                          <div className="grid md:grid-cols-2 gap-4 text-sm">
+                            <div>
+                              <h5 className="font-medium mb-1">Actions</h5>
+                              <ul className="list-disc list-inside space-y-1">
+                                {journey.actions.map((action, aIdx) => (
+                                  <li key={aIdx} className="text-muted-foreground">{action}</li>
+                                ))}
+                              </ul>
+                            </div>
+                            <div>
+                              <h5 className="font-medium mb-1">Thoughts</h5>
+                              <ul className="list-disc list-inside space-y-1">
+                                {journey.thoughts.map((thought, tIdx) => (
+                                  <li key={tIdx} className="text-muted-foreground">{thought}</li>
+                                ))}
+                              </ul>
+                            </div>
+                            <div>
+                              <h5 className="font-medium mb-1">Pain Points</h5>
+                              <ul className="list-disc list-inside space-y-1">
+                                {journey.painPoints.map((pain, pIdx) => (
+                                  <li key={pIdx} className="text-muted-foreground">{pain}</li>
+                                ))}
+                              </ul>
+                            </div>
+                            <div>
+                              <h5 className="font-medium mb-1">Opportunities</h5>
+                              <ul className="list-disc list-inside space-y-1">
+                                {journey.opportunities.map((opp, oIdx) => (
+                                  <li key={oIdx} className="text-muted-foreground">{opp}</li>
+                                ))}
+                              </ul>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              {/* Features Tab */}
+              <TabsContent value="features" className="space-y-4">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Features ({analysis.features.length})</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    {analysis.features.map((feature) => (
+                      <Card key={feature.id}>
+                        <CardContent className="pt-4">
+                          <div className="flex items-start justify-between mb-2">
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2 mb-1">
+                                <h4 className="font-semibold">{feature.name}</h4>
+                                <Badge variant={getPriorityColor(feature.priority) as any}>
+                                  {feature.priority}
+                                </Badge>
+                                <Badge variant="outline">{feature.category}</Badge>
+                              </div>
+                              <p className="text-sm text-muted-foreground">{feature.description}</p>
+                            </div>
+                          </div>
+                          {feature.userStories && feature.userStories.length > 0 && (
+                            <div className="mt-3 space-y-2">
+                              <h5 className="font-medium text-sm">User Stories</h5>
+                              {feature.userStories.map((story) => (
+                                <Card key={story.id} className="bg-muted/50">
+                                  <CardContent className="pt-3">
+                                    <div className="flex items-start justify-between mb-1">
+                                      <h6 className="font-medium text-sm">{story.title}</h6>
+                                      <Badge variant="outline">{story.complexity}</Badge>
+                                    </div>
+                                    <p className="text-xs text-muted-foreground mb-2">{story.description}</p>
+                                    {story.acceptanceCriteria.length > 0 && (
+                                      <div>
+                                        <p className="text-xs font-medium mb-1">Acceptance Criteria:</p>
+                                        <ul className="list-disc list-inside space-y-0.5">
+                                          {story.acceptanceCriteria.map((criteria, cIdx) => (
+                                            <li key={cIdx} className="text-xs text-muted-foreground">{criteria}</li>
+                                          ))}
+                                        </ul>
+                                      </div>
+                                    )}
+                                  </CardContent>
+                                </Card>
+                              ))}
+                            </div>
+                          )}
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Functional Requirements ({analysis.functionalRequirements.length})</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-2">
+                    {analysis.functionalRequirements.map((req) => (
+                      <div key={req.id} className="flex items-start gap-2 text-sm border rounded p-2">
+                        <Badge variant={getPriorityColor(req.priority) as any}>{req.priority}</Badge>
+                        <div className="flex-1">
+                          <span className="font-medium">{req.id}:</span> {req.description}
+                          {req.relatedFeatures.length > 0 && (
+                            <div className="flex gap-1 mt-1">
+                              {req.relatedFeatures.map((fId, idx) => (
+                                <Badge key={idx} variant="outline" className="text-xs">{fId}</Badge>
+                              ))}
+                            </div>
+                          )}
                         </div>
-                        <p className="text-sm font-medium mb-1">{risk.description}</p>
-                        <p className="text-xs text-muted-foreground mb-2">Location: {risk.location}</p>
-                        <div className="flex items-start gap-2 text-xs">
-                          <CheckCircle2 className="h-3 w-3 mt-0.5 text-green-500" />
-                          <span>{risk.recommendation}</span>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
+                      </div>
+                    ))}
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Non-Functional Requirements ({analysis.nonFunctionalRequirements.length})</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-2">
+                    {analysis.nonFunctionalRequirements.map((req) => (
+                      <Card key={req.id}>
+                        <CardContent className="pt-3">
+                          <div className="flex items-start justify-between mb-1">
+                            <h5 className="font-medium text-sm">{req.id}</h5>
+                            <Badge variant="secondary">{req.type}</Badge>
+                          </div>
+                          <p className="text-sm text-muted-foreground mb-2">{req.description}</p>
+                          <div className="flex gap-4 text-xs">
+                            <div><span className="font-medium">Metric:</span> {req.metric}</div>
+                            <div><span className="font-medium">Target:</span> {req.target}</div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              {/* Tech Tab */}
+              <TabsContent value="tech" className="space-y-4">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Architecture</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div>
+                      <h4 className="font-semibold mb-2">Overview</h4>
+                      <p className="text-sm text-muted-foreground">{analysis.techSpec.architecture.overview}</p>
+                    </div>
+                    <Separator />
+                    <div>
+                      <h4 className="font-semibold mb-2">Patterns</h4>
+                      <div className="flex flex-wrap gap-2">
+                        {analysis.techSpec.architecture.patterns.map((pattern, idx) => (
+                          <Badge key={idx} variant="outline">{pattern}</Badge>
+                        ))}
+                      </div>
+                    </div>
+                    <Separator />
+                    <div>
+                      <h4 className="font-semibold mb-2">Components ({analysis.techSpec.architecture.components.length})</h4>
+                      <div className="space-y-2">
+                        {analysis.techSpec.architecture.components.map((comp, idx) => (
+                          <Card key={idx}>
+                            <CardContent className="pt-3">
+                              <div className="flex items-start justify-between mb-1">
+                                <h5 className="font-medium">{comp.name}</h5>
+                                <Badge variant="secondary">{comp.type}</Badge>
+                              </div>
+                              <p className="text-sm text-muted-foreground mb-2">{comp.description}</p>
+                              <div className="space-y-1 text-sm">
+                                <div>
+                                  <span className="font-medium">Responsibilities:</span>
+                                  <ul className="list-disc list-inside ml-2">
+                                    {comp.responsibilities.map((resp, rIdx) => (
+                                      <li key={rIdx}>{resp}</li>
+                                    ))}
+                                  </ul>
+                                </div>
+                                {comp.dependencies.length > 0 && (
+                                  <div>
+                                    <span className="font-medium">Dependencies:</span>
+                                    <div className="flex flex-wrap gap-1 mt-1">
+                                      {comp.dependencies.map((dep, dIdx) => (
+                                        <Badge key={dIdx} variant="outline" className="text-xs">{dep}</Badge>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            </CardContent>
+                          </Card>
+                        ))}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Frameworks & Technologies</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-2">
+                    {analysis.techSpec.frameworks.map((fw, idx) => (
+                      <div key={idx} className="flex items-center gap-2 text-sm border rounded p-2">
+                        <Badge variant="outline">{fw.name}</Badge>
+                        <span className="text-muted-foreground text-xs">v{fw.version}</span>
+                        <span className="text-sm flex-1">{fw.purpose}</span>
+                      </div>
+                    ))}
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Data Models ({analysis.techSpec.dataModels.length})</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-2">
+                    {analysis.techSpec.dataModels.map((model, idx) => (
+                      <Card key={idx}>
+                        <CardContent className="pt-3">
+                          <h5 className="font-semibold mb-1">{model.name}</h5>
+                          <p className="text-sm text-muted-foreground mb-2">{model.description}</p>
+                          <div className="space-y-2 text-sm">
+                            <div>
+                              <span className="font-medium">Fields:</span>
+                              <div className="grid grid-cols-2 gap-1 mt-1">
+                                {model.fields.map((field, fIdx) => (
+                                  <div key={fIdx} className="flex items-center gap-1">
+                                    <code className="text-xs">{field.name}</code>
+                                    <span className="text-xs text-muted-foreground">: {field.type}</span>
+                                    {field.required && <Badge variant="outline" className="text-xs">required</Badge>}
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                            {model.relationships.length > 0 && (
+                              <div>
+                                <span className="font-medium">Relationships:</span>
+                                <ul className="list-disc list-inside ml-2">
+                                  {model.relationships.map((rel, rIdx) => (
+                                    <li key={rIdx}>{rel}</li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle>API Catalog ({analysis.apiCatalog.length} endpoints)</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-2">
+                    {analysis.apiCatalog.map((api, idx) => (
+                      <Card key={idx}>
+                        <CardContent className="pt-3">
+                          <div className="flex items-center gap-2 mb-2">
+                            <Badge variant="outline">{api.method}</Badge>
+                            <code className="text-sm flex-1">{api.path}</code>
+                            {api.authentication && <Badge variant="secondary">Auth</Badge>}
+                          </div>
+                          <p className="text-sm text-muted-foreground mb-2">{api.description}</p>
+                          {api.parameters.length > 0 && (
+                            <div className="text-sm mb-2">
+                              <span className="font-medium">Parameters:</span>
+                              <div className="grid grid-cols-2 gap-1 mt-1">
+                                {api.parameters.map((param, pIdx) => (
+                                  <div key={pIdx} className="flex items-center gap-1">
+                                    <code className="text-xs">{param.name}</code>
+                                    <span className="text-xs text-muted-foreground">: {param.type}</span>
+                                    {param.required && <Badge variant="outline" className="text-xs">required</Badge>}
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                          {api.responses.length > 0 && (
+                            <div className="text-sm">
+                              <span className="font-medium">Responses:</span>
+                              <div className="flex flex-wrap gap-1 mt-1">
+                                {api.responses.map((resp, rIdx) => (
+                                  <Badge key={rIdx} variant="outline" className="text-xs">
+                                    {resp.code}: {resp.description}
+                                  </Badge>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </CardContent>
+                </Card>
+
+                {analysis.techSpec.integrations.length > 0 && (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Integrations ({analysis.techSpec.integrations.length})</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-2">
+                      {analysis.techSpec.integrations.map((integration, idx) => (
+                        <Card key={idx}>
+                          <CardContent className="pt-3">
+                            <div className="flex items-start justify-between mb-1">
+                              <h5 className="font-semibold">{integration.name}</h5>
+                              <Badge variant="secondary">{integration.type}</Badge>
+                            </div>
+                            <p className="text-sm text-muted-foreground mb-2">{integration.description}</p>
+                            {integration.apis.length > 0 && (
+                              <div className="flex flex-wrap gap-1">
+                                {integration.apis.map((api, aIdx) => (
+                                  <Badge key={aIdx} variant="outline" className="text-xs">{api}</Badge>
+                                ))}
+                              </div>
+                            )}
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </CardContent>
+                  </Card>
+                )}
+              </TabsContent>
+
+              {/* QA Tab */}
+              <TabsContent value="qa" className="space-y-4">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Test Plan</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div>
+                      <h4 className="font-semibold mb-2">Strategy</h4>
+                      <p className="text-sm text-muted-foreground">{analysis.testPlan.strategy}</p>
+                    </div>
+                    <Separator />
+                    <div className="grid grid-cols-3 gap-4">
+                      <Card>
+                        <CardContent className="pt-6 text-center">
+                          <div className="text-3xl font-bold text-primary">{analysis.testPlan.coverageScore}%</div>
+                          <div className="text-sm text-muted-foreground">Coverage Score</div>
+                        </CardContent>
+                      </Card>
+                      <Card>
+                        <CardContent className="pt-6 text-center">
+                          <div className="text-3xl font-bold">{analysis.testPlan.testedEndpoints}</div>
+                          <div className="text-sm text-muted-foreground">Tested Endpoints</div>
+                        </CardContent>
+                      </Card>
+                      <Card>
+                        <CardContent className="pt-6 text-center">
+                          <div className="text-3xl font-bold">{analysis.testPlan.totalEndpoints}</div>
+                          <div className="text-sm text-muted-foreground">Total Endpoints</div>
+                        </CardContent>
+                      </Card>
+                    </div>
+                    <Separator />
+                    <div>
+                      <h4 className="font-semibold mb-2">Test Types</h4>
+                      <div className="space-y-2">
+                        {analysis.testPlan.testTypes.map((testType, idx) => (
+                          <Card key={idx}>
+                            <CardContent className="pt-3">
+                              <div className="flex items-center justify-between mb-1">
+                                <h5 className="font-medium">{testType.type}</h5>
+                                <Badge variant="outline">{testType.coverage}%</Badge>
+                              </div>
+                              <p className="text-sm text-muted-foreground">{testType.description}</p>
+                            </CardContent>
+                          </Card>
+                        ))}
+                      </div>
+                    </div>
+                    <Separator />
+                    <div>
+                      <h4 className="font-semibold mb-2">Critical Paths</h4>
+                      <ul className="list-disc list-inside space-y-1">
+                        {analysis.testPlan.criticalPaths.map((path, idx) => (
+                          <li key={idx} className="text-sm text-muted-foreground">{path}</li>
+                        ))}
+                      </ul>
+                    </div>
+                    <Separator />
+                    <div>
+                      <h4 className="font-semibold mb-2">Coverage Gaps</h4>
+                      <ul className="list-disc list-inside space-y-1">
+                        {analysis.testPlan.gaps.map((gap, idx) => (
+                          <li key={idx} className="text-sm text-muted-foreground">{gap}</li>
+                        ))}
+                      </ul>
+                    </div>
+                    <Separator />
+                    <div>
+                      <h4 className="font-semibold mb-2">Suggestions</h4>
+                      <ul className="list-disc list-inside space-y-1">
+                        {analysis.testPlan.suggestions.map((suggestion, idx) => (
+                          <li key={idx} className="text-sm text-muted-foreground">{suggestion}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Shield className="h-5 w-5" />
+                      Risk Register ({analysis.riskRegister.length} items)
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-2">
+                    {analysis.riskRegister.map((risk, idx) => (
+                      <Card key={idx}>
+                        <CardContent className="pt-4">
+                          <div className="flex items-start justify-between mb-2">
+                            <div className="flex items-center gap-2">
+                              <Badge variant={getSeverityColor(risk.severity) as any}>{risk.severity}</Badge>
+                              <Badge variant="outline">{risk.type}</Badge>
+                            </div>
+                            <Badge variant="secondary">{risk.probability}</Badge>
+                          </div>
+                          <h5 className="font-semibold mb-1">{risk.description}</h5>
+                          <p className="text-sm text-muted-foreground mb-2">
+                            <span className="font-medium">Location:</span> {risk.location}
+                          </p>
+                          <div className="space-y-2 text-sm">
+                            <div>
+                              <span className="font-medium">Impact:</span> {risk.impact}
+                            </div>
+                            <div>
+                              <span className="font-medium">Mitigation:</span> {risk.mitigation}
+                            </div>
+                            {risk.dependencies.length > 0 && (
+                              <div>
+                                <span className="font-medium">Dependencies:</span>
+                                <div className="flex flex-wrap gap-1 mt-1">
+                                  {risk.dependencies.map((dep, dIdx) => (
+                                    <Badge key={dIdx} variant="outline" className="text-xs">{dep}</Badge>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </CardContent>
+                </Card>
               </TabsContent>
             </Tabs>
 
-            <div className="flex justify-between gap-2 pt-4 border-t">
+            <div className="flex justify-between gap-2 mt-6">
               <Button variant="outline" onClick={() => { setStep(1); setAnalysis(null); }}>
                 New Analysis
               </Button>
-              <Button onClick={() => {
-                exportArtifact('complete-analysis', analysis);
-              }}>
-                <Download className="h-4 w-4 mr-1" />
-                Export All Artifacts
+              <Button onClick={exportAllArtifacts}>
+                <Download className="h-4 w-4 mr-2" />
+                Export Complete Documentation
               </Button>
             </div>
           </div>
