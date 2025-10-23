@@ -20,6 +20,7 @@ import { TechnicalSpecification } from './TechnicalSpecification';
 import { SmartDiscoveryCanvas } from './SmartDiscoveryCanvas';
 import EpicToUserStories from './EpicToUserStories';
 import { GitToSpecsGenerator } from './GitToSpecsGenerator';
+import { ProductVisionDefiner } from './ProductVisionDefiner';
 import { AcceptanceCriteriaValidator } from './AcceptanceCriteriaValidator';
 import { FrameworkFilter } from './FrameworkFilter';
 import { useFrameworkFilter } from '@/hooks/useFrameworkFilter';
@@ -61,7 +62,7 @@ interface Workflow {
     id: string;
     title: string;
     description: string;
-    tool?: 'canvas' | 'story' | 'impact' | 'research' | 'design' | 'code' | 'roadmap' | 'launch' | 'sprint' | 'kpi' | 'epic-stories' | 'test-generator' | 'ac-validator' | 'git-to-specs' | 'critical-path-analyzer';
+    tool?: 'canvas' | 'story' | 'impact' | 'research' | 'design' | 'code' | 'roadmap' | 'launch' | 'sprint' | 'kpi' | 'epic-stories' | 'test-generator' | 'ac-validator' | 'git-to-specs' | 'critical-path-analyzer' | 'vision';
     completed?: boolean;
   }>;
 }
@@ -102,6 +103,7 @@ const workflows: Workflow[] = [
         id: 'vision',
         title: 'Définir la Vision Produit',
         description: 'Établir la vision long-terme et les objectifs stratégiques',
+        tool: 'vision',
         completed: false,
       },
       {
@@ -779,6 +781,7 @@ export const Workflows: React.FC = () => {
   const [showEpicToStories, setShowEpicToStories] = useState(false);
   const [showACValidator, setShowACValidator] = useState(false);
   const [showGitToSpecs, setShowGitToSpecs] = useState(false);
+  const [showVisionDefiner, setShowVisionDefiner] = useState(false);
 
   const [activeContext, setActiveContext] = useState<{
     name: string;
@@ -951,6 +954,9 @@ export const Workflows: React.FC = () => {
       case 'critical-path-analyzer':
         navigate('/critical-path-analyzer');
         break;
+      case 'vision':
+        setShowVisionDefiner(true);
+        break;
       default:
         console.warn('Unknown tool:', tool);
     }
@@ -1049,7 +1055,17 @@ export const Workflows: React.FC = () => {
         {/* Tool Dialogs */}
         <CanvasGenerator open={showCanvasGenerator} onClose={() => setShowCanvasGenerator(false)} />
         <StoryWriter open={showStoryWriter} onClose={() => setShowStoryWriter(false)} />
-        <ImpactPlotter open={showImpactPlotter} onClose={() => setShowImpactPlotter(false)} />
+        <ImpactPlotter 
+          open={showImpactPlotter} 
+          onClose={() => setShowImpactPlotter(false)}
+          activeWorkflow={activeWorkflow}
+          onStepComplete={(nextStep, context) => {
+            setCurrentStep(nextStep);
+            setWorkflowContext(context);
+            setActiveWorkflow(prev => prev ? { ...prev, currentStep: nextStep } : null);
+          }}
+          workflowContext={workflowContext}
+        />
         {showMarketResearch && (
           <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm">
             <div className="fixed inset-4 z-50 overflow-auto bg-background rounded-lg border shadow-lg p-6">
@@ -1111,7 +1127,16 @@ export const Workflows: React.FC = () => {
               >
                 ✕
               </Button>
-              <RoadmapPlanner />
+              <RoadmapPlanner 
+                activeWorkflow={activeWorkflow}
+                onStepComplete={(nextStep, context) => {
+                  setCurrentStep(nextStep);
+                  setWorkflowContext(context);
+                  setActiveWorkflow(prev => prev ? { ...prev, currentStep: nextStep } : null);
+                  setShowRoadmapPlanner(false);
+                }}
+                workflowContext={workflowContext}
+              />
             </div>
           </div>
         )}
@@ -1143,7 +1168,30 @@ export const Workflows: React.FC = () => {
             </div>
           </div>
         )}
-        <KPIGenerator 
+        {showVisionDefiner && (
+          <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm">
+            <div className="fixed inset-4 z-50 overflow-auto bg-background rounded-lg border shadow-lg p-6">
+              <Button
+                variant="ghost"
+                className="absolute right-4 top-4"
+                onClick={() => setShowVisionDefiner(false)}
+              >
+                ✕
+              </Button>
+              <ProductVisionDefiner 
+                activeWorkflow={activeWorkflow}
+                onStepComplete={(nextStep, context) => {
+                  setCurrentStep(nextStep);
+                  setWorkflowContext(context);
+                  setActiveWorkflow(prev => prev ? { ...prev, currentStep: nextStep } : null);
+                  setShowVisionDefiner(false);
+                }}
+                workflowContext={workflowContext}
+              />
+            </div>
+          </div>
+        )}
+        <KPIGenerator
           open={showKPIGenerator} 
           onOpenChange={setShowKPIGenerator}
           activeContext={activeContext}

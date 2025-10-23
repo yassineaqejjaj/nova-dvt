@@ -5,13 +5,16 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, TrendingUp, Plus, Trash2, Download } from 'lucide-react';
+import { Loader2, TrendingUp, Plus, Trash2, Download, Save, ArrowRight } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 interface ImpactPlotterProps {
   open: boolean;
   onClose: () => void;
+  activeWorkflow?: { type: string; currentStep: number } | null;
+  onStepComplete?: (nextStep: number, context: any) => void;
+  workflowContext?: Record<string, any>;
 }
 
 interface PlotItem {
@@ -21,11 +24,31 @@ interface PlotItem {
   effort: number;
 }
 
-export const ImpactPlotter: React.FC<ImpactPlotterProps> = ({ open, onClose }) => {
+export const ImpactPlotter: React.FC<ImpactPlotterProps> = ({ 
+  open, 
+  onClose,
+  activeWorkflow,
+  onStepComplete,
+  workflowContext
+}) => {
   const [items, setItems] = useState<PlotItem[]>([]);
   const [newItemName, setNewItemName] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [showChart, setShowChart] = useState(false);
+
+  // Load initiatives from roadmap context
+  React.useEffect(() => {
+    if (workflowContext?.roadmapData?.milestones) {
+      const milestonesAsItems = workflowContext.roadmapData.milestones.map((milestone: any, index: number) => ({
+        id: `milestone-${index}`,
+        name: milestone.title,
+        impact: milestone.impact === 'high' ? 8 : milestone.impact === 'medium' ? 5 : 3,
+        effort: 5  // Default, will be adjusted by AI
+      }));
+      setItems(milestonesAsItems);
+    }
+  }, [workflowContext]);
 
   const addItem = () => {
     if (!newItemName.trim()) {
@@ -125,6 +148,50 @@ export const ImpactPlotter: React.FC<ImpactPlotterProps> = ({ open, onClose }) =
       toast.error('Failed to analyze items. Please try again.');
     } finally {
       setIsGenerating(false);
+    }
+  };
+
+  const saveImpactAnalysis = async (andContinue: boolean = false) => {
+    if (items.length === 0) {
+      toast.error("Aucun élément à sauvegarder");
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("User not authenticated");
+
+      const { data: savedArtifact, error } = await supabase.from('artifacts').insert({
+        user_id: user.id,
+        artifact_type: 'impact_analysis' as const,
+        title: `Analyse Impact/Effort - ${new Date().toLocaleDateString('fr-FR')}`,
+        content: { items },
+        metadata: { 
+          type: 'impact-effort-analysis',
+          itemCount: items.length,
+          workflowStep: activeWorkflow?.currentStep
+        }
+      } as any).select().single();
+
+      if (error) throw error;
+      toast.success("Analyse sauvegardée!");
+
+      if (andContinue && activeWorkflow && onStepComplete && savedArtifact) {
+        const updatedContext = {
+          ...workflowContext,
+          [`step_${activeWorkflow.currentStep}`]: savedArtifact,
+          impact_artifact: savedArtifact,
+          impactData: { items }
+        };
+        onStepComplete(activeWorkflow.currentStep + 1, updatedContext);
+        onClose();
+      }
+    } catch (error) {
+      console.error('Error saving analysis:', error);
+      toast.error("Erreur lors de la sauvegarde");
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -381,9 +448,23 @@ ${index + 1}. **${item.name}**
                     Export Report
                   </Button>
                 </>
-              )}
-            </div>
-          </div>
+          )}
+        </div>
+        {items.length > 0 && showChart && (
+          <>
+            <Button onClick={() => saveImpactAnalysis(false)} disabled={isSaving} variant="outline">
+              {isSaving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
+              Sauvegarder
+            </Button>
+            {activeWorkflow && onStepComplete && (
+              <Button onClick={() => saveImpactAnalysis(true)} disabled={isSaving}>
+                {isSaving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <ArrowRight className="w-4 h-4 mr-2" />}
+                Étape suivante
+              </Button>
+            )}
+          </>
+        )}
+      </div>
         </div>
       </DialogContent>
     </Dialog>

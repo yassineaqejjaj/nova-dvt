@@ -7,8 +7,10 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Calendar, Target, Plus, Edit2, Trash2, MapPin } from 'lucide-react';
+import { Calendar, Target, Plus, Edit2, Trash2, MapPin, Save, Loader2, ArrowRight } from 'lucide-react';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
+import { useEffect } from 'react';
 
 interface Milestone {
   id: string;
@@ -20,20 +22,21 @@ interface Milestone {
   owner: string;
 }
 
-export const RoadmapPlanner: React.FC = () => {
-  const [milestones, setMilestones] = useState<Milestone[]>([
-    {
-      id: '1',
-      title: 'Launch MVP',
-      description: 'Release minimum viable product to early adopters',
-      quarter: 'Q1 2025',
-      status: 'in-progress',
-      impact: 'high',
-      owner: 'Product Team'
-    }
-  ]);
+interface RoadmapPlannerProps {
+  activeWorkflow?: { type: string; currentStep: number } | null;
+  onStepComplete?: (nextStep: number, context: any) => void;
+  workflowContext?: Record<string, any>;
+}
+
+export const RoadmapPlanner: React.FC<RoadmapPlannerProps> = ({
+  activeWorkflow,
+  onStepComplete,
+  workflowContext
+}) => {
+  const [milestones, setMilestones] = useState<Milestone[]>([]);
   const [showDialog, setShowDialog] = useState(false);
   const [editingMilestone, setEditingMilestone] = useState<Milestone | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
   const [formData, setFormData] = useState<{
     title: string;
     description: string;
@@ -51,6 +54,15 @@ export const RoadmapPlanner: React.FC = () => {
   });
 
   const quarters = ['Q1 2025', 'Q2 2025', 'Q3 2025', 'Q4 2025'];
+
+  // Load vision data from workflow context
+  useEffect(() => {
+    if (workflowContext?.visionData) {
+      const { strategicThemes } = workflowContext.visionData;
+      // Could pre-populate milestones based on themes if needed
+      console.log('Vision context loaded:', strategicThemes);
+    }
+  }, [workflowContext]);
 
   const handleAddMilestone = () => {
     if (!formData.title || !formData.owner) {
@@ -120,6 +132,58 @@ export const RoadmapPlanner: React.FC = () => {
     }
   };
 
+  const saveRoadmap = async (andContinue: boolean = false) => {
+    if (milestones.length === 0) {
+      toast.error("Ajoutez au moins un jalon à la roadmap");
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("User not authenticated");
+
+      const roadmapData = {
+        milestones,
+        quarters,
+        visionContext: workflowContext?.visionData || null,
+        createdAt: new Date().toISOString()
+      };
+
+      const { data: savedArtifact, error } = await supabase.from('artifacts').insert({
+        user_id: user.id,
+        artifact_type: 'roadmap' as const,
+        title: `Roadmap - ${new Date().toLocaleDateString('fr-FR')}`,
+        content: roadmapData,
+        metadata: { 
+          type: 'strategic-roadmap',
+          milestoneCount: milestones.length,
+          generatedAt: new Date().toISOString(),
+          workflowStep: activeWorkflow?.currentStep
+        }
+      } as any).select().single();
+
+      if (error) throw error;
+      toast.success("Roadmap sauvegardée!");
+
+      // If in a workflow and continuing to next step
+      if (andContinue && activeWorkflow && onStepComplete && savedArtifact) {
+        const updatedContext = {
+          ...workflowContext,
+          [`step_${activeWorkflow.currentStep}`]: savedArtifact,
+          roadmap_artifact: savedArtifact,
+          roadmapData
+        };
+        onStepComplete(activeWorkflow.currentStep + 1, updatedContext);
+      }
+    } catch (error) {
+      console.error('Error saving roadmap:', error);
+      toast.error("Erreur lors de la sauvegarde");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -127,10 +191,33 @@ export const RoadmapPlanner: React.FC = () => {
           <h2 className="text-3xl font-bold tracking-tight">Product Roadmap</h2>
           <p className="text-muted-foreground">Plan and visualize your product milestones</p>
         </div>
-        <Button onClick={() => setShowDialog(true)}>
-          <Plus className="w-4 h-4 mr-2" />
-          Add Milestone
-        </Button>
+        <div className="flex gap-2">
+          {milestones.length > 0 && (
+            <>
+              <Button 
+                onClick={() => saveRoadmap(false)} 
+                disabled={isSaving}
+                variant="outline"
+              >
+                {isSaving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
+                Sauvegarder
+              </Button>
+              {activeWorkflow && onStepComplete && (
+                <Button 
+                  onClick={() => saveRoadmap(true)} 
+                  disabled={isSaving}
+                >
+                  {isSaving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <ArrowRight className="w-4 h-4 mr-2" />}
+                  Étape suivante
+                </Button>
+              )}
+            </>
+          )}
+          <Button onClick={() => setShowDialog(true)}>
+            <Plus className="w-4 h-4 mr-2" />
+            Add Milestone
+          </Button>
+        </div>
       </div>
 
       {/* Roadmap Timeline */}
