@@ -57,6 +57,18 @@ verify_jwt = true
 [functions.generate-roadmap-from-document]
 verify_jwt = true
 
+[functions.generate-research-objectives]
+verify_jwt = true
+
+[functions.generate-research-plan]
+verify_jwt = true
+
+[functions.generate-research-materials]
+verify_jwt = true
+
+[functions.synthesize-research-results]
+verify_jwt = true
+
 [functions.generate-suggestions]
 verify_jwt = true
 

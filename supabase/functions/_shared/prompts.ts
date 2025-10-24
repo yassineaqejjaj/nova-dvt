@@ -478,6 +478,315 @@ Think step-by-step about how your expertise applies to each request.`
 };
 
 // ============================================
+// USER RESEARCH PROMPTS
+// ============================================
+
+export const userResearchPrompts = {
+  system: `You are a user research expert specializing in qualitative and quantitative research methodologies.
+
+Your research approach:
+1. Understand the business context and research goals
+2. Apply appropriate research methodologies
+3. Design rigorous, unbiased research instruments
+4. Synthesize insights from diverse data sources
+5. Generate actionable, evidence-based recommendations
+
+Think systematically and ensure research validity.`,
+
+  objectives: (context: string, productInfo?: string) => `
+Let's define comprehensive research objectives using a structured methodology.
+
+CONTEXT: ${context}
+${productInfo ? `PRODUCT INFO: ${productInfo}` : ''}
+
+RESEARCH PLANNING FRAMEWORK:
+
+STEP 1: CLARIFY BUSINESS CONTEXT
+Think about:
+- What business decisions will this research inform?
+- Who are the key stakeholders?
+- What assumptions need validation?
+
+STEP 2: IDENTIFY INFORMATION GAPS
+Consider:
+- What don't we know about users?
+- What assumptions are we making?
+- What risks need to be de-risked?
+
+STEP 3: FORMULATE RESEARCH OBJECTIVES
+Create 4-6 objectives that are:
+- Specific and measurable
+- Aligned with business decisions
+- Feasible to investigate
+- Valuable to stakeholders
+
+STEP 4: DESIGN RESEARCH QUESTIONS
+For each objective, generate 2-4 questions that:
+- Explore the "why" behind behaviors
+- Avoid leading or biased phrasing
+- Cover different aspects of the topic
+- Enable actionable insights
+
+Return in this JSON format:
+{
+  "objectives": [
+    {
+      "objective": "Clear, specific research objective statement",
+      "rationale": "Why this objective matters to the business",
+      "questions": [
+        "Open-ended research question 1",
+        "Exploratory question 2"
+      ]
+    }
+  ],
+  "recommendedMethodologies": [
+    "Methodology 1 (e.g., user interviews) - why it fits",
+    "Methodology 2 (e.g., surveys) - when to use"
+  ]
+}`,
+
+  plan: (objectives: string, methodology: string, context?: string) => `
+Let's create a detailed research plan with recruitment strategies.
+
+OBJECTIVES: ${objectives}
+METHODOLOGY: ${methodology}
+${context ? `CONTEXT: ${context}` : ''}
+
+RESEARCH PLANNING FRAMEWORK:
+
+STEP 1: DEFINE PARTICIPANT CRITERIA
+Think about:
+- Who are the target users?
+- What characteristics are essential vs nice-to-have?
+- How many participants do we need?
+
+STEP 2: DESIGN RECRUITMENT STRATEGY
+Consider:
+- Where can we find these participants?
+- What incentives are appropriate?
+- What screening questions ensure fit?
+
+STEP 3: PLAN LOGISTICS
+Determine:
+- Timeline and scheduling
+- Tools and materials needed
+- Team roles and responsibilities
+
+STEP 4: PREPARE RESEARCH MATERIALS
+Outline:
+- Discussion guides or survey structure
+- Consent and ethics considerations
+- Data collection methods
+
+Return in this JSON format:
+{
+  "participantProfile": {
+    "criteria": ["Specific criterion 1", "Criterion 2"],
+    "targetNumber": "Recommended number with rationale",
+    "screeningQuestions": ["Question 1 to validate fit", "Question 2"]
+  },
+  "recruitmentStrategy": {
+    "channels": ["Channel 1 (e.g., social media) - approach", "Channel 2"],
+    "incentives": "Recommended incentive with justification",
+    "timeline": "Recruitment period with milestones"
+  },
+  "logistics": {
+    "schedule": "Research timeline and session planning",
+    "tools": ["Tool/platform 1", "Tool 2"],
+    "teamRoles": ["Role 1: Responsibilities", "Role 2"]
+  },
+  "researchGuide": "High-level outline of the research protocol"
+}`,
+
+  interview: (objectives: string, participantProfile: string) => `
+Generate a comprehensive interview guide.
+
+OBJECTIVES: ${objectives}
+PARTICIPANTS: ${participantProfile}
+
+INTERVIEW DESIGN FRAMEWORK:
+
+STEP 1: STRUCTURE THE INTERVIEW
+Plan:
+- Warm-up (5-10 min): Build rapport
+- Main topics (30-40 min): Core questions
+- Wrap-up (5 min): Final thoughts, next steps
+
+STEP 2: CRAFT QUESTIONS
+Ensure questions:
+- Are open-ended ("Tell me about..." not "Do you...")
+- Avoid leading language
+- Build progressively (general to specific)
+- Allow for stories and examples
+
+STEP 3: ADD PROBES
+Include follow-ups:
+- "Can you tell me more about that?"
+- "What was that experience like?"
+- "Why do you think that happened?"
+
+Return in JSON:
+{
+  "introduction": "Script for introduction and consent",
+  "sections": [
+    {
+      "title": "Section name",
+      "duration": "Estimated minutes",
+      "questions": [
+        {
+          "main": "Main question",
+          "probes": ["Follow-up 1", "Probe 2"]
+        }
+      ]
+    }
+  ],
+  "closingScript": "How to wrap up and thank participant"
+}`,
+
+  survey: (objectives: string, audience: string) => `
+Create a survey questionnaire.
+
+OBJECTIVES: ${objectives}
+AUDIENCE: ${audience}
+
+SURVEY DESIGN FRAMEWORK:
+
+STEP 1: DETERMINE QUESTION TYPES
+Choose appropriate formats:
+- Multiple choice for categorization
+- Likert scales for attitudes
+- Open-ended for depth
+- Ranking for priorities
+
+STEP 2: WRITE CLEAR QUESTIONS
+Ensure:
+- Simple, jargon-free language
+- One concept per question
+- Neutral phrasing
+- Logical flow
+
+STEP 3: OPTIMIZE LENGTH
+Balance:
+- Completeness vs respondent fatigue
+- Aim for 5-10 minutes max
+
+Return in JSON:
+{
+  "introduction": "Survey purpose and consent",
+  "questions": [
+    {
+      "question": "Question text",
+      "type": "multiple_choice|likert|open_ended|ranking",
+      "options": ["Option 1", "Option 2"],
+      "required": true|false
+    }
+  ],
+  "estimatedTime": "Minutes to complete"
+}`,
+
+  usabilityTest: (feature: string, tasks: string) => `
+Design a usability test protocol.
+
+FEATURE: ${feature}
+TASKS: ${tasks}
+
+USABILITY TESTING FRAMEWORK:
+
+STEP 1: DEFINE SUCCESS METRICS
+Establish:
+- Task completion rate
+- Time on task
+- Error rate
+- Satisfaction score
+
+STEP 2: CREATE REALISTIC SCENARIOS
+Design scenarios that:
+- Reflect real use cases
+- Have clear start/end points
+- Don't give away the solution
+- Build in complexity
+
+STEP 3: PREPARE OBSERVATION PROTOCOL
+Include:
+- What to observe (behaviors, pain points)
+- When to probe vs stay silent
+- How to record findings
+
+Return in JSON:
+{
+  "testScenarios": [
+    {
+      "scenario": "Contextual scenario description",
+      "task": "Specific task instruction",
+      "successCriteria": "What defines completion",
+      "expectedDuration": "Minutes"
+    }
+  ],
+  "metrics": {
+    "quantitative": ["Metric 1", "Metric 2"],
+    "qualitative": ["Observation 1", "Observation 2"]
+  },
+  "facilitationGuide": "How to run the session, when to intervene"
+}`,
+
+  synthesis: (researchData: string, objectives: string) => `
+Synthesize research findings into actionable insights.
+
+RESEARCH DATA: ${researchData}
+ORIGINAL OBJECTIVES: ${objectives}
+
+SYNTHESIS FRAMEWORK:
+
+STEP 1: ORGANIZE FINDINGS
+Group data by:
+- Themes and patterns
+- Frequency of mention
+- Relevance to objectives
+
+STEP 2: IDENTIFY INSIGHTS
+Look for:
+- Surprising findings
+- Contradictions to assumptions
+- User needs and pain points
+- Behavioral patterns
+
+STEP 3: PRIORITIZE INSIGHTS
+Assess each by:
+- Impact on business decisions
+- Confidence level (data strength)
+- Actionability
+
+STEP 4: GENERATE RECOMMENDATIONS
+Create recommendations that:
+- Address specific insights
+- Are concrete and actionable
+- Include success metrics
+- Consider feasibility
+
+Return in JSON:
+{
+  "keyFindings": [
+    {
+      "finding": "Clear statement of what was discovered",
+      "evidence": "Data supporting this finding",
+      "confidence": "high|medium|low"
+    }
+  ],
+  "insights": [
+    {
+      "insight": "What this means for the product/business",
+      "impact": "Potential business impact",
+      "priority": "high|medium|low",
+      "recommendation": "Specific action to take"
+    }
+  ],
+  "userNeeds": ["Need 1 identified from research", "Need 2"],
+  "opportunityAreas": ["Opportunity 1 with rationale", "Opportunity 2"],
+  "nextSteps": ["Immediate action 1", "Follow-up research need 2"]
+}`
+};
+
+// ============================================
 // HELPER FUNCTIONS
 // ============================================
 
