@@ -70,7 +70,7 @@ interface Workflow {
     id: string;
     title: string;
     description: string;
-    tool?: 'canvas' | 'story' | 'impact' | 'research' | 'design' | 'code' | 'roadmap' | 'launch' | 'sprint' | 'kpi' | 'epic-stories' | 'test-generator' | 'ac-validator' | 'git-to-specs' | 'critical-path-analyzer' | 'vision' | 'research-objectives' | 'research-plan' | 'research-conduct' | 'research-synthesize';
+    tool?: 'canvas' | 'story' | 'impact' | 'research' | 'design' | 'code' | 'roadmap' | 'launch' | 'sprint' | 'kpi' | 'epic-stories' | 'test-generator' | 'ac-validator' | 'git-to-specs' | 'critical-path-analyzer' | 'vision' | 'research-objectives' | 'research-plan' | 'research-conduct' | 'research-synthesize' | 'requirements-scope' | 'requirements-collection' | 'requirements-prioritization' | 'requirements-documentation';
     completed?: boolean;
   }>;
 }
@@ -1339,6 +1339,98 @@ export const Workflows: React.FC = () => {
                   setShowResearchSynthesize(false);
                 }}
                 workflowContext={workflowContext}
+              />
+            </div>
+          </div>
+        )}
+        {showRequirementsScope && (
+          <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm">
+            <div className="fixed inset-4 z-50 overflow-auto bg-background rounded-lg border shadow-lg p-6">
+              <Button
+                variant="ghost"
+                className="absolute right-4 top-4"
+                onClick={() => setShowRequirementsScope(false)}
+              >
+                ✕
+              </Button>
+              <h2 className="text-2xl font-bold mb-4">Définir le Périmètre</h2>
+              <RequirementsScopeDefiner 
+                onSave={(data) => {
+                  setCurrentStep(currentStep + 1);
+                  setWorkflowContext({ ...workflowContext, scope: data });
+                  setActiveWorkflow(prev => prev ? { ...prev, currentStep: currentStep + 1 } : null);
+                  setShowRequirementsScope(false);
+                }}
+                onClose={() => setShowRequirementsScope(false)}
+              />
+            </div>
+          </div>
+        )}
+        {showRequirementsCollection && (
+          <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm">
+            <div className="fixed inset-4 z-50 overflow-auto bg-background rounded-lg border shadow-lg p-6">
+              <Button
+                variant="ghost"
+                className="absolute right-4 top-4"
+                onClick={() => setShowRequirementsCollection(false)}
+              >
+                ✕
+              </Button>
+              <h2 className="text-2xl font-bold mb-4">Collecter les Exigences</h2>
+              <RequirementsCollector 
+                onSave={(data) => {
+                  setCurrentStep(currentStep + 1);
+                  setWorkflowContext({ ...workflowContext, requirements: data });
+                  setActiveWorkflow(prev => prev ? { ...prev, currentStep: currentStep + 1 } : null);
+                  setShowRequirementsCollection(false);
+                }}
+                onClose={() => setShowRequirementsCollection(false)}
+              />
+            </div>
+          </div>
+        )}
+        {showRequirementsPrioritization && (
+          <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm">
+            <div className="fixed inset-4 z-50 overflow-auto bg-background rounded-lg border shadow-lg p-6">
+              <Button
+                variant="ghost"
+                className="absolute right-4 top-4"
+                onClick={() => setShowRequirementsPrioritization(false)}
+              >
+                ✕
+              </Button>
+              <h2 className="text-2xl font-bold mb-4">Prioriser les Exigences</h2>
+              <RequirementsPrioritizer 
+                onSave={(data) => {
+                  setCurrentStep(currentStep + 1);
+                  setWorkflowContext({ ...workflowContext, prioritization: data });
+                  setActiveWorkflow(prev => prev ? { ...prev, currentStep: currentStep + 1 } : null);
+                  setShowRequirementsPrioritization(false);
+                }}
+                onClose={() => setShowRequirementsPrioritization(false)}
+              />
+            </div>
+          </div>
+        )}
+        {showRequirementsDocumentation && (
+          <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm">
+            <div className="fixed inset-4 z-50 overflow-auto bg-background rounded-lg border shadow-lg p-6">
+              <Button
+                variant="ghost"
+                className="absolute right-4 top-4"
+                onClick={() => setShowRequirementsDocumentation(false)}
+              >
+                ✕
+              </Button>
+              <h2 className="text-2xl font-bold mb-4">Documenter les Spécifications</h2>
+              <RequirementsDocumentor 
+                onSave={(data) => {
+                  setCurrentStep(currentStep + 1);
+                  setWorkflowContext({ ...workflowContext, documentation: data });
+                  setActiveWorkflow(prev => prev ? { ...prev, currentStep: currentStep + 1 } : null);
+                  setShowRequirementsDocumentation(false);
+                }}
+                onClose={() => setShowRequirementsDocumentation(false)}
               />
             </div>
           </div>
