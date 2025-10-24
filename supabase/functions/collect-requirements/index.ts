@@ -1,6 +1,6 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { PROMPTS } from "../_shared/prompts.ts";
+import { promptHelpers } from "../_shared/prompts.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -31,7 +31,18 @@ serve(async (req) => {
       );
     }
 
-    const prompt = PROMPTS.requirementsCollection.replace('{context}', context);
+    const prompt = promptHelpers.requirementsCollection.replace('{context}', context);
+
+    const systemPrompt = `Tu es un expert en collecte d'exigences produit et en analyse des besoins utilisateurs.
+    
+Approche méthodologique :
+1. Analyse du contexte pour identifier les besoins explicites et implicites
+2. Classification des exigences (fonctionnelles, non-fonctionnelles, utilisateur, techniques)
+3. Définition de critères d'acceptation clairs et mesurables
+4. Identification des dépendances et des contraintes
+5. Priorisation initiale des exigences
+
+Réponds toujours en français de manière structurée et complète.`;
 
     console.log('Collecting requirements...');
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
@@ -43,7 +54,7 @@ serve(async (req) => {
       body: JSON.stringify({
         model: 'google/gemini-2.5-flash',
         messages: [
-          { role: 'system', content: PROMPTS.system },
+          { role: 'system', content: systemPrompt },
           { role: 'user', content: prompt }
         ],
       }),

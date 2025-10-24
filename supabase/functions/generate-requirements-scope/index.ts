@@ -1,6 +1,6 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { PROMPTS } from "../_shared/prompts.ts";
+import { promptHelpers } from "../_shared/prompts.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -31,7 +31,18 @@ serve(async (req) => {
       );
     }
 
-    const prompt = PROMPTS.requirementsScope.replace('{context}', context);
+    const prompt = promptHelpers.requirementsScope.replace('{context}', context);
+    
+    const systemPrompt = `Tu es un expert en définition de périmètre projet et en analyse des besoins produit.
+    
+Approche méthodologique :
+1. Analyse du contexte fourni pour identifier les éléments clés
+2. Structuration du périmètre fonctionnel et des objectifs
+3. Identification des parties prenantes et leurs besoins
+4. Définition des contraintes et des limites du projet
+5. Formulation de questions de clarification pertinentes
+
+Réponds toujours en français de manière structurée et actionnelle.`;
 
     console.log('Generating requirements scope...');
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
@@ -43,7 +54,7 @@ serve(async (req) => {
       body: JSON.stringify({
         model: 'google/gemini-2.5-flash',
         messages: [
-          { role: 'system', content: PROMPTS.system },
+          { role: 'system', content: systemPrompt },
           { role: 'user', content: prompt }
         ],
       }),

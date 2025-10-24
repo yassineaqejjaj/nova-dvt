@@ -1,6 +1,6 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { PROMPTS } from "../_shared/prompts.ts";
+import { promptHelpers } from "../_shared/prompts.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -31,9 +31,20 @@ serve(async (req) => {
       );
     }
 
-    const prompt = PROMPTS.requirementsPrioritization
+    const prompt = promptHelpers.requirementsPrioritization
       .replace('{requirements}', requirements)
       .replace('{context}', context || 'Non spécifié');
+
+    const systemPrompt = `Tu es un expert en priorisation d'exigences et en planification stratégique produit.
+    
+Approche méthodologique :
+1. Analyse des exigences selon la méthode MoSCoW (Must have, Should have, Could have, Won't have)
+2. Évaluation via matrice valeur/effort pour optimiser le ROI
+3. Identification des dépendances techniques et métier
+4. Analyse des risques et des points de blocage potentiels
+5. Définition d'une roadmap en 3 phases réaliste et actionnelle
+
+Réponds toujours en français avec des recommandations concrètes.`;
 
     console.log('Prioritizing requirements...');
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
@@ -45,7 +56,7 @@ serve(async (req) => {
       body: JSON.stringify({
         model: 'google/gemini-2.5-flash',
         messages: [
-          { role: 'system', content: PROMPTS.system },
+          { role: 'system', content: systemPrompt },
           { role: 'user', content: prompt }
         ],
       }),

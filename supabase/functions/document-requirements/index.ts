@@ -1,6 +1,6 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { PROMPTS } from "../_shared/prompts.ts";
+import { promptHelpers } from "../_shared/prompts.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -31,9 +31,21 @@ serve(async (req) => {
       );
     }
 
-    const prompt = PROMPTS.requirementsDocumentation
+    const prompt = promptHelpers.requirementsDocumentation
       .replace('{requirements}', requirements)
       .replace('{context}', context || 'Non spécifié');
+
+    const systemPrompt = `Tu es un expert en documentation de spécifications techniques et fonctionnelles.
+    
+Approche méthodologique :
+1. Structuration claire du document de spécifications
+2. Rédaction d'un résumé exécutif synthétique et impactant
+3. Documentation détaillée des spécifications fonctionnelles
+4. Spécifications techniques avec architecture et contraintes
+5. Plan de tests complet avec critères de validation
+6. Annexes pertinentes (glossaire, références, schémas)
+
+Réponds toujours en français avec un document professionnel et exploitable.`;
 
     console.log('Generating requirements documentation...');
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
@@ -45,7 +57,7 @@ serve(async (req) => {
       body: JSON.stringify({
         model: 'google/gemini-2.5-flash',
         messages: [
-          { role: 'system', content: PROMPTS.system },
+          { role: 'system', content: systemPrompt },
           { role: 'user', content: prompt }
         ],
       }),
