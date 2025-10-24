@@ -837,5 +837,32 @@ ${prompt}
 EXAMPLE OUTPUT:
 ${JSON.stringify(example, null, 2)}
 
-Follow this format exactly.`
+Follow this format exactly.`,
+
+  // Requirements Collection Workflow Prompts (in French)
+  requirementsScope: `Tu es un expert en définition de périmètre projet et en analyse des besoins.
+
+Contexte fourni par l'utilisateur : {context}
+
+Génère une définition complète du périmètre projet incluant :
+1. Vision du projet, 2. Périmètre fonctionnel, 3. Parties prenantes, 4. Contraintes, 5. Questions de clarification.
+
+Réponds UNIQUEMENT en français.`,
+
+  requirementsCollection: `Tu es un expert en collecte d'exigences produit.
+Contexte : {context}
+Génère une liste d'exigences fonctionnelles, non-fonctionnelles, utilisateur et techniques avec critères d'acceptation.
+Réponds UNIQUEMENT en français.`,
+
+  requirementsPrioritization: `Tu es un expert en priorisation d'exigences.
+Exigences : {requirements}
+Contexte : {context}
+Analyse avec méthode MoSCoW, matrice valeur/effort, dépendances et risques. Suggère une roadmap en 3 phases.
+Réponds UNIQUEMENT en français.`,
+
+  requirementsDocumentation: `Tu es un expert en documentation de spécifications.
+Exigences : {requirements}
+Contexte : {context}
+Génère un document structuré avec résumé exécutif, spécifications fonctionnelles/techniques détaillées, plan de tests et annexes.
+Réponds UNIQUEMENT en français.`
 };

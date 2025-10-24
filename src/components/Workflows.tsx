@@ -12,6 +12,10 @@ import { ResearchObjectivesGenerator } from './research/ResearchObjectivesGenera
 import { ResearchPlanBuilder } from './research/ResearchPlanBuilder';
 import { ResearchConductor } from './research/ResearchConductor';
 import { ResearchSynthesizer } from './research/ResearchSynthesizer';
+import { RequirementsScopeDefiner } from './requirements/RequirementsScopeDefiner';
+import { RequirementsCollector } from './requirements/RequirementsCollector';
+import { RequirementsPrioritizer } from './requirements/RequirementsPrioritizer';
+import { RequirementsDocumentor } from './requirements/RequirementsDocumentor';
 import { DesignTool } from './DesignTool';
 import { CodeGenerator } from './CodeGenerator';
 import { RoadmapPlanner } from './RoadmapPlanner';
@@ -216,6 +220,23 @@ const workflows: Workflow[] = [
         tool: 'research-synthesize',
         completed: false,
       },
+    ],
+  },
+  {
+    id: 'requirements-collection',
+    name: 'Collecte d\'Exigences',
+    description: 'Définir, collecter, prioriser et documenter les exigences projet',
+    icon: <FileText className="w-6 h-6" />,
+    category: 'Discovery',
+    tags: ['Exigences', 'Spécifications', 'MoSCoW', 'Documentation'],
+    frameworks: ['waterfall', 'safe', 'scrum'],
+    difficulty: 'Intermediate',
+    estimatedTime: '60-90 min',
+    steps: [
+      { id: 'scope', title: 'Définir le Périmètre', description: 'Vision, parties prenantes et contraintes', tool: 'requirements-scope', completed: false },
+      { id: 'collect', title: 'Collecter les Exigences', description: 'Exigences fonctionnelles et non-fonctionnelles', tool: 'requirements-collection', completed: false },
+      { id: 'prioritize', title: 'Prioriser', description: 'MoSCoW et matrice valeur/effort', tool: 'requirements-prioritization', completed: false },
+      { id: 'document', title: 'Documenter', description: 'Spécifications complètes', tool: 'requirements-documentation', completed: false },
     ],
   },
   
@@ -793,6 +814,10 @@ export const Workflows: React.FC = () => {
   const [showResearchPlan, setShowResearchPlan] = useState(false);
   const [showResearchConduct, setShowResearchConduct] = useState(false);
   const [showResearchSynthesize, setShowResearchSynthesize] = useState(false);
+  const [showRequirementsScope, setShowRequirementsScope] = useState(false);
+  const [showRequirementsCollection, setShowRequirementsCollection] = useState(false);
+  const [showRequirementsPrioritization, setShowRequirementsPrioritization] = useState(false);
+  const [showRequirementsDocumentation, setShowRequirementsDocumentation] = useState(false);
 
   const [activeContext, setActiveContext] = useState<{
     name: string;
@@ -979,6 +1004,18 @@ export const Workflows: React.FC = () => {
         break;
       case 'research-synthesize':
         setShowResearchSynthesize(true);
+        break;
+      case 'requirements-scope':
+        setShowRequirementsScope(true);
+        break;
+      case 'requirements-collection':
+        setShowRequirementsCollection(true);
+        break;
+      case 'requirements-prioritization':
+        setShowRequirementsPrioritization(true);
+        break;
+      case 'requirements-documentation':
+        setShowRequirementsDocumentation(true);
         break;
       default:
         console.warn('Unknown tool:', tool);
