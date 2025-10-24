@@ -59,6 +59,7 @@ export const ResearchPlanBuilder: React.FC<ResearchPlanBuilderProps> = ({
       if (!user) throw new Error('Non authentifié');
 
       const { error } = await supabase.from('artifacts').insert({
+        user_id: user.id,
         title: 'Plan de Recherche Utilisateur',
         artifact_type: 'canvas',
         content: results,

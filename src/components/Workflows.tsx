@@ -8,6 +8,10 @@ import { CanvasGenerator } from './CanvasGenerator';
 import { StoryWriter } from './StoryWriter';
 import { ImpactPlotter } from './ImpactPlotter';
 import { MarketResearch } from './MarketResearch';
+import { ResearchObjectivesGenerator } from './research/ResearchObjectivesGenerator';
+import { ResearchPlanBuilder } from './research/ResearchPlanBuilder';
+import { ResearchConductor } from './research/ResearchConductor';
+import { ResearchSynthesizer } from './research/ResearchSynthesizer';
 import { DesignTool } from './DesignTool';
 import { CodeGenerator } from './CodeGenerator';
 import { RoadmapPlanner } from './RoadmapPlanner';
@@ -62,7 +66,7 @@ interface Workflow {
     id: string;
     title: string;
     description: string;
-    tool?: 'canvas' | 'story' | 'impact' | 'research' | 'design' | 'code' | 'roadmap' | 'launch' | 'sprint' | 'kpi' | 'epic-stories' | 'test-generator' | 'ac-validator' | 'git-to-specs' | 'critical-path-analyzer' | 'vision';
+    tool?: 'canvas' | 'story' | 'impact' | 'research' | 'design' | 'code' | 'roadmap' | 'launch' | 'sprint' | 'kpi' | 'epic-stories' | 'test-generator' | 'ac-validator' | 'git-to-specs' | 'critical-path-analyzer' | 'vision' | 'research-objectives' | 'research-plan' | 'research-conduct' | 'research-synthesize';
     completed?: boolean;
   }>;
 }
@@ -188,25 +192,28 @@ const workflows: Workflow[] = [
         id: 'objectives',
         title: 'Définir les Objectifs de Recherche',
         description: 'Définir des questions et objectifs de recherche clairs',
+        tool: 'research-objectives',
         completed: false,
       },
       {
         id: 'plan',
         title: 'Plan de Recherche',
         description: 'Concevoir la méthodologie et recruter les participants',
+        tool: 'research-plan',
         completed: false,
       },
       {
         id: 'conduct',
         title: 'Mener la Recherche',
         description: 'Exécuter interviews, sondages, tests d\'utilisabilité',
+        tool: 'research-conduct',
         completed: false,
       },
       {
         id: 'synthesize',
         title: 'Synthétiser les Résultats',
         description: 'Analyser les données et créer des insights actionnables',
-        tool: 'canvas',
+        tool: 'research-synthesize',
         completed: false,
       },
     ],
@@ -782,6 +789,10 @@ export const Workflows: React.FC = () => {
   const [showACValidator, setShowACValidator] = useState(false);
   const [showGitToSpecs, setShowGitToSpecs] = useState(false);
   const [showVisionDefiner, setShowVisionDefiner] = useState(false);
+  const [showResearchObjectives, setShowResearchObjectives] = useState(false);
+  const [showResearchPlan, setShowResearchPlan] = useState(false);
+  const [showResearchConduct, setShowResearchConduct] = useState(false);
+  const [showResearchSynthesize, setShowResearchSynthesize] = useState(false);
 
   const [activeContext, setActiveContext] = useState<{
     name: string;
@@ -956,6 +967,18 @@ export const Workflows: React.FC = () => {
         break;
       case 'vision':
         setShowVisionDefiner(true);
+        break;
+      case 'research-objectives':
+        setShowResearchObjectives(true);
+        break;
+      case 'research-plan':
+        setShowResearchPlan(true);
+        break;
+      case 'research-conduct':
+        setShowResearchConduct(true);
+        break;
+      case 'research-synthesize':
+        setShowResearchSynthesize(true);
         break;
       default:
         console.warn('Unknown tool:', tool);
@@ -1185,6 +1208,98 @@ export const Workflows: React.FC = () => {
                   setWorkflowContext(context);
                   setActiveWorkflow(prev => prev ? { ...prev, currentStep: nextStep } : null);
                   setShowVisionDefiner(false);
+                }}
+                workflowContext={workflowContext}
+              />
+            </div>
+          </div>
+        )}
+        {showResearchObjectives && (
+          <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm">
+            <div className="fixed inset-4 z-50 overflow-auto bg-background rounded-lg border shadow-lg p-6">
+              <Button
+                variant="ghost"
+                className="absolute right-4 top-4"
+                onClick={() => setShowResearchObjectives(false)}
+              >
+                ✕
+              </Button>
+              <h2 className="text-2xl font-bold mb-4">Objectifs de Recherche</h2>
+              <ResearchObjectivesGenerator 
+                onSave={(data) => {
+                  setCurrentStep(currentStep + 1);
+                  setWorkflowContext({ ...workflowContext, objectives: data });
+                  setActiveWorkflow(prev => prev ? { ...prev, currentStep: currentStep + 1 } : null);
+                  setShowResearchObjectives(false);
+                }}
+                workflowContext={workflowContext}
+              />
+            </div>
+          </div>
+        )}
+        {showResearchPlan && (
+          <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm">
+            <div className="fixed inset-4 z-50 overflow-auto bg-background rounded-lg border shadow-lg p-6">
+              <Button
+                variant="ghost"
+                className="absolute right-4 top-4"
+                onClick={() => setShowResearchPlan(false)}
+              >
+                ✕
+              </Button>
+              <h2 className="text-2xl font-bold mb-4">Plan de Recherche</h2>
+              <ResearchPlanBuilder 
+                onSave={(data) => {
+                  setCurrentStep(currentStep + 1);
+                  setWorkflowContext({ ...workflowContext, plan: data });
+                  setActiveWorkflow(prev => prev ? { ...prev, currentStep: currentStep + 1 } : null);
+                  setShowResearchPlan(false);
+                }}
+                workflowContext={workflowContext}
+              />
+            </div>
+          </div>
+        )}
+        {showResearchConduct && (
+          <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm">
+            <div className="fixed inset-4 z-50 overflow-auto bg-background rounded-lg border shadow-lg p-6">
+              <Button
+                variant="ghost"
+                className="absolute right-4 top-4"
+                onClick={() => setShowResearchConduct(false)}
+              >
+                ✕
+              </Button>
+              <h2 className="text-2xl font-bold mb-4">Mener la Recherche</h2>
+              <ResearchConductor 
+                onSave={(data) => {
+                  setCurrentStep(currentStep + 1);
+                  setWorkflowContext({ ...workflowContext, researchData: data });
+                  setActiveWorkflow(prev => prev ? { ...prev, currentStep: currentStep + 1 } : null);
+                  setShowResearchConduct(false);
+                }}
+                workflowContext={workflowContext}
+              />
+            </div>
+          </div>
+        )}
+        {showResearchSynthesize && (
+          <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm">
+            <div className="fixed inset-4 z-50 overflow-auto bg-background rounded-lg border shadow-lg p-6">
+              <Button
+                variant="ghost"
+                className="absolute right-4 top-4"
+                onClick={() => setShowResearchSynthesize(false)}
+              >
+                ✕
+              </Button>
+              <h2 className="text-2xl font-bold mb-4">Synthèse de Recherche</h2>
+              <ResearchSynthesizer 
+                onSave={(data) => {
+                  setCurrentStep(currentStep + 1);
+                  setWorkflowContext({ ...workflowContext, synthesis: data });
+                  setActiveWorkflow(prev => prev ? { ...prev, currentStep: currentStep + 1 } : null);
+                  setShowResearchSynthesize(false);
                 }}
                 workflowContext={workflowContext}
               />

@@ -58,6 +58,7 @@ export const ResearchSynthesizer: React.FC<ResearchSynthesizerProps> = ({
       if (!user) throw new Error('Non authentifié');
 
       const { error } = await supabase.from('artifacts').insert({
+        user_id: user.id,
         title: 'Synthèse de Recherche Utilisateur',
         artifact_type: 'canvas',
         content: results,

@@ -88,6 +88,7 @@ export const ResearchConductor: React.FC<ResearchConductorProps> = ({
       };
 
       const { error } = await supabase.from('artifacts').insert({
+        user_id: user.id,
         title: typeMap[activeTab] || 'Matériel de Recherche',
         artifact_type: 'canvas',
         content: results,

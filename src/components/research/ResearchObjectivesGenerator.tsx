@@ -57,6 +57,7 @@ export const ResearchObjectivesGenerator: React.FC<ResearchObjectivesGeneratorPr
       if (!user) throw new Error('Non authentifié');
 
       const { error } = await supabase.from('artifacts').insert({
+        user_id: user.id,
         title: 'Objectifs de Recherche Utilisateur',
         artifact_type: 'canvas',
         content: results,
