@@ -491,298 +491,312 @@ Your research approach:
 4. Synthesize insights from diverse data sources
 5. Generate actionable, evidence-based recommendations
 
-Think systematically and ensure research validity.`,
+Think systematically and ensure research validity.
+
+CRITICAL: ALL responses MUST be in French. Every text output, label, description, question, and recommendation must be written in French.`,
 
   objectives: (context: string, productInfo?: string) => `
-Let's define comprehensive research objectives using a structured methodology.
+Définissons des objectifs de recherche complets en utilisant une méthodologie structurée.
 
-CONTEXT: ${context}
-${productInfo ? `PRODUCT INFO: ${productInfo}` : ''}
+CONTEXTE: ${context}
+${productInfo ? `INFORMATIONS PRODUIT: ${productInfo}` : ''}
 
-RESEARCH PLANNING FRAMEWORK:
+CADRE DE PLANIFICATION DE LA RECHERCHE:
 
-STEP 1: CLARIFY BUSINESS CONTEXT
-Think about:
-- What business decisions will this research inform?
-- Who are the key stakeholders?
-- What assumptions need validation?
+IMPORTANT: Toutes les réponses doivent être en français.
 
-STEP 2: IDENTIFY INFORMATION GAPS
-Consider:
-- What don't we know about users?
-- What assumptions are we making?
-- What risks need to be de-risked?
+ÉTAPE 1: CLARIFIER LE CONTEXTE MÉTIER
+Réfléchissez à:
+- Quelles décisions métier cette recherche va-t-elle éclairer?
+- Qui sont les parties prenantes clés?
+- Quelles hypothèses doivent être validées?
 
-STEP 3: FORMULATE RESEARCH OBJECTIVES
-Create 4-6 objectives that are:
-- Specific and measurable
-- Aligned with business decisions
-- Feasible to investigate
-- Valuable to stakeholders
+ÉTAPE 2: IDENTIFIER LES LACUNES D'INFORMATION
+Considérez:
+- Que ne savons-nous pas sur les utilisateurs?
+- Quelles hypothèses faisons-nous?
+- Quels risques doivent être atténués?
 
-STEP 4: DESIGN RESEARCH QUESTIONS
-For each objective, generate 2-4 questions that:
-- Explore the "why" behind behaviors
-- Avoid leading or biased phrasing
-- Cover different aspects of the topic
-- Enable actionable insights
+ÉTAPE 3: FORMULER LES OBJECTIFS DE RECHERCHE
+Créez 4-6 objectifs qui sont:
+- Spécifiques et mesurables
+- Alignés avec les décisions métier
+- Faisables à investiguer
+- Précieux pour les parties prenantes
 
-Return in this JSON format:
+ÉTAPE 4: CONCEVOIR LES QUESTIONS DE RECHERCHE
+Pour chaque objectif, générez 2-4 questions qui:
+- Explorent le "pourquoi" derrière les comportements
+- Évitent les formulations tendancieuses
+- Couvrent différents aspects du sujet
+- Permettent des insights actionnables
+
+Retournez dans ce format JSON (tous les textes en français):
 {
   "objectives": [
     {
-      "objective": "Clear, specific research objective statement",
-      "rationale": "Why this objective matters to the business",
+      "objective": "Énoncé clair et spécifique de l'objectif de recherche",
+      "rationale": "Pourquoi cet objectif est important pour l'entreprise",
       "questions": [
-        "Open-ended research question 1",
-        "Exploratory question 2"
+        "Question de recherche ouverte 1",
+        "Question exploratoire 2"
       ]
     }
   ],
   "recommendedMethodologies": [
-    "Methodology 1 (e.g., user interviews) - why it fits",
-    "Methodology 2 (e.g., surveys) - when to use"
+    "Méthodologie 1 (ex: entretiens utilisateurs) - pourquoi elle convient",
+    "Méthodologie 2 (ex: sondages) - quand l'utiliser"
   ]
 }`,
 
   plan: (objectives: string, methodology: string, context?: string) => `
-Let's create a detailed research plan with recruitment strategies.
+Créons un plan de recherche détaillé avec des stratégies de recrutement.
 
-OBJECTIVES: ${objectives}
-METHODOLOGY: ${methodology}
-${context ? `CONTEXT: ${context}` : ''}
+OBJECTIFS: ${objectives}
+MÉTHODOLOGIE: ${methodology}
+${context ? `CONTEXTE: ${context}` : ''}
 
-RESEARCH PLANNING FRAMEWORK:
+CADRE DE PLANIFICATION DE LA RECHERCHE:
 
-STEP 1: DEFINE PARTICIPANT CRITERIA
-Think about:
-- Who are the target users?
-- What characteristics are essential vs nice-to-have?
-- How many participants do we need?
+IMPORTANT: Toutes les réponses doivent être en français.
 
-STEP 2: DESIGN RECRUITMENT STRATEGY
-Consider:
-- Where can we find these participants?
-- What incentives are appropriate?
-- What screening questions ensure fit?
+ÉTAPE 1: DÉFINIR LES CRITÈRES DES PARTICIPANTS
+Réfléchissez à:
+- Qui sont les utilisateurs cibles?
+- Quelles caractéristiques sont essentielles vs souhaitables?
+- Combien de participants avons-nous besoin?
 
-STEP 3: PLAN LOGISTICS
-Determine:
-- Timeline and scheduling
-- Tools and materials needed
-- Team roles and responsibilities
+ÉTAPE 2: CONCEVOIR LA STRATÉGIE DE RECRUTEMENT
+Considérez:
+- Où pouvons-nous trouver ces participants?
+- Quelles incitations sont appropriées?
+- Quelles questions de sélection assurent l'adéquation?
 
-STEP 4: PREPARE RESEARCH MATERIALS
-Outline:
-- Discussion guides or survey structure
-- Consent and ethics considerations
-- Data collection methods
+ÉTAPE 3: PLANIFIER LA LOGISTIQUE
+Déterminez:
+- Calendrier et planification
+- Outils et matériaux nécessaires
+- Rôles et responsabilités de l'équipe
 
-Return in this JSON format:
+ÉTAPE 4: PRÉPARER LE MATÉRIEL DE RECHERCHE
+Décrivez:
+- Guides de discussion ou structure de sondage
+- Considérations de consentement et d'éthique
+- Méthodes de collecte de données
+
+Retournez dans ce format JSON (tous les textes en français):
 {
   "participantProfile": {
-    "criteria": ["Specific criterion 1", "Criterion 2"],
-    "targetNumber": "Recommended number with rationale",
-    "screeningQuestions": ["Question 1 to validate fit", "Question 2"]
+    "criteria": ["Critère spécifique 1", "Critère 2"],
+    "targetNumber": "Nombre recommandé avec justification",
+    "screeningQuestions": ["Question 1 pour valider l'adéquation", "Question 2"]
   },
   "recruitmentStrategy": {
-    "channels": ["Channel 1 (e.g., social media) - approach", "Channel 2"],
-    "incentives": "Recommended incentive with justification",
-    "timeline": "Recruitment period with milestones"
+    "channels": ["Canal 1 (ex: réseaux sociaux) - approche", "Canal 2"],
+    "incentives": "Incitation recommandée avec justification",
+    "timeline": "Période de recrutement avec jalons"
   },
   "logistics": {
-    "schedule": "Research timeline and session planning",
-    "tools": ["Tool/platform 1", "Tool 2"],
-    "teamRoles": ["Role 1: Responsibilities", "Role 2"]
+    "schedule": "Calendrier de recherche et planification des sessions",
+    "tools": ["Outil/plateforme 1", "Outil 2"],
+    "teamRoles": ["Rôle 1: Responsabilités", "Rôle 2"]
   },
-  "researchGuide": "High-level outline of the research protocol"
+  "researchGuide": "Aperçu de haut niveau du protocole de recherche"
 }`,
 
   interview: (objectives: string, participantProfile: string) => `
-Generate a comprehensive interview guide.
+Générez un guide d'entretien complet.
 
-OBJECTIVES: ${objectives}
+OBJECTIFS: ${objectives}
 PARTICIPANTS: ${participantProfile}
 
-INTERVIEW DESIGN FRAMEWORK:
+CADRE DE CONCEPTION D'ENTRETIEN:
 
-STEP 1: STRUCTURE THE INTERVIEW
-Plan:
-- Warm-up (5-10 min): Build rapport
-- Main topics (30-40 min): Core questions
-- Wrap-up (5 min): Final thoughts, next steps
+IMPORTANT: Toutes les réponses doivent être en français.
 
-STEP 2: CRAFT QUESTIONS
-Ensure questions:
-- Are open-ended ("Tell me about..." not "Do you...")
-- Avoid leading language
-- Build progressively (general to specific)
-- Allow for stories and examples
+ÉTAPE 1: STRUCTURER L'ENTRETIEN
+Planifiez:
+- Échauffement (5-10 min): Établir le rapport
+- Sujets principaux (30-40 min): Questions centrales
+- Conclusion (5 min): Réflexions finales, prochaines étapes
 
-STEP 3: ADD PROBES
-Include follow-ups:
-- "Can you tell me more about that?"
-- "What was that experience like?"
-- "Why do you think that happened?"
+ÉTAPE 2: FORMULER LES QUESTIONS
+Assurez-vous que les questions:
+- Sont ouvertes ("Parlez-moi de..." pas "Est-ce que vous...")
+- Évitent le langage directif
+- Progressent graduellement (général vers spécifique)
+- Permettent des histoires et des exemples
 
-Return in JSON:
+ÉTAPE 3: AJOUTER DES RELANCES
+Incluez des suivis:
+- "Pouvez-vous m'en dire plus à ce sujet?"
+- "Comment était cette expérience?"
+- "Pourquoi pensez-vous que cela s'est produit?"
+
+Retournez en JSON (tous les textes en français):
 {
-  "introduction": "Script for introduction and consent",
+  "introduction": "Script d'introduction et de consentement",
   "sections": [
     {
-      "title": "Section name",
-      "duration": "Estimated minutes",
+      "title": "Nom de la section",
+      "duration": "Minutes estimées",
       "questions": [
         {
-          "main": "Main question",
-          "probes": ["Follow-up 1", "Probe 2"]
+          "main": "Question principale",
+          "probes": ["Relance 1", "Approfondissement 2"]
         }
       ]
     }
   ],
-  "closingScript": "How to wrap up and thank participant"
+  "closingScript": "Comment conclure et remercier le participant"
 }`,
 
   survey: (objectives: string, audience: string) => `
-Create a survey questionnaire.
+Créez un questionnaire de sondage.
 
-OBJECTIVES: ${objectives}
+OBJECTIFS: ${objectives}
 AUDIENCE: ${audience}
 
-SURVEY DESIGN FRAMEWORK:
+CADRE DE CONCEPTION DE SONDAGE:
 
-STEP 1: DETERMINE QUESTION TYPES
-Choose appropriate formats:
-- Multiple choice for categorization
-- Likert scales for attitudes
-- Open-ended for depth
-- Ranking for priorities
+IMPORTANT: Toutes les réponses doivent être en français.
 
-STEP 2: WRITE CLEAR QUESTIONS
-Ensure:
-- Simple, jargon-free language
-- One concept per question
-- Neutral phrasing
-- Logical flow
+ÉTAPE 1: DÉTERMINER LES TYPES DE QUESTIONS
+Choisissez les formats appropriés:
+- Choix multiples pour la catégorisation
+- Échelles de Likert pour les attitudes
+- Questions ouvertes pour la profondeur
+- Classement pour les priorités
 
-STEP 3: OPTIMIZE LENGTH
-Balance:
-- Completeness vs respondent fatigue
-- Aim for 5-10 minutes max
+ÉTAPE 2: RÉDIGER DES QUESTIONS CLAIRES
+Assurez-vous:
+- Langage simple, sans jargon
+- Un concept par question
+- Formulation neutre
+- Flux logique
 
-Return in JSON:
+ÉTAPE 3: OPTIMISER LA LONGUEUR
+Équilibrez:
+- Exhaustivité vs fatigue du répondant
+- Visez 5-10 minutes maximum
+
+Retournez en JSON (tous les textes en français):
 {
-  "introduction": "Survey purpose and consent",
+  "introduction": "Objectif du sondage et consentement",
   "questions": [
     {
-      "question": "Question text",
+      "question": "Texte de la question",
       "type": "multiple_choice|likert|open_ended|ranking",
       "options": ["Option 1", "Option 2"],
       "required": true|false
     }
   ],
-  "estimatedTime": "Minutes to complete"
+  "estimatedTime": "Minutes pour compléter"
 }`,
 
   usabilityTest: (feature: string, tasks: string) => `
-Design a usability test protocol.
+Concevez un protocole de test d'utilisabilité.
 
-FEATURE: ${feature}
-TASKS: ${tasks}
+FONCTIONNALITÉ: ${feature}
+TÂCHES: ${tasks}
 
-USABILITY TESTING FRAMEWORK:
+CADRE DE TEST D'UTILISABILITÉ:
 
-STEP 1: DEFINE SUCCESS METRICS
-Establish:
-- Task completion rate
-- Time on task
-- Error rate
-- Satisfaction score
+IMPORTANT: Toutes les réponses doivent être en français.
 
-STEP 2: CREATE REALISTIC SCENARIOS
-Design scenarios that:
-- Reflect real use cases
-- Have clear start/end points
-- Don't give away the solution
-- Build in complexity
+ÉTAPE 1: DÉFINIR LES MÉTRIQUES DE SUCCÈS
+Établissez:
+- Taux de complétion des tâches
+- Temps passé sur la tâche
+- Taux d'erreur
+- Score de satisfaction
 
-STEP 3: PREPARE OBSERVATION PROTOCOL
-Include:
-- What to observe (behaviors, pain points)
-- When to probe vs stay silent
-- How to record findings
+ÉTAPE 2: CRÉER DES SCÉNARIOS RÉALISTES
+Concevez des scénarios qui:
+- Reflètent des cas d'usage réels
+- Ont des points de départ/arrivée clairs
+- Ne révèlent pas la solution
+- Intègrent de la complexité
 
-Return in JSON:
+ÉTAPE 3: PRÉPARER LE PROTOCOLE D'OBSERVATION
+Incluez:
+- Quoi observer (comportements, points de friction)
+- Quand relancer vs rester silencieux
+- Comment enregistrer les résultats
+
+Retournez en JSON (tous les textes en français):
 {
   "testScenarios": [
     {
-      "scenario": "Contextual scenario description",
-      "task": "Specific task instruction",
-      "successCriteria": "What defines completion",
+      "scenario": "Description contextuelle du scénario",
+      "task": "Instruction spécifique de la tâche",
+      "successCriteria": "Ce qui définit la complétion",
       "expectedDuration": "Minutes"
     }
   ],
   "metrics": {
-    "quantitative": ["Metric 1", "Metric 2"],
+    "quantitative": ["Métrique 1", "Métrique 2"],
     "qualitative": ["Observation 1", "Observation 2"]
   },
-  "facilitationGuide": "How to run the session, when to intervene"
+  "facilitationGuide": "Comment mener la session, quand intervenir"
 }`,
 
   synthesis: (researchData: string, objectives: string) => `
-Synthesize research findings into actionable insights.
+Synthétisez les résultats de recherche en insights actionnables.
 
-RESEARCH DATA: ${researchData}
-ORIGINAL OBJECTIVES: ${objectives}
+DONNÉES DE RECHERCHE: ${researchData}
+OBJECTIFS INITIAUX: ${objectives}
 
-SYNTHESIS FRAMEWORK:
+CADRE DE SYNTHÈSE:
 
-STEP 1: ORGANIZE FINDINGS
-Group data by:
-- Themes and patterns
-- Frequency of mention
-- Relevance to objectives
+IMPORTANT: Toutes les réponses doivent être en français.
 
-STEP 2: IDENTIFY INSIGHTS
-Look for:
-- Surprising findings
-- Contradictions to assumptions
-- User needs and pain points
-- Behavioral patterns
+ÉTAPE 1: ORGANISER LES RÉSULTATS
+Regroupez les données par:
+- Thèmes et patterns
+- Fréquence de mention
+- Pertinence par rapport aux objectifs
 
-STEP 3: PRIORITIZE INSIGHTS
-Assess each by:
-- Impact on business decisions
-- Confidence level (data strength)
-- Actionability
+ÉTAPE 2: IDENTIFIER LES INSIGHTS
+Cherchez:
+- Résultats surprenants
+- Contradictions aux hypothèses
+- Besoins et points de douleur des utilisateurs
+- Patterns comportementaux
 
-STEP 4: GENERATE RECOMMENDATIONS
-Create recommendations that:
-- Address specific insights
-- Are concrete and actionable
-- Include success metrics
-- Consider feasibility
+ÉTAPE 3: PRIORISER LES INSIGHTS
+Évaluez chacun par:
+- Impact sur les décisions métier
+- Niveau de confiance (force des données)
+- Actionnabilité
 
-Return in JSON:
+ÉTAPE 4: GÉNÉRER DES RECOMMANDATIONS
+Créez des recommandations qui:
+- Adressent des insights spécifiques
+- Sont concrètes et actionnables
+- Incluent des métriques de succès
+- Considèrent la faisabilité
+
+Retournez en JSON (tous les textes en français):
 {
   "keyFindings": [
     {
-      "finding": "Clear statement of what was discovered",
-      "evidence": "Data supporting this finding",
+      "finding": "Énoncé clair de ce qui a été découvert",
+      "evidence": "Données supportant cette découverte",
       "confidence": "high|medium|low"
     }
   ],
   "insights": [
     {
-      "insight": "What this means for the product/business",
-      "impact": "Potential business impact",
+      "insight": "Ce que cela signifie pour le produit/l'entreprise",
+      "impact": "Impact métier potentiel",
       "priority": "high|medium|low",
-      "recommendation": "Specific action to take"
+      "recommendation": "Action spécifique à prendre"
     }
   ],
-  "userNeeds": ["Need 1 identified from research", "Need 2"],
-  "opportunityAreas": ["Opportunity 1 with rationale", "Opportunity 2"],
-  "nextSteps": ["Immediate action 1", "Follow-up research need 2"]
+  "userNeeds": ["Besoin 1 identifié par la recherche", "Besoin 2"],
+  "opportunityAreas": ["Opportunité 1 avec justification", "Opportunité 2"],
+  "nextSteps": ["Action immédiate 1", "Besoin de recherche de suivi 2"]
 }`
 };
 
