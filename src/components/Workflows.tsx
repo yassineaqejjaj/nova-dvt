@@ -30,6 +30,7 @@ import EpicToUserStories from './EpicToUserStories';
 import { GitToSpecsGenerator } from './GitToSpecsGenerator';
 import { ProductVisionDefiner } from './ProductVisionDefiner';
 import { AcceptanceCriteriaValidator } from './AcceptanceCriteriaValidator';
+import { DesignSystem } from './DesignSystem';
 import { FrameworkFilter } from './FrameworkFilter';
 import { useFrameworkFilter } from '@/hooks/useFrameworkFilter';
 import { useWorkflowProgress } from '@/hooks/useWorkflowProgress';
@@ -644,42 +645,21 @@ const workflows: Workflow[] = [
   },
   {
     id: 'design-system',
-    name: 'Création de Design System',
-    description: 'Construisez un design system complet avec identité de marque, composants et documentation',
+    name: 'Design System & Storybook',
+    description: 'Explorez le design system complet avec tokens, composants UI et documentation Storybook',
     icon: <Palette className="w-6 h-6" />,
     category: 'Mon Quotidien',
-    tags: ['Design', 'UI', 'Marque', 'Composants', 'System'],
-    frameworks: ['spotify', 'lean'],
-    difficulty: 'Advanced',
-    estimatedTime: '60-90 min',
+    tags: ['Design', 'UI', 'Storybook', 'Composants', 'Documentation'],
+    frameworks: ['spotify', 'lean', 'scrum', 'safe'],
+    difficulty: 'Beginner',
+    estimatedTime: '10 min',
     steps: [
       {
-        id: 'brand',
-        title: 'Identité de Marque',
-        description: 'Définir couleurs de marque, logo, identité visuelle',
-        tool: 'design',
+        id: 'explore',
+        title: 'Explorer le Design System',
+        description: 'Parcourir les tokens de couleurs, typographie et composants',
         completed: false,
-      },
-      {
-        id: 'typography',
-        title: 'Système Typographique',
-        description: 'Choisir polices et créer hiérarchie de texte',
-        tool: 'design',
-        completed: false,
-      },
-      {
-        id: 'components',
-        title: 'Composants UI',
-        description: 'Designer la bibliothèque de composants réutilisables',
-        tool: 'design',
-        completed: false,
-      },
-      {
-        id: 'documentation',
-        title: 'Documentation',
-        description: 'Créer la documentation du design system',
-        completed: false,
-      },
+      }
     ],
   },
   {
@@ -818,6 +798,7 @@ export const Workflows: React.FC = () => {
   const [showRequirementsCollection, setShowRequirementsCollection] = useState(false);
   const [showRequirementsPrioritization, setShowRequirementsPrioritization] = useState(false);
   const [showRequirementsDocumentation, setShowRequirementsDocumentation] = useState(false);
+  const [showDesignSystem, setShowDesignSystem] = useState(false);
 
   const [activeContext, setActiveContext] = useState<{
     name: string;
@@ -925,6 +906,10 @@ export const Workflows: React.FC = () => {
     }
     if (workflow.id === 'acceptance-criteria-validator') {
       setShowACValidator(true);
+      return;
+    }
+    if (workflow.id === 'design-system') {
+      setShowDesignSystem(true);
       return;
     }
     
@@ -1727,6 +1712,20 @@ export const Workflows: React.FC = () => {
           <div className="container mx-auto p-6">
             <AcceptanceCriteriaValidator />
           </div>
+        </div>
+      )}
+      
+      {showDesignSystem && (
+        <div className="fixed inset-0 z-50 bg-background overflow-auto">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="absolute top-4 right-4 z-50"
+            onClick={() => setShowDesignSystem(false)}
+          >
+            ✕ Fermer
+          </Button>
+          <DesignSystem />
         </div>
       )}
     </div>
