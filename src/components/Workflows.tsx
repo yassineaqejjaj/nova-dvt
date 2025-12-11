@@ -31,6 +31,7 @@ import { GitToSpecsGenerator } from './GitToSpecsGenerator';
 import { ProductVisionDefiner } from './ProductVisionDefiner';
 import { AcceptanceCriteriaValidator } from './AcceptanceCriteriaValidator';
 import { DesignSystem } from './DesignSystem';
+import { InsightSynthesizer } from './InsightSynthesizer';
 import { FrameworkFilter } from './FrameworkFilter';
 import { useFrameworkFilter } from '@/hooks/useFrameworkFilter';
 import { useWorkflowProgress } from '@/hooks/useWorkflowProgress';
@@ -52,6 +53,7 @@ import {
   Sparkles,
   CheckCircle2,
   ListTree,
+  BarChart3,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
@@ -77,6 +79,43 @@ interface Workflow {
 }
 
 const workflows: Workflow[] = [
+  {
+    id: 'insight-synthesizer',
+    name: 'Insight Synthesizer',
+    description: 'Transformez vos avis stores, demandes métiers et incidents en recommandations roadmap avec Epics et User Stories',
+    icon: <BarChart3 className="w-6 h-6" />,
+    category: 'Discovery',
+    tags: ['AI', 'Insights', 'Roadmap', 'Priorisation', 'Epic', 'Stores'],
+    frameworks: ['scrum', 'less', 'spotify', 'lean', 'safe'],
+    difficulty: 'Intermediate',
+    estimatedTime: '30-45 min',
+    steps: [
+      {
+        id: 'input',
+        title: 'Sources de Données',
+        description: 'Avis App Stores, demandes métiers, incidents',
+        completed: false,
+      },
+      {
+        id: 'synthesis',
+        title: 'Synthèse & Priorisation',
+        description: 'Analyse automatique et thèmes prioritaires',
+        completed: false,
+      },
+      {
+        id: 'recommendations',
+        title: 'Recommandations Roadmap',
+        description: 'Impact, effort et actions recommandées',
+        completed: false,
+      },
+      {
+        id: 'epics',
+        title: 'Epics & User Stories',
+        description: 'Génération automatique avec AC',
+        completed: false,
+      }
+    ]
+  },
   {
     id: 'smart-discovery',
     name: 'Smart Discovery Canvas',
@@ -799,6 +838,7 @@ export const Workflows: React.FC = () => {
   const [showRequirementsPrioritization, setShowRequirementsPrioritization] = useState(false);
   const [showRequirementsDocumentation, setShowRequirementsDocumentation] = useState(false);
   const [showDesignSystem, setShowDesignSystem] = useState(false);
+  const [showInsightSynthesizer, setShowInsightSynthesizer] = useState(false);
 
   const [activeContext, setActiveContext] = useState<{
     name: string;
@@ -910,6 +950,10 @@ export const Workflows: React.FC = () => {
     }
     if (workflow.id === 'design-system') {
       setShowDesignSystem(true);
+      return;
+    }
+    if (workflow.id === 'insight-synthesizer') {
+      setShowInsightSynthesizer(true);
       return;
     }
     
@@ -1728,6 +1772,11 @@ export const Workflows: React.FC = () => {
           <DesignSystem />
         </div>
       )}
+      
+      <InsightSynthesizer 
+        open={showInsightSynthesizer} 
+        onClose={() => setShowInsightSynthesizer(false)} 
+      />
     </div>
   );
 };

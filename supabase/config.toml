@@ -89,3 +89,6 @@ verify_jwt = true
 
 [functions.document-requirements]
 verify_jwt = true
+
+[functions.synthesize-insights]
+verify_jwt = true
