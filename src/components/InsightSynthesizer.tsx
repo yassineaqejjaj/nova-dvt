@@ -10,6 +10,7 @@ import { Separator } from '@/components/ui/separator';
 import { Progress } from '@/components/ui/progress';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { ContextSelector } from '@/components/ContextSelector';
 import {
   Loader2,
   Sparkles,
@@ -27,7 +28,18 @@ import {
   ChevronDown,
   ChevronUp,
   BarChart3,
+  Database,
 } from 'lucide-react';
+
+interface ProductContext {
+  id: string;
+  name: string;
+  vision?: string;
+  objectives?: string[];
+  target_kpis?: string[];
+  target_audience?: string;
+  constraints?: string;
+}
 
 interface StoreReview {
   source: 'apple_store' | 'google_play';
@@ -109,6 +121,39 @@ export const InsightSynthesizer: React.FC<InsightSynthesizerProps> = ({ open, on
   const [businessRequestsInput, setBusinessRequestsInput] = useState('');
   const [incidentsInput, setIncidentsInput] = useState('');
   const [productContext, setProductContext] = useState('');
+  const [selectedProductContext, setSelectedProductContext] = useState<ProductContext | null>(null);
+
+  const formatContextToString = (context: ProductContext): string => {
+    const parts: string[] = [];
+    parts.push(`📋 Produit: ${context.name}`);
+    
+    if (context.vision) {
+      parts.push(`\n🎯 Vision: ${context.vision}`);
+    }
+    
+    if (context.objectives && context.objectives.length > 0) {
+      parts.push(`\n📌 Objectifs:\n${context.objectives.map(o => `  • ${o}`).join('\n')}`);
+    }
+    
+    if (context.target_kpis && context.target_kpis.length > 0) {
+      parts.push(`\n📊 KPIs cibles:\n${context.target_kpis.map(k => `  • ${k}`).join('\n')}`);
+    }
+    
+    if (context.target_audience) {
+      parts.push(`\n👥 Audience cible: ${context.target_audience}`);
+    }
+    
+    if (context.constraints) {
+      parts.push(`\n⚠️ Contraintes: ${context.constraints}`);
+    }
+    
+    return parts.join('');
+  };
+
+  const handleContextSelected = (context: ProductContext) => {
+    setSelectedProductContext(context);
+    setProductContext(formatContextToString(context));
+  };
 
   const parseStoreReviews = (input: string): StoreReview[] => {
     if (!input.trim()) return [];
@@ -430,18 +475,37 @@ Ou format JSON:
                 {/* Product Context */}
                 <Card>
                   <CardHeader className="pb-3">
-                    <CardTitle className="text-lg">Contexte Produit (optionnel)</CardTitle>
-                    <CardDescription>
-                      Ajoutez du contexte pour une analyse plus pertinente
-                    </CardDescription>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <CardTitle className="text-lg">Contexte Produit (optionnel)</CardTitle>
+                        <CardDescription>
+                          Ajoutez du contexte pour une analyse plus pertinente
+                        </CardDescription>
+                      </div>
+                      <ContextSelector
+                        onContextSelected={handleContextSelected}
+                        selectedContextId={selectedProductContext?.id}
+                      />
+                    </div>
                   </CardHeader>
                   <CardContent>
                     <Textarea
                       value={productContext}
-                      onChange={(e) => setProductContext(e.target.value)}
+                      onChange={(e) => {
+                        setProductContext(e.target.value);
+                        if (selectedProductContext) {
+                          setSelectedProductContext(null);
+                        }
+                      }}
                       placeholder="Ex: Application mobile B2C de fitness, 500k utilisateurs actifs, focus Q1 sur la rétention..."
-                      className="min-h-[80px]"
+                      className="min-h-[100px]"
                     />
+                    {selectedProductContext && (
+                      <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1">
+                        <CheckCircle2 className="w-3 h-3 text-green-500" />
+                        Contexte "{selectedProductContext.name}" chargé depuis Nova Core
+                      </p>
+                    )}
                   </CardContent>
                 </Card>
 
