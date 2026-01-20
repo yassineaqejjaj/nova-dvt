@@ -3,10 +3,11 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Share2, Download, Edit, Sparkles, Target, Users, TrendingUp, AlertTriangle, Lightbulb, BarChart3, FlaskConical, CheckCircle2, Rocket, Save, Send } from "lucide-react";
+import { Loader2, Share2, Download, Edit, Sparkles, Target, Users, TrendingUp, AlertTriangle, Lightbulb, BarChart3, FlaskConical, CheckCircle2, Rocket, Save, Send, ArrowLeft, Copy, FileText } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { ContextSelector } from "./ContextSelector";
+import { Separator } from "@/components/ui/separator";
 
 interface AnalysisResult {
   problem: string;
@@ -56,6 +57,7 @@ export const SmartDiscoveryCanvas = () => {
   const [isBuildingTestPlan, setIsBuildingTestPlan] = useState(false);
   const [testPlan, setTestPlan] = useState<string | null>(null);
   const [importedContext, setImportedContext] = useState<any>(null);
+  const [currentView, setCurrentView] = useState<'input' | 'results'>('input');
 
   const handleAnalyze = async () => {
     if (!initialInput.trim()) {
@@ -135,6 +137,9 @@ EXAMPLE OUTPUT:
 
       setConfidence(Math.floor(Math.random() * 20) + 75);
       setTimeSpent(Math.floor((Date.now() - startTime) / 1000));
+      
+      // Switch to results view
+      setCurrentView('results');
       
       toast.success("Analyse terminée !");
     } catch (error) {
@@ -529,126 +534,369 @@ Return ONLY valid JSON (no markdown):
     }
   };
 
-  return (
-    <div className="min-h-screen bg-background p-6">
-      <div className="max-w-7xl mx-auto space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Sparkles className="w-8 h-8 text-primary" />
-            <h1 className="text-3xl font-bold">Smart Discovery Canvas</h1>
-          </div>
-          <div className="flex gap-2">
-            <Button variant="outline" size="sm">
-              <Share2 className="w-4 h-4 mr-2" />
-              Share
-            </Button>
-            <Button variant="outline" size="sm">
-              <Download className="w-4 h-4 mr-2" />
-              Export
-            </Button>
-          </div>
-        </div>
+  const handleStartOver = () => {
+    setAnalysis(null);
+    setSolutions([]);
+    setValidation(null);
+    setSelectedOption(null);
+    setEpic(null);
+    setTestPlan(null);
+    setConfidence(0);
+    setTimeSpent(0);
+    setCurrentView('input');
+  };
 
-        {/* Initial Input */}
-        <Card className="p-6">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2">
-              <Lightbulb className="w-5 h-5 text-primary" />
-              <h2 className="text-xl font-semibold">Initial Input</h2>
+  const handleCopyResults = () => {
+    const resultsText = `
+Smart Discovery Canvas Results
+==============================
+
+📋 Original Input:
+${initialInput}
+
+🎯 Problem Analysis:
+${analysis?.problem || 'N/A'}
+
+👥 Personas:
+${analysis?.personas?.join(', ') || 'N/A'}
+
+📈 Key Metrics:
+${analysis?.analytics?.map(m => `• ${m}`).join('\n') || 'N/A'}
+
+🏢 Competitive Landscape:
+${analysis?.competitors || 'N/A'}
+
+⚠️ Red Flags:
+${analysis?.redFlags?.map(r => `• ${r}`).join('\n') || 'N/A'}
+
+💡 Solutions:
+${solutions.map((s, i) => `${i + 1}. ${s.title} (Effort: ${s.effort}, Impact: ${s.impact})\n   ${s.description}`).join('\n') || 'N/A'}
+
+${epic ? `
+🚀 Epic:
+Title: ${epic.title}
+User Stories: ${epic.userStories}
+Story Points: ${epic.storyPoints}
+Metrics: ${epic.metrics}
+Business Case: ${epic.businessCase}
+Validation Plan: ${epic.validationPlan}
+` : ''}
+    `.trim();
+    
+    navigator.clipboard.writeText(resultsText);
+    toast.success("Résultats copiés dans le presse-papier");
+  };
+
+  // INPUT VIEW
+  if (currentView === 'input') {
+    return (
+      <div className="min-h-screen bg-background p-6">
+        <div className="max-w-4xl mx-auto space-y-6">
+          {/* Header */}
+          <div className="text-center space-y-4">
+            <div className="flex items-center justify-center gap-3">
+              <Sparkles className="w-10 h-10 text-primary" />
+              <h1 className="text-4xl font-bold">Smart Discovery Canvas</h1>
             </div>
-            <Button variant="ghost" size="sm">
-              <Edit className="w-4 h-4" />
-            </Button>
+            <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
+              Transformez une idée ou demande stakeholder en analyse structurée et Epic prêt à développer
+            </p>
           </div>
 
-          <Textarea
-            placeholder="Collez le message Slack du stakeholder ou décrivez l'idée..."
-            value={initialInput}
-            onChange={(e) => setInitialInput(e.target.value)}
-            className="min-h-[120px] mb-4"
-          />
+          {/* Input Card */}
+          <Card className="p-8">
+            <div className="space-y-6">
+              <div className="flex items-center gap-2">
+                <Lightbulb className="w-6 h-6 text-primary" />
+                <h2 className="text-xl font-semibold">Décrivez votre idée ou demande</h2>
+              </div>
 
-          <div className="flex items-center gap-2 mb-4">
-            <ContextSelector
-              onContextSelected={(context) => {
-                setImportedContext(context);
-                // Pre-fill with context information
-                const contextInfo = `
+              <Textarea
+                placeholder="Collez le message Slack du stakeholder, décrivez une idée de feature, ou expliquez un problème utilisateur à résoudre..."
+                value={initialInput}
+                onChange={(e) => setInitialInput(e.target.value)}
+                className="min-h-[200px] text-base"
+              />
+
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <ContextSelector
+                    onContextSelected={(context) => {
+                      setImportedContext(context);
+                      const contextInfo = `
 Contexte: ${context.name}
 Vision: ${context.vision || 'Non définie'}
 Objectifs: ${context.objectives.join(', ')}
 Audience: ${context.target_audience || 'Non définie'}
 `;
-                setInitialInput(prev => prev ? `${prev}\n\n${contextInfo}` : contextInfo);
-              }}
-              selectedContextId={importedContext?.id}
-            />
-          </div>
-
-          {!analysis && (
-            <Button onClick={handleAnalyze} disabled={isAnalyzing || !initialInput.trim()}>
-              {isAnalyzing && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-              <Sparkles className="w-4 h-4 mr-2" />
-              Analyser avec Nova
-            </Button>
-          )}
-
-          {analysis && (
-            <div className="mt-4 p-4 bg-muted rounded-lg">
-              <div className="flex items-center gap-2 mb-2">
-                <Sparkles className="w-4 h-4 text-primary" />
-                <span className="font-semibold">Nova Analysis</span>
-                <span className="text-xs text-muted-foreground">(3s ago)</span>
-              </div>
-                <ul className="space-y-1 text-sm">
-                  <li className="flex items-center gap-2">
-                    <Target className="w-3 h-3" />
-                    Problem detected: {(analysis?.problem ? analysis.problem.substring(0, 50) : '—')}...
-                  </li>
-                  {(Array.isArray(analysis?.redFlags) ? analysis!.redFlags : []).map((flag, idx) => (
-                    <li key={idx} className="flex items-center gap-2">
-                      <AlertTriangle className="w-3 h-3 text-yellow-500" />
-                      {flag}
-                    </li>
-                  ))}
-                </ul>
-            </div>
-          )}
-        </Card>
-
-        {/* Three Columns: Problem, Solution, Validation */}
-        {analysis && (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {/* Problem */}
-            <Card className="p-6">
-              <div className="flex items-center gap-2 mb-4">
-                <Target className="w-5 h-5 text-primary" />
-                <h3 className="font-semibold">1. PROBLEM</h3>
-              </div>
-
-              <div className="space-y-4">
-                <div>
-                  <div className="text-sm font-medium mb-2">🎯 Reframed Problem:</div>
-                  <p className="text-sm text-muted-foreground">{analysis?.problem || '—'}</p>
+                      setInitialInput(prev => prev ? `${prev}\n\n${contextInfo}` : contextInfo);
+                    }}
+                    selectedContextId={importedContext?.id}
+                  />
+                  {importedContext && (
+                    <Badge variant="secondary" className="text-xs">
+                      <CheckCircle2 className="w-3 h-3 mr-1" />
+                      {importedContext.name}
+                    </Badge>
+                  )}
                 </div>
 
+                <Button 
+                  onClick={handleAnalyze} 
+                  disabled={isAnalyzing || !initialInput.trim()}
+                  size="lg"
+                  className="px-8"
+                >
+                  {isAnalyzing ? (
+                    <>
+                      <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                      Analyse en cours...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="w-5 h-5 mr-2" />
+                      Analyser avec Nova
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+          </Card>
+
+          {/* Features */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4">
+            <div className="text-center p-4">
+              <Target className="w-8 h-8 text-primary mx-auto mb-2" />
+              <h3 className="font-semibold">Reformulation du problème</h3>
+              <p className="text-sm text-muted-foreground">Cadrage user-centric automatique</p>
+            </div>
+            <div className="text-center p-4">
+              <Lightbulb className="w-8 h-8 text-primary mx-auto mb-2" />
+              <h3 className="font-semibold">3 options de solution</h3>
+              <p className="text-sm text-muted-foreground">Matrice effort/impact intégrée</p>
+            </div>
+            <div className="text-center p-4">
+              <Rocket className="w-8 h-8 text-primary mx-auto mb-2" />
+              <h3 className="font-semibold">Epic prêt à shipper</h3>
+              <p className="text-sm text-muted-foreground">User stories et business case</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // RESULTS VIEW
+  return (
+    <div className="min-h-screen bg-background">
+      {/* Results Header */}
+      <div className="sticky top-0 z-10 bg-background/95 backdrop-blur border-b">
+        <div className="max-w-7xl mx-auto px-6 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <Button variant="ghost" size="sm" onClick={handleStartOver}>
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Nouvelle analyse
+              </Button>
+              <Separator orientation="vertical" className="h-6" />
+              <div className="flex items-center gap-2">
+                <Sparkles className="w-5 h-5 text-primary" />
+                <span className="font-semibold">Smart Discovery Canvas</span>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="sm" onClick={handleCopyResults}>
+                <Copy className="w-4 h-4 mr-2" />
+                Copier
+              </Button>
+              <Button variant="outline" size="sm">
+                <Download className="w-4 h-4 mr-2" />
+                Export
+              </Button>
+              <Button variant="outline" size="sm">
+                <Share2 className="w-4 h-4 mr-2" />
+                Partager
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="max-w-7xl mx-auto p-6 space-y-6">
+        {/* Original Input Summary */}
+        <Card className="p-4 bg-muted/50">
+          <div className="flex items-start gap-3">
+            <FileText className="w-5 h-5 text-muted-foreground mt-0.5" />
+            <div className="flex-1">
+              <h3 className="text-sm font-medium text-muted-foreground mb-1">Demande analysée</h3>
+              <p className="text-sm line-clamp-2">{initialInput}</p>
+            </div>
+            <Button variant="ghost" size="sm" onClick={() => setCurrentView('input')}>
+              <Edit className="w-4 h-4" />
+            </Button>
+          </div>
+        </Card>
+
+        {/* Stats Bar */}
+        <div className="flex items-center justify-center gap-8 text-sm text-muted-foreground bg-muted/30 rounded-lg py-3">
+          <div className="flex items-center gap-2">
+            <Users className="w-4 h-4" />
+            <span>{analysis?.personas?.length || 0} Personas identifiées</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <Lightbulb className="w-4 h-4" />
+            <span>{solutions.length} Solutions générées</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <TrendingUp className="w-4 h-4" />
+            <span>Confiance: {confidence}%</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span>⏱️ Analysé en {timeSpent}s</span>
+          </div>
+        </div>
+
+        {/* Three Columns: Problem, Solution, Validation */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {/* Problem */}
+          <Card className="p-6">
+            <div className="flex items-center gap-2 mb-4">
+              <Target className="w-5 h-5 text-primary" />
+              <h3 className="font-semibold">1. PROBLEM</h3>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <div className="text-sm font-medium mb-2">🎯 Reframed Problem:</div>
+                <p className="text-sm text-muted-foreground">{analysis?.problem || '—'}</p>
+              </div>
+
+              <div>
+                <div className="text-sm font-medium mb-2">👥 Personas:</div>
+                <div className="flex flex-wrap gap-1">
+                  {(Array.isArray(analysis?.personas) ? analysis!.personas : []).map((persona, idx) => (
+                    <Badge key={idx} variant="secondary" className="text-xs">
+                      {persona}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <div className="text-sm font-medium mb-2">📈 Analytics:</div>
+                <ul className="space-y-1 text-sm text-muted-foreground">
+                  {(Array.isArray(analysis?.analytics) ? analysis!.analytics : []).map((metric, idx) => (
+                    <li key={idx}>• {metric}</li>
+                  ))}
+                </ul>
+              </div>
+
+              <div>
+                <div className="text-sm font-medium mb-2">🏢 Competitors:</div>
+                <p className="text-sm text-muted-foreground">{analysis?.competitors || '—'}</p>
+              </div>
+
+              {analysis?.redFlags && analysis.redFlags.length > 0 && (
                 <div>
-                  <div className="text-sm font-medium mb-2">👥 Personas:</div>
-                  <div className="space-y-1">
-                    {(Array.isArray(analysis?.personas) ? analysis!.personas : []).map((persona, idx) => (
-                      <Badge key={idx} variant="secondary" className="text-xs">
-                        {persona}
-                      </Badge>
+                  <div className="text-sm font-medium mb-2">⚠️ Red Flags:</div>
+                  <ul className="space-y-1">
+                    {analysis.redFlags.map((flag, idx) => (
+                      <li key={idx} className="flex items-start gap-2 text-sm text-yellow-600 dark:text-yellow-500">
+                        <AlertTriangle className="w-3 h-3 mt-0.5 shrink-0" />
+                        {flag}
+                      </li>
                     ))}
+                  </ul>
+                </div>
+              )}
+
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="w-full"
+                onClick={handleDigDeeper}
+                disabled={isDiggingDeeper}
+              >
+                {isDiggingDeeper && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                <Sparkles className="w-4 h-4 mr-2" />
+                Dig Deeper
+              </Button>
+            </div>
+          </Card>
+
+          {/* Solution */}
+          <Card className="p-6">
+            <div className="flex items-center gap-2 mb-4">
+              <Lightbulb className="w-5 h-5 text-primary" />
+              <h3 className="font-semibold">2. SOLUTION</h3>
+            </div>
+
+            <div className="space-y-3">
+              <div className="text-sm font-medium mb-2">💡 {solutions.length} Options:</div>
+              {solutions.map((solution) => (
+                <div
+                  key={solution.id}
+                  className={`p-3 border rounded-lg cursor-pointer transition-colors ${
+                    selectedOption === solution.id ? 'border-primary bg-primary/5' : 'hover:border-primary/50'
+                  }`}
+                  onClick={() => setSelectedOption(solution.id)}
+                >
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="font-medium text-sm">{solution.title}</span>
+                    <Badge variant={solution.impact === "high" ? "default" : "secondary"} className="text-xs">
+                      {solution.impact}
+                    </Badge>
+                  </div>
+                  <p className="text-xs text-muted-foreground mb-2">{solution.description}</p>
+                  <div className="flex items-center gap-2 text-xs">
+                    <span>Effort: {solution.effort}</span>
+                    <span className={getImpactColor(solution.impact)}>Impact: {solution.impact}</span>
+                  </div>
+                </div>
+              ))}
+
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="w-full"
+                onClick={handleGenerateMoreSolutions}
+                disabled={isGeneratingMore}
+              >
+                {isGeneratingMore && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                <Sparkles className="w-4 h-4 mr-2" />
+                Generate More
+              </Button>
+            </div>
+          </Card>
+
+          {/* Validation */}
+          <Card className="p-6">
+            <div className="flex items-center gap-2 mb-4">
+              <FlaskConical className="w-5 h-5 text-primary" />
+              <h3 className="font-semibold">3. VALIDATION</h3>
+            </div>
+
+            {validation && (
+              <div className="space-y-4">
+                <div>
+                  <div className="text-sm font-medium mb-2">📊 Data Points:</div>
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 text-sm">
+                      <CheckCircle2 className="w-4 h-4 text-green-500" />
+                      <span>{validation.userComplaints} users complained</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm">
+                      <AlertTriangle className="w-4 h-4 text-yellow-500" />
+                      <span>Competitor adoption: {validation.competitorAdoption} only</span>
+                    </div>
                   </div>
                 </div>
 
                 <div>
-                  <div className="text-sm font-medium mb-2">📈 Analytics:</div>
+                  <div className="text-sm font-medium mb-2">🧪 Test Ideas:</div>
                   <ul className="space-y-1 text-sm text-muted-foreground">
-                    {(Array.isArray(analysis?.analytics) ? analysis!.analytics : []).map((metric, idx) => (
-                      <li key={idx}>• {metric}</li>
+                    {validation.testIdeas.map((idea, idx) => (
+                      <li key={idx}>• {idea}</li>
                     ))}
                   </ul>
                 </div>
@@ -657,118 +905,26 @@ Audience: ${context.target_audience || 'Non définie'}
                   variant="outline" 
                   size="sm" 
                   className="w-full"
-                  onClick={handleDigDeeper}
-                  disabled={isDiggingDeeper}
+                  onClick={handleBuildTestPlan}
+                  disabled={isBuildingTestPlan}
                 >
-                  {isDiggingDeeper && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                  {isBuildingTestPlan && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
                   <Sparkles className="w-4 h-4 mr-2" />
-                  Dig Deeper
+                  Build Test Plan
                 </Button>
-              </div>
-            </Card>
-
-            {/* Solution */}
-            <Card className="p-6">
-              <div className="flex items-center gap-2 mb-4">
-                <Lightbulb className="w-5 h-5 text-primary" />
-                <h3 className="font-semibold">2. SOLUTION</h3>
-              </div>
-
-              <div className="space-y-3">
-                <div className="text-sm font-medium mb-2">💡 3 Options:</div>
-                {solutions.map((solution) => (
-                  <div
-                    key={solution.id}
-                    className={`p-3 border rounded-lg cursor-pointer transition-colors ${
-                      selectedOption === solution.id ? 'border-primary bg-primary/5' : 'hover:border-primary/50'
-                    }`}
-                    onClick={() => setSelectedOption(solution.id)}
-                  >
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="font-medium text-sm">{solution.title}</span>
-                      <Badge variant={solution.impact === "high" ? "default" : "secondary"} className="text-xs">
-                        {solution.impact}
-                      </Badge>
-                    </div>
-                    <p className="text-xs text-muted-foreground mb-2">{solution.description}</p>
-                    <div className="flex items-center gap-2 text-xs">
-                      <span>Effort: {solution.effort}</span>
-                      <span className={getImpactColor(solution.impact)}>Impact: {solution.impact}</span>
-                    </div>
+                
+                {testPlan && (
+                  <div className="mt-4 p-3 bg-muted rounded-lg">
+                    <div className="text-xs font-medium mb-2">📋 Test Plan Generated</div>
+                    <pre className="text-xs whitespace-pre-wrap overflow-auto max-h-40">
+                      {testPlan}
+                    </pre>
                   </div>
-                ))}
-
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="w-full"
-                  onClick={handleGenerateMoreSolutions}
-                  disabled={isGeneratingMore}
-                >
-                  {isGeneratingMore && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                  <Sparkles className="w-4 h-4 mr-2" />
-                  Generate More
-                </Button>
+                )}
               </div>
-            </Card>
-
-            {/* Validation */}
-            <Card className="p-6">
-              <div className="flex items-center gap-2 mb-4">
-                <FlaskConical className="w-5 h-5 text-primary" />
-                <h3 className="font-semibold">3. VALIDATION</h3>
-              </div>
-
-              {validation && (
-                <div className="space-y-4">
-                  <div>
-                    <div className="text-sm font-medium mb-2">📊 Data Points:</div>
-                    <div className="space-y-2">
-                      <div className="flex items-center gap-2 text-sm">
-                        <CheckCircle2 className="w-4 h-4 text-green-500" />
-                        <span>{validation.userComplaints} users complained</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-sm">
-                        <AlertTriangle className="w-4 h-4 text-yellow-500" />
-                        <span>Competitor adoption: {validation.competitorAdoption} only</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div>
-                    <div className="text-sm font-medium mb-2">🧪 Test Ideas:</div>
-                    <ul className="space-y-1 text-sm text-muted-foreground">
-                      {validation.testIdeas.map((idea, idx) => (
-                        <li key={idx}>• {idea}</li>
-                      ))}
-                    </ul>
-                  </div>
-
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    className="w-full"
-                    onClick={handleBuildTestPlan}
-                    disabled={isBuildingTestPlan}
-                  >
-                    {isBuildingTestPlan && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                    <Sparkles className="w-4 h-4 mr-2" />
-                    Build Test Plan
-                  </Button>
-                  
-                  {testPlan && (
-                    <div className="mt-4 p-3 bg-muted rounded-lg">
-                      <div className="text-xs font-medium mb-2">📋 Test Plan Generated</div>
-                      <pre className="text-xs whitespace-pre-wrap overflow-auto max-h-40">
-                        {testPlan}
-                      </pre>
-                    </div>
-                  )}
-                </div>
-              )}
-            </Card>
-          </div>
-        )}
+            )}
+          </Card>
+        </div>
 
         {/* Decision Matrix */}
         {solutions.length > 0 && (
@@ -809,7 +965,7 @@ Audience: ${context.target_audience || 'Non définie'}
                           className={`absolute w-16 h-16 rounded-full flex items-center justify-center text-white font-bold cursor-pointer transition-transform hover:scale-110 ${
                             solution.impact === "high" ? 'bg-green-500' : 
                             solution.impact === "medium" ? 'bg-yellow-500' : 'bg-red-500'
-                          }`}
+                          } ${selectedOption === solution.id ? 'ring-4 ring-primary ring-offset-2' : ''}`}
                           style={{
                             left: `${effortValue}%`,
                             bottom: `${impactValue}%`,
@@ -830,90 +986,99 @@ Audience: ${context.target_audience || 'Non définie'}
               <div className="p-4 bg-primary/10 rounded-lg">
                 <div className="flex items-center gap-2 mb-2">
                   <Target className="w-4 h-4 text-primary" />
-                  <span className="font-semibold">Nova Recommendation: {solutions.find(s => s.id === selectedOption)?.title}</span>
+                  <span className="font-semibold">Selected: {solutions.find(s => s.id === selectedOption)?.title}</span>
                 </div>
                 <p className="text-sm text-muted-foreground mb-3">
-                  Why: Highest ROI, aligns with Q1 OKR, tech feasible
+                  {solutions.find(s => s.id === selectedOption)?.details}
                 </p>
                 <div className="flex gap-2">
                   <Button onClick={handleGenerateEpic} disabled={isGeneratingEpic}>
                     {isGeneratingEpic && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                    <Rocket className="w-4 h-4 mr-2" />
                     Generate Epic
                   </Button>
                   <Button variant="outline">Compare All</Button>
-                  <Button variant="outline">Add Custom</Button>
                 </div>
               </div>
             )}
           </Card>
         )}
 
-        {/* Output Ready */}
+        {/* Output Ready - Epic */}
         {epic && (
-          <Card className="p-6">
-            <div className="flex items-center justify-between mb-4">
+          <Card className="p-6 border-green-500/50 bg-green-500/5">
+            <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-2">
-                <CheckCircle2 className="w-5 h-5 text-green-500" />
-                <h3 className="font-semibold">5. OUTPUT READY</h3>
+                <CheckCircle2 className="w-6 h-6 text-green-500" />
+                <h3 className="text-xl font-semibold">5. EPIC READY</h3>
               </div>
-              <Button variant="outline" size="sm">Review</Button>
+              <Badge variant="default" className="bg-green-500">
+                <CheckCircle2 className="w-3 h-3 mr-1" />
+                Prêt à développer
+              </Badge>
             </div>
 
-            <div className="space-y-3">
-              <div className="flex items-center gap-2 text-sm">
-                <CheckCircle2 className="w-4 h-4 text-green-500" />
-                <span>Epic: "{epic.title}"</span>
-              </div>
-              <div className="flex items-center gap-2 text-sm">
-                <CheckCircle2 className="w-4 h-4 text-green-500" />
-                <span>{epic.userStories} User Stories (total {epic.storyPoints} points)</span>
-              </div>
-              <div className="flex items-center gap-2 text-sm">
-                <CheckCircle2 className="w-4 h-4 text-green-500" />
-                <span>Success Metrics: {epic.metrics}</span>
-              </div>
-              <div className="flex items-center gap-2 text-sm">
-                <CheckCircle2 className="w-4 h-4 text-green-500" />
-                <span>Business Case: {epic.businessCase}</span>
-              </div>
-              <div className="flex items-center gap-2 text-sm">
-                <CheckCircle2 className="w-4 h-4 text-green-500" />
-                <span>Validation Plan: {epic.validationPlan}</span>
+            <div className="space-y-6">
+              <div>
+                <h4 className="text-2xl font-bold text-primary mb-2">{epic.title}</h4>
+                <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                  <span className="flex items-center gap-1">
+                    <FileText className="w-4 h-4" />
+                    {epic.userStories} User Stories
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <Target className="w-4 h-4" />
+                    {epic.storyPoints} Story Points
+                  </span>
+                </div>
               </div>
 
-              <div className="flex gap-2 pt-4">
-                <Button>
+              <Separator />
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <h5 className="font-semibold mb-2 flex items-center gap-2">
+                    <TrendingUp className="w-4 h-4 text-primary" />
+                    Success Metrics
+                  </h5>
+                  <p className="text-sm text-muted-foreground">{epic.metrics}</p>
+                </div>
+
+                <div>
+                  <h5 className="font-semibold mb-2 flex items-center gap-2">
+                    <BarChart3 className="w-4 h-4 text-primary" />
+                    Business Case
+                  </h5>
+                  <p className="text-sm text-muted-foreground">{epic.businessCase}</p>
+                </div>
+              </div>
+
+              <div>
+                <h5 className="font-semibold mb-2 flex items-center gap-2">
+                  <FlaskConical className="w-4 h-4 text-primary" />
+                  Validation Plan
+                </h5>
+                <p className="text-sm text-muted-foreground">{epic.validationPlan}</p>
+              </div>
+
+              <Separator />
+
+              <div className="flex gap-2">
+                <Button size="lg">
                   <Rocket className="w-4 h-4 mr-2" />
                   Ship to Dev
                 </Button>
-                <Button variant="outline">
+                <Button variant="outline" size="lg">
                   <Save className="w-4 h-4 mr-2" />
-                  Save Draft
+                  Save to Artifacts
                 </Button>
-                <Button variant="outline">
+                <Button variant="outline" size="lg">
                   <Send className="w-4 h-4 mr-2" />
                   Share Canvas
                 </Button>
               </div>
             </div>
           </Card>
-        )}
-
-        {/* Footer Stats */}
-        {analysis && (
-          <div className="flex items-center justify-center gap-8 text-sm text-muted-foreground">
-            <div className="flex items-center gap-2">
-              <Users className="w-4 h-4" />
-              <span>💬 Stakeholders (3)</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <TrendingUp className="w-4 h-4" />
-              <span>📊 Confidence: {confidence}%</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span>⏱️ {timeSpent} min</span>
-            </div>
-          </div>
         )}
       </div>
     </div>
