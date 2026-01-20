@@ -1,9 +1,10 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Share2, Download, Edit, Sparkles, Target, Users, TrendingUp, AlertTriangle, Lightbulb, BarChart3, FlaskConical, CheckCircle2, Rocket, Save, Send, ArrowLeft, Copy, FileText } from "lucide-react";
+import { Loader2, Share2, Download, Edit, Sparkles, Target, Users, TrendingUp, AlertTriangle, Lightbulb, BarChart3, FlaskConical, CheckCircle2, Rocket, Save, Send, ArrowLeft, Copy, FileText, Home } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { ContextSelector } from "./ContextSelector";
@@ -42,6 +43,7 @@ interface Epic {
 }
 
 export const SmartDiscoveryCanvas = () => {
+  const navigate = useNavigate();
   const [initialInput, setInitialInput] = useState("");
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysis, setAnalysis] = useState<AnalysisResult | null>(null);
@@ -592,6 +594,12 @@ Validation Plan: ${epic.validationPlan}
     return (
       <div className="min-h-screen bg-background p-6">
         <div className="max-w-4xl mx-auto space-y-6">
+          {/* Back Button */}
+          <Button variant="ghost" size="sm" onClick={() => navigate('/')}>
+            <Home className="w-4 h-4 mr-2" />
+            Retour aux workflows
+          </Button>
+
           {/* Header */}
           <div className="text-center space-y-4">
             <div className="flex items-center justify-center gap-3">

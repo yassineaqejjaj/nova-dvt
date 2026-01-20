@@ -25,7 +25,7 @@ import { KPIGenerator } from './KPIGenerator';
 import { ProductContextManager } from './ProductContextManager';
 import { FeatureDiscoveryWorkflow } from './FeatureDiscoveryWorkflow';
 import { TechnicalSpecification } from './TechnicalSpecification';
-import { SmartDiscoveryCanvas } from './SmartDiscoveryCanvas';
+
 import EpicToUserStories from './EpicToUserStories';
 import { GitToSpecsGenerator } from './GitToSpecsGenerator';
 import { ProductVisionDefiner } from './ProductVisionDefiner';
@@ -824,7 +824,7 @@ export const Workflows: React.FC = () => {
   const [showContextManager, setShowContextManager] = useState(false);
   const [showFeatureDiscovery, setShowFeatureDiscovery] = useState(false);
   const [showTechnicalSpec, setShowTechnicalSpec] = useState(false);
-  const [showSmartDiscovery, setShowSmartDiscovery] = useState(false);
+  
   const [showEpicToStories, setShowEpicToStories] = useState(false);
   const [showACValidator, setShowACValidator] = useState(false);
   const [showGitToSpecs, setShowGitToSpecs] = useState(false);
@@ -937,7 +937,7 @@ export const Workflows: React.FC = () => {
       return;
     }
     if (workflow.id === 'smart-discovery') {
-      setShowSmartDiscovery(true);
+      navigate('/smart-discovery');
       return;
     }
     if (workflow.id === 'epic-to-stories') {
@@ -1683,19 +1683,6 @@ export const Workflows: React.FC = () => {
         onClose={() => setShowTechnicalSpec(false)}
       />
       
-      {showSmartDiscovery && (
-        <div className="fixed inset-0 z-50 bg-background">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="absolute top-4 right-4 z-50"
-            onClick={() => setShowSmartDiscovery(false)}
-          >
-            ✕ Fermer
-          </Button>
-          <SmartDiscoveryCanvas />
-        </div>
-      )}
       
       {showEpicToStories && (
         <div className="fixed inset-0 z-50 bg-background">
