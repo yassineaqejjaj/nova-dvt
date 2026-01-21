@@ -20,7 +20,7 @@ interface StepSummaryProps {
   personas: Persona[];
   epics: Epic[];
   stories: UserStory[];
-  onExport: (format: 'pdf' | 'notion' | 'jira') => void;
+  onExport: (format: 'pdf' | 'notion' | 'jira' | 'docx') => void;
   onNewDiscovery: () => void;
   onGoHome: () => void;
 }
@@ -185,9 +185,12 @@ export const StepSummary = ({
         </CardHeader>
         <CardContent>
           <div className="flex flex-wrap gap-2">
-            <Button variant="outline" onClick={() => onExport('pdf')}>
+            <Button onClick={() => onExport('docx')}>
               <Download className="mr-2 h-4 w-4" />
-              PDF / Doc interne
+              Télécharger Word (.docx)
+            </Button>
+            <Button variant="outline" onClick={() => onExport('pdf')}>
+              Copier Markdown
             </Button>
             <Button variant="outline" onClick={() => onExport('notion')} disabled>
               Notion (bientôt)
