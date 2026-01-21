@@ -4,6 +4,8 @@ import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { ArrowLeft, Sparkles } from 'lucide-react';
+import { Document, Packer, Paragraph, TextRun, HeadingLevel, Table, TableRow, TableCell, WidthType, BorderStyle, AlignmentType, convertInchesToTwip } from 'docx';
+import { saveAs } from 'file-saver';
 
 import { DiscoveryProgress } from './DiscoveryProgress';
 import { StepInput } from './StepInput';
@@ -488,9 +490,10 @@ Génère 3-5 User Stories par Epic. tshirtSize: XS, S, M, L, XL. priority: high,
   };
 
   // Export handler
-  const handleExport = (format: 'pdf' | 'notion' | 'jira') => {
-    // PDF export - basic implementation
-    if (format === 'pdf') {
+  const handleExport = async (format: 'pdf' | 'notion' | 'jira' | 'docx') => {
+    if (format === 'docx') {
+      await exportToWord();
+    } else if (format === 'pdf') {
       const content = `
 # Smart Discovery Canvas
 
@@ -518,6 +521,254 @@ ${stories.map(s => `- ${s.title}: En tant que ${s.story.asA}, je veux ${s.story.
     } else {
       toast.info('Export vers ' + format + ' bientôt disponible');
     }
+  };
+
+  // Word Document Export
+  const exportToWord = async () => {
+    const selectedPersonas = personas.filter(p => p.selected);
+    const selectedEpics = epics.filter(e => e.selected);
+    const totalPoints = stories.reduce((sum, s) => sum + s.effortPoints, 0);
+    const estimatedSprints = Math.ceil(totalPoints / 20);
+    const today = new Date().toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' });
+
+    const createBulletList = (items: string[]) => 
+      items.map(item => new Paragraph({
+        text: item,
+        bullet: { level: 0 },
+        spacing: { after: 100 }
+      }));
+
+    const createTableCell = (text: string, bold = false, width?: number) => 
+      new TableCell({
+        width: width ? { size: width, type: WidthType.PERCENTAGE } : undefined,
+        children: [new Paragraph({
+          children: [new TextRun({ text, bold })],
+          spacing: { before: 50, after: 50 }
+        })],
+        margins: { top: convertInchesToTwip(0.05), bottom: convertInchesToTwip(0.05), left: convertInchesToTwip(0.1), right: convertInchesToTwip(0.1) }
+      });
+
+    // Document sections
+    const children: (Paragraph | Table)[] = [];
+
+    // Title
+    children.push(
+      new Paragraph({
+        text: 'Smart Discovery Canvas',
+        heading: HeadingLevel.TITLE,
+        spacing: { after: 200 }
+      }),
+      new Paragraph({
+        children: [new TextRun({ text: `Généré le ${today}`, italics: true, color: '666666' })],
+        spacing: { after: 400 }
+      })
+    );
+
+    // Context
+    if (activeContext) {
+      children.push(
+        new Paragraph({ text: 'Contexte Produit', heading: HeadingLevel.HEADING_1, spacing: { before: 400, after: 200 } }),
+        new Paragraph({ text: `Produit: ${activeContext.name}`, spacing: { after: 100 } })
+      );
+      if (activeContext.vision) {
+        children.push(new Paragraph({ text: `Vision: ${activeContext.vision}`, spacing: { after: 100 } }));
+      }
+      if (activeContext.target_audience) {
+        children.push(new Paragraph({ text: `Audience cible: ${activeContext.target_audience}`, spacing: { after: 100 } }));
+      }
+    }
+
+    // Idea & Problem
+    children.push(
+      new Paragraph({ text: '1. Cadrage Discovery', heading: HeadingLevel.HEADING_1, spacing: { before: 400, after: 200 } }),
+      new Paragraph({ text: 'Idée initiale', heading: HeadingLevel.HEADING_2, spacing: { before: 200, after: 100 } }),
+      new Paragraph({ text: ideaDescription, spacing: { after: 200 } }),
+      new Paragraph({ text: 'Problème reformulé', heading: HeadingLevel.HEADING_2, spacing: { before: 200, after: 100 } }),
+      new Paragraph({ 
+        children: [new TextRun({ text: reformulatedProblem, bold: true })],
+        spacing: { after: 200 }
+      })
+    );
+
+    // Discovery Data
+    if (discoveryData) {
+      children.push(
+        new Paragraph({ text: 'Hypothèses', heading: HeadingLevel.HEADING_2, spacing: { before: 200, after: 100 } }),
+        ...createBulletList(discoveryData.hypotheses),
+        new Paragraph({ text: 'Objectifs', heading: HeadingLevel.HEADING_2, spacing: { before: 200, after: 100 } }),
+        ...createBulletList(discoveryData.objectives),
+        new Paragraph({ text: 'Contraintes identifiées', heading: HeadingLevel.HEADING_2, spacing: { before: 200, after: 100 } }),
+        ...createBulletList(discoveryData.constraints),
+        new Paragraph({ text: 'Indicateurs pressentis', heading: HeadingLevel.HEADING_2, spacing: { before: 200, after: 100 } }),
+        ...createBulletList(discoveryData.indicators)
+      );
+    }
+
+    // Personas
+    children.push(
+      new Paragraph({ text: '2. Personas', heading: HeadingLevel.HEADING_1, spacing: { before: 400, after: 200 } })
+    );
+
+    selectedPersonas.forEach(persona => {
+      children.push(
+        new Paragraph({ text: persona.role, heading: HeadingLevel.HEADING_2, spacing: { before: 200, after: 100 } }),
+        new Table({
+          width: { size: 100, type: WidthType.PERCENTAGE },
+          rows: [
+            new TableRow({ children: [createTableCell('Objectif principal', true, 30), createTableCell(persona.mainGoal, false, 70)] }),
+            new TableRow({ children: [createTableCell('Frustration clé', true, 30), createTableCell(persona.keyFrustration, false, 70)] }),
+            new TableRow({ children: [createTableCell('Contexte d\'usage', true, 30), createTableCell(persona.usageContext, false, 70)] })
+          ]
+        })
+      );
+    });
+
+    // Journeys
+    if (journeyNeeds.length > 0) {
+      children.push(
+        new Paragraph({ text: '3. Parcours et Besoins', heading: HeadingLevel.HEADING_1, spacing: { before: 400, after: 200 } })
+      );
+
+      journeyNeeds.forEach(journey => {
+        const persona = personas.find(p => p.id === journey.personaId);
+        if (persona) {
+          children.push(
+            new Paragraph({ text: `Parcours: ${persona.role}`, heading: HeadingLevel.HEADING_2, spacing: { before: 200, after: 100 } }),
+            new Paragraph({ text: 'Situations clés:', spacing: { before: 100, after: 50 } }),
+            ...createBulletList(journey.situations),
+            new Paragraph({ text: 'Besoins:', spacing: { before: 100, after: 50 } }),
+            ...createBulletList(journey.needs),
+            new Paragraph({ text: 'Points de friction:', spacing: { before: 100, after: 50 } }),
+            ...createBulletList(journey.frictionPoints)
+          );
+        }
+      });
+    }
+
+    // Epics
+    children.push(
+      new Paragraph({ text: '4. Epics', heading: HeadingLevel.HEADING_1, spacing: { before: 400, after: 200 } })
+    );
+
+    selectedEpics.forEach((epic, index) => {
+      const epicStories = stories.filter(s => s.epicId === epic.id);
+      const epicPoints = epicStories.reduce((sum, s) => sum + s.effortPoints, 0);
+
+      children.push(
+        new Paragraph({ 
+          text: `Epic ${index + 1}: ${epic.title}`, 
+          heading: HeadingLevel.HEADING_2, 
+          spacing: { before: 300, after: 100 } 
+        }),
+        new Table({
+          width: { size: 100, type: WidthType.PERCENTAGE },
+          rows: [
+            new TableRow({ children: [createTableCell('Description', true, 25), createTableCell(epic.description, false, 75)] }),
+            new TableRow({ children: [createTableCell('Objectif', true, 25), createTableCell(epic.objective, false, 75)] }),
+            new TableRow({ children: [createTableCell('Valeur attendue', true, 25), createTableCell(epic.expectedValue, false, 75)] }),
+            new TableRow({ children: [createTableCell('Persona', true, 25), createTableCell(epic.personaRole, false, 75)] }),
+            new TableRow({ children: [createTableCell('Stories', true, 25), createTableCell(`${epicStories.length} stories - ${epicPoints} points`, false, 75)] })
+          ]
+        })
+      );
+
+      if (epic.indicators.length > 0) {
+        children.push(
+          new Paragraph({ text: 'Indicateurs:', spacing: { before: 100, after: 50 } }),
+          ...createBulletList(epic.indicators)
+        );
+      }
+    });
+
+    // User Stories
+    children.push(
+      new Paragraph({ text: '5. User Stories', heading: HeadingLevel.HEADING_1, spacing: { before: 400, after: 200 } })
+    );
+
+    selectedEpics.forEach(epic => {
+      const epicStories = stories.filter(s => s.epicId === epic.id);
+      
+      if (epicStories.length > 0) {
+        children.push(
+          new Paragraph({ 
+            text: `Stories pour: ${epic.title}`, 
+            heading: HeadingLevel.HEADING_2, 
+            spacing: { before: 200, after: 100 } 
+          })
+        );
+
+        epicStories.forEach((story, storyIndex) => {
+          children.push(
+            new Paragraph({ 
+              children: [new TextRun({ text: `${storyIndex + 1}. ${story.title}`, bold: true })],
+              spacing: { before: 150, after: 50 }
+            }),
+            new Paragraph({ 
+              children: [
+                new TextRun({ text: 'En tant que ', italics: true }),
+                new TextRun({ text: story.story.asA }),
+                new TextRun({ text: ', je veux ', italics: true }),
+                new TextRun({ text: story.story.iWant }),
+                new TextRun({ text: ' afin de ', italics: true }),
+                new TextRun({ text: story.story.soThat })
+              ],
+              spacing: { after: 100 }
+            }),
+            new Paragraph({ 
+              children: [
+                new TextRun({ text: `Taille: ${story.tshirtSize} | Priorité: ${story.priority} | Points: ${story.effortPoints}`, color: '666666' })
+              ],
+              spacing: { after: 50 }
+            }),
+            new Paragraph({ text: 'Critères d\'acceptation:', spacing: { before: 50, after: 50 } }),
+            ...story.acceptanceCriteria.map(criterion => 
+              new Paragraph({
+                text: `☐ ${criterion}`,
+                spacing: { after: 50 }
+              })
+            )
+          );
+
+          if (story.impact) {
+            children.push(
+              new Paragraph({ 
+                children: [new TextRun({ text: `Impact: ${story.impact}`, italics: true })],
+                spacing: { before: 50, after: 100 }
+              })
+            );
+          }
+        });
+      }
+    });
+
+    // Summary
+    children.push(
+      new Paragraph({ text: '6. Résumé', heading: HeadingLevel.HEADING_1, spacing: { before: 400, after: 200 } }),
+      new Table({
+        width: { size: 100, type: WidthType.PERCENTAGE },
+        rows: [
+          new TableRow({ children: [createTableCell('Personas validés', true), createTableCell(String(selectedPersonas.length))] }),
+          new TableRow({ children: [createTableCell('Epics créés', true), createTableCell(String(selectedEpics.length))] }),
+          new TableRow({ children: [createTableCell('User Stories', true), createTableCell(String(stories.length))] }),
+          new TableRow({ children: [createTableCell('Points totaux', true), createTableCell(String(totalPoints))] }),
+          new TableRow({ children: [createTableCell('Sprints estimés (~20 pts/sprint)', true), createTableCell(`~${estimatedSprints}`)] })
+        ]
+      })
+    );
+
+    // Create document
+    const doc = new Document({
+      sections: [{
+        properties: {},
+        children
+      }]
+    });
+
+    // Generate and download
+    const blob = await Packer.toBlob(doc);
+    const fileName = `Smart_Discovery_${activeContext?.name || 'Canvas'}_${new Date().toISOString().split('T')[0]}.docx`;
+    saveAs(blob, fileName);
+    toast.success('Document Word téléchargé !');
   };
 
   // Reset
