@@ -112,12 +112,7 @@ Contraintes: ${activeContext.constraints || 'Aucune'}
 `
         : '';
 
-      const { data, error } = await supabase.functions.invoke('chat-ai', {
-        body: {
-          messages: [
-            {
-              role: 'system',
-              content: `Tu es un expert Product Manager. Analyse l'idée fournie et génère un Epic structuré.
+      const systemPrompt = `Tu es un expert Product Manager. Analyse l'idée fournie et génère un Epic structuré.
               
 RÉPONDS UNIQUEMENT EN JSON avec cette structure exacte:
 {
@@ -131,13 +126,12 @@ RÉPONDS UNIQUEMENT EN JSON avec cette structure exacte:
   "estimatedValue": "Impact business attendu"
 }
 
-Assure-toi que l'Epic est actionnable, mesurable et aligné avec les bonnes pratiques produit.`
-            },
-            {
-              role: 'user',
-              content: `${contextInfo}\n\nIdée à analyser:\n${ideaDescription}`
-            }
-          ]
+Assure-toi que l'Epic est actionnable, mesurable et aligné avec les bonnes pratiques produit.`;
+
+      const { data, error } = await supabase.functions.invoke('chat-ai', {
+        body: {
+          message: `${contextInfo}\n\nIdée à analyser:\n${ideaDescription}`,
+          systemPrompt
         }
       });
 
