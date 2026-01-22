@@ -84,13 +84,14 @@ export const ThreadConclusion: FC<ThreadConclusionProps> = ({
           
           <p className="text-sm font-medium mb-3">{getDisplayContent()}</p>
 
-          {/* Options with impact */}
+          {/* Options with impact - display only */}
           {conclusion.type === 'options' && conclusion.options && (
             <div className="space-y-2 mb-3">
               {conclusion.options.map((option, i) => (
                 <div 
                   key={i} 
-                  className="flex items-center justify-between bg-background/80 rounded-lg p-2"
+                  className="flex items-center justify-between bg-background/80 rounded-lg p-2 cursor-pointer hover:bg-background transition-colors"
+                  onClick={() => onActionClick?.(`select_option:${i}:${option.label}`)}
                 >
                   <span className="text-sm">{option.label}</span>
                   <Badge variant="secondary" className="text-xs">
@@ -101,29 +102,58 @@ export const ThreadConclusion: FC<ThreadConclusionProps> = ({
             </div>
           )}
 
-          {/* Action button */}
-          {conclusion.actionable && (
-            <Button 
-              size="sm"
-              onClick={() => onActionClick?.(conclusion.actionable!.handler)}
-              className="mt-2"
-            >
-              {conclusion.actionable.label}
-              <ArrowRight className="w-4 h-4 ml-2" />
-            </Button>
-          )}
+          {/* Action buttons */}
+          <div className="flex flex-wrap gap-2 mt-3">
+            {conclusion.actionable ? (
+              <Button 
+                size="sm"
+                onClick={() => onActionClick?.(conclusion.actionable!.handler)}
+              >
+                {conclusion.actionable.label}
+                <ArrowRight className="w-4 h-4 ml-2" />
+              </Button>
+            ) : (
+              /* Default action for recommendations without explicit actionable */
+              conclusion.type === 'recommendation' && (
+                <Button 
+                  size="sm"
+                  onClick={() => onActionClick?.('save_decision')}
+                >
+                  Enregistrer la décision
+                  <ArrowRight className="w-4 h-4 ml-2" />
+                </Button>
+              )
+            )}
 
-          {/* Question requires response */}
-          {conclusion.type === 'question' && (
-            <div className="flex gap-2 mt-3">
-              <Button size="sm" variant="outline">
-                Répondre
-              </Button>
-              <Button size="sm" variant="ghost">
-                Plus tard
-              </Button>
-            </div>
-          )}
+            {/* Question requires response */}
+            {conclusion.type === 'question' && (
+              <>
+                <Button size="sm" variant="outline" onClick={() => onActionClick?.('respond_question')}>
+                  Répondre
+                </Button>
+                <Button size="sm" variant="ghost">
+                  Plus tard
+                </Button>
+              </>
+            )}
+
+            {/* Options are clickable */}
+            {conclusion.type === 'options' && conclusion.options && (
+              <div className="w-full flex gap-2">
+                {conclusion.options.map((option, i) => (
+                  <Button
+                    key={i}
+                    size="sm"
+                    variant={i === 0 ? 'default' : 'outline'}
+                    onClick={() => onActionClick?.(`select_option:${i}:${option.label}`)}
+                    className="flex-1"
+                  >
+                    {option.label}
+                  </Button>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </Card>
