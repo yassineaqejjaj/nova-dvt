@@ -56,6 +56,23 @@ export const ThreadConclusion: FC<ThreadConclusionProps> = ({
     }
   };
 
+  // Parse content if it's a JSON string
+  const getDisplayContent = () => {
+    const content = conclusion.content;
+    // Check if content looks like JSON (starts with ``` or {)
+    if (typeof content === 'string') {
+      // Remove markdown code blocks if present
+      const cleanContent = content.replace(/```json\s*/g, '').replace(/```/g, '').trim();
+      try {
+        const parsed = JSON.parse(cleanContent);
+        return parsed.content || parsed.message || cleanContent;
+      } catch {
+        return content;
+      }
+    }
+    return content;
+  };
+
   return (
     <Card className={`p-4 border-2 ${getBgClass()} mt-4`}>
       <div className="flex items-start gap-3">
@@ -65,7 +82,7 @@ export const ThreadConclusion: FC<ThreadConclusionProps> = ({
             {getLabel()}
           </Badge>
           
-          <p className="text-sm font-medium mb-3">{conclusion.content}</p>
+          <p className="text-sm font-medium mb-3">{getDisplayContent()}</p>
 
           {/* Options with impact */}
           {conclusion.type === 'options' && conclusion.options && (
