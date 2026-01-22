@@ -58,7 +58,7 @@ serve(async (req) => {
     if (message && !agents) {
       console.log('Simple mode: generating response with Lovable AI');
       
-      const defaultSystemPrompt = 'You are a helpful AI assistant specialized in product management and technical specifications. Provide clear, structured, and actionable responses.';
+      const defaultSystemPrompt = 'Tu es un assistant IA spécialisé en gestion de produit et spécifications techniques. Tu DOIS ABSOLUMENT répondre UNIQUEMENT en français. Fournis des réponses claires, structurées et actionnables.';
       const finalSystemPrompt = systemPrompt || defaultSystemPrompt;
       
       const { stream } = body;
