@@ -523,27 +523,130 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ currentSquad, squa
       `${m.sender === 'user' ? 'User' : (m.sender as Agent).name}: ${m.content.slice(0, 100)}`
     ).join('\n');
 
+    // Detect mentioned agents in recent messages
+    const mentionedAgentNames = currentSquad
+      .filter(agent => summary.toLowerCase().includes(agent.name.toLowerCase()))
+      .map(a => a.name);
+
     try {
       const { data } = await supabase.functions.invoke('chat-ai', {
         body: {
-          message: `Basé sur cette discussion, génère UNE conclusion actionnable:\n\n${summary}\n\nFormat: Soit une recommandation claire, soit 2 options avec impact, soit une question à trancher, soit une action que Nova peut exécuter.`,
-          systemPrompt: 'Tu es un facilitateur. Fournis une conclusion courte et actionnable. Réponds en JSON: {"type": "recommendation|options|question|action", "content": "...", "options": [...] si applicable}',
+          message: `Basé sur cette discussion, génère UNE conclusion actionnable:\n\n${summary}\n\nAgents mentionnés: ${mentionedAgentNames.join(', ') || 'aucun'}\n\nFormat: Soit une recommandation claire avec l'agent à solliciter, soit 2 options avec impact, soit une question à trancher, soit une action que Nova peut exécuter.`,
+          systemPrompt: `Tu es un facilitateur. Fournis une conclusion courte et actionnable. 
+IMPORTANT: Réponds UNIQUEMENT en JSON valide (pas de markdown):
+{
+  "type": "recommendation|options|question|action",
+  "content": "texte de la conclusion",
+  "actionable": {
+    "label": "texte du bouton d'action",
+    "handler": "trigger_agent:nom_agent:task OU save_decision OU open_tool:tool_name"
+  },
+  "options": [{"label": "...", "impact": "..."}, ...] // si type=options
+}
+
+Pour le handler actionable:
+- Si un agent doit agir: "trigger_agent:NomAgent:résumer|proposer|analyser"
+- Pour sauvegarder: "save_decision"
+- Pour ouvrir un outil: "open_tool:canvas|story|impact"`,
         }
       });
 
       if (data?.response) {
         try {
-          const parsed = JSON.parse(data.response);
+          // Clean markdown if present
+          const cleanResponse = data.response.replace(/```json\s*/g, '').replace(/```/g, '').trim();
+          const parsed = JSON.parse(cleanResponse);
           setThreadConclusion(parsed);
         } catch {
           setThreadConclusion({
             type: 'recommendation',
             content: data.response,
+            actionable: {
+              label: 'Enregistrer la décision',
+              handler: 'save_decision'
+            }
           });
         }
       }
     } catch (error) {
       console.error('Error generating conclusion:', error);
+    }
+  };
+
+  const handleConclusionAction = async (handler: string) => {
+    const [action, ...params] = handler.split(':');
+    
+    switch (action) {
+      case 'trigger_agent': {
+        const [agentName, task] = params;
+        const agent = currentSquad.find(a => 
+          a.name.toLowerCase().includes(agentName.toLowerCase())
+        );
+        if (agent) {
+          const taskPrompts: Record<string, string> = {
+            'résumer': 'peux-tu résumer les points clés de notre discussion ?',
+            'proposer': 'quelles seraient tes propositions concrètes ?',
+            'analyser': 'peux-tu analyser cette situation en détail ?',
+          };
+          const prompt = taskPrompts[task] || `peux-tu ${task} ?`;
+          setInputMessage(`@${agent.name} ${prompt}`);
+          // Focus input to let user send
+          inputRef.current?.focus();
+          toast({
+            title: `Question préparée pour ${agent.name}`,
+            description: "Appuyez sur Entrée pour envoyer",
+          });
+        }
+        break;
+      }
+      case 'save_decision': {
+        try {
+          const { data: { user } } = await supabase.auth.getUser();
+          if (!user) {
+            toast({ title: "Connectez-vous pour sauvegarder", variant: "destructive" });
+            return;
+          }
+          
+          await supabase.from('decision_log').insert({
+            user_id: user.id,
+            squad_id: squadId || null,
+            debate_topic: threadConclusion?.content || 'Discussion',
+            options_considered: messages.slice(-5).map(m => ({
+              agent: m.sender === 'user' ? 'User' : (m.sender as Agent).name,
+              content: m.content.slice(0, 200)
+            })),
+            option_chosen: { content: threadConclusion?.content },
+            confidence_level: 'medium',
+          });
+          
+          toast({
+            title: "Décision enregistrée",
+            description: "Retrouvez-la dans votre historique des décisions",
+          });
+          onAddXP(25, 'decision saved');
+        } catch (error) {
+          console.error('Error saving decision:', error);
+          toast({ title: "Erreur lors de la sauvegarde", variant: "destructive" });
+        }
+        break;
+      }
+      case 'open_tool': {
+        const [toolName] = params;
+        switch (toolName) {
+          case 'canvas':
+            setShowCanvasGenerator(true);
+            break;
+          case 'story':
+            setShowStoryWriter(true);
+            break;
+          case 'impact':
+            setShowImpactPlotter(true);
+            break;
+        }
+        break;
+      }
+      default:
+        console.warn('Unknown action handler:', handler);
     }
   };
 
@@ -752,7 +855,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ currentSquad, squa
               {threadConclusion && !isLoading && (
                 <ThreadConclusion 
                   conclusion={threadConclusion}
-                  onActionClick={(action) => console.log('Action:', action)}
+                  onActionClick={handleConclusionAction}
                 />
               )}
             </div>
