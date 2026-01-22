@@ -12,16 +12,20 @@ import { toast } from '@/hooks/use-toast';
 import { 
   Play, 
   Pause, 
-  Send, 
   Users, 
   Sparkles, 
   Loader2,
   UserMinus,
-  UserPlus,
   Volume2,
   VolumeX,
   FileText,
-  CheckCircle2
+  CheckCircle2,
+  Handshake,
+  GitFork,
+  ListChecks,
+  AlertTriangle,
+  ArrowRight,
+  Target
 } from 'lucide-react';
 import { allAgents } from '@/data/mockData';
 
@@ -38,6 +42,14 @@ interface DebateMessage {
   content: string;
   timestamp: Date;
   isThinking?: boolean;
+}
+
+interface ParsedSummary {
+  consensus: string[];
+  divergences: string[];
+  recommendations: string[];
+  risks: string[];
+  nextSteps: string[];
 }
 
 export const RealityMode: React.FC<RealityModeProps> = ({ 
@@ -57,7 +69,7 @@ export const RealityMode: React.FC<RealityModeProps> = ({
   const [isSoundOn, setIsSoundOn] = useState(false);
   const [isDebateComplete, setIsDebateComplete] = useState(false);
   const [isGeneratingSummary, setIsGeneratingSummary] = useState(false);
-  const [summary, setSummary] = useState<string | null>(null);
+  const [parsedSummary, setParsedSummary] = useState<ParsedSummary | null>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const debateControllerRef = useRef<{ stop: boolean }>({ stop: false });
 
@@ -86,7 +98,7 @@ export const RealityMode: React.FC<RealityModeProps> = ({
     setCurrentRound(0);
     setMessages([]);
     setIsDebateComplete(false);
-    setSummary(null);
+    setParsedSummary(null);
     debateControllerRef.current.stop = false;
 
     const initialMessage: DebateMessage = {
@@ -260,6 +272,44 @@ Respond with conviction and expertise:`;
     });
   };
 
+  const parseSummaryResponse = (response: string): ParsedSummary => {
+    const lines = response.split('\n');
+    const summary: ParsedSummary = {
+      consensus: [],
+      divergences: [],
+      recommendations: [],
+      risks: [],
+      nextSteps: []
+    };
+    
+    let currentSection = '';
+    
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (!trimmed) continue;
+      
+      // Detect sections
+      if (trimmed.toLowerCase().includes('consensus')) {
+        currentSection = 'consensus';
+      } else if (trimmed.toLowerCase().includes('divergence') || trimmed.toLowerCase().includes('désaccord')) {
+        currentSection = 'divergences';
+      } else if (trimmed.toLowerCase().includes('recommandation') || trimmed.toLowerCase().includes('priorit')) {
+        currentSection = 'recommendations';
+      } else if (trimmed.toLowerCase().includes('risque')) {
+        currentSection = 'risks';
+      } else if (trimmed.toLowerCase().includes('étape') || trimmed.toLowerCase().includes('prochaine')) {
+        currentSection = 'nextSteps';
+      } else if (trimmed.startsWith('-') || trimmed.startsWith('•') || /^\d+\./.test(trimmed)) {
+        const content = trimmed.replace(/^[-•]\s*/, '').replace(/^\d+\.\s*/, '');
+        if (content && currentSection) {
+          summary[currentSection as keyof ParsedSummary].push(content);
+        }
+      }
+    }
+    
+    return summary;
+  };
+
   const generateSummary = async () => {
     if (messages.length < 2) return;
 
@@ -276,33 +326,37 @@ Respond with conviction and expertise:`;
           message: debateContent,
           systemPrompt: `Tu es un expert en synthèse de débats produit. Analyse le débat suivant entre plusieurs experts et génère un résumé structuré.
 
-FORMAT DE SORTIE:
-## 🎯 Points Clés du Débat
+FORMAT DE SORTIE OBLIGATOIRE (respecte exactement ce format):
 
 ### Consensus
-- [Points sur lesquels les experts sont d'accord]
+- [Point 1 sur lequel les experts sont d'accord]
+- [Point 2 sur lequel les experts sont d'accord]
 
 ### Points de Divergence
-- [Points de désaccord et perspectives différentes]
+- [Point 1 de désaccord]
+- [Point 2 de désaccord]
 
 ### Recommandations Prioritaires
-1. [Action prioritaire 1 avec justification]
-2. [Action prioritaire 2 avec justification]
-3. [Action prioritaire 3 avec justification]
+1. [Action prioritaire 1]
+2. [Action prioritaire 2]
+3. [Action prioritaire 3]
 
 ### Risques Identifiés
-- [Risques mentionnés pendant le débat]
+- [Risque 1]
+- [Risque 2]
 
-### Prochaines Étapes Suggérées
-- [Étapes concrètes à suivre]
+### Prochaines Étapes
+- [Étape 1]
+- [Étape 2]
 
-Sois concis et actionnable. Mets en avant les insights les plus précieux du débat.`
+Sois concis et actionnable. Maximum 3-4 points par section.`
         }
       });
 
       if (error) throw error;
 
-      setSummary(data.response);
+      const parsed = parseSummaryResponse(data.response);
+      setParsedSummary(parsed);
       onAddXP(25, 'generating debate summary');
       
       toast({
@@ -319,6 +373,37 @@ Sois concis et actionnable. Mets en avant les insights les plus précieux du dé
     } finally {
       setIsGeneratingSummary(false);
     }
+  };
+
+  const SummarySection = ({ 
+    icon: Icon, 
+    title, 
+    items, 
+    colorClass 
+  }: { 
+    icon: React.ElementType; 
+    title: string; 
+    items: string[]; 
+    colorClass: string; 
+  }) => {
+    if (items.length === 0) return null;
+    
+    return (
+      <div className="space-y-2">
+        <div className={`flex items-center gap-2 ${colorClass}`}>
+          <Icon className="w-5 h-5" />
+          <h5 className="font-semibold">{title}</h5>
+        </div>
+        <ul className="space-y-1.5 pl-7">
+          {items.map((item, idx) => (
+            <li key={idx} className="text-sm text-muted-foreground flex items-start gap-2">
+              <span className="text-primary mt-1">•</span>
+              <span>{item}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
+    );
   };
 
   if (workingSquad.length === 0) {
@@ -496,14 +581,50 @@ Sois concis et actionnable. Mets en avant les insights les plus précieux du dé
               ))}
 
               {/* Summary Section */}
-              {summary && (
-                <Card className="p-4 bg-gradient-to-br from-primary/5 to-primary/10 border-primary/20">
-                  <div className="flex items-center space-x-2 mb-3">
-                    <FileText className="w-5 h-5 text-primary" />
-                    <h4 className="font-semibold">Synthèse du Débat</h4>
+              {parsedSummary && (
+                <Card className="p-5 bg-gradient-to-br from-primary/5 to-primary/10 border-primary/20">
+                  <div className="flex items-center gap-3 mb-5">
+                    <div className="p-2 rounded-lg bg-primary/10">
+                      <Target className="w-6 h-6 text-primary" />
+                    </div>
+                    <h4 className="text-lg font-bold">Synthèse du Débat</h4>
                   </div>
-                  <div className="prose prose-sm dark:prose-invert max-w-none">
-                    <div className="whitespace-pre-wrap text-sm">{summary}</div>
+                  
+                  <div className="space-y-5">
+                    <SummarySection 
+                      icon={Handshake} 
+                      title="Points de Consensus" 
+                      items={parsedSummary.consensus}
+                      colorClass="text-green-600 dark:text-green-400"
+                    />
+                    
+                    <SummarySection 
+                      icon={GitFork} 
+                      title="Points de Divergence" 
+                      items={parsedSummary.divergences}
+                      colorClass="text-amber-600 dark:text-amber-400"
+                    />
+                    
+                    <SummarySection 
+                      icon={ListChecks} 
+                      title="Recommandations Prioritaires" 
+                      items={parsedSummary.recommendations}
+                      colorClass="text-primary"
+                    />
+                    
+                    <SummarySection 
+                      icon={AlertTriangle} 
+                      title="Risques Identifiés" 
+                      items={parsedSummary.risks}
+                      colorClass="text-red-600 dark:text-red-400"
+                    />
+                    
+                    <SummarySection 
+                      icon={ArrowRight} 
+                      title="Prochaines Étapes" 
+                      items={parsedSummary.nextSteps}
+                      colorClass="text-blue-600 dark:text-blue-400"
+                    />
                   </div>
                 </Card>
               )}
@@ -552,14 +673,14 @@ Sois concis et actionnable. Mets en avant les insights les plus précieux du dé
                 <Button 
                   onClick={generateSummary} 
                   className="flex-1"
-                  disabled={isGeneratingSummary || !!summary}
+                  disabled={isGeneratingSummary || !!parsedSummary}
                 >
                   {isGeneratingSummary ? (
                     <>
                       <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                       Génération...
                     </>
-                  ) : summary ? (
+                  ) : parsedSummary ? (
                     <>
                       <CheckCircle2 className="w-4 h-4 mr-2" />
                       Résumé Généré
@@ -575,7 +696,7 @@ Sois concis et actionnable. Mets en avant les insights les plus précieux du dé
                   onClick={() => {
                     setIsDebateComplete(false);
                     setMessages([]);
-                    setSummary(null);
+                    setParsedSummary(null);
                     setPrompt('');
                   }} 
                   variant="outline"
