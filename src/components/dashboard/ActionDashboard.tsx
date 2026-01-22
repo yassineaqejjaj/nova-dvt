@@ -108,7 +108,7 @@ export const ActionDashboard: React.FC<ActionDashboardProps> = ({
   const xpToNextLevel = (Math.ceil(user.xp / 200) * 200) - user.xp;
   const progressToNextLevel = ((user.xp % 200) / 200) * 100;
 
-  // Work starter cards
+  // Work starter cards with distinct visual personalities
   const workCards = [
     {
       id: 'understand',
@@ -116,6 +116,8 @@ export const ActionDashboard: React.FC<ActionDashboardProps> = ({
       subtitle: 'Clarifier une idée, un problème ou un retour terrain.',
       time: 'Environ 30 min',
       icon: Lightbulb,
+      iconStyle: 'text-amber-500',
+      bgStyle: 'group-hover:bg-amber-500/10',
       action: () => onNavigate('workflows')
     },
     {
@@ -124,6 +126,8 @@ export const ActionDashboard: React.FC<ActionDashboardProps> = ({
       subtitle: 'Passer d\'une idée à des user stories claires.',
       time: 'Environ 45 min',
       icon: Target,
+      iconStyle: 'text-primary',
+      bgStyle: 'group-hover:bg-primary/10',
       action: () => onNavigate('instant-prd')
     },
     {
@@ -132,12 +136,14 @@ export const ActionDashboard: React.FC<ActionDashboardProps> = ({
       subtitle: 'Organiser un sprint ou une roadmap.',
       time: 'Environ 40–60 min',
       icon: Calendar,
+      iconStyle: 'text-emerald-500',
+      bgStyle: 'group-hover:bg-emerald-500/10',
       action: () => onNavigate('document-roadmap')
     }
   ];
 
   return (
-    <div className="max-w-4xl mx-auto space-y-8 py-8 px-4">
+    <div className="max-w-4xl mx-auto space-y-10 py-8 px-4">
       
       {/* 1. Functional Header - Compact */}
       <header className="text-center space-y-4">
@@ -165,51 +171,54 @@ export const ActionDashboard: React.FC<ActionDashboardProps> = ({
         </div>
       </header>
 
-      {/* 2. Main CTA - Single dominant action */}
-      <div className="text-center space-y-3">
+      {/* 2. Main CTA - Single dominant action with stronger presence */}
+      <div className="text-center space-y-2">
+        <p className="text-xs font-medium text-primary/70 uppercase tracking-wider">
+          Recommandé pour commencer
+        </p>
         <Button 
           size="lg" 
-          className="h-14 px-8 text-lg font-medium shadow-lg"
+          className="h-16 px-10 text-lg font-medium shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all duration-200"
           onClick={() => onNavigate('chat')}
         >
           <Play className="w-5 h-5 mr-2" />
           Démarrer une session de travail
         </Button>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm text-muted-foreground/80">
           Chat multi-agents, mode réalité ou process guidé.
         </p>
       </div>
 
-      {/* 3. Resume Work - Single card, Nova decides */}
+      {/* 3. Resume Work - Strong visual block for continuity */}
       {recentWork && (
         <section className="space-y-3">
           <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
-            Reprendre
+            Reprendre là où vous en étiez
           </h2>
-          <Card className="border border-border/50 hover:border-primary/30 transition-colors">
-            <CardContent className="p-4">
+          <Card className="border-2 border-primary/20 bg-primary/5 hover:border-primary/40 transition-all duration-200">
+            <CardContent className="p-5">
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-lg bg-primary/10">
-                    {recentWork.type === 'chat' && <MessageCircle className="w-5 h-5 text-primary" />}
-                    {recentWork.type === 'process' && <Sparkles className="w-5 h-5 text-primary" />}
-                    {recentWork.type === 'artifact' && <Target className="w-5 h-5 text-primary" />}
+                <div className="flex items-center gap-4">
+                  <div className="p-3 rounded-xl bg-primary/15">
+                    {recentWork.type === 'chat' && <MessageCircle className="w-6 h-6 text-primary" />}
+                    {recentWork.type === 'process' && <Sparkles className="w-6 h-6 text-primary" />}
+                    {recentWork.type === 'artifact' && <Target className="w-6 h-6 text-primary" />}
                   </div>
                   <div>
-                    <p className="font-medium">{recentWork.title}</p>
+                    <p className="font-semibold text-foreground">{recentWork.title}</p>
                     <p className="text-sm text-muted-foreground">{recentWork.subtitle}</p>
                     {recentWork.progress && (
-                      <div className="flex items-center gap-2 mt-1">
-                        <Progress value={recentWork.progress} className="h-1.5 w-24" />
-                        <span className="text-xs text-muted-foreground">{recentWork.progress}%</span>
+                      <div className="flex items-center gap-2 mt-2">
+                        <Progress value={recentWork.progress} className="h-2 w-28" />
+                        <span className="text-xs font-medium text-primary">{recentWork.progress}%</span>
                       </div>
                     )}
                   </div>
                 </div>
                 <Button 
-                  variant="outline" 
-                  size="sm"
+                  size="default"
                   onClick={() => onNavigate(recentWork.tabTarget)}
+                  className="shadow-sm"
                 >
                   Reprendre
                   <ArrowRight className="w-4 h-4 ml-1" />
@@ -220,8 +229,8 @@ export const ActionDashboard: React.FC<ActionDashboardProps> = ({
         </section>
       )}
 
-      {/* 4. Launch Work - 3 intention-based cards */}
-      <section className="space-y-3">
+      {/* 4. Launch Work - 3 intention-based cards with distinct visual identity */}
+      <section className="space-y-4">
         <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
           Lancer un travail
         </h2>
@@ -231,20 +240,20 @@ export const ActionDashboard: React.FC<ActionDashboardProps> = ({
             return (
               <Card 
                 key={card.id}
-                className="group cursor-pointer border border-border/50 hover:border-primary/30 hover:shadow-md transition-all"
+                className="group cursor-pointer border border-border/50 hover:border-border hover:shadow-md transition-all duration-200"
                 onClick={card.action}
               >
                 <CardContent className="p-5 space-y-3">
-                  <div className="p-2 w-fit rounded-lg bg-muted group-hover:bg-primary/10 transition-colors">
-                    <Icon className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors" />
+                  <div className={`p-2.5 w-fit rounded-xl bg-muted ${card.bgStyle} transition-colors duration-200`}>
+                    <Icon className={`w-5 h-5 text-muted-foreground group-hover:${card.iconStyle} transition-colors duration-200`} />
                   </div>
                   <div>
                     <h3 className="font-medium text-foreground">{card.title}</h3>
-                    <p className="text-sm text-muted-foreground mt-1 leading-relaxed">
+                    <p className="text-sm text-muted-foreground/80 mt-1 leading-relaxed">
                       {card.subtitle}
                     </p>
                   </div>
-                  <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                  <div className="flex items-center gap-1 text-xs text-muted-foreground/60">
                     <Clock className="w-3 h-3" />
                     <span>{card.time}</span>
                   </div>
@@ -255,80 +264,80 @@ export const ActionDashboard: React.FC<ActionDashboardProps> = ({
         </div>
       </section>
 
-      {/* 5. Secondary Management Actions */}
-      <section className="space-y-3">
-        <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
-          Actions rapides
-        </h2>
+      {/* 5. Secondary Management Actions - Reduced visual weight */}
+      <section className="space-y-2 pt-2">
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-muted-foreground/60">Autres actions</span>
+          <div className="flex-1 h-px bg-border/50" />
+        </div>
         <div className="flex flex-wrap gap-2">
           <Button 
-            variant="outline" 
+            variant="ghost" 
             size="sm"
+            className="text-muted-foreground hover:text-foreground"
             onClick={() => onNavigate('squads')}
           >
-            <Users className="w-4 h-4 mr-2" />
+            <Users className="w-4 h-4 mr-1.5" />
             Créer une squad
           </Button>
           <Button 
-            variant="outline" 
+            variant="ghost" 
             size="sm"
+            className="text-muted-foreground hover:text-foreground"
             onClick={() => onNavigate('agents')}
           >
-            <Bot className="w-4 h-4 mr-2" />
+            <Bot className="w-4 h-4 mr-1.5" />
             Gérer les agents
           </Button>
           <Button 
             variant="ghost" 
             size="sm"
+            className="text-muted-foreground hover:text-foreground"
             onClick={() => onNavigate('chat')}
           >
-            <MessageCircle className="w-4 h-4 mr-2" />
-            Démarrer un chat libre
+            <MessageCircle className="w-4 h-4 mr-1.5" />
+            Chat libre
           </Button>
         </div>
       </section>
 
-      {/* 6. Recent Activity - Minimal, 3 items max */}
-      <section className="space-y-3">
+      {/* 6. Recent Activity - Subtle, reduced weight */}
+      <section className="space-y-2 pt-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
-            Activité récente
-          </h2>
-          <Button variant="link" size="sm" className="text-xs text-muted-foreground h-auto p-0">
-            Voir toute l'activité
+          <span className="text-xs text-muted-foreground/60">Activité récente</span>
+          <Button variant="link" size="sm" className="text-xs text-muted-foreground/50 hover:text-muted-foreground h-auto p-0">
+            Voir tout
           </Button>
         </div>
-        <div className="space-y-2">
+        <div className="space-y-1">
           {recentActivities.slice(0, 3).map((activity, idx) => (
-            <div key={idx} className="flex items-center justify-between py-2 text-sm">
-              <span className="text-muted-foreground">{activity.action}</span>
-              <span className="text-xs text-muted-foreground/70">{activity.time}</span>
+            <div key={idx} className="flex items-center justify-between py-1.5 text-sm">
+              <span className="text-muted-foreground/70">{activity.action}</span>
+              <span className="text-xs text-muted-foreground/50">{activity.time}</span>
             </div>
           ))}
         </div>
       </section>
 
-      {/* 7. Progression - Subtle, never dominant */}
-      <section className="pt-4 border-t border-border/50">
+      {/* 7. Progression - Subtle with motivational nudge */}
+      <section className="pt-6 mt-4 border-t border-border/30">
         <div className="flex items-center justify-between text-sm">
           <div>
-            <span className="text-muted-foreground">Progression</span>
-            <p className="text-xs text-muted-foreground/70 mt-0.5">
+            <span className="text-muted-foreground/70">Progression</span>
+            <p className="text-xs text-muted-foreground/50 mt-0.5">
               Encore {xpToNextLevel} XP pour le niveau suivant.
             </p>
           </div>
           <div className="text-right">
-            <span className="text-muted-foreground">
-              Série en cours : {user.streak} jour{user.streak !== 1 ? 's' : ''}
+            <span className="text-muted-foreground/70">
+              Série : {user.streak} jour{user.streak !== 1 ? 's' : ''}
             </span>
-            {user.streak === 0 && (
-              <p className="text-xs text-muted-foreground/70 mt-0.5">
-                Continuez à travailler pour la relancer.
-              </p>
-            )}
           </div>
         </div>
-        <Progress value={progressToNextLevel} className="h-1.5 mt-3" />
+        <Progress value={progressToNextLevel} className="h-1 mt-3" />
+        <p className="text-xs text-center text-muted-foreground/50 mt-3">
+          Encore une session pour progresser.
+        </p>
       </section>
 
     </div>
