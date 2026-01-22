@@ -553,13 +553,215 @@ Génère 2-3 options de décision concrètes basées sur le débat. Chaque optio
   };
 
   const createNextArtifact = async (type: 'discovery' | 'epic' | 'journey' | 'kpis') => {
+    if (!debateOutcome) {
+      toast({
+        title: "Erreur",
+        description: "Générez d'abord les décisions du débat",
+        variant: "destructive",
+      });
+      return;
+    }
+
     toast({
       title: "Création en cours...",
       description: `Génération de l'artefact ${type}`,
     });
-    // This would integrate with the artifact creation system
-    // For now, we show a toast indicating the action
-    onAddXP(20, `creating ${type} from debate`);
+
+    try {
+      // Build context from debate messages, outcome, and selected artifacts
+      const debateContext = messages
+        .filter(m => m.agent.id !== 'system' && !m.isThinking)
+        .map(m => `${m.agent.name} (${m.agent.specialty})${m.stance ? ` [${STANCE_LABELS[m.stance].label}]` : ''}: ${m.content}`)
+        .join('\n\n');
+
+      const outcomeContext = `
+## Résultat du Débat
+
+### Consensus
+${debateOutcome.consensus.map(c => `- ${c}`).join('\n')}
+
+### Tensions
+${debateOutcome.tensions.map(t => `- ${t.left} vs ${t.right}`).join('\n')}
+
+### Non-négociables
+${debateOutcome.nonNegotiables.map(n => `- ${n}`).join('\n')}
+
+### Options de Décision
+${debateOutcome.decisionOptions.map((opt, i) => `
+**Option ${String.fromCharCode(65 + i)}: ${opt.title}**
+${opt.description}
+- Ce qui change: ${opt.whatChanges.join(', ')}
+- Ce qui reste humain: ${opt.whatStaysHuman.join(', ')}
+- Risque principal: ${opt.keyRisk}
+- KPIs suggérés: ${opt.suggestedKPIs.join(', ')}
+`).join('\n')}
+`;
+
+      const artifactContext = formatArtifactsForContext(selectedArtifacts);
+      const fullContext = `${debateContext}\n\n${outcomeContext}\n\n${artifactContext}`;
+
+      let artifactPrompt = '';
+      let artifactType = '';
+      let artifactTitle = '';
+
+      switch (type) {
+        case 'discovery':
+          artifactType = 'canvas';
+          artifactTitle = `Discovery - ${prompt.substring(0, 50)}`;
+          artifactPrompt = `À partir du débat et des décisions ci-dessous, génère un résumé Discovery structuré en JSON avec:
+{
+  "problem_statement": "Énoncé clair du problème",
+  "hypotheses": ["Hypothèse 1", "Hypothèse 2", "Hypothèse 3"],
+  "target_personas": ["Persona 1 avec description", "Persona 2 avec description"],
+  "key_insights": ["Insight 1 du débat", "Insight 2", "Insight 3"],
+  "constraints": ["Contrainte technique ou organisationnelle"],
+  "success_metrics": ["Métrique de succès 1", "Métrique 2"],
+  "recommended_approach": "Description de l'approche recommandée basée sur le consensus",
+  "risks_to_monitor": ["Risque 1", "Risque 2"],
+  "next_validation_steps": ["Étape 1", "Étape 2"]
+}`;
+          break;
+
+        case 'epic':
+          artifactType = 'epic';
+          artifactTitle = `Epic - ${debateOutcome.decisionOptions[0]?.title || prompt.substring(0, 30)}`;
+          artifactPrompt = `À partir du débat et de l'option de décision recommandée, génère un Epic structuré en JSON:
+{
+  "title": "Titre de l'Epic clair et actionnable",
+  "objective": "Objectif business de cet epic",
+  "value_proposition": "Valeur apportée aux utilisateurs/business",
+  "target_persona": "Persona principale concernée",
+  "acceptance_criteria": ["Critère 1", "Critère 2", "Critère 3"],
+  "user_stories": [
+    {
+      "title": "En tant que [persona], je veux [action] afin de [bénéfice]",
+      "priority": "high|medium|low",
+      "estimation": "XS|S|M|L|XL"
+    }
+  ],
+  "success_metrics": ["KPI 1", "KPI 2"],
+  "dependencies": ["Dépendance 1"],
+  "risks": ["Risque identifié 1"],
+  "non_negotiables": ["Élément non-négociable du débat"]
+}`;
+          break;
+
+        case 'journey':
+          artifactType = 'canvas';
+          artifactTitle = `Parcours Conseiller - ${prompt.substring(0, 40)}`;
+          artifactPrompt = `À partir du débat orienté conseiller/client, génère un parcours utilisateur structuré en JSON:
+{
+  "persona": "Conseiller en boutique (ou autre persona principale)",
+  "context": "Contexte du parcours",
+  "stages": [
+    {
+      "name": "Étape 1",
+      "actions": ["Action 1", "Action 2"],
+      "touchpoints": ["Point de contact 1"],
+      "emotions": "positive|neutral|negative",
+      "pain_points": ["Point de friction"],
+      "opportunities": ["Opportunité d'amélioration"],
+      "tools_needed": ["Outil digital ou humain nécessaire"]
+    }
+  ],
+  "moments_of_truth": ["Moment clé 1", "Moment clé 2"],
+  "what_stays_human": ["Élément humain préservé"],
+  "what_changes": ["Changement proposé"],
+  "success_metrics": ["KPI du parcours"]
+}`;
+          break;
+
+        case 'kpis':
+          artifactType = 'canvas';
+          artifactTitle = `KPIs à Valider - ${prompt.substring(0, 40)}`;
+          artifactPrompt = `À partir des options de décision et du débat, génère une liste de KPIs à valider en boutique:
+{
+  "validation_context": "Contexte de validation en boutique",
+  "primary_kpis": [
+    {
+      "name": "Nom du KPI",
+      "description": "Description claire",
+      "measurement_method": "Comment le mesurer",
+      "target": "Objectif chiffré",
+      "current_baseline": "Baseline actuelle si connue",
+      "frequency": "Fréquence de mesure",
+      "owner": "Responsable de la mesure"
+    }
+  ],
+  "secondary_kpis": [
+    {
+      "name": "KPI secondaire",
+      "description": "Description",
+      "measurement_method": "Méthode"
+    }
+  ],
+  "qualitative_indicators": ["Indicateur qualitatif 1", "Indicateur 2"],
+  "validation_timeline": "Durée de validation recommandée",
+  "success_criteria": "Critères de succès de la validation",
+  "risks_if_not_measured": ["Risque si non mesuré"]
+}`;
+          break;
+      }
+
+      const { data, error } = await supabase.functions.invoke('chat-ai', {
+        body: {
+          message: `${artifactPrompt}\n\nContexte complet:\n${fullContext}`,
+          systemPrompt: `Tu es un expert en product management. Génère des artefacts structurés et actionnables basés sur les débats stratégiques. Réponds UNIQUEMENT avec le JSON demandé, sans texte additionnel.`
+        }
+      });
+
+      if (error) throw error;
+
+      // Parse the response
+      let artifactContent: any = {};
+      try {
+        const jsonMatch = data.response.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          artifactContent = JSON.parse(jsonMatch[0]);
+        }
+      } catch {
+        console.error('Failed to parse artifact JSON');
+        artifactContent = { raw_content: data.response };
+      }
+
+      // Add debate metadata
+      artifactContent.source = {
+        type: 'reality_mode_debate',
+        debate_topic: prompt,
+        squad_members: workingSquad.map(a => ({ name: a.name, specialty: a.specialty })),
+        created_from_options: debateOutcome.decisionOptions.map(o => o.title),
+        consensus_points: debateOutcome.consensus,
+        non_negotiables: debateOutcome.nonNegotiables
+      };
+
+      // Save to database - artifact_type must be valid enum: canvas, epic, story, impact_analysis
+      const validArtifactType = artifactType === 'epic' ? 'epic' : 'canvas';
+      const { error: saveError } = await supabase
+        .from('artifacts')
+        .insert({
+          title: artifactTitle,
+          artifact_type: validArtifactType as 'canvas' | 'epic' | 'story' | 'impact_analysis',
+          content: artifactContent,
+          user_id: userId
+        });
+
+      if (saveError) throw saveError;
+
+      onAddXP(30, `creating ${type} from debate`);
+      
+      toast({
+        title: "Artefact Créé",
+        description: `${artifactTitle} a été sauvegardé`,
+      });
+
+    } catch (error) {
+      console.error('Error creating artifact:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de créer l'artefact",
+        variant: "destructive",
+      });
+    }
   };
 
   // Stance distribution bar
