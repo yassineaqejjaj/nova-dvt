@@ -14,7 +14,10 @@ import {
   Bot,
   Shield,
   ChevronDown,
-  Wrench
+  Wrench,
+  Hammer,
+  Target,
+  GitBranch
 } from 'lucide-react';
 import {
   Sidebar,
@@ -70,7 +73,7 @@ export const WorkSidebar: React.FC<WorkSidebarProps> = ({
   const { open, setOpen } = useSidebar();
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
     work: true,
-    build: false,
+    build: true,
     structure: false,
     monitor: false,
     config: false
@@ -106,6 +109,38 @@ export const WorkSidebar: React.FC<WorkSidebarProps> = ({
           label: 'Artefacts',
           description: 'Retrouver vos livrables',
           icon: FileText
+        }
+      ]
+    },
+    {
+      id: 'build',
+      title: 'Construire',
+      icon: Hammer,
+      defaultExpanded: true,
+      items: [
+        {
+          id: 'instant-prd' as TabType,
+          label: 'PRD',
+          description: 'Générer un document produit clair',
+          icon: FileText
+        },
+        {
+          id: 'epic-to-stories' as TabType,
+          label: 'Epic → Stories',
+          description: 'Découper en tâches actionnables',
+          icon: Target
+        },
+        {
+          id: 'git-to-specs' as TabType,
+          label: 'Git → Specs',
+          description: 'Specs à partir du code',
+          icon: GitBranch
+        },
+        {
+          id: 'toolbox' as TabType,
+          label: 'Tous les outils',
+          description: 'Voir la galerie complète',
+          icon: Wrench
         }
       ]
     },
@@ -164,12 +199,6 @@ export const WorkSidebar: React.FC<WorkSidebarProps> = ({
           label: 'Galerie d\'agents',
           description: 'Découvrir et gérer les agents',
           icon: Bot
-        },
-        {
-          id: 'toolbox' as TabType,
-          label: 'Outils de production',
-          description: 'Accès direct aux outils',
-          icon: Wrench
         },
         {
           id: 'admin' as TabType,
