@@ -26,8 +26,13 @@ import {
   Zap,
   PartyPopper,
   BookOpen,
-  Save
+  Save,
+  FolderOpen,
+  ChevronDown,
+  ChevronUp
 } from "lucide-react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { ContextSelector } from "./ContextSelector";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { CanvasGenerator } from "./CanvasGenerator";
@@ -94,6 +99,14 @@ interface PRDDocument {
   appendix: string[];
 }
 
+interface Artifact {
+  id: string;
+  title: string;
+  artifact_type: string;
+  content: any;
+  created_at: string;
+}
+
 export const InstantPRD = () => {
   const [idea, setIdea] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
@@ -107,44 +120,64 @@ export const InstantPRD = () => {
   const [editedDocument, setEditedDocument] = useState<PRDDocument | null>(null);
   const [savedPrdId, setSavedPrdId] = useState<string | null>(null);
   const [showArtifactCreator, setShowArtifactCreator] = useState(false);
+  const [projectArtifacts, setProjectArtifacts] = useState<Artifact[]>([]);
+  const [selectedArtifacts, setSelectedArtifacts] = useState<string[]>([]);
+  const [isArtifactsOpen, setIsArtifactsOpen] = useState(false);
+  const [isLoadingArtifacts, setIsLoadingArtifacts] = useState(false);
 
-  // Load active product context
-  useEffect(() => {
-    const loadActiveContext = async () => {
-      try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) return;
+  // Load artifacts when context changes
+  const loadProjectArtifacts = async (contextId: string) => {
+    setIsLoadingArtifacts(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
 
-        const { data, error } = await supabase
-          .from('product_contexts')
-          .select('*')
-          .eq('user_id', user.id)
-          .eq('is_active', true)
-          .eq('is_deleted', false)
-          .single();
+      const { data, error } = await supabase
+        .from('artifacts')
+        .select('id, title, artifact_type, content, created_at')
+        .eq('user_id', user.id)
+        .eq('product_context_id', contextId)
+        .order('created_at', { ascending: false });
 
-        if (error) {
-          // No active context, get the most recent one
-          const { data: recent } = await supabase
-            .from('product_contexts')
-            .select('*')
-            .eq('user_id', user.id)
-            .eq('is_deleted', false)
-            .order('updated_at', { ascending: false })
-            .limit(1)
-            .single();
-          
-          setActiveContext(recent);
-        } else {
-          setActiveContext(data);
-        }
-      } catch (error) {
-        console.error('Error loading context:', error);
-      }
+      if (error) throw error;
+      setProjectArtifacts(data || []);
+    } catch (error) {
+      console.error('Error loading artifacts:', error);
+    } finally {
+      setIsLoadingArtifacts(false);
+    }
+  };
+
+  const handleContextSelected = (context: any) => {
+    setActiveContext(context);
+    setSelectedArtifacts([]);
+    if (context?.id) {
+      loadProjectArtifacts(context.id);
+    } else {
+      setProjectArtifacts([]);
+    }
+  };
+
+  const toggleArtifactSelection = (artifactId: string) => {
+    setSelectedArtifacts(prev => 
+      prev.includes(artifactId)
+        ? prev.filter(id => id !== artifactId)
+        : [...prev, artifactId]
+    );
+  };
+
+  const getArtifactTypeLabel = (type: string) => {
+    const labels: Record<string, string> = {
+      'canvas': 'Canvas',
+      'story': 'User Story',
+      'epic': 'Epic',
+      'tech_spec': 'Spec Technique',
+      'roadmap': 'Roadmap',
+      'prd': 'PRD',
+      'impact_analysis': 'Analyse Impact'
     };
-
-    loadActiveContext();
-  }, []);
+    return labels[type] || type;
+  };
 
   const [sections, setSections] = useState<PRDSection[]>([
     { id: 'introduction', title: 'Introduction', icon: BookOpen, status: 'pending' },
@@ -255,12 +288,24 @@ export const InstantPRD = () => {
     const startTime = Date.now();
 
     try {
+      // Build context info from selected context
       const contextInfo = activeContext ? `
 Contexte Produit:
 - Vision: ${activeContext.vision || 'Non définie'}
 - Objectifs: ${(activeContext.objectives || []).join(', ')}
 - Audience cible: ${activeContext.target_audience || 'Non définie'}
 - Contraintes: ${activeContext.constraints || 'Aucune'}
+` : '';
+
+      // Build artifacts info from selected artifacts
+      const selectedArtifactsData = projectArtifacts.filter(a => selectedArtifacts.includes(a.id));
+      const artifactsInfo = selectedArtifactsData.length > 0 ? `
+
+Artefacts du projet à prendre en compte:
+${selectedArtifactsData.map(a => `
+--- ${getArtifactTypeLabel(a.artifact_type)}: ${a.title} ---
+${typeof a.content === 'string' ? a.content : JSON.stringify(a.content, null, 2)}
+`).join('\n')}
 ` : '';
 
       // Step 1: Introduction (6%)
@@ -290,8 +335,9 @@ Génère une introduction concise (JSON uniquement):
         body: {
           message: `Idée: "${idea}"
 ${contextInfo}
+${artifactsInfo}
 
-Génère contexte et objectifs (JSON uniquement):
+Génère contexte et objectifs en tenant compte des informations fournies (JSON uniquement):
 { "context": "Texte en 3-4 phrases" }`,
           mode: 'simple'
         }
@@ -741,6 +787,94 @@ Génère 3-4 références/annexes (JSON uniquement):
           </div>
         </CardHeader>
         <CardContent className="space-y-6">
+          {/* Context Import Section */}
+          <div className="space-y-3 p-4 border rounded-lg bg-muted/30">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Target className="h-5 w-5 text-primary" />
+                <span className="font-medium">Contexte produit</span>
+              </div>
+              <ContextSelector
+                onContextSelected={handleContextSelected}
+                selectedContextId={activeContext?.id}
+              />
+            </div>
+            
+            {activeContext && (
+              <div className="mt-3 p-3 bg-background rounded-md border text-sm space-y-1">
+                <p className="font-medium">{activeContext.name}</p>
+                {activeContext.vision && (
+                  <p className="text-muted-foreground line-clamp-2">{activeContext.vision}</p>
+                )}
+              </div>
+            )}
+
+            {/* Artifacts Section - Only shown when context is selected */}
+            {activeContext && (
+              <Collapsible open={isArtifactsOpen} onOpenChange={setIsArtifactsOpen}>
+                <CollapsibleTrigger asChild>
+                  <Button variant="ghost" size="sm" className="w-full justify-between mt-2">
+                    <span className="flex items-center gap-2">
+                      <FolderOpen className="h-4 w-4" />
+                      Artefacts du projet ({projectArtifacts.length})
+                      {selectedArtifacts.length > 0 && (
+                        <Badge variant="default" className="ml-2">
+                          {selectedArtifacts.length} sélectionné(s)
+                        </Badge>
+                      )}
+                    </span>
+                    {isArtifactsOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                  </Button>
+                </CollapsibleTrigger>
+                <CollapsibleContent className="mt-2">
+                  {isLoadingArtifacts ? (
+                    <div className="flex items-center justify-center py-4">
+                      <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                    </div>
+                  ) : projectArtifacts.length === 0 ? (
+                    <p className="text-sm text-muted-foreground text-center py-3">
+                      Aucun artefact trouvé pour ce projet
+                    </p>
+                  ) : (
+                    <ScrollArea className="h-[200px]">
+                      <div className="space-y-2">
+                        {projectArtifacts.map((artifact) => (
+                          <div
+                            key={artifact.id}
+                            onClick={() => toggleArtifactSelection(artifact.id)}
+                            className={`p-3 border rounded-md cursor-pointer transition-colors ${
+                              selectedArtifacts.includes(artifact.id)
+                                ? 'border-primary bg-primary/5'
+                                : 'hover:bg-muted/50'
+                            }`}
+                          >
+                            <div className="flex items-center justify-between">
+                              <div className="flex-1 min-w-0">
+                                <p className="font-medium text-sm truncate">{artifact.title}</p>
+                                <div className="flex items-center gap-2 mt-1">
+                                  <Badge variant="outline" className="text-xs">
+                                    {getArtifactTypeLabel(artifact.artifact_type)}
+                                  </Badge>
+                                  <span className="text-xs text-muted-foreground">
+                                    {new Date(artifact.created_at).toLocaleDateString('fr-FR')}
+                                  </span>
+                                </div>
+                              </div>
+                              {selectedArtifacts.includes(artifact.id) && (
+                                <CheckCircle2 className="h-5 w-5 text-primary flex-shrink-0" />
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </ScrollArea>
+                  )}
+                </CollapsibleContent>
+              </Collapsible>
+            )}
+          </div>
+
+          {/* Idea Input */}
           <div className="space-y-3">
             <Input
               placeholder="Décrivez votre idée en une phrase..."
