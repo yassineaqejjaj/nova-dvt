@@ -3,10 +3,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Folder, FileText, Download, Trash2, Loader2, FolderOpen } from 'lucide-react';
+import { Folder, FileText, Download, Trash2, Loader2, FolderOpen, Eye, Target, Layers, TrendingUp } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { ArtifactPreviewDialog } from './ArtifactPreviewDialog';
 
 interface Artifact {
   id: string;
@@ -34,6 +35,8 @@ export const ProjectArtifactsView = () => {
   const [orphanArtifacts, setOrphanArtifacts] = useState<Artifact[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [openFolders, setOpenFolders] = useState<Set<string>>(new Set());
+  const [selectedArtifact, setSelectedArtifact] = useState<Artifact | null>(null);
+  const [showPreview, setShowPreview] = useState(false);
 
   useEffect(() => {
     loadProjectArtifacts();
@@ -42,7 +45,6 @@ export const ProjectArtifactsView = () => {
   const loadProjectArtifacts = async () => {
     setIsLoading(true);
     try {
-      // Load all contexts
       const { data: contexts, error: contextsError } = await supabase
         .from('product_contexts')
         .select('id, name, vision')
@@ -51,7 +53,6 @@ export const ProjectArtifactsView = () => {
 
       if (contextsError) throw contextsError;
 
-      // Load all artifacts
       const { data: artifacts, error: artifactsError } = await supabase
         .from('artifacts')
         .select('*')
@@ -59,7 +60,6 @@ export const ProjectArtifactsView = () => {
 
       if (artifactsError) throw artifactsError;
 
-      // Group artifacts by project
       const folders: ProjectFolder[] = [];
       const orphans: Artifact[] = [];
 
@@ -76,7 +76,6 @@ export const ProjectArtifactsView = () => {
         }
       });
 
-      // Find orphan artifacts (no project association)
       artifacts?.forEach(artifact => {
         if (!artifact.product_context_id) {
           orphans.push(artifact);
@@ -134,16 +133,96 @@ export const ProjectArtifactsView = () => {
     toast.success('Artefact exporté');
   };
 
+  const handlePreview = (artifact: Artifact) => {
+    setSelectedArtifact(artifact);
+    setShowPreview(true);
+  };
+
+  const getArtifactTypeIcon = (type: string) => {
+    const icons: Record<string, React.ReactNode> = {
+      canvas: <Layers className="h-4 w-4" />,
+      story: <FileText className="h-4 w-4" />,
+      epic: <Target className="h-4 w-4" />,
+      impact_analysis: <TrendingUp className="h-4 w-4" />,
+    };
+    return icons[type] || <FileText className="h-4 w-4" />;
+  };
+
   const getArtifactTypeBadge = (type: string) => {
-    const typeMap: Record<string, { label: string; variant: any }> = {
-      canvas: { label: 'Canvas', variant: 'default' },
-      wireframe: { label: 'Wireframe', variant: 'secondary' },
-      user_flow: { label: 'User Flow', variant: 'outline' },
+    const typeMap: Record<string, { label: string; variant: "default" | "secondary" | "outline"; className?: string }> = {
+      canvas: { label: 'Canvas', variant: 'default', className: 'bg-blue-500/20 text-blue-700 border-blue-500/30' },
+      story: { label: 'User Story', variant: 'secondary', className: 'bg-green-500/20 text-green-700 border-green-500/30' },
+      epic: { label: 'Epic', variant: 'outline', className: 'bg-purple-500/20 text-purple-700 border-purple-500/30' },
+      impact_analysis: { label: 'Analyse', variant: 'secondary', className: 'bg-amber-500/20 text-amber-700 border-amber-500/30' },
     };
     
-    const typeInfo = typeMap[type] || { label: type, variant: 'default' };
-    return <Badge variant={typeInfo.variant}>{typeInfo.label}</Badge>;
+    const typeInfo = typeMap[type] || { label: type, variant: 'default' as const };
+    return <Badge variant={typeInfo.variant} className={typeInfo.className}>{typeInfo.label}</Badge>;
   };
+
+  const renderArtifactCard = (artifact: Artifact) => (
+    <Card key={artifact.id} className="hover:shadow-md transition-all hover:border-primary/30 cursor-pointer group">
+      <CardContent className="p-4">
+        <div className="flex items-start justify-between">
+          <div 
+            className="flex items-start gap-3 flex-1"
+            onClick={() => handlePreview(artifact)}
+          >
+            <div className="p-2 bg-primary/10 rounded-lg text-primary">
+              {getArtifactTypeIcon(artifact.artifact_type)}
+            </div>
+            <div className="flex-1">
+              <h4 className="font-medium text-sm group-hover:text-primary transition-colors">
+                {artifact.title}
+              </h4>
+              <p className="text-xs text-muted-foreground mt-1">
+                Créé le {new Date(artifact.created_at).toLocaleDateString('fr-FR')}
+              </p>
+              <div className="mt-2">
+                {getArtifactTypeBadge(artifact.artifact_type)}
+              </div>
+            </div>
+          </div>
+          <div className="flex gap-1">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={(e) => {
+                e.stopPropagation();
+                handlePreview(artifact);
+              }}
+              title="Consulter"
+              className="opacity-0 group-hover:opacity-100 transition-opacity"
+            >
+              <Eye className="h-4 w-4 text-primary" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleExport(artifact);
+              }}
+              title="Exporter"
+            >
+              <Download className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleDelete(artifact.id);
+              }}
+              title="Supprimer"
+            >
+              <Trash2 className="h-4 w-4 text-destructive" />
+            </Button>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
 
   if (isLoading) {
     return (
@@ -207,46 +286,7 @@ export const ProjectArtifactsView = () => {
                       
                       <CollapsibleContent>
                         <CardContent className="space-y-2 pt-0">
-                          {folder.artifacts.map((artifact) => (
-                            <Card key={artifact.id} className="hover:shadow-md transition-shadow">
-                              <CardContent className="p-4">
-                                <div className="flex items-start justify-between">
-                                  <div className="flex items-start gap-3 flex-1">
-                                    <div className="p-2 bg-secondary/20 rounded-lg">
-                                      <FileText className="h-4 w-4" />
-                                    </div>
-                                    <div className="flex-1">
-                                      <h4 className="font-medium text-sm">{artifact.title}</h4>
-                                      <p className="text-xs text-muted-foreground mt-1">
-                                        Créé le {new Date(artifact.created_at).toLocaleDateString('fr-FR')}
-                                      </p>
-                                      <div className="mt-2">
-                                        {getArtifactTypeBadge(artifact.artifact_type)}
-                                      </div>
-                                    </div>
-                                  </div>
-                                  <div className="flex gap-1">
-                                    <Button
-                                      variant="ghost"
-                                      size="icon"
-                                      onClick={() => handleExport(artifact)}
-                                      title="Exporter"
-                                    >
-                                      <Download className="h-4 w-4" />
-                                    </Button>
-                                    <Button
-                                      variant="ghost"
-                                      size="icon"
-                                      onClick={() => handleDelete(artifact.id)}
-                                      title="Supprimer"
-                                    >
-                                      <Trash2 className="h-4 w-4 text-destructive" />
-                                    </Button>
-                                  </div>
-                                </div>
-                              </CardContent>
-                            </Card>
-                          ))}
+                          {folder.artifacts.map((artifact) => renderArtifactCard(artifact))}
                         </CardContent>
                       </CollapsibleContent>
                     </Card>
@@ -265,46 +305,7 @@ export const ProjectArtifactsView = () => {
                       </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-2">
-                      {orphanArtifacts.map((artifact) => (
-                        <Card key={artifact.id} className="hover:shadow-md transition-shadow">
-                          <CardContent className="p-4">
-                            <div className="flex items-start justify-between">
-                              <div className="flex items-start gap-3 flex-1">
-                                <div className="p-2 bg-secondary/20 rounded-lg">
-                                  <FileText className="h-4 w-4" />
-                                </div>
-                                <div className="flex-1">
-                                  <h4 className="font-medium text-sm">{artifact.title}</h4>
-                                  <p className="text-xs text-muted-foreground mt-1">
-                                    Créé le {new Date(artifact.created_at).toLocaleDateString('fr-FR')}
-                                  </p>
-                                  <div className="mt-2">
-                                    {getArtifactTypeBadge(artifact.artifact_type)}
-                                  </div>
-                                </div>
-                              </div>
-                              <div className="flex gap-1">
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  onClick={() => handleExport(artifact)}
-                                  title="Exporter"
-                                >
-                                  <Download className="h-4 w-4" />
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  onClick={() => handleDelete(artifact.id)}
-                                  title="Supprimer"
-                                >
-                                  <Trash2 className="h-4 w-4 text-destructive" />
-                                </Button>
-                              </div>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      ))}
+                      {orphanArtifacts.map((artifact) => renderArtifactCard(artifact))}
                     </CardContent>
                   </Card>
                 )}
@@ -313,6 +314,12 @@ export const ProjectArtifactsView = () => {
           )}
         </CardContent>
       </Card>
+
+      <ArtifactPreviewDialog
+        open={showPreview}
+        onOpenChange={setShowPreview}
+        artifact={selectedArtifact}
+      />
     </div>
   );
 };
