@@ -11,6 +11,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Agent, ChatMessage } from '@/types';
 import { toast } from '@/hooks/use-toast';
 import { Send, MessageCircle, Users, Loader2, AtSign, Grid3X3, FileText, TrendingUp, Sparkles } from 'lucide-react';
+import { FormattedText } from './ui/formatted-text';
 import { CanvasGenerator } from './CanvasGenerator';
 import { StoryWriter } from './StoryWriter';
 import { ImpactPlotter } from './ImpactPlotter';
@@ -513,7 +514,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ currentSquad, squa
                       </Badge>
                     </div>
                   )}
-                  <p className="text-sm">{message.content}</p>
+                  <FormattedText content={message.content} className="text-sm" />
                   <span className="text-xs opacity-70 mt-1 block">
                     {message.timestamp.toLocaleTimeString()}
                   </span>
