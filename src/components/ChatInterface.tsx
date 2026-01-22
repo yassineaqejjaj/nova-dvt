@@ -15,6 +15,7 @@ import { StoryWriter } from './StoryWriter';
 import { ImpactPlotter } from './ImpactPlotter';
 import { ArtifactPreviewDialog } from './ArtifactPreviewDialog';
 import { ArtifactSelector, formatArtifactsForContext } from './ArtifactSelector';
+import { DeliverableCreator, DeliverableCreatorButton } from './tools/DeliverableCreator';
 import {
   RoleBadge,
   ResponseModeToggle,
@@ -62,6 +63,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ currentSquad, squa
   const [showCanvasGenerator, setShowCanvasGenerator] = useState(false);
   const [showStoryWriter, setShowStoryWriter] = useState(false);
   const [showImpactPlotter, setShowImpactPlotter] = useState(false);
+  const [showDeliverableCreator, setShowDeliverableCreator] = useState(false);
   const [selectedArtifacts, setSelectedArtifacts] = useState<Artifact[]>([]);
   const [showArtifactPreview, setShowArtifactPreview] = useState(false);
   const [previewArtifact, setPreviewArtifact] = useState<Artifact | null>(null);
@@ -929,18 +931,11 @@ Pour le handler actionable:
                 maxSelection={5}
               />
               <div className="h-5 w-px bg-border" />
-              <Button variant="outline" size="sm" onClick={() => setShowCanvasGenerator(true)} className="h-7 text-xs gap-1">
-                <Grid3X3 className="w-3 h-3" />
-                Canvas
-              </Button>
-              <Button variant="outline" size="sm" onClick={() => setShowStoryWriter(true)} className="h-7 text-xs gap-1">
-                <FileText className="w-3 h-3" />
-                Story
-              </Button>
-              <Button variant="outline" size="sm" onClick={() => setShowImpactPlotter(true)} className="h-7 text-xs gap-1">
-                <TrendingUp className="w-3 h-3" />
-                Impact
-              </Button>
+              {/* Main deliverable creation button - contextual */}
+              <DeliverableCreatorButton 
+                variant="compact"
+                onClick={() => setShowDeliverableCreator(true)}
+              />
             </div>
             
             <div className="flex space-x-2">
@@ -1010,6 +1005,30 @@ Pour le handler actionable:
       <CanvasGenerator open={showCanvasGenerator} onClose={() => setShowCanvasGenerator(false)} />
       <StoryWriter open={showStoryWriter} onClose={() => setShowStoryWriter(false)} />
       <ImpactPlotter open={showImpactPlotter} onClose={() => setShowImpactPlotter(false)} />
+      
+      {/* Contextual Deliverable Creator */}
+      <DeliverableCreator
+        open={showDeliverableCreator}
+        onClose={() => setShowDeliverableCreator(false)}
+        onSelectTool={(toolId) => {
+          setShowDeliverableCreator(false);
+          // Route to appropriate tool
+          switch (toolId) {
+            case 'canvas':
+              setShowCanvasGenerator(true);
+              break;
+            case 'epic-stories':
+              setShowStoryWriter(true);
+              break;
+            case 'prd':
+              // Will be handled by parent navigation
+              break;
+            default:
+              toast({ title: 'Outil sélectionné', description: `Ouverture de ${toolId}` });
+          }
+        }}
+        context="all"
+      />
       
       {/* Artifact Preview Dialog */}
       <ArtifactPreviewDialog

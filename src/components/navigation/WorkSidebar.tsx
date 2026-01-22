@@ -7,16 +7,14 @@ import {
   MessageCircle,
   Sparkles,
   FileText,
-  Lightbulb,
-  Target,
-  Users as UsersIcon,
   Database,
   Workflow,
   BarChart3,
   LayoutDashboard,
   Bot,
   Shield,
-  ChevronDown
+  ChevronDown,
+  Wrench
 } from 'lucide-react';
 import {
   Sidebar,
@@ -37,6 +35,7 @@ interface WorkSidebarProps {
   hasActiveChat: boolean;
   onCreateCanvas: () => void;
   onManageContexts: () => void;
+  onOpenToolbox?: () => void;
 }
 
 interface NavItem {
@@ -64,7 +63,8 @@ export const WorkSidebar: React.FC<WorkSidebarProps> = ({
   squadCount,
   hasActiveChat,
   onCreateCanvas,
-  onManageContexts
+  onManageContexts,
+  onOpenToolbox
 }) => {
   const navigate = useNavigate();
   const { open, setOpen } = useSidebar();
@@ -80,7 +80,7 @@ export const WorkSidebar: React.FC<WorkSidebarProps> = ({
     setExpandedSections(prev => ({ ...prev, [sectionId]: !prev[sectionId] }));
   };
 
-  // Navigation sections following the new structure
+  // Navigation sections - NO tools in main menu, only work contexts
   const navSections: NavSection[] = [
     {
       id: 'work',
@@ -110,33 +110,6 @@ export const WorkSidebar: React.FC<WorkSidebarProps> = ({
       ]
     },
     {
-      id: 'build',
-      title: 'Construire',
-      icon: Lightbulb,
-      items: [
-        {
-          id: 'user-research' as TabType,
-          label: 'Discovery & Strategy',
-          description: 'Clarifier les besoins et les objectifs',
-          icon: Lightbulb,
-          isRoute: true,
-          route: '/user-research'
-        },
-        {
-          id: 'instant-prd' as TabType,
-          label: 'Specs & Planning',
-          description: 'Structurer et planifier le travail',
-          icon: Target
-        },
-        {
-          id: 'raci-generator' as TabType,
-          label: 'Team & Docs',
-          description: 'Collaborer et documenter',
-          icon: UsersIcon
-        }
-      ]
-    },
-    {
       id: 'structure',
       title: 'Structurer',
       icon: Database,
@@ -157,7 +130,7 @@ export const WorkSidebar: React.FC<WorkSidebarProps> = ({
           id: 'squads' as TabType,
           label: 'Squads',
           description: 'Gérer les équipes IA',
-          icon: UsersIcon,
+          icon: Bot,
           badge: squadCount > 0 ? squadCount.toString() : undefined
         }
       ]
@@ -193,6 +166,12 @@ export const WorkSidebar: React.FC<WorkSidebarProps> = ({
           icon: Bot
         },
         {
+          id: 'toolbox' as TabType,
+          label: 'Outils de production',
+          description: 'Accès direct aux outils',
+          icon: Wrench
+        },
+        {
           id: 'admin' as TabType,
           label: 'Admin',
           description: 'Paramètres et accès',
@@ -201,7 +180,6 @@ export const WorkSidebar: React.FC<WorkSidebarProps> = ({
       ]
     }
   ];
-
   const getNavClass = (isActive: boolean, disabled?: boolean) => {
     if (disabled) return 'opacity-50 cursor-not-allowed';
     return isActive 
