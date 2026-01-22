@@ -9,7 +9,65 @@ export interface Agent {
   xpRequired: number;
   familyColor: 'blue' | 'green' | 'purple' | 'orange';
   personality?: 'balanced' | 'analytical' | 'creative' | 'socratic';
+  role?: AgentRole; // NEW: Role badge
 }
+
+// NEW: Role types for badges
+export type AgentRole = 'ux' | 'product' | 'data' | 'tech' | 'business' | 'strategy';
+
+// NEW: Response mode for verbosity control
+export type ResponseMode = 'short' | 'structured' | 'detailed';
+
+// NEW: Agent message with stance and reaction type
+export interface AgentMessage extends ChatMessage {
+  stance?: string; // e.g., "protect human touch first"
+  isReaction?: boolean; // micro-input vs full response
+  reactionType?: 'agree' | 'disagree' | 'risk' | 'idea';
+  isExpanded?: boolean; // for inline expansion
+  truncatedContent?: string; // short version
+}
+
+// NEW: Live synthesis for side panel
+export interface LiveSynthesis {
+  options: SynthesisOption[];
+  openPoints: string[];
+  decisionDraft?: string;
+  disagreements: Disagreement[];
+  lastUpdated: Date;
+}
+
+export interface SynthesisOption {
+  id: string;
+  title: string;
+  pros: string[];
+  cons: string[];
+  supportingAgents: string[];
+}
+
+export interface Disagreement {
+  id: string;
+  agentA: string;
+  agentB: string;
+  topic: string;
+  positionA: string;
+  positionB: string;
+  resolved?: boolean;
+}
+
+// NEW: Thread conclusion types
+export interface ThreadConclusion {
+  type: 'recommendation' | 'options' | 'question' | 'action';
+  content: string;
+  options?: { label: string; impact: string }[];
+  actionable?: { label: string; handler: string };
+}
+
+// NEW: Steering commands
+export type SteeringCommand = 
+  | 'pause_others' 
+  | 'only_ux_business' 
+  | 'tradeoffs_only' 
+  | 'summarize';
 
 export interface Squad {
   id: string;
