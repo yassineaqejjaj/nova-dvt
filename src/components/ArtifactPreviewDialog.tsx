@@ -58,7 +58,157 @@ export const ArtifactPreviewDialog = ({
 
   const renderCanvasContent = (content: any) => {
     if (!content) return null;
+
+    // Handle smart_discovery type
+    if (content.type === 'smart_discovery') {
+      return (
+        <div className="space-y-4">
+          {/* Reformulated Problem */}
+          {content.reformulatedProblem && (
+            <Card className="p-4 bg-primary/5 border-primary/20">
+              <div className="flex items-center gap-2 mb-2 text-primary">
+                <Target className="w-4 h-4" />
+                <h4 className="font-semibold text-sm">Problème reformulé</h4>
+              </div>
+              <p className="text-sm">{content.reformulatedProblem}</p>
+            </Card>
+          )}
+
+          {/* Idea Description */}
+          {content.ideaDescription && (
+            <div>
+              <h4 className="font-semibold text-sm mb-1 flex items-center gap-2">
+                <Lightbulb className="w-4 h-4 text-amber-600" />
+                Idée initiale
+              </h4>
+              <p className="text-sm text-muted-foreground">{content.ideaDescription}</p>
+            </div>
+          )}
+
+          {/* Discovery Data */}
+          {content.discoveryData && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {content.discoveryData.hypotheses && content.discoveryData.hypotheses.length > 0 && (
+                <Card className="p-3">
+                  <h5 className="font-semibold text-sm mb-2 flex items-center gap-1 text-blue-600">
+                    <Lightbulb className="w-4 h-4" />
+                    Hypothèses
+                  </h5>
+                  <ul className="space-y-1">
+                    {content.discoveryData.hypotheses.map((h: string, idx: number) => (
+                      <li key={idx} className="flex items-start gap-2 text-sm">
+                        <span className="text-blue-600">•</span>
+                        <span className="text-muted-foreground">{h}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </Card>
+              )}
+
+              {content.discoveryData.objectives && content.discoveryData.objectives.length > 0 && (
+                <Card className="p-3">
+                  <h5 className="font-semibold text-sm mb-2 flex items-center gap-1 text-green-600">
+                    <Target className="w-4 h-4" />
+                    Objectifs
+                  </h5>
+                  <ul className="space-y-1">
+                    {content.discoveryData.objectives.map((o: string, idx: number) => (
+                      <li key={idx} className="flex items-start gap-2 text-sm">
+                        <CheckCircle2 className="w-3 h-3 mt-1 text-green-600 shrink-0" />
+                        <span className="text-muted-foreground">{o}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </Card>
+              )}
+
+              {content.discoveryData.constraints && content.discoveryData.constraints.length > 0 && (
+                <Card className="p-3">
+                  <h5 className="font-semibold text-sm mb-2 flex items-center gap-1 text-red-600">
+                    <AlertTriangle className="w-4 h-4" />
+                    Contraintes
+                  </h5>
+                  <ul className="space-y-1">
+                    {content.discoveryData.constraints.map((c: string, idx: number) => (
+                      <li key={idx} className="flex items-start gap-2 text-sm">
+                        <span className="text-red-600">•</span>
+                        <span className="text-muted-foreground">{c}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </Card>
+              )}
+
+              {content.discoveryData.indicators && content.discoveryData.indicators.length > 0 && (
+                <Card className="p-3">
+                  <h5 className="font-semibold text-sm mb-2 flex items-center gap-1 text-purple-600">
+                    <TrendingUp className="w-4 h-4" />
+                    Indicateurs
+                  </h5>
+                  <div className="flex flex-wrap gap-1">
+                    {content.discoveryData.indicators.map((i: string, idx: number) => (
+                      <Badge key={idx} variant="secondary" className="text-xs">{i}</Badge>
+                    ))}
+                  </div>
+                </Card>
+              )}
+            </div>
+          )}
+
+          {/* Personas */}
+          {content.personas && content.personas.length > 0 && (
+            <div>
+              <h4 className="font-semibold text-sm mb-2 flex items-center gap-2">
+                <Users className="w-4 h-4 text-primary" />
+                Personas ({content.personas.length})
+              </h4>
+              <div className="grid gap-2">
+                {content.personas.map((p: any, idx: number) => (
+                  <Card key={idx} className="p-3">
+                    <div className="flex items-center gap-2 mb-1">
+                      <User className="w-4 h-4 text-primary" />
+                      <span className="font-medium text-sm">{p.role}</span>
+                    </div>
+                    {p.mainObjective && (
+                      <p className="text-xs text-muted-foreground">Objectif: {p.mainObjective}</p>
+                    )}
+                    {p.keyFrustration && (
+                      <p className="text-xs text-red-600">Frustration: {p.keyFrustration}</p>
+                    )}
+                  </Card>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Journey Needs */}
+          {content.journeyNeeds && content.journeyNeeds.length > 0 && (
+            <div>
+              <h4 className="font-semibold text-sm mb-2 flex items-center gap-2">
+                <Workflow className="w-4 h-4 text-primary" />
+                Parcours & Besoins ({content.journeyNeeds.length})
+              </h4>
+              <div className="space-y-2">
+                {content.journeyNeeds.map((j: any, idx: number) => (
+                  <Card key={idx} className="p-3">
+                    <p className="font-medium text-sm">{j.situation}</p>
+                    {j.needs && j.needs.length > 0 && (
+                      <div className="mt-1 flex flex-wrap gap-1">
+                        {j.needs.map((n: string, nIdx: number) => (
+                          <Badge key={nIdx} variant="outline" className="text-xs">{n}</Badge>
+                        ))}
+                      </div>
+                    )}
+                  </Card>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      );
+    }
     
+    // Standard Lean Canvas sections
     const sections = [
       { key: 'problem', title: 'Problème', icon: AlertTriangle, color: 'text-amber-600' },
       { key: 'solution', title: 'Solution', icon: Lightbulb, color: 'text-green-600' },
@@ -71,185 +221,309 @@ export const ArtifactPreviewDialog = ({
       { key: 'revenueStreams', title: 'Sources de Revenus', icon: TrendingUp, color: 'text-emerald-600' },
     ];
 
+    // Check if any standard section exists
+    const hasStandardSections = sections.some(({ key }) => content[key]);
+    
+    if (hasStandardSections) {
+      return (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {sections.map(({ key, title, icon: Icon, color }) => {
+            const value = content[key];
+            if (!value) return null;
+            
+            return (
+              <Card key={key} className="p-4">
+                <div className={`flex items-center gap-2 mb-2 ${color}`}>
+                  <Icon className="w-4 h-4" />
+                  <h4 className="font-semibold text-sm">{title}</h4>
+                </div>
+                {Array.isArray(value) ? (
+                  <ul className="space-y-1">
+                    {value.map((item: string, idx: number) => (
+                      <li key={idx} className="flex items-start gap-2 text-sm">
+                        <span className={color}>•</span>
+                        <span className="text-muted-foreground">{item}</span>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="text-sm text-muted-foreground">{value}</p>
+                )}
+              </Card>
+            );
+          })}
+        </div>
+      );
+    }
+
+    // Fallback to generic content rendering for other canvas types
+    return renderGenericContent(content);
+  };
+
+  // Helper to render a single user story
+  const renderSingleStory = (story: any, idx?: number) => {
+    const storyData = story.story || story;
+    const asA = storyData.asA || story.asA;
+    const iWant = storyData.iWant || story.iWant;
+    const soThat = storyData.soThat || story.soThat;
+    
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {sections.map(({ key, title, icon: Icon, color }) => {
-          const value = content[key];
-          if (!value) return null;
+      <Card key={idx} className="p-4">
+        <div className="space-y-3">
+          {/* Title */}
+          {story.title && (
+            <h4 className="font-semibold text-sm flex items-center gap-2">
+              <FileText className="w-4 h-4 text-primary" />
+              {story.title}
+            </h4>
+          )}
           
-          return (
-            <Card key={key} className="p-4">
-              <div className={`flex items-center gap-2 mb-2 ${color}`}>
-                <Icon className="w-4 h-4" />
-                <h4 className="font-semibold text-sm">{title}</h4>
-              </div>
-              <p className="text-sm text-muted-foreground">
-                {Array.isArray(value) ? value.join(', ') : value}
+          {/* User Story Format */}
+          {(asA || iWant || soThat) && (
+            <div className="bg-primary/5 p-3 rounded-lg space-y-1 text-sm">
+              {asA && (
+                <p><span className="font-semibold text-primary">En tant que</span> {asA}</p>
+              )}
+              {iWant && (
+                <p><span className="font-semibold text-primary">Je veux</span> {iWant}</p>
+              )}
+              {soThat && (
+                <p><span className="font-semibold text-primary">Afin de</span> {soThat}</p>
+              )}
+            </div>
+          )}
+
+          {/* Badges */}
+          <div className="flex flex-wrap gap-2">
+            {story.tshirtSize && <Badge variant="outline">{story.tshirtSize}</Badge>}
+            {story.priority && (
+              <Badge variant={story.priority === 'high' ? 'destructive' : story.priority === 'medium' ? 'default' : 'secondary'}>
+                {story.priority === 'high' ? 'Haute' : story.priority === 'medium' ? 'Moyenne' : 'Basse'}
+              </Badge>
+            )}
+            {story.personaRole && (
+              <Badge variant="outline" className="gap-1">
+                <User className="w-3 h-3" />
+                {story.personaRole}
+              </Badge>
+            )}
+          </div>
+
+          {/* Acceptance Criteria */}
+          {story.acceptanceCriteria && story.acceptanceCriteria.length > 0 && (
+            <div>
+              <p className="text-xs font-semibold text-muted-foreground mb-1 flex items-center gap-1">
+                <CheckCircle2 className="w-3 h-3" />
+                Critères d'acceptation
               </p>
-            </Card>
-          );
-        })}
-      </div>
+              <ul className="space-y-1">
+                {story.acceptanceCriteria.map((criteria: string, cIdx: number) => (
+                  <li key={cIdx} className="flex items-start gap-2 text-sm">
+                    <CheckCircle2 className="w-3 h-3 mt-1 text-green-600 shrink-0" />
+                    <span className="text-muted-foreground">{criteria}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {/* Impact & Indicators */}
+          {(story.impact || (story.indicators && story.indicators.length > 0)) && (
+            <div className="grid grid-cols-2 gap-3 text-sm">
+              {story.impact && (
+                <div>
+                  <p className="font-medium flex items-center gap-1 text-xs text-muted-foreground mb-1">
+                    <Target className="w-3 h-3" />
+                    Impact
+                  </p>
+                  <p className="text-sm">{story.impact}</p>
+                </div>
+              )}
+              {story.indicators && story.indicators.length > 0 && (
+                <div>
+                  <p className="font-medium flex items-center gap-1 text-xs text-muted-foreground mb-1">
+                    <TrendingUp className="w-3 h-3" />
+                    Indicateurs
+                  </p>
+                  <div className="flex flex-wrap gap-1">
+                    {story.indicators.map((ind: string, iIdx: number) => (
+                      <Badge key={iIdx} variant="secondary" className="text-xs">{ind}</Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </Card>
     );
   };
 
   const renderStoryContent = (content: any) => {
     if (!content) return null;
 
-    return (
-      <div className="space-y-4">
-        {/* User Story Format */}
-        {(content.asA || content.iWant || content.soThat) && (
-          <Card className="p-4 bg-primary/5 border-primary/20">
-            <div className="space-y-2">
-              {content.asA && (
-                <p className="text-sm">
-                  <span className="font-semibold text-primary">En tant que</span>{' '}
-                  <span className="text-foreground">{content.asA}</span>
-                </p>
-              )}
-              {content.iWant && (
-                <p className="text-sm">
-                  <span className="font-semibold text-primary">Je veux</span>{' '}
-                  <span className="text-foreground">{content.iWant}</span>
-                </p>
-              )}
-              {content.soThat && (
-                <p className="text-sm">
-                  <span className="font-semibold text-primary">Afin de</span>{' '}
-                  <span className="text-foreground">{content.soThat}</span>
-                </p>
-              )}
+    // Handle discovery_stories type (collection of stories)
+    if (content.type === 'discovery_stories' && content.stories) {
+      return (
+        <div className="space-y-4">
+          {content.epics && content.epics.length > 0 && (
+            <div className="mb-4">
+              <p className="text-sm font-medium mb-2 flex items-center gap-2">
+                <Target className="w-4 h-4 text-primary" />
+                Epics associés
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {content.epics.map((epic: any, idx: number) => (
+                  <Badge key={idx} variant="outline">{epic.title}</Badge>
+                ))}
+              </div>
             </div>
-          </Card>
-        )}
+          )}
+          
+          <p className="text-sm font-medium mb-2 flex items-center gap-2">
+            <FileText className="w-4 h-4 text-primary" />
+            {content.stories.length} User Stories
+          </p>
+          
+          <div className="space-y-3">
+            {content.stories.map((story: any, idx: number) => renderSingleStory(story, idx))}
+          </div>
+        </div>
+      );
+    }
 
-        {/* Story Title/Description */}
-        {content.title && (
-          <div>
-            <h4 className="font-semibold text-sm mb-1 flex items-center gap-2">
-              <FileText className="w-4 h-4 text-primary" />
-              Titre
+    // Handle single story with nested structure
+    if (content.asA || content.iWant || content.soThat || content.story) {
+      return renderSingleStory(content);
+    }
+
+    // Handle array of stories
+    if (Array.isArray(content)) {
+      return (
+        <div className="space-y-3">
+          {content.map((story: any, idx: number) => renderSingleStory(story, idx))}
+        </div>
+      );
+    }
+
+    return renderGenericContent(content);
+  };
+
+  // Helper to render a single epic
+  const renderSingleEpic = (epic: any, idx?: number) => {
+    return (
+      <Card key={idx} className="p-4">
+        <div className="space-y-3">
+          {epic.title && (
+            <h4 className="font-semibold flex items-center gap-2">
+              <Target className="w-4 h-4 text-primary" />
+              {epic.title}
             </h4>
-            <p className="text-sm text-muted-foreground">{content.title}</p>
-          </div>
-        )}
+          )}
+          
+          {epic.objective && (
+            <div className="bg-primary/5 p-3 rounded-lg">
+              <p className="text-xs font-semibold text-primary mb-1">Objectif</p>
+              <p className="text-sm">{epic.objective}</p>
+            </div>
+          )}
 
-        {content.description && (
-          <div>
-            <h4 className="font-semibold text-sm mb-1 flex items-center gap-2">
-              <FileText className="w-4 h-4 text-primary" />
-              Description
-            </h4>
-            <p className="text-sm text-muted-foreground">{content.description}</p>
-          </div>
-        )}
+          {epic.description && (
+            <p className="text-sm text-muted-foreground">{epic.description}</p>
+          )}
 
-        {/* Acceptance Criteria */}
-        {content.acceptanceCriteria && content.acceptanceCriteria.length > 0 && (
-          <div>
-            <h4 className="font-semibold text-sm mb-2 flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4 text-green-600" />
-              Critères d'Acceptation
-            </h4>
-            <ul className="space-y-1">
-              {content.acceptanceCriteria.map((criteria: string, idx: number) => (
-                <li key={idx} className="flex items-start gap-2 text-sm">
-                  <CheckCircle2 className="w-3 h-3 mt-1 text-green-600 shrink-0" />
-                  <span className="text-muted-foreground">{criteria}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
+          {epic.expectedValue && (
+            <div>
+              <p className="text-xs font-semibold text-muted-foreground flex items-center gap-1 mb-1">
+                <TrendingUp className="w-3 h-3 text-green-600" />
+                Valeur Attendue
+              </p>
+              <p className="text-sm">{epic.expectedValue}</p>
+            </div>
+          )}
 
-        {/* Size/Estimation */}
-        {content.size && (
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-medium">Estimation:</span>
-            <Badge variant="outline">{content.size}</Badge>
+          <div className="flex flex-wrap gap-2">
+            {epic.personaRole && (
+              <Badge variant="outline" className="gap-1">
+                <User className="w-3 h-3" />
+                {epic.personaRole}
+              </Badge>
+            )}
           </div>
-        )}
 
-        {/* Persona */}
-        {content.persona && (
-          <div className="flex items-center gap-2">
-            <User className="w-4 h-4 text-muted-foreground" />
-            <span className="text-sm text-muted-foreground">Persona: {content.persona}</span>
-          </div>
-        )}
-      </div>
+          {epic.indicators && epic.indicators.length > 0 && (
+            <div>
+              <p className="text-xs font-semibold text-muted-foreground mb-1">Indicateurs</p>
+              <div className="flex flex-wrap gap-1">
+                {epic.indicators.map((ind: string, iIdx: number) => (
+                  <Badge key={iIdx} variant="secondary" className="text-xs">{ind}</Badge>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </Card>
     );
   };
 
   const renderEpicContent = (content: any) => {
     if (!content) return null;
 
-    return (
-      <div className="space-y-4">
-        {content.objective && (
-          <Card className="p-4 bg-primary/5 border-primary/20">
-            <div className="flex items-center gap-2 mb-2 text-primary">
-              <Target className="w-4 h-4" />
-              <h4 className="font-semibold text-sm">Objectif</h4>
+    // Handle discovery_epic type (epic with embedded stories)
+    if (content.type === 'discovery_epic' && content.epic) {
+      const epic = content.epic;
+      const stories = content.stories || [];
+      
+      return (
+        <div className="space-y-4">
+          {renderSingleEpic(epic)}
+          
+          {stories.length > 0 && (
+            <div>
+              <h4 className="font-semibold text-sm mb-3 flex items-center gap-2">
+                <FileText className="w-4 h-4 text-primary" />
+                User Stories associées ({stories.length})
+              </h4>
+              <div className="space-y-3">
+                {stories.map((story: any, idx: number) => renderSingleStory(story, idx))}
+              </div>
             </div>
-            <p className="text-sm">{content.objective}</p>
-          </Card>
-        )}
+          )}
+        </div>
+      );
+    }
 
-        {content.description && (
-          <div>
-            <h4 className="font-semibold text-sm mb-1">Description</h4>
-            <p className="text-sm text-muted-foreground">{content.description}</p>
-          </div>
-        )}
-
-        {content.expectedValue && (
-          <div>
-            <h4 className="font-semibold text-sm mb-1 flex items-center gap-2">
-              <TrendingUp className="w-4 h-4 text-green-600" />
-              Valeur Attendue
-            </h4>
-            <p className="text-sm text-muted-foreground">{content.expectedValue}</p>
-          </div>
-        )}
-
-        {content.persona && (
-          <div className="flex items-center gap-2">
-            <User className="w-4 h-4 text-muted-foreground" />
-            <span className="text-sm text-muted-foreground">Persona concerné: {content.persona}</span>
-          </div>
-        )}
-
-        {content.indicators && content.indicators.length > 0 && (
-          <div>
-            <h4 className="font-semibold text-sm mb-2">Indicateurs</h4>
-            <div className="flex flex-wrap gap-2">
-              {content.indicators.map((indicator: string, idx: number) => (
-                <Badge key={idx} variant="secondary">{indicator}</Badge>
-              ))}
+    // Handle direct epic content
+    if (content.objective || content.title || content.description) {
+      return (
+        <div className="space-y-4">
+          {renderSingleEpic(content)}
+          
+          {content.stories && content.stories.length > 0 && (
+            <div>
+              <h4 className="font-semibold text-sm mb-3 flex items-center gap-2">
+                <FileText className="w-4 h-4 text-primary" />
+                User Stories ({content.stories.length})
+              </h4>
+              <div className="space-y-3">
+                {content.stories.map((story: any, idx: number) => renderSingleStory(story, idx))}
+              </div>
             </div>
-          </div>
-        )}
+          )}
+        </div>
+      );
+    }
 
-        {content.stories && content.stories.length > 0 && (
-          <div>
-            <h4 className="font-semibold text-sm mb-2 flex items-center gap-2">
-              <Layers className="w-4 h-4" />
-              User Stories ({content.stories.length})
-            </h4>
-            <div className="space-y-2">
-              {content.stories.map((story: any, idx: number) => (
-                <Card key={idx} className="p-3">
-                  <p className="text-sm font-medium">{story.title || story.iWant || `Story ${idx + 1}`}</p>
-                  {story.size && <Badge variant="outline" className="mt-1">{story.size}</Badge>}
-                </Card>
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
-    );
+    // Handle array of epics
+    if (Array.isArray(content)) {
+      return (
+        <div className="space-y-4">
+          {content.map((epic: any, idx: number) => renderSingleEpic(epic, idx))}
+        </div>
+      );
+    }
+
+    return renderGenericContent(content);
   };
 
   const renderImpactAnalysisContent = (content: any) => {
