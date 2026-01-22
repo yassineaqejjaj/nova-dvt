@@ -44,7 +44,7 @@ serve(async (req) => {
     }
 
     const body = await req.json();
-    const { messages, agents, mentionedAgents, message, systemPrompt } = body;
+    const { messages, agents, mentionedAgents, message, systemPrompt, artifactContext } = body;
 
     // Input validation
     if (message && typeof message === 'string' && message.length > 50000) {
@@ -136,9 +136,14 @@ serve(async (req) => {
     for (const agent of respondingAgents) {
       const toolInstructions = getToolInstructions(agent);
       
+      // Include artifact context if provided
+      const artifactInstructions = artifactContext 
+        ? `\n\n${artifactContext}\n\nIMPORTANT: You have access to the artifacts above. Reference them in your responses when relevant to provide grounded, contextual answers.`
+        : '';
+      
       const systemMessage = {
         role: 'system',
-        content: multiAgentPrompts.buildSystemPrompt(agent) + `\n\n${toolInstructions}`
+        content: multiAgentPrompts.buildSystemPrompt(agent) + `\n\n${toolInstructions}${artifactInstructions}`
       };
 
       const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {

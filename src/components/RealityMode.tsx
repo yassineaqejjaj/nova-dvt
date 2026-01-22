@@ -28,6 +28,15 @@ import {
   Target
 } from 'lucide-react';
 import { allAgents } from '@/data/mockData';
+import { ArtifactSelector, formatArtifactsForContext } from './ArtifactSelector';
+
+interface Artifact {
+  id: string;
+  title: string;
+  artifact_type: string;
+  content: any;
+  created_at: string;
+}
 
 interface RealityModeProps {
   currentSquad: Agent[];
@@ -70,6 +79,7 @@ export const RealityMode: React.FC<RealityModeProps> = ({
   const [isDebateComplete, setIsDebateComplete] = useState(false);
   const [isGeneratingSummary, setIsGeneratingSummary] = useState(false);
   const [parsedSummary, setParsedSummary] = useState<ParsedSummary | null>(null);
+  const [selectedArtifacts, setSelectedArtifacts] = useState<Artifact[]>([]);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const debateControllerRef = useRef<{ stop: boolean }>({ stop: false });
 
@@ -159,17 +169,21 @@ export const RealityMode: React.FC<RealityModeProps> = ({
           content: `${m.agent.name}: ${m.content}`
         }));
 
+        // Build artifact context
+        const artifactContext = formatArtifactsForContext(selectedArtifacts);
+
         const debateSystemPrompt = `You are ${agent.name}, a ${agent.specialty} specialist participating in a live product strategy debate.
 
 CONTEXT: ${agent.backstory}
 CAPABILITIES: ${agent.capabilities.join(', ')}
 EXPERTISE: ${agent.tags.join(', ')}
-
+${artifactContext ? `\n${artifactContext}\n` : ''}
 DEBATE RULES:
 - This is Round ${round + 1} of ${maxRounds}
 - Challenge other perspectives respectfully but firmly
 - Bring your unique expertise to the discussion
 - Reference specific points made by other agents
+${selectedArtifacts.length > 0 ? '- IMPORTANT: Reference and cite the provided artifacts when relevant to ground your arguments' : ''}
 - Be passionate about your viewpoint
 - Keep responses concise (3-4 sentences)
 - End with a provocative question or statement
@@ -635,6 +649,13 @@ Sois concis et actionnable. Maximum 3-4 points par section.`
           <div className="p-4 border-t bg-muted/30">
             {!isDebating && !isDebateComplete ? (
               <div className="space-y-3">
+                {/* Artifact Selector */}
+                <ArtifactSelector 
+                  selectedArtifacts={selectedArtifacts}
+                  onSelectionChange={setSelectedArtifacts}
+                  maxSelection={5}
+                />
+                
                 <Input
                   placeholder="Entrez le sujet de débat... (ex : Créez-moi un plan de lancement pour une nouvelle app fitness)"
                   value={prompt}
