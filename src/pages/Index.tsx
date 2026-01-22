@@ -30,6 +30,7 @@ import { UserPersonaBuilder } from '@/components/UserPersonaBuilder';
 import { EstimationTool } from '@/components/EstimationTool';
 import { ReleaseNotesGenerator } from '@/components/ReleaseNotesGenerator';
 import { GitToSpecsGenerator } from '@/components/GitToSpecsGenerator';
+import { Toolbox } from '@/components/tools/Toolbox';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -353,6 +354,32 @@ const Index = () => {
 
       case 'admin':
         return <AdminPanel />;
+      
+      case 'toolbox':
+        return (
+          <Toolbox 
+            onSelectTool={(toolId) => {
+              // Route to appropriate tool
+              const toolRoutes: Record<string, TabType> = {
+                'prd': 'instant-prd',
+                'doc-roadmap': 'document-roadmap',
+                'epic-stories': 'epic-to-stories',
+                'git-specs': 'git-to-specs',
+                'raci': 'raci-generator',
+                'estimation': 'estimation-tool',
+                'release-notes': 'release-notes-generator',
+                'meeting-notes': 'meeting-minutes',
+                'canvas': 'dashboard', // Opens dialog
+                'user-research': 'user-persona-builder',
+              };
+              if (toolId === 'canvas') {
+                setShowCanvasGenerator(true);
+              } else if (toolRoutes[toolId]) {
+                setActiveTab(toolRoutes[toolId]);
+              }
+            }}
+          />
+        );
       
       default:
         return null;
