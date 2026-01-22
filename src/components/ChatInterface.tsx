@@ -14,6 +14,15 @@ import { Send, MessageCircle, Users, Loader2, AtSign, Grid3X3, FileText, Trendin
 import { CanvasGenerator } from './CanvasGenerator';
 import { StoryWriter } from './StoryWriter';
 import { ImpactPlotter } from './ImpactPlotter';
+import { ArtifactSelector, formatArtifactsForContext } from './ArtifactSelector';
+
+type Artifact = {
+  id: string;
+  title: string;
+  artifact_type: string;
+  content: any;
+  created_at: string;
+};
 
 interface ChatInterfaceProps {
   currentSquad: Agent[];
@@ -32,6 +41,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ currentSquad, squa
   const [showCanvasGenerator, setShowCanvasGenerator] = useState(false);
   const [showStoryWriter, setShowStoryWriter] = useState(false);
   const [showImpactPlotter, setShowImpactPlotter] = useState(false);
+  const [selectedArtifacts, setSelectedArtifacts] = useState<Artifact[]>([]);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -198,11 +208,15 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ currentSquad, squa
         content: messageToSend,
       });
 
+      // Build artifact context
+      const artifactContext = formatArtifactsForContext(selectedArtifacts);
+
       const { data, error } = await supabase.functions.invoke('chat-ai', {
         body: {
           messages: fullConversationHistory,
           agents: currentSquad,
           mentionedAgents: userMessage.mentionedAgents || [],
+          artifactContext: artifactContext || undefined,
         },
       });
 
@@ -534,7 +548,13 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ currentSquad, squa
         
         {/* Message Input */}
         <div className="p-4 relative">
-          <div className="flex items-center space-x-2 mb-2">
+          <div className="flex flex-wrap items-center gap-2 mb-3">
+            <ArtifactSelector 
+              selectedArtifacts={selectedArtifacts}
+              onSelectionChange={setSelectedArtifacts}
+              maxSelection={5}
+            />
+            <div className="h-6 w-px bg-border" />
             <Button
               variant="outline"
               size="sm"
