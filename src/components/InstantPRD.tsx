@@ -297,16 +297,36 @@ Contexte Produit:
 - Contraintes: ${activeContext.constraints || 'Aucune'}
 ` : '';
 
-      // Build artifacts info from selected artifacts
+      // Build artifacts info from selected artifacts with size limit
+      const MAX_ARTIFACT_CHARS = 3000; // Per artifact limit
+      const MAX_TOTAL_ARTIFACTS_CHARS = 10000; // Total limit for all artifacts
+      
       const selectedArtifactsData = projectArtifacts.filter(a => selectedArtifacts.includes(a.id));
-      const artifactsInfo = selectedArtifactsData.length > 0 ? `
-
-Artefacts du projet à prendre en compte:
-${selectedArtifactsData.map(a => `
---- ${getArtifactTypeLabel(a.artifact_type)}: ${a.title} ---
-${typeof a.content === 'string' ? a.content : JSON.stringify(a.content, null, 2)}
-`).join('\n')}
-` : '';
+      
+      const truncateContent = (content: any, maxLength: number): string => {
+        const str = typeof content === 'string' ? content : JSON.stringify(content, null, 2);
+        if (str.length <= maxLength) return str;
+        return str.substring(0, maxLength) + '\n... [contenu tronqué pour limiter la taille]';
+      };
+      
+      let artifactsInfo = '';
+      let totalChars = 0;
+      
+      if (selectedArtifactsData.length > 0) {
+        const artifactSummaries: string[] = [];
+        
+        for (const artifact of selectedArtifactsData) {
+          const content = truncateContent(artifact.content, MAX_ARTIFACT_CHARS);
+          if (totalChars + content.length > MAX_TOTAL_ARTIFACTS_CHARS) {
+            artifactSummaries.push(`--- ${getArtifactTypeLabel(artifact.artifact_type)}: ${artifact.title} ---\n[Artefact ignoré - limite de taille atteinte]`);
+            break;
+          }
+          artifactSummaries.push(`--- ${getArtifactTypeLabel(artifact.artifact_type)}: ${artifact.title} ---\n${content}`);
+          totalChars += content.length;
+        }
+        
+        artifactsInfo = `\n\nArtefacts du projet à prendre en compte:\n${artifactSummaries.join('\n\n')}`;
+      }
 
       // Step 1: Introduction (6%)
       setCurrentSection("Introduction");
