@@ -1,4 +1,4 @@
-import React from 'react';
+import type { FC } from 'react';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Minimize2, List, FileText } from 'lucide-react';
@@ -9,7 +9,7 @@ interface ResponseModeToggleProps {
   onChange: (mode: ResponseMode) => void;
 }
 
-export const ResponseModeToggle: React.FC<ResponseModeToggleProps> = ({ mode, onChange }) => {
+export const ResponseModeToggle: FC<ResponseModeToggleProps> = ({ mode, onChange }) => {
   return (
     <TooltipProvider>
       <div className="flex items-center gap-2">

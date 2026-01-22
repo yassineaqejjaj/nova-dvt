@@ -1,4 +1,4 @@
-import React from 'react';
+import type { FC, ElementType } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { AgentRole } from '@/types';
 import { Palette, Package, BarChart3, Code, Briefcase, Target } from 'lucide-react';
@@ -11,7 +11,7 @@ interface RoleBadgeProps {
 
 const ROLE_CONFIG: Record<AgentRole, { 
   label: string; 
-  icon: React.ElementType; 
+  icon: ElementType; 
   className: string;
 }> = {
   ux: { 
@@ -61,7 +61,7 @@ function inferRole(specialty?: string): AgentRole | undefined {
   return undefined;
 }
 
-export const RoleBadge: React.FC<RoleBadgeProps> = ({ role, specialty, size = 'sm' }) => {
+export const RoleBadge: FC<RoleBadgeProps> = ({ role, specialty, size = 'sm' }) => {
   const effectiveRole = role || inferRole(specialty);
   
   if (!effectiveRole) {

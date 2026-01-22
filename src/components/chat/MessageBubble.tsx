@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState, type FC } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -36,7 +36,7 @@ const REACTION_ICONS = {
   idea: { icon: Lightbulb, className: 'text-blue-600' },
 };
 
-export const MessageBubble: React.FC<MessageBubbleProps> = ({
+export const MessageBubble: FC<MessageBubbleProps> = ({
   content,
   sender,
   timestamp,

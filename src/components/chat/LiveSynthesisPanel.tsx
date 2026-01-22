@@ -1,4 +1,4 @@
-import React from 'react';
+import type { FC } from 'react';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -15,7 +15,7 @@ interface LiveSynthesisPanelProps {
   onResolveDisagreement: (disagreementId: string) => void;
 }
 
-export const LiveSynthesisPanel: React.FC<LiveSynthesisPanelProps> = ({
+export const LiveSynthesisPanel: FC<LiveSynthesisPanelProps> = ({
   synthesis,
   onResolveDisagreement,
 }) => {
@@ -151,7 +151,7 @@ export const LiveSynthesisPanel: React.FC<LiveSynthesisPanelProps> = ({
   );
 };
 
-const DisagreementCard: React.FC<{ 
+const DisagreementCard: FC<{ 
   disagreement: Disagreement; 
   onResolve: () => void;
 }> = ({ disagreement, onResolve }) => {

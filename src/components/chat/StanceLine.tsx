@@ -1,4 +1,4 @@
-import React from 'react';
+import type { FC } from 'react';
 import { AgentRole } from '@/types';
 import { inferRoleFromSpecialty } from './RoleBadge';
 
@@ -17,7 +17,7 @@ const STANCE_COLORS: Record<AgentRole, string> = {
   strategy: 'text-amber-600 dark:text-amber-400',
 };
 
-export const StanceLine: React.FC<StanceLineProps> = ({ stance, role, specialty }) => {
+export const StanceLine: FC<StanceLineProps> = ({ stance, role, specialty }) => {
   if (!stance) return null;
 
   const effectiveRole = role || inferRoleFromSpecialty(specialty);
