@@ -44,7 +44,7 @@ serve(async (req) => {
     }
 
     const body = await req.json();
-    const { messages, agents, mentionedAgents, message, systemPrompt, artifactContext } = body;
+    const { messages, agents, mentionedAgents, message, systemPrompt, artifactContext, responseMode, modeInstructions } = body;
 
     // Input validation
     if (message && typeof message === 'string' && message.length > 50000) {
@@ -141,10 +141,23 @@ serve(async (req) => {
         ? `\n\n${artifactContext}\n\nIMPORTANT: You have access to the artifacts above. Reference them in your responses when relevant to provide grounded, contextual answers.`
         : '';
       
+      // Include response mode instructions if provided
+      const modeInstruction = modeInstructions 
+        ? `\n\nINSTRUCTIONS DE FORMAT DE RÉPONSE:\n${modeInstructions}\nTu DOIS respecter ce format de réponse.`
+        : '';
+      
       const systemMessage = {
         role: 'system',
-        content: multiAgentPrompts.buildSystemPrompt(agent) + `\n\n${toolInstructions}${artifactInstructions}`
+        content: multiAgentPrompts.buildSystemPrompt(agent) + `\n\n${toolInstructions}${artifactInstructions}${modeInstruction}`
       };
+
+      // Adjust max_tokens based on response mode
+      let maxTokens = 200; // default for 'short'
+      if (responseMode === 'structured') {
+        maxTokens = 350;
+      } else if (responseMode === 'detailed') {
+        maxTokens = 600;
+      }
 
       const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
         method: 'POST',
@@ -155,7 +168,7 @@ serve(async (req) => {
         body: JSON.stringify({
           model: 'google/gemini-2.5-flash',
           messages: [systemMessage, ...messages],
-          max_tokens: 200,
+          max_tokens: maxTokens,
           temperature: 0.8,
         }),
       });
