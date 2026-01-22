@@ -220,7 +220,7 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
       label: 'Mode Réalité',
       icon: Sparkles,
       description: 'Simulation live de squad',
-      disabled: !hasActiveChat,
+      disabled: false,
       badge: hasActiveChat ? '✨' : undefined
     },
     {
