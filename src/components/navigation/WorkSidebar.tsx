@@ -121,25 +121,25 @@ export const WorkSidebar: React.FC<WorkSidebarProps> = ({
         {
           id: 'instant-prd' as TabType,
           label: 'Créer un document produit',
-          description: 'Structurer une idée en document clair',
+          description: 'Idée → document clair',
           icon: FileText
         },
         {
           id: 'epic-to-stories' as TabType,
           label: 'Découper une feature',
-          description: 'Transformer une feature en tâches actionnables',
+          description: 'Feature → tâches',
           icon: Target
         },
         {
           id: 'git-to-specs' as TabType,
-          label: 'Générer des specs depuis le code',
-          description: 'Créer des specs techniques à partir du dépôt',
+          label: 'Générer des specs',
+          description: 'Code → specs techniques',
           icon: GitBranch
         },
         {
           id: 'toolbox' as TabType,
           label: 'Voir tous les outils',
-          description: 'Accéder à l\'ensemble des outils disponibles',
+          description: 'Tous les outils Nova',
           icon: Wrench
         }
       ]
