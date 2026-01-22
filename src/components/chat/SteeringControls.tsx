@@ -1,4 +1,4 @@
-import React from 'react';
+import type { FC, ElementType } from 'react';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { PauseCircle, Users2, Scale, ListChecks } from 'lucide-react';
@@ -10,14 +10,14 @@ interface SteeringControlsProps {
   disabled?: boolean;
 }
 
-const COMMANDS: { id: SteeringCommand; label: string; icon: React.ElementType; tooltip: string }[] = [
+const COMMANDS: { id: SteeringCommand; label: string; icon: ElementType; tooltip: string }[] = [
   { id: 'pause_others', label: 'Pause', icon: PauseCircle, tooltip: 'Mettre les autres agents en pause' },
   { id: 'only_ux_business', label: 'UX + Biz', icon: Users2, tooltip: 'Seuls UX et Business répondent' },
   { id: 'tradeoffs_only', label: 'Trade-offs', icon: Scale, tooltip: 'Afficher uniquement les compromis' },
   { id: 'summarize', label: 'Résumer', icon: ListChecks, tooltip: 'Résumer la discussion' },
 ];
 
-export const SteeringControls: React.FC<SteeringControlsProps> = ({ 
+export const SteeringControls: FC<SteeringControlsProps> = ({ 
   onCommand, 
   activeFilters = [],
   disabled = false 

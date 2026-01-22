@@ -1,4 +1,4 @@
-import React from 'react';
+import type { FC } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -13,7 +13,7 @@ interface ThreadConclusionProps {
   onActionClick?: (action: string) => void;
 }
 
-export const ThreadConclusion: React.FC<ThreadConclusionProps> = ({
+export const ThreadConclusion: FC<ThreadConclusionProps> = ({
   conclusion,
   onActionClick,
 }) => {
