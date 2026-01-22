@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { SidebarNav } from '@/components/Sidebar';
-import { Dashboard } from '@/components/Dashboard';
+import { WorkSidebar } from '@/components/navigation/WorkSidebar';
+import { ActionDashboard } from '@/components/dashboard/ActionDashboard';
 import { AgentGallery } from '@/components/AgentGallery';
 import { ChatInterface } from '@/components/ChatInterface';
 import { CanvasGenerator } from '@/components/CanvasGenerator';
@@ -67,7 +67,7 @@ const Index = () => {
     description: '',
   });
 
-  const { updateSession } = useSessionMemory(user?.id);
+  const { session, updateSession } = useSessionMemory(user?.id);
   const [showContextManager, setShowContextManager] = useState(false);
   const [customAgents, setCustomAgents] = useState<Agent[]>([]);
 
@@ -245,10 +245,11 @@ const Index = () => {
     switch (activeTab) {
       case 'dashboard':
         return (
-          <Dashboard
+          <ActionDashboard
             user={userProfile}
             squads={squads}
             onNavigate={setActiveTab}
+            session={session}
           />
         );
       
@@ -361,7 +362,7 @@ const Index = () => {
   return (
     <SidebarProvider defaultOpen={false}>
       <div className="min-h-screen bg-background relative flex w-full">
-        <SidebarNav
+        <WorkSidebar
           activeTab={activeTab} 
           onTabChange={handleTabChange}
           squadCount={squads.length}
