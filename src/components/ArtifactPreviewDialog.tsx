@@ -24,7 +24,7 @@ interface ArtifactPreviewDialogProps {
     title: string;
     artifact_type: string;
     content: any;
-    metadata: any;
+    metadata?: any;
     created_at: string;
   } | null;
 }

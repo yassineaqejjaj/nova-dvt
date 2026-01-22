@@ -13,6 +13,7 @@ import { Send, MessageCircle, Users, Loader2, AtSign, Grid3X3, FileText, Trendin
 import { CanvasGenerator } from './CanvasGenerator';
 import { StoryWriter } from './StoryWriter';
 import { ImpactPlotter } from './ImpactPlotter';
+import { ArtifactPreviewDialog } from './ArtifactPreviewDialog';
 import { ArtifactSelector, formatArtifactsForContext } from './ArtifactSelector';
 import {
   RoleBadge,
@@ -29,6 +30,7 @@ type Artifact = {
   title: string;
   artifact_type: string;
   content: any;
+  metadata?: any;
   created_at: string;
 };
 
@@ -58,6 +60,8 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ currentSquad, squa
   const [showStoryWriter, setShowStoryWriter] = useState(false);
   const [showImpactPlotter, setShowImpactPlotter] = useState(false);
   const [selectedArtifacts, setSelectedArtifacts] = useState<Artifact[]>([]);
+  const [showArtifactPreview, setShowArtifactPreview] = useState(false);
+  const [previewArtifact, setPreviewArtifact] = useState<Artifact | null>(null);
   
   // NEW: UX Enhancement states
   const [responseMode, setResponseMode] = useState<ResponseMode>('short');
@@ -645,6 +649,47 @@ Pour le handler actionable:
         }
         break;
       }
+      case 'open_artifact': {
+        // Find artifact by name in selected artifacts or search
+        const artifactName = params.join(':'); // Rejoin in case name contains ':'
+        const matchingArtifact = selectedArtifacts.find(a => 
+          a.title.toLowerCase().includes(artifactName.toLowerCase())
+        );
+        
+        if (matchingArtifact) {
+          // Open artifact preview dialog
+          setPreviewArtifact(matchingArtifact);
+          setShowArtifactPreview(true);
+        } else {
+          // Search for artifact in database
+          try {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user) {
+              const { data: artifacts } = await supabase
+                .from('artifacts')
+                .select('*')
+                .eq('user_id', user.id)
+                .ilike('title', `%${artifactName}%`)
+                .limit(1);
+              
+              if (artifacts && artifacts.length > 0) {
+                setPreviewArtifact(artifacts[0]);
+                setShowArtifactPreview(true);
+              } else {
+                toast({
+                  title: "Artefact non trouvé",
+                  description: `L'artefact "${artifactName}" n'a pas été trouvé`,
+                  variant: "destructive",
+                });
+              }
+            }
+          } catch (error) {
+            console.error('Error fetching artifact:', error);
+            toast({ title: "Erreur de chargement", variant: "destructive" });
+          }
+        }
+        break;
+      }
       default:
         console.warn('Unknown action handler:', handler);
     }
@@ -953,6 +998,13 @@ Pour le handler actionable:
       <CanvasGenerator open={showCanvasGenerator} onClose={() => setShowCanvasGenerator(false)} />
       <StoryWriter open={showStoryWriter} onClose={() => setShowStoryWriter(false)} />
       <ImpactPlotter open={showImpactPlotter} onClose={() => setShowImpactPlotter(false)} />
+      
+      {/* Artifact Preview Dialog */}
+      <ArtifactPreviewDialog
+        open={showArtifactPreview}
+        onOpenChange={setShowArtifactPreview}
+        artifact={previewArtifact}
+      />
     </div>
   );
 };
