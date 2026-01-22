@@ -14,6 +14,65 @@ export type Database = {
   }
   public: {
     Tables: {
+      agent_analytics: {
+        Row: {
+          agent_id: string
+          agent_name: string
+          contributions_count: number | null
+          created_at: string
+          decision_id: string | null
+          id: string
+          ignored_count: number | null
+          influenced_decision: number | null
+          signal_score: number | null
+          stance_consistency: number | null
+          strengths: Json | null
+          survived_synthesis: number | null
+          weaknesses: Json | null
+          word_count_avg: number | null
+        }
+        Insert: {
+          agent_id: string
+          agent_name: string
+          contributions_count?: number | null
+          created_at?: string
+          decision_id?: string | null
+          id?: string
+          ignored_count?: number | null
+          influenced_decision?: number | null
+          signal_score?: number | null
+          stance_consistency?: number | null
+          strengths?: Json | null
+          survived_synthesis?: number | null
+          weaknesses?: Json | null
+          word_count_avg?: number | null
+        }
+        Update: {
+          agent_id?: string
+          agent_name?: string
+          contributions_count?: number | null
+          created_at?: string
+          decision_id?: string | null
+          id?: string
+          ignored_count?: number | null
+          influenced_decision?: number | null
+          signal_score?: number | null
+          stance_consistency?: number | null
+          strengths?: Json | null
+          survived_synthesis?: number | null
+          weaknesses?: Json | null
+          word_count_avg?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_analytics_decision_id_fkey"
+            columns: ["decision_id"]
+            isOneToOne: false
+            referencedRelation: "decision_log"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       agent_personalities: {
         Row: {
           agent_id: string
@@ -295,6 +354,130 @@ export type Database = {
         }
         Relationships: []
       }
+      decision_log: {
+        Row: {
+          assumptions: Json | null
+          confidence_factors: Json | null
+          confidence_level: string | null
+          consensus_points: Json | null
+          context: string | null
+          counterfactual_analysis: Json | null
+          created_at: string
+          debate_messages: Json | null
+          debate_topic: string
+          id: string
+          kpis_to_watch: Json | null
+          non_negotiables: Json | null
+          option_chosen: Json | null
+          options_considered: Json
+          outcome: Json | null
+          squad_id: string | null
+          tensions_remaining: Json | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          assumptions?: Json | null
+          confidence_factors?: Json | null
+          confidence_level?: string | null
+          consensus_points?: Json | null
+          context?: string | null
+          counterfactual_analysis?: Json | null
+          created_at?: string
+          debate_messages?: Json | null
+          debate_topic: string
+          id?: string
+          kpis_to_watch?: Json | null
+          non_negotiables?: Json | null
+          option_chosen?: Json | null
+          options_considered?: Json
+          outcome?: Json | null
+          squad_id?: string | null
+          tensions_remaining?: Json | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          assumptions?: Json | null
+          confidence_factors?: Json | null
+          confidence_level?: string | null
+          consensus_points?: Json | null
+          context?: string | null
+          counterfactual_analysis?: Json | null
+          created_at?: string
+          debate_messages?: Json | null
+          debate_topic?: string
+          id?: string
+          kpis_to_watch?: Json | null
+          non_negotiables?: Json | null
+          option_chosen?: Json | null
+          options_considered?: Json
+          outcome?: Json | null
+          squad_id?: string | null
+          tensions_remaining?: Json | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "decision_log_squad_id_fkey"
+            columns: ["squad_id"]
+            isOneToOne: false
+            referencedRelation: "squads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      decision_validations: {
+        Row: {
+          assumption_status: string | null
+          attachment_url: string | null
+          confidence_impact: string | null
+          content: string | null
+          created_at: string
+          decision_id: string
+          id: string
+          title: string
+          user_id: string
+          validates_assumption: string | null
+          validation_type: string | null
+        }
+        Insert: {
+          assumption_status?: string | null
+          attachment_url?: string | null
+          confidence_impact?: string | null
+          content?: string | null
+          created_at?: string
+          decision_id: string
+          id?: string
+          title: string
+          user_id: string
+          validates_assumption?: string | null
+          validation_type?: string | null
+        }
+        Update: {
+          assumption_status?: string | null
+          attachment_url?: string | null
+          confidence_impact?: string | null
+          content?: string | null
+          created_at?: string
+          decision_id?: string
+          id?: string
+          title?: string
+          user_id?: string
+          validates_assumption?: string | null
+          validation_type?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "decision_validations_decision_id_fkey"
+            columns: ["decision_id"]
+            isOneToOne: false
+            referencedRelation: "decision_log"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       feature_flags: {
         Row: {
           created_at: string | null
@@ -319,6 +502,45 @@ export type Database = {
           id?: string
           status?: Database["public"]["Enums"]["feature_status"]
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      friction_patterns: {
+        Row: {
+          created_at: string
+          decision_ids: Json | null
+          id: string
+          is_structural: boolean | null
+          last_occurred: string | null
+          occurrence_count: number | null
+          resolution_rate: number | null
+          tension_left: string
+          tension_right: string
+          tension_signature: string
+        }
+        Insert: {
+          created_at?: string
+          decision_ids?: Json | null
+          id?: string
+          is_structural?: boolean | null
+          last_occurred?: string | null
+          occurrence_count?: number | null
+          resolution_rate?: number | null
+          tension_left: string
+          tension_right: string
+          tension_signature: string
+        }
+        Update: {
+          created_at?: string
+          decision_ids?: Json | null
+          id?: string
+          is_structural?: boolean | null
+          last_occurred?: string | null
+          occurrence_count?: number | null
+          resolution_rate?: number | null
+          tension_left?: string
+          tension_right?: string
+          tension_signature?: string
         }
         Relationships: []
       }
@@ -1070,6 +1292,51 @@ export type Database = {
           last_tab?: string | null
           last_workflow_type?: string | null
           session_data?: Json | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_thinking_analytics: {
+        Row: {
+          alternative_proposal_rate: number | null
+          debates_participated: number | null
+          early_agreement_rate: number | null
+          id: string
+          ideation_contribution_rate: number | null
+          insights: Json | null
+          opt_in: boolean | null
+          risk_raising_rate: number | null
+          strongest_impact_area: string | null
+          synthesis_contribution_rate: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          alternative_proposal_rate?: number | null
+          debates_participated?: number | null
+          early_agreement_rate?: number | null
+          id?: string
+          ideation_contribution_rate?: number | null
+          insights?: Json | null
+          opt_in?: boolean | null
+          risk_raising_rate?: number | null
+          strongest_impact_area?: string | null
+          synthesis_contribution_rate?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          alternative_proposal_rate?: number | null
+          debates_participated?: number | null
+          early_agreement_rate?: number | null
+          id?: string
+          ideation_contribution_rate?: number | null
+          insights?: Json | null
+          opt_in?: boolean | null
+          risk_raising_rate?: number | null
+          strongest_impact_area?: string | null
+          synthesis_contribution_rate?: number | null
           updated_at?: string
           user_id?: string
         }
