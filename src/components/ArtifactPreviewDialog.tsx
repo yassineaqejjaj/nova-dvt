@@ -325,9 +325,116 @@ export const ArtifactPreviewDialog = ({
   };
 
   const renderGenericContent = (content: any) => {
-    if (typeof content === 'string') {
-      return <p className="text-sm text-muted-foreground whitespace-pre-wrap">{content}</p>;
+    // Handle null/undefined
+    if (content === null || content === undefined) {
+      return (
+        <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
+          <FileText className="w-12 h-12 mb-3 opacity-50" />
+          <p className="text-sm">Aucun contenu disponible pour cet artefact</p>
+        </div>
+      );
     }
+
+    // Handle string content - format with line breaks
+    if (typeof content === 'string') {
+      if (!content.trim()) {
+        return (
+          <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
+            <FileText className="w-12 h-12 mb-3 opacity-50" />
+            <p className="text-sm">Contenu vide</p>
+          </div>
+        );
+      }
+      
+      // Parse sections from text (lines starting with emoji or special chars as headers)
+      const lines = content.split('\n');
+      const sections: { title: string; items: string[] }[] = [];
+      let currentSection: { title: string; items: string[] } | null = null;
+
+      lines.forEach(line => {
+        const trimmed = line.trim();
+        if (!trimmed) return;
+
+        // Detect section headers (starts with emoji, •, -, or is all caps/bold-like)
+        const isSectionHeader = /^[^\w\s]/.test(trimmed) || 
+                                /^[A-ZÀÂÄÉÈÊËÏÎÔÙÛÜŸÇ\s]{3,}:?$/.test(trimmed) ||
+                                /^\*\*.*\*\*:?$/.test(trimmed);
+
+        if (isSectionHeader && trimmed.length < 60) {
+          if (currentSection) sections.push(currentSection);
+          currentSection = { title: trimmed.replace(/^\*\*|\*\*$/g, ''), items: [] };
+        } else if (currentSection) {
+          currentSection.items.push(trimmed.replace(/^[•\-\*]\s*/, ''));
+        } else {
+          if (!sections.length) {
+            currentSection = { title: '', items: [trimmed.replace(/^[•\-\*]\s*/, '')] };
+          }
+        }
+      });
+
+      if (currentSection) sections.push(currentSection);
+
+      if (sections.length === 0) {
+        return <p className="text-sm text-muted-foreground whitespace-pre-wrap">{content}</p>;
+      }
+
+      return (
+        <div className="space-y-4">
+          {sections.map((section, idx) => (
+            <Card key={idx} className="p-4">
+              {section.title && (
+                <h4 className="font-semibold text-sm mb-2 flex items-center gap-2 text-primary">
+                  <Lightbulb className="w-4 h-4" />
+                  {section.title}
+                </h4>
+              )}
+              {section.items.length > 0 && (
+                <ul className="space-y-1.5">
+                  {section.items.map((item, itemIdx) => (
+                    <li key={itemIdx} className="flex items-start gap-2 text-sm">
+                      <CheckCircle2 className="w-3.5 h-3.5 mt-0.5 text-muted-foreground shrink-0" />
+                      <span className="text-muted-foreground">{item}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </Card>
+          ))}
+        </div>
+      );
+    }
+
+    // Handle empty objects/arrays
+    if (typeof content === 'object') {
+      if (Array.isArray(content) && content.length === 0) {
+        return (
+          <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
+            <Layers className="w-12 h-12 mb-3 opacity-50" />
+            <p className="text-sm">Liste vide</p>
+          </div>
+        );
+      }
+      if (Object.keys(content).length === 0) {
+        return (
+          <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
+            <FileText className="w-12 h-12 mb-3 opacity-50" />
+            <p className="text-sm">Aucun contenu disponible</p>
+          </div>
+        );
+      }
+    }
+
+    const getIconForKey = (key: string) => {
+      const keyLower = key.toLowerCase();
+      if (keyLower.includes('goal') || keyLower.includes('objecti')) return Target;
+      if (keyLower.includes('user') || keyLower.includes('persona') || keyLower.includes('client')) return User;
+      if (keyLower.includes('risk') || keyLower.includes('risque')) return AlertTriangle;
+      if (keyLower.includes('metric') || keyLower.includes('kpi') || keyLower.includes('indicat')) return TrendingUp;
+      if (keyLower.includes('accept') || keyLower.includes('critere') || keyLower.includes('done')) return CheckCircle2;
+      if (keyLower.includes('story') || keyLower.includes('stories')) return FileText;
+      if (keyLower.includes('team') || keyLower.includes('equipe')) return Users;
+      return Lightbulb;
+    };
 
     const renderValue = (value: any, depth: number = 0): React.ReactNode => {
       if (value === null || value === undefined) return null;
@@ -339,11 +446,15 @@ export const ArtifactPreviewDialog = ({
       if (Array.isArray(value)) {
         if (value.length === 0) return null;
         return (
-          <ul className="space-y-1 mt-1">
+          <ul className="space-y-1.5 mt-1">
             {value.map((item, idx) => (
               <li key={idx} className="flex items-start gap-2 text-sm">
-                <span className="text-primary mt-0.5">•</span>
-                {typeof item === 'object' ? renderValue(item, depth + 1) : <span>{item}</span>}
+                <CheckCircle2 className="w-3.5 h-3.5 mt-0.5 text-muted-foreground shrink-0" />
+                {typeof item === 'object' ? (
+                  <div className="flex-1">{renderValue(item, depth + 1)}</div>
+                ) : (
+                  <span className="text-muted-foreground">{String(item)}</span>
+                )}
               </li>
             ))}
           </ul>
@@ -352,19 +463,28 @@ export const ArtifactPreviewDialog = ({
 
       if (typeof value === 'object') {
         return (
-          <div className={`space-y-3 ${depth > 0 ? 'pl-4 border-l-2 border-muted' : ''}`}>
+          <div className={`space-y-4 ${depth > 0 ? 'pl-4 border-l-2 border-muted' : ''}`}>
             {Object.entries(value).map(([key, val]) => {
               if (val === null || val === undefined) return null;
+              if (typeof val === 'object' && !Array.isArray(val) && Object.keys(val as object).length === 0) return null;
+              if (Array.isArray(val) && val.length === 0) return null;
+              
               const formattedKey = key
                 .replace(/([A-Z])/g, ' $1')
+                .replace(/_/g, ' ')
                 .replace(/^./, str => str.toUpperCase())
                 .trim();
               
+              const IconComponent = getIconForKey(key);
+              
               return (
-                <div key={key}>
-                  <h5 className="font-medium text-sm text-foreground">{formattedKey}</h5>
-                  <div className="text-sm mt-1">{renderValue(val, depth + 1)}</div>
-                </div>
+                <Card key={key} className={depth === 0 ? 'p-4' : 'p-3 bg-muted/30'}>
+                  <h5 className="font-semibold text-sm text-foreground flex items-center gap-2 mb-2">
+                    <IconComponent className="w-4 h-4 text-primary" />
+                    {formattedKey}
+                  </h5>
+                  <div className="text-sm">{renderValue(val, depth + 1)}</div>
+                </Card>
               );
             })}
           </div>
