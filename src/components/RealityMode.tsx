@@ -9,6 +9,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { supabase } from '@/integrations/supabase/client';
 import { Agent } from '@/types';
 import { toast } from '@/hooks/use-toast';
+import { FormattedText } from './ui/formatted-text';
 import { 
   Play, 
   Pause, 
@@ -172,28 +173,30 @@ export const RealityMode: React.FC<RealityModeProps> = ({
         // Build artifact context
         const artifactContext = formatArtifactsForContext(selectedArtifacts);
 
-        const debateSystemPrompt = `You are ${agent.name}, a ${agent.specialty} specialist participating in a live product strategy debate.
+        const debateSystemPrompt = `Tu es ${agent.name}, un expert en ${agent.specialty} participant à un débat stratégique produit en direct.
 
-CONTEXT: ${agent.backstory}
-CAPABILITIES: ${agent.capabilities.join(', ')}
+LANGUE OBLIGATOIRE: Tu DOIS ABSOLUMENT répondre UNIQUEMENT en français. Toutes tes réponses doivent être rédigées exclusivement en français.
+
+CONTEXTE: ${agent.backstory}
+CAPACITÉS: ${agent.capabilities.join(', ')}
 EXPERTISE: ${agent.tags.join(', ')}
 ${artifactContext ? `\n${artifactContext}\n` : ''}
-DEBATE RULES:
-- This is Round ${round + 1} of ${maxRounds}
-- Challenge other perspectives respectfully but firmly
-- Bring your unique expertise to the discussion
-- Reference specific points made by other agents
-${selectedArtifacts.length > 0 ? '- IMPORTANT: Reference and cite the provided artifacts when relevant to ground your arguments' : ''}
-- Be passionate about your viewpoint
-- Keep responses concise (3-4 sentences)
-- End with a provocative question or statement
+RÈGLES DU DÉBAT:
+- C'est le Round ${round + 1} sur ${maxRounds}
+- Conteste les autres perspectives avec respect mais fermeté
+- Apporte ton expertise unique à la discussion
+- Fais référence aux points spécifiques soulevés par les autres agents
+${selectedArtifacts.length > 0 ? '- IMPORTANT: Réfère-toi et cite les artefacts fournis quand c\'est pertinent pour ancrer tes arguments' : ''}
+- Sois passionné par ton point de vue
+- Garde tes réponses concises (3-4 phrases)
+- Termine par une question ou une affirmation provocatrice
 
-TOPIC: ${topic}
+SUJET: ${topic}
 
-Previous discussion:
+Discussion précédente:
 ${conversationContext.slice(-6).map(m => m.content).join('\n')}
 
-Respond with conviction and expertise:`;
+Réponds avec conviction et expertise (en français uniquement):`;
 
         const { data, error } = await supabase.functions.invoke('chat-ai', {
           body: {
@@ -578,7 +581,7 @@ Sois concis et actionnable. Maximum 3-4 points par section.`
                       </div>
                     ) : (
                       <>
-                        <p className="text-sm leading-relaxed">{message.content}</p>
+                        <FormattedText content={message.content} className="text-sm leading-relaxed" />
                         <span className="text-xs opacity-70 mt-2 block">
                           {message.timestamp.toLocaleTimeString()}
                         </span>
