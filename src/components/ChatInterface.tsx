@@ -18,11 +18,14 @@ import { ArtifactSelector, formatArtifactsForContext } from './ArtifactSelector'
 import {
   RoleBadge,
   ResponseModeToggle,
-  SteeringControls,
   MessageBubble,
   LiveSynthesisPanel,
   ThreadConclusion,
   inferRoleFromSpecialty,
+  ConversationStatusPill,
+  NextStepRail,
+  ModeSwitcher,
+  ArtifactDropZone,
 } from './chat';
 
 type Artifact = {
@@ -63,10 +66,10 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ currentSquad, squa
   const [showArtifactPreview, setShowArtifactPreview] = useState(false);
   const [previewArtifact, setPreviewArtifact] = useState<Artifact | null>(null);
   
-  // NEW: UX Enhancement states
+  // UX Enhancement states
   const [responseMode, setResponseMode] = useState<ResponseMode>('short');
   const [showSynthesisPanel, setShowSynthesisPanel] = useState(true);
-  const [activeSteeringFilters, setActiveSteeringFilters] = useState<SteeringCommand[]>([]);
+  const [activeSteeringMode, setActiveSteeringMode] = useState<SteeringCommand | null>(null);
   const [liveSynthesis, setLiveSynthesis] = useState<LiveSynthesis>({
     options: [],
     openPoints: [],
@@ -165,9 +168,19 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ currentSquad, squa
     }
   }, [messages]);
 
-  const handleSteeringCommand = async (command: SteeringCommand) => {
-    if (command === 'summarize') {
-      // Request a summary from the conductor
+  const handleSteeringModeChange = async (mode: SteeringCommand | null) => {
+    // If clicking the same mode, deactivate it
+    if (mode === activeSteeringMode) {
+      setActiveSteeringMode(null);
+      toast({
+        title: "Mode standard",
+        description: "Tous les agents participent normalement",
+      });
+      return;
+    }
+
+    // Handle summarize immediately
+    if (mode === 'summarize') {
       setIsLoading(true);
       try {
         const conversationContext = messages.slice(-15).map(m => 
@@ -176,8 +189,8 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ currentSquad, squa
 
         const { data } = await supabase.functions.invoke('chat-ai', {
           body: {
-            message: `En tant que facilitateur, résume cette discussion en 3 points clés:\n\n${conversationContext}`,
-            systemPrompt: 'Tu es un facilitateur de discussion. Fournis un résumé structuré et concis.',
+            message: `En tant que facilitateur, recentre cette discussion en 3 points:\n\n${conversationContext}`,
+            systemPrompt: 'Tu es un facilitateur. Fournis un résumé structuré pour remettre le groupe sur les rails.',
           }
         });
 
@@ -188,7 +201,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ currentSquad, squa
             content: data.response,
             sender: { 
               id: 'conductor', 
-              name: 'Conducteur', 
+              name: 'Nova', 
               specialty: 'Facilitation', 
               avatar: '', 
               backstory: '', 
@@ -210,25 +223,21 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ currentSquad, squa
       return;
     }
 
-    // Toggle other filters
-    setActiveSteeringFilters(prev => 
-      prev.includes(command) 
-        ? prev.filter(f => f !== command)
-        : [...prev, command]
-    );
+    // Set the new active mode
+    setActiveSteeringMode(mode);
+    
+    const modeDescriptions: Record<SteeringCommand, string> = {
+      pause_others: 'Un seul agent répond à la fois',
+      only_ux_business: 'Dialogue UX-Business uniquement',
+      tradeoffs_only: 'Focus sur les risques et compromis',
+      summarize: '',
+    };
 
-    toast({
-      title: "Filtre appliqué",
-      description: getFilterDescription(command),
-    });
-  };
-
-  const getFilterDescription = (command: SteeringCommand): string => {
-    switch (command) {
-      case 'pause_others': return 'Les autres agents sont en pause';
-      case 'only_ux_business': return 'Seuls UX et Business répondront';
-      case 'tradeoffs_only': return 'Focus sur les compromis';
-      default: return '';
+    if (mode) {
+      toast({
+        title: "Mode activé",
+        description: modeDescriptions[mode],
+      });
     }
   };
 
@@ -344,15 +353,15 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ currentSquad, squa
 
       const artifactContext = formatArtifactsForContext(selectedArtifacts);
 
-      // Filter agents based on steering commands
+      // Filter agents based on steering mode
       let respondingAgents = [...currentSquad];
-      if (activeSteeringFilters.includes('only_ux_business')) {
+      if (activeSteeringMode === 'only_ux_business') {
         respondingAgents = currentSquad.filter(a => {
           const role = inferRoleFromSpecialty(a.specialty);
           return role === 'ux' || role === 'business';
         });
       }
-      if (activeSteeringFilters.includes('pause_others') && userMessage.mentionedAgents?.length) {
+      if (activeSteeringMode === 'pause_others' && userMessage.mentionedAgents?.length) {
         respondingAgents = currentSquad.filter(a => 
           userMessage.mentionedAgents?.some(m => a.name.toLowerCase().includes(m.toLowerCase()))
         );
@@ -844,7 +853,10 @@ Pour le handler actionable:
           {/* Header with Controls */}
           <div className="p-3 border-b space-y-2">
             <div className="flex items-center justify-between">
-              <h3 className="font-semibold text-sm">Conversation</h3>
+              <div className="flex items-center gap-3">
+                <h3 className="font-semibold text-sm">Conversation</h3>
+                <ConversationStatusPill synthesis={liveSynthesis} messageCount={messages.length} />
+              </div>
               <div className="flex items-center gap-3">
                 <ResponseModeToggle mode={responseMode} onChange={setResponseMode} />
                 <Button
@@ -857,9 +869,9 @@ Pour le handler actionable:
                 </Button>
               </div>
             </div>
-            <SteeringControls 
-              onCommand={handleSteeringCommand} 
-              activeFilters={activeSteeringFilters}
+            <ModeSwitcher 
+              activeMode={activeSteeringMode} 
+              onModeChange={handleSteeringModeChange}
               disabled={isLoading}
             />
           </div>

@@ -3,157 +3,160 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { 
-  CheckCircle2, HelpCircle, ArrowRight, Lightbulb,
-  Scale
+  Lightbulb, 
+  GitBranch, 
+  HelpCircle, 
+  Zap,
+  ChevronRight,
+  CheckCircle2,
+  ArrowRight
 } from 'lucide-react';
 import { ThreadConclusion as ThreadConclusionType } from '@/types';
+import { cn } from '@/lib/utils';
 
 interface ThreadConclusionProps {
   conclusion: ThreadConclusionType;
   onActionClick?: (action: string) => void;
 }
 
+const TYPE_CONFIG: Record<ThreadConclusionType['type'], {
+  icon: typeof Lightbulb;
+  label: string;
+  bgClass: string;
+  borderClass: string;
+}> = {
+  recommendation: {
+    icon: Lightbulb,
+    label: 'Ce que ça suggère',
+    bgClass: 'bg-emerald-50/80 dark:bg-emerald-950/30',
+    borderClass: 'border-emerald-200 dark:border-emerald-800',
+  },
+  options: {
+    icon: GitBranch,
+    label: 'Les chemins possibles',
+    bgClass: 'bg-blue-50/80 dark:bg-blue-950/30',
+    borderClass: 'border-blue-200 dark:border-blue-800',
+  },
+  question: {
+    icon: HelpCircle,
+    label: 'La question qui bloque',
+    bgClass: 'bg-amber-50/80 dark:bg-amber-950/30',
+    borderClass: 'border-amber-200 dark:border-amber-800',
+  },
+  action: {
+    icon: Zap,
+    label: 'L\'action à lancer',
+    bgClass: 'bg-primary/10',
+    borderClass: 'border-primary/30',
+  },
+};
+
 export const ThreadConclusion: FC<ThreadConclusionProps> = ({
   conclusion,
   onActionClick,
 }) => {
-  const getIcon = () => {
-    switch (conclusion.type) {
-      case 'recommendation':
-        return <CheckCircle2 className="w-5 h-5 text-green-600" />;
-      case 'options':
-        return <Scale className="w-5 h-5 text-blue-600" />;
-      case 'question':
-        return <HelpCircle className="w-5 h-5 text-amber-600" />;
-      case 'action':
-        return <Lightbulb className="w-5 h-5 text-purple-600" />;
-    }
-  };
+  const config = TYPE_CONFIG[conclusion.type];
+  const Icon = config.icon;
 
-  const getLabel = () => {
-    switch (conclusion.type) {
-      case 'recommendation':
-        return 'Recommandation';
-      case 'options':
-        return 'Options à trancher';
-      case 'question':
-        return 'Question à résoudre';
-      case 'action':
-        return 'Action suggérée';
-    }
-  };
-
-  const getBgClass = () => {
-    switch (conclusion.type) {
-      case 'recommendation':
-        return 'bg-green-50 border-green-200 dark:bg-green-950/20 dark:border-green-800';
-      case 'options':
-        return 'bg-blue-50 border-blue-200 dark:bg-blue-950/20 dark:border-blue-800';
-      case 'question':
-        return 'bg-amber-50 border-amber-200 dark:bg-amber-950/20 dark:border-amber-800';
-      case 'action':
-        return 'bg-purple-50 border-purple-200 dark:bg-purple-950/20 dark:border-purple-800';
-    }
-  };
-
-  // Parse content if it's a JSON string
+  // Parse content if it's JSON-like
   const getDisplayContent = () => {
-    const content = conclusion.content;
-    // Check if content looks like JSON (starts with ``` or {)
-    if (typeof content === 'string') {
-      // Remove markdown code blocks if present
-      const cleanContent = content.replace(/```json\s*/g, '').replace(/```/g, '').trim();
-      try {
-        const parsed = JSON.parse(cleanContent);
-        return parsed.content || parsed.message || cleanContent;
-      } catch {
-        return content;
-      }
+    try {
+      const cleaned = conclusion.content.replace(/```json\s*/g, '').replace(/```/g, '').trim();
+      const parsed = JSON.parse(cleaned);
+      return parsed.content || conclusion.content;
+    } catch {
+      return conclusion.content;
     }
-    return content;
   };
 
   return (
-    <Card className={`p-4 border-2 ${getBgClass()} mt-4`}>
-      <div className="flex items-start gap-3">
-        {getIcon()}
-        <div className="flex-1">
-          <Badge variant="outline" className="mb-2 text-xs">
-            {getLabel()}
-          </Badge>
-          
-          <p className="text-sm font-medium mb-3">{getDisplayContent()}</p>
-
-          {/* Options with impact - display only */}
-          {conclusion.type === 'options' && conclusion.options && (
-            <div className="space-y-2 mb-3">
-              {conclusion.options.map((option, i) => (
-                <div 
-                  key={i} 
-                  className="flex items-center justify-between bg-background/80 rounded-lg p-2 cursor-pointer hover:bg-background transition-colors"
-                  onClick={() => onActionClick?.(`select_option:${i}:${option.label}`)}
-                >
-                  <span className="text-sm">{option.label}</span>
-                  <Badge variant="secondary" className="text-xs">
-                    Impact: {option.impact}
-                  </Badge>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* Action buttons */}
-          <div className="flex flex-wrap gap-2 mt-3">
-            {conclusion.actionable ? (
-              <Button 
-                size="sm"
-                onClick={() => onActionClick?.(conclusion.actionable!.handler)}
-              >
-                {conclusion.actionable.label}
-                <ArrowRight className="w-4 h-4 ml-2" />
-              </Button>
-            ) : (
-              /* Default action for recommendations without explicit actionable */
-              conclusion.type === 'recommendation' && (
-                <Button 
-                  size="sm"
-                  onClick={() => onActionClick?.('save_decision')}
-                >
-                  Enregistrer la décision
-                  <ArrowRight className="w-4 h-4 ml-2" />
-                </Button>
-              )
-            )}
-
-            {/* Question requires response */}
-            {conclusion.type === 'question' && (
-              <>
-                <Button size="sm" variant="outline" onClick={() => onActionClick?.('respond_question')}>
-                  Répondre
-                </Button>
-                <Button size="sm" variant="ghost">
-                  Plus tard
-                </Button>
-              </>
-            )}
-
-            {/* Options are clickable */}
-            {conclusion.type === 'options' && conclusion.options && (
-              <div className="w-full flex gap-2">
-                {conclusion.options.map((option, i) => (
-                  <Button
-                    key={i}
-                    size="sm"
-                    variant={i === 0 ? 'default' : 'outline'}
-                    onClick={() => onActionClick?.(`select_option:${i}:${option.label}`)}
-                    className="flex-1"
-                  >
-                    {option.label}
-                  </Button>
-                ))}
-              </div>
-            )}
+    <Card className={cn(
+      "my-4 border-2",
+      config.bgClass,
+      config.borderClass
+    )}>
+      <div className="p-4">
+        {/* Header */}
+        <div className="flex items-center gap-2 mb-3">
+          <div className={cn(
+            "p-1.5 rounded-md",
+            conclusion.type === 'recommendation' && "bg-emerald-100 dark:bg-emerald-900/50",
+            conclusion.type === 'options' && "bg-blue-100 dark:bg-blue-900/50",
+            conclusion.type === 'question' && "bg-amber-100 dark:bg-amber-900/50",
+            conclusion.type === 'action' && "bg-primary/20"
+          )}>
+            <Icon className="w-4 h-4" />
           </div>
+          <span className="text-sm font-semibold">{config.label}</span>
+        </div>
+
+        {/* Content */}
+        <p className="text-sm leading-relaxed mb-4">
+          {getDisplayContent()}
+        </p>
+
+        {/* Options rendering */}
+        {conclusion.options && conclusion.options.length > 0 && (
+          <div className="space-y-2 mb-4">
+            {conclusion.options.map((option, idx) => (
+              <button
+                key={idx}
+                onClick={() => onActionClick?.(`selectOption:${idx}:${option.label}`)}
+                className={cn(
+                  "w-full text-left p-3 rounded-lg border transition-all",
+                  "hover:border-primary/50 hover:bg-background/80",
+                  "bg-white/60 dark:bg-background/40 border-border"
+                )}
+              >
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium">{option.label}</span>
+                  <ArrowRight className="w-4 h-4 text-muted-foreground" />
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Impact: {option.impact}
+                </p>
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* Action buttons - improved microcopy */}
+        <div className="flex items-center gap-2">
+          {conclusion.actionable ? (
+            <Button
+              onClick={() => onActionClick?.(conclusion.actionable!.handler)}
+              className="h-8 text-sm gap-1.5"
+            >
+              {conclusion.actionable.label}
+              <ChevronRight className="w-3.5 h-3.5" />
+            </Button>
+          ) : conclusion.type === 'question' ? (
+            <>
+              <Button
+                variant="default"
+                onClick={() => onActionClick?.('answer_question')}
+                className="h-8 text-sm gap-1.5"
+              >
+                Répondre maintenant
+                <ChevronRight className="w-3.5 h-3.5" />
+              </Button>
+              <Button
+                variant="ghost"
+                onClick={() => onActionClick?.('defer_question')}
+                className="h-8 text-sm"
+              >
+                Plus tard
+              </Button>
+            </>
+          ) : (
+            <Button
+              onClick={() => onActionClick?.('save_decision')}
+              className="h-8 text-sm gap-1.5"
+            >
+              <CheckCircle2 className="w-3.5 h-3.5" />
+              Ancrer cette décision
+            </Button>
+          )}
         </div>
       </div>
     </Card>

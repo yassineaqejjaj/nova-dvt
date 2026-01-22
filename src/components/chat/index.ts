@@ -5,3 +5,8 @@ export { SteeringControls } from './SteeringControls';
 export { MessageBubble } from './MessageBubble';
 export { LiveSynthesisPanel } from './LiveSynthesisPanel';
 export { ThreadConclusion } from './ThreadConclusion';
+export { StructuredMessage } from './StructuredMessage';
+export { ConversationStatusPill } from './ConversationStatusPill';
+export { NextStepRail } from './NextStepRail';
+export { ModeSwitcher } from './ModeSwitcher';
+export { ArtifactDropZone } from './ArtifactDropZone';
