@@ -19,7 +19,9 @@ import {
   UserMinus,
   UserPlus,
   Volume2,
-  VolumeX
+  VolumeX,
+  FileText,
+  CheckCircle2
 } from 'lucide-react';
 import { allAgents } from '@/data/mockData';
 
@@ -53,6 +55,9 @@ export const RealityMode: React.FC<RealityModeProps> = ({
   const [agentToReplace, setAgentToReplace] = useState<Agent | null>(null);
   const [workingSquad, setWorkingSquad] = useState<Agent[]>(currentSquad);
   const [isSoundOn, setIsSoundOn] = useState(false);
+  const [isDebateComplete, setIsDebateComplete] = useState(false);
+  const [isGeneratingSummary, setIsGeneratingSummary] = useState(false);
+  const [summary, setSummary] = useState<string | null>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const debateControllerRef = useRef<{ stop: boolean }>({ stop: false });
 
@@ -80,9 +85,10 @@ export const RealityMode: React.FC<RealityModeProps> = ({
     setIsPaused(false);
     setCurrentRound(0);
     setMessages([]);
+    setIsDebateComplete(false);
+    setSummary(null);
     debateControllerRef.current.stop = false;
 
-    // Add initial prompt as a user message
     const initialMessage: DebateMessage = {
       id: `user-${Date.now()}`,
       agent: { 
@@ -101,7 +107,6 @@ export const RealityMode: React.FC<RealityModeProps> = ({
     };
     setMessages([initialMessage]);
 
-    // Start the debate simulation
     runDebateSimulation(prompt);
   };
 
@@ -111,6 +116,7 @@ export const RealityMode: React.FC<RealityModeProps> = ({
     const maxRounds = 3;
     if (round >= maxRounds) {
       setIsDebating(false);
+      setIsDebateComplete(true);
       toast({
         title: "Simulation Complete",
         description: `${workingSquad.length} agents completed ${maxRounds} rounds of discussion`,
@@ -121,13 +127,11 @@ export const RealityMode: React.FC<RealityModeProps> = ({
 
     setCurrentRound(round + 1);
 
-    // Each agent responds in sequence with their perspective
     for (let i = 0; i < workingSquad.length; i++) {
       if (debateControllerRef.current.stop) return;
 
       const agent = workingSquad[i];
       
-      // Show thinking state
       const thinkingMessage: DebateMessage = {
         id: `thinking-${Date.now()}-${i}`,
         agent,
@@ -137,7 +141,6 @@ export const RealityMode: React.FC<RealityModeProps> = ({
       };
       setMessages(prev => [...prev, thinkingMessage]);
 
-      // Get agent response
       try {
         const conversationContext = messages.map(m => ({
           role: m.agent.id === 'user' ? 'user' : 'assistant',
@@ -175,7 +178,6 @@ Respond with conviction and expertise:`;
 
         if (error) throw error;
 
-        // Remove thinking message and add actual response
         setMessages(prev => {
           const filtered = prev.filter(m => m.id !== thinkingMessage.id);
           return [...filtered, {
@@ -186,7 +188,6 @@ Respond with conviction and expertise:`;
           }];
         });
 
-        // Wait between agents for theatrical effect
         await new Promise(resolve => setTimeout(resolve, 2000));
       } catch (error) {
         console.error(`Error getting response from ${agent.name}:`, error);
@@ -194,7 +195,6 @@ Respond with conviction and expertise:`;
       }
     }
 
-    // Continue to next round after a pause
     await new Promise(resolve => setTimeout(resolve, 3000));
     if (!debateControllerRef.current.stop) {
       runDebateSimulation(topic, round + 1);
@@ -216,6 +216,7 @@ Respond with conviction and expertise:`;
   const stopDebate = () => {
     setIsDebating(false);
     setIsPaused(false);
+    setIsDebateComplete(messages.length > 1);
     debateControllerRef.current.stop = true;
   };
 
@@ -232,7 +233,6 @@ Respond with conviction and expertise:`;
     );
     setWorkingSquad(newSquad);
     
-    // Add system message about swap
     const swapMessage: DebateMessage = {
       id: `swap-${Date.now()}`,
       agent: { 
@@ -260,6 +260,67 @@ Respond with conviction and expertise:`;
     });
   };
 
+  const generateSummary = async () => {
+    if (messages.length < 2) return;
+
+    setIsGeneratingSummary(true);
+
+    try {
+      const debateContent = messages
+        .filter(m => m.agent.id !== 'system' && !m.isThinking)
+        .map(m => `${m.agent.name} (${m.agent.specialty}): ${m.content}`)
+        .join('\n\n');
+
+      const { data, error } = await supabase.functions.invoke('chat-ai', {
+        body: {
+          message: debateContent,
+          systemPrompt: `Tu es un expert en synthèse de débats produit. Analyse le débat suivant entre plusieurs experts et génère un résumé structuré.
+
+FORMAT DE SORTIE:
+## 🎯 Points Clés du Débat
+
+### Consensus
+- [Points sur lesquels les experts sont d'accord]
+
+### Points de Divergence
+- [Points de désaccord et perspectives différentes]
+
+### Recommandations Prioritaires
+1. [Action prioritaire 1 avec justification]
+2. [Action prioritaire 2 avec justification]
+3. [Action prioritaire 3 avec justification]
+
+### Risques Identifiés
+- [Risques mentionnés pendant le débat]
+
+### Prochaines Étapes Suggérées
+- [Étapes concrètes à suivre]
+
+Sois concis et actionnable. Mets en avant les insights les plus précieux du débat.`
+        }
+      });
+
+      if (error) throw error;
+
+      setSummary(data.response);
+      onAddXP(25, 'generating debate summary');
+      
+      toast({
+        title: "Résumé généré",
+        description: "Les points essentiels du débat ont été synthétisés",
+      });
+    } catch (error) {
+      console.error('Error generating summary:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de générer le résumé",
+        variant: "destructive",
+      });
+    } finally {
+      setIsGeneratingSummary(false);
+    }
+  };
+
   if (workingSquad.length === 0) {
     return (
       <Card className="p-8">
@@ -282,7 +343,7 @@ Respond with conviction and expertise:`;
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Header */}
       <div className="text-center space-y-2">
         <div className="flex items-center justify-center space-x-2">
@@ -295,52 +356,57 @@ Respond with conviction and expertise:`;
         </p>
       </div>
 
-      {/* Squad Display */}
-      <Card className="p-4">
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center space-x-2">
-            <Users className="w-4 h-4" />
-            <h3 className="font-semibold">Squad Active</h3>
-            <Badge variant="secondary">{workingSquad.length} agents</Badge>
+      {/* Main Layout: Sidebar + Debate Arena */}
+      <div className="flex gap-4">
+        {/* Left Sidebar - Agents */}
+        <div className="w-48 shrink-0 space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <Users className="w-4 h-4" />
+              <h3 className="font-semibold text-sm">Squad</h3>
+            </div>
+            <Badge variant="secondary" className="text-xs">{workingSquad.length}</Badge>
           </div>
+          
+          <div className="space-y-2">
+            {workingSquad.map(agent => (
+              <Card key={agent.id} className="p-2 relative group">
+                <div className="flex items-center space-x-2">
+                  <Avatar className="w-8 h-8">
+                    <AvatarImage src={agent.avatar} />
+                    <AvatarFallback className="text-xs">
+                      {agent.name.split(' ').map(n => n[0]).join('')}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-medium truncate">{agent.name}</p>
+                    <p className="text-[10px] text-muted-foreground truncate">{agent.specialty}</p>
+                  </div>
+                </div>
+                {isDebating && !isPaused && (
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="absolute -top-1 -right-1 h-5 w-5 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                    onClick={() => handleReplaceAgent(agent)}
+                  >
+                    <UserMinus className="w-3 h-3" />
+                  </Button>
+                )}
+              </Card>
+            ))}
+          </div>
+
           {currentRound > 0 && (
-            <Badge variant="outline">Round {currentRound}/3</Badge>
+            <Badge variant="outline" className="w-full justify-center">
+              Round {currentRound}/3
+            </Badge>
           )}
         </div>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          {workingSquad.map(agent => (
-            <Card key={agent.id} className="p-3 relative group">
-              <div className="flex flex-col items-center space-y-2">
-                <Avatar className="w-12 h-12">
-                  <AvatarImage src={agent.avatar} />
-                  <AvatarFallback>
-                    {agent.name.split(' ').map(n => n[0]).join('')}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="text-center">
-                  <p className="text-sm font-medium">{agent.name}</p>
-                  <p className="text-xs text-muted-foreground">{agent.specialty}</p>
-                </div>
-              </div>
-              {isDebating && !isPaused && (
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                  onClick={() => handleReplaceAgent(agent)}
-                >
-                  <UserMinus className="w-3 h-3" />
-                </Button>
-              )}
-            </Card>
-          ))}
-        </div>
-      </Card>
 
-      {/* Debate Arena */}
-      <Card className="overflow-hidden">
-        <div className="p-4 border-b bg-muted/30">
-          <div className="flex items-center justify-between">
+        {/* Main Debate Arena */}
+        <Card className="flex-1 overflow-hidden flex flex-col min-h-[600px]">
+          <div className="p-3 border-b bg-muted/30 flex items-center justify-between">
             <h3 className="font-semibold">Arène de Débat</h3>
             <div className="flex items-center space-x-2">
               <Button
@@ -360,111 +426,167 @@ Respond with conviction and expertise:`;
                   En Direct
                 </Badge>
               )}
+              {isDebateComplete && (
+                <Badge variant="secondary" className="bg-green-500/20 text-green-700">
+                  <CheckCircle2 className="w-3 h-3 mr-1" />
+                  Terminé
+                </Badge>
+              )}
             </div>
           </div>
-        </div>
 
-        <ScrollArea className="h-[400px] p-4" ref={scrollAreaRef}>
-          <div className="space-y-4">
-            {messages.map((message) => (
-              <div
-                key={message.id}
-                className={`flex space-x-3 ${
-                  message.agent.id === 'user' ? 'justify-end' : 
-                  message.agent.id === 'system' ? 'justify-center' : 'justify-start'
-                }`}
-              >
-                {message.agent.id !== 'user' && message.agent.id !== 'system' && (
-                  <Avatar className="w-10 h-10 flex-shrink-0">
-                    <AvatarImage src={message.agent.avatar} />
-                    <AvatarFallback>
-                      {message.agent.name.split(' ').map(n => n[0]).join('')}
-                    </AvatarFallback>
-                  </Avatar>
-                )}
-                
+          <ScrollArea className="flex-1 p-4" ref={scrollAreaRef}>
+            <div className="space-y-4">
+              {messages.map((message) => (
                 <div
-                  className={`max-w-[85%] rounded-lg p-4 ${
-                    message.agent.id === 'user'
-                      ? 'bg-primary text-primary-foreground'
-                      : message.agent.id === 'system'
-                      ? 'bg-muted/50 text-muted-foreground text-center'
-                      : 'bg-card border-2 border-primary/20'
+                  key={message.id}
+                  className={`flex space-x-3 ${
+                    message.agent.id === 'user' ? 'justify-end' : 
+                    message.agent.id === 'system' ? 'justify-center' : 'justify-start'
                   }`}
                 >
                   {message.agent.id !== 'user' && message.agent.id !== 'system' && (
-                    <div className="flex items-center space-x-2 mb-2">
-                      <span className="text-sm font-bold">{message.agent.name}</span>
-                      <Badge variant="outline" className="text-xs">
-                        {message.agent.specialty}
-                      </Badge>
-                    </div>
+                    <Avatar className="w-10 h-10 flex-shrink-0">
+                      <AvatarImage src={message.agent.avatar} />
+                      <AvatarFallback>
+                        {message.agent.name.split(' ').map(n => n[0]).join('')}
+                      </AvatarFallback>
+                    </Avatar>
                   )}
                   
-                  {message.isThinking ? (
-                    <div className="flex items-center space-x-2 text-muted-foreground">
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      <span className="text-sm">Formulation de la réponse...</span>
-                    </div>
-                  ) : (
-                    <>
-                      <p className="text-sm leading-relaxed">{message.content}</p>
-                      <span className="text-xs opacity-70 mt-2 block">
-                        {message.timestamp.toLocaleTimeString()}
-                      </span>
-                    </>
+                  <div
+                    className={`max-w-[80%] rounded-lg p-4 ${
+                      message.agent.id === 'user'
+                        ? 'bg-primary text-primary-foreground'
+                        : message.agent.id === 'system'
+                        ? 'bg-muted/50 text-muted-foreground text-center'
+                        : 'bg-card border-2 border-primary/20'
+                    }`}
+                  >
+                    {message.agent.id !== 'user' && message.agent.id !== 'system' && (
+                      <div className="flex items-center space-x-2 mb-2">
+                        <span className="text-sm font-bold">{message.agent.name}</span>
+                        <Badge variant="outline" className="text-xs">
+                          {message.agent.specialty}
+                        </Badge>
+                      </div>
+                    )}
+                    
+                    {message.isThinking ? (
+                      <div className="flex items-center space-x-2 text-muted-foreground">
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        <span className="text-sm">Formulation de la réponse...</span>
+                      </div>
+                    ) : (
+                      <>
+                        <p className="text-sm leading-relaxed">{message.content}</p>
+                        <span className="text-xs opacity-70 mt-2 block">
+                          {message.timestamp.toLocaleTimeString()}
+                        </span>
+                      </>
+                    )}
+                  </div>
+
+                  {message.agent.id === 'user' && (
+                    <Avatar className="w-10 h-10 flex-shrink-0">
+                      <AvatarFallback>You</AvatarFallback>
+                    </Avatar>
                   )}
                 </div>
+              ))}
 
-                {message.agent.id === 'user' && (
-                  <Avatar className="w-10 h-10 flex-shrink-0">
-                    <AvatarFallback>You</AvatarFallback>
-                  </Avatar>
-                )}
-              </div>
-            ))}
-          </div>
-        </ScrollArea>
-
-        {/* Controls */}
-        <div className="p-4 border-t bg-muted/30">
-          {!isDebating ? (
-            <div className="space-y-3">
-              <Input
-                placeholder="Entrez le sujet de débat... (ex : Créez-moi un plan de lancement pour une nouvelle app fitness)"
-                value={prompt}
-                onChange={(e) => setPrompt(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && startDebate()}
-              />
-              <Button
-                onClick={startDebate}
-                className="w-full"
-                disabled={!prompt.trim()}
-              >
-                <Play className="w-4 h-4 mr-2" />
-                Démarrer la Simulation
-              </Button>
-            </div>
-          ) : (
-            <div className="flex items-center space-x-2">
-              {!isPaused ? (
-                <Button onClick={pauseDebate} variant="outline" className="flex-1">
-                  <Pause className="w-4 h-4 mr-2" />
-                  Pause
-                </Button>
-              ) : (
-                <Button onClick={resumeDebate} className="flex-1">
-                  <Play className="w-4 h-4 mr-2" />
-                  Reprendre
-                </Button>
+              {/* Summary Section */}
+              {summary && (
+                <Card className="p-4 bg-gradient-to-br from-primary/5 to-primary/10 border-primary/20">
+                  <div className="flex items-center space-x-2 mb-3">
+                    <FileText className="w-5 h-5 text-primary" />
+                    <h4 className="font-semibold">Synthèse du Débat</h4>
+                  </div>
+                  <div className="prose prose-sm dark:prose-invert max-w-none">
+                    <div className="whitespace-pre-wrap text-sm">{summary}</div>
+                  </div>
+                </Card>
               )}
-              <Button onClick={stopDebate} variant="destructive">
-                Arrêter
-              </Button>
             </div>
-          )}
-        </div>
-      </Card>
+          </ScrollArea>
+
+          {/* Controls */}
+          <div className="p-4 border-t bg-muted/30">
+            {!isDebating && !isDebateComplete ? (
+              <div className="space-y-3">
+                <Input
+                  placeholder="Entrez le sujet de débat... (ex : Créez-moi un plan de lancement pour une nouvelle app fitness)"
+                  value={prompt}
+                  onChange={(e) => setPrompt(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && startDebate()}
+                  className="text-base"
+                />
+                <Button
+                  onClick={startDebate}
+                  className="w-full"
+                  disabled={!prompt.trim()}
+                >
+                  <Play className="w-4 h-4 mr-2" />
+                  Démarrer la Simulation
+                </Button>
+              </div>
+            ) : isDebating ? (
+              <div className="flex items-center space-x-2">
+                {!isPaused ? (
+                  <Button onClick={pauseDebate} variant="outline" className="flex-1">
+                    <Pause className="w-4 h-4 mr-2" />
+                    Pause
+                  </Button>
+                ) : (
+                  <Button onClick={resumeDebate} className="flex-1">
+                    <Play className="w-4 h-4 mr-2" />
+                    Reprendre
+                  </Button>
+                )}
+                <Button onClick={stopDebate} variant="destructive">
+                  Arrêter
+                </Button>
+              </div>
+            ) : (
+              <div className="flex items-center space-x-2">
+                <Button 
+                  onClick={generateSummary} 
+                  className="flex-1"
+                  disabled={isGeneratingSummary || !!summary}
+                >
+                  {isGeneratingSummary ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Génération...
+                    </>
+                  ) : summary ? (
+                    <>
+                      <CheckCircle2 className="w-4 h-4 mr-2" />
+                      Résumé Généré
+                    </>
+                  ) : (
+                    <>
+                      <FileText className="w-4 h-4 mr-2" />
+                      Générer le Résumé
+                    </>
+                  )}
+                </Button>
+                <Button 
+                  onClick={() => {
+                    setIsDebateComplete(false);
+                    setMessages([]);
+                    setSummary(null);
+                    setPrompt('');
+                  }} 
+                  variant="outline"
+                >
+                  Nouveau Débat
+                </Button>
+              </div>
+            )}
+          </div>
+        </Card>
+      </div>
 
       {/* Agent Swap Dialog */}
       <Dialog open={showAgentSwap} onOpenChange={setShowAgentSwap}>
