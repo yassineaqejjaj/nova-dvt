@@ -114,32 +114,32 @@ export const WorkSidebar: React.FC<WorkSidebarProps> = ({
     },
     {
       id: 'build',
-      title: 'Construire',
+      title: 'Produire',
       icon: Hammer,
       defaultExpanded: true,
       items: [
         {
           id: 'instant-prd' as TabType,
-          label: 'PRD',
-          description: 'Générer un document produit clair',
+          label: 'Créer un document produit',
+          description: 'Structurer une idée en document clair',
           icon: FileText
         },
         {
           id: 'epic-to-stories' as TabType,
-          label: 'Epic → Stories',
-          description: 'Découper en tâches actionnables',
+          label: 'Découper une feature',
+          description: 'Transformer une feature en tâches actionnables',
           icon: Target
         },
         {
           id: 'git-to-specs' as TabType,
-          label: 'Git → Specs',
-          description: 'Specs à partir du code',
+          label: 'Générer des specs depuis le code',
+          description: 'Créer des specs techniques à partir du dépôt',
           icon: GitBranch
         },
         {
           id: 'toolbox' as TabType,
-          label: 'Tous les outils',
-          description: 'Voir la galerie complète',
+          label: 'Voir tous les outils',
+          description: 'Accéder à l\'ensemble des outils disponibles',
           icon: Wrench
         }
       ]
