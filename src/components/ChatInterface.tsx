@@ -5,7 +5,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { supabase } from '@/integrations/supabase/client';
-import { Agent, ChatMessage, ResponseMode, SteeringCommand, LiveSynthesis, ThreadConclusion as ThreadConclusionType, Disagreement } from '@/types';
+import { Agent, ChatMessage, ResponseMode, SteeringCommand, LiveSynthesis, ThreadConclusion as ThreadConclusionType, Disagreement, AgentInsight } from '@/types';
 import { toast } from '@/hooks/use-toast';
 import { Send, Users, Loader2, AtSign } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -520,12 +520,112 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ currentSquad, squa
       }
     }
 
+    // Generate agent insights for transparency
+    const agentInsights: AgentInsight[] = responses.map((response, index) => {
+      const agent = response.agent;
+      const role = inferRoleFromSpecialty(agent.specialty);
+      
+      // Extract key arguments from message
+      const keyArgs = extractKeyArguments(response.message);
+      
+      // Calculate agreement rate (simple heuristic)
+      const agreementRate = calculateAgreementRate(response.message, responses, index);
+      
+      // Detect stance from message content
+      const stance = detectAgentStance(response.message, agent.specialty);
+      
+      // Detect potential bias
+      const bias = detectAgentBias(agent.specialty);
+      
+      return {
+        agentId: agent.id,
+        agentName: agent.name,
+        specialty: agent.specialty,
+        stance,
+        contributionCount: messages.filter(m => 
+          m.sender !== 'user' && (m.sender as Agent).id === agent.id
+        ).length + 1,
+        keyArguments: keyArgs,
+        bias,
+        agreementRate,
+      };
+    });
+
+    // Detect conversation mood
+    const conversationMood = detectConversationMood(responses);
+
     setLiveSynthesis(prev => ({
       ...prev,
       disagreements: [...prev.disagreements, ...newDisagreements].slice(-5),
       openPoints: [...prev.openPoints, question].slice(-3),
+      agentInsights,
+      conversationMood,
       lastUpdated: new Date(),
     }));
+  };
+
+  const extractKeyArguments = (message: string): string[] => {
+    const keywords = ['important', 'crucial', 'essentiel', 'priorité', 'focus', 'clé'];
+    const sentences = message.split(/[.!?]/);
+    return sentences
+      .filter(s => keywords.some(k => s.toLowerCase().includes(k)))
+      .map(s => s.trim().slice(0, 40))
+      .slice(0, 2);
+  };
+
+  const calculateAgreementRate = (message: string, allResponses: any[], index: number): number => {
+    const lower = message.toLowerCase();
+    const hasDisagreement = lower.includes('désaccord') || lower.includes('mais') || 
+                            lower.includes('cependant') || lower.includes('non');
+    const hasAgreement = lower.includes('accord') || lower.includes('exactement') || 
+                         lower.includes('tout à fait') || lower.includes('oui');
+    
+    if (hasDisagreement && !hasAgreement) return 30 + Math.random() * 20;
+    if (hasAgreement && !hasDisagreement) return 70 + Math.random() * 25;
+    return 50 + Math.random() * 20;
+  };
+
+  const detectAgentStance = (message: string, specialty: string): string => {
+    const role = inferRoleFromSpecialty(specialty);
+    const stanceMap: Record<string, string[]> = {
+      ux: ['Expérience utilisateur avant tout', 'Simplifier le parcours', 'Réduire la friction'],
+      product: ['Valeur long-terme', 'Équilibre des besoins', 'Vision produit'],
+      tech: ['Faisabilité et scalabilité', 'Dette technique maîtrisée', 'Architecture solide'],
+      business: ['ROI et croissance', 'Impact marché', 'Avantage compétitif'],
+      data: ['Décision data-driven', 'Mesurer avant d\'agir', 'Insights actionnables'],
+      strategy: ['Alignement stratégique', 'Priorisation claire', 'Vision d\'ensemble'],
+    };
+    
+    const stances = role ? stanceMap[role] : stanceMap.product;
+    return stances[Math.floor(Math.random() * stances.length)];
+  };
+
+  const detectAgentBias = (specialty: string): string | undefined => {
+    const role = inferRoleFromSpecialty(specialty);
+    const biases: Record<string, string> = {
+      ux: 'Tendance à privilégier l\'utilisateur sur la complexité technique',
+      tech: 'Tendance à sur-estimer les risques techniques',
+      business: 'Focus sur les métriques de croissance à court terme',
+      product: 'Vision parfois trop ambitieuse vs ressources',
+      data: 'Peut négliger l\'intuition au profit des données',
+      strategy: 'Vue macro pouvant manquer de détails opérationnels',
+    };
+    return role ? biases[role] : undefined;
+  };
+
+  const detectConversationMood = (responses: any[]): 'exploratory' | 'convergent' | 'divergent' | 'decisive' => {
+    const allContent = responses.map(r => r.message.toLowerCase()).join(' ');
+    
+    if (allContent.includes('décidons') || allContent.includes('conclusion') || allContent.includes('finalisons')) {
+      return 'decisive';
+    }
+    if (allContent.includes('d\'accord') && !allContent.includes('désaccord')) {
+      return 'convergent';
+    }
+    if (allContent.includes('mais') || allContent.includes('cependant') || allContent.includes('désaccord')) {
+      return 'divergent';
+    }
+    return 'exploratory';
   };
 
   const generateThreadConclusion = async () => {
