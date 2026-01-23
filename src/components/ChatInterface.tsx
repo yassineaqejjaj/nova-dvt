@@ -800,7 +800,7 @@ Pour le handler actionable:
   }
 
   return (
-    <div className="h-full flex flex-col overflow-hidden">
+    <div className="h-full flex flex-col overflow-hidden bg-background">
       {/* Persistent Control Header */}
       <ChatControlHeader
         synthesis={liveSynthesis}
@@ -814,15 +814,14 @@ Pour le handler actionable:
         isLoading={isLoading}
       />
 
-      {/* Compact Squad Display */}
-      <div className="flex-shrink-0 px-4 py-2 border-b bg-muted/30">
-        <div className="flex items-center gap-2 overflow-x-auto">
-          <span className="text-xs text-muted-foreground flex-shrink-0">Squad:</span>
+      {/* Compact Squad Bar */}
+      <div className="flex-shrink-0 px-4 py-1.5 border-b bg-muted/20">
+        <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide">
           {currentSquad.map(agent => (
-            <div key={agent.id} className="flex items-center gap-1.5 bg-background rounded-full px-2 py-1 flex-shrink-0">
+            <div key={agent.id} className="flex items-center gap-1.5 bg-background/80 rounded-full px-2.5 py-1 flex-shrink-0 border border-border/50">
               <Avatar className="w-4 h-4">
                 <AvatarImage src={agent.avatar} />
-                <AvatarFallback className="text-[10px]">
+                <AvatarFallback className="text-[9px] font-medium">
                   {agent.name.split(' ').map(n => n[0]).join('')}
                 </AvatarFallback>
               </Avatar>
@@ -833,16 +832,16 @@ Pour le handler actionable:
         </div>
       </div>
 
-      {/* Main Content Area - Flex to fill remaining space */}
+      {/* Main Content Area */}
       <div className="flex flex-1 min-h-0 overflow-hidden">
-        {/* Chat Messages Area */}
+        {/* Chat Column */}
         <div className={cn(
           'flex flex-col flex-1 min-h-0 min-w-0',
-          showSynthesisPanel && 'border-r'
+          showSynthesisPanel && 'border-r border-border/50'
         )}>
-          {/* Messages - Scrollable */}
+          {/* Messages */}
           <ScrollArea className="flex-1" ref={scrollAreaRef}>
-            <div className="p-4 space-y-3">
+            <div className="p-4 space-y-4">
               {messages.map((message) => (
                 <MessageBubble
                   key={message.id}
@@ -859,20 +858,15 @@ Pour le handler actionable:
               ))}
               
               {isLoading && (
-                <div className="flex space-x-3 justify-start">
-                  <Avatar className="w-8 h-8">
-                    <AvatarFallback>AI</AvatarFallback>
-                  </Avatar>
-                  <div className="bg-muted rounded-lg p-3">
-                    <div className="flex items-center space-x-2">
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      <span className="text-sm text-muted-foreground">Réflexion en cours...</span>
-                    </div>
+                <div className="flex gap-3">
+                  <div className="w-9 h-9 rounded-full bg-muted animate-pulse" />
+                  <div className="flex-1 space-y-2">
+                    <div className="h-4 w-24 bg-muted rounded animate-pulse" />
+                    <div className="h-16 w-3/4 bg-muted rounded-2xl animate-pulse" />
                   </div>
                 </div>
               )}
 
-              {/* Thread Conclusion */}
               {threadConclusion && !isLoading && (
                 <ThreadConclusion 
                   conclusion={threadConclusion}
@@ -881,57 +875,57 @@ Pour le handler actionable:
               )}
             </div>
           </ScrollArea>
-
-          <Separator />
           
-          {/* Input Area - Fixed at bottom */}
-          <div className="flex-shrink-0 p-3 bg-background relative">
-            <div className="flex flex-wrap items-center gap-2 mb-2">
+          {/* Modern Input Area */}
+          <div className="flex-shrink-0 p-4 border-t bg-muted/30">
+            {/* Toolbar */}
+            <div className="flex items-center gap-2 mb-3">
               <ArtifactSelector 
                 selectedArtifacts={selectedArtifacts}
                 onSelectionChange={setSelectedArtifacts}
                 maxSelection={5}
               />
-              <div className="h-5 w-px bg-border" />
               <DeliverableCreatorButton 
                 variant="compact"
                 onClick={() => setShowDeliverableCreator(true)}
               />
             </div>
             
-            <div className="flex space-x-2">
+            {/* Input */}
+            <div className="flex gap-2">
               <div className="relative flex-1">
                 <Input
                   ref={inputRef}
                   value={inputMessage}
                   onChange={handleInputChange}
                   onKeyDown={handleKeyPress}
-                  placeholder="Votre message... (@ pour mentionner)"
+                  placeholder="Écrivez votre message... @ pour mentionner"
                   disabled={isLoading}
-                  className="pr-10"
+                  className="h-11 rounded-xl bg-background border-border/60 focus-visible:ring-primary/30 pr-12"
                 />
                 
                 {/* Mention Dropdown */}
                 {showMentionDropdown && filteredAgents.length > 0 && (
-                  <div className="absolute bottom-full left-0 mb-1 w-full max-w-xs bg-background border rounded-md shadow-lg z-50">
-                    <div className="p-2 border-b">
-                      <div className="flex items-center space-x-2 text-xs text-muted-foreground">
+                  <div className="absolute bottom-full left-0 mb-2 w-full max-w-sm bg-background border rounded-xl shadow-xl z-50 overflow-hidden">
+                    <div className="p-2 border-b bg-muted/30">
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
                         <AtSign className="w-3 h-3" />
                         <span>Mentionner un agent</span>
                       </div>
                     </div>
-                    <div className="max-h-40 overflow-y-auto">
+                    <div className="max-h-48 overflow-y-auto p-1">
                       {filteredAgents.map((agent, index) => (
                         <div
                           key={agent.id}
-                          className={`flex items-center gap-2 p-2 cursor-pointer transition-colors ${
-                            index === selectedMentionIndex ? 'bg-accent' : 'hover:bg-muted'
-                          }`}
+                          className={cn(
+                            "flex items-center gap-2.5 p-2.5 cursor-pointer rounded-lg transition-colors",
+                            index === selectedMentionIndex ? 'bg-primary/10' : 'hover:bg-muted'
+                          )}
                           onClick={() => selectMention(agent)}
                         >
-                          <Avatar className="w-5 h-5">
+                          <Avatar className="w-6 h-6">
                             <AvatarImage src={agent.avatar} />
-                            <AvatarFallback className="text-xs">
+                            <AvatarFallback className="text-[10px]">
                               {agent.name.split(' ').map(n => n[0]).join('')}
                             </AvatarFallback>
                           </Avatar>
@@ -944,16 +938,21 @@ Pour le handler actionable:
                 )}
               </div>
               
-              <Button onClick={handleSendMessage} disabled={isLoading || !inputMessage.trim()} size="icon">
+              <Button 
+                onClick={handleSendMessage} 
+                disabled={isLoading || !inputMessage.trim()} 
+                size="icon"
+                className="h-11 w-11 rounded-xl"
+              >
                 {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
               </Button>
             </div>
           </div>
         </div>
 
-        {/* Synthesis Panel - Fixed width */}
+        {/* Synthesis Panel */}
         {showSynthesisPanel && (
-          <div className="w-80 flex-shrink-0 overflow-auto">
+          <div className="w-80 flex-shrink-0 overflow-auto bg-muted/10">
             <LiveSynthesisPanel 
               synthesis={liveSynthesis}
               onResolveDisagreement={handleResolveDisagreement}
