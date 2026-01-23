@@ -14,23 +14,39 @@ function sanitizeAgentSelfReference(raw: string, agentName?: string): string {
   if (!raw) return raw;
   let text = raw.trim();
 
-  // Remove leading self-identification patterns that make the conversation feel unnatural.
-  // Examples seen: "Alex Kim ici, ...", "Sarah Chen ici: ...", "En tant que Sarah Chen, ..."
   const safeName = (agentName || '').trim();
 
   const stripLeading = (pattern: RegExp) => {
-    const m = text.match(pattern);
-    if (m?.[0]) text = text.slice(m[0].length).trimStart();
+    let match = text.match(pattern);
+    while (match?.[0]) {
+      text = text.slice(match[0].length).trimStart();
+      match = text.match(pattern);
+    }
   };
 
+  // Agent name-specific patterns
   if (safeName) {
     const escaped = safeName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    stripLeading(new RegExp(`^\"?\s*(?:${escaped})\s*(?:ici\s*)?[,.:\-—]+\s*`, 'i'));
-    stripLeading(new RegExp(`^\s*je\s+suis\s+(?:${escaped})\s*[,.:\-—]+\s*`, 'i'));
+    // "Alex Kim ici," / "Alex Kim ici :" / "Alex Kim," / "Alex Kim :"
+    stripLeading(new RegExp(`^\\s*(?:${escaped})\\s*(?:ici\\s*)?[,.!:;\\-—]+\\s*`, 'i'));
+    // "Je suis Alex Kim," / "C'est Alex Kim,"
+    stripLeading(new RegExp(`^\\s*(?:je\\s+suis|c['']est)\\s+(?:${escaped})\\s*[,.!:;\\-—]+\\s*`, 'i'));
+    // "This is Alex Kim." / "Hello, this is Alex Kim."
+    stripLeading(new RegExp(`^\\s*(?:hello|bonjour|salut)?[,!\\s]*(?:this\\s+is|c['']est)\\s+(?:${escaped})\\s*[,.!:;\\-—]+\\s*`, 'i'));
+    // "Hello team! Alex Kim here,"
+    stripLeading(new RegExp(`^\\s*(?:hello|bonjour|salut)[^.!?]{0,30}[!,.]?\\s*(?:${escaped})\\s+(?:here|ici)\\s*[,.!:;\\-—]+\\s*`, 'i'));
+    // "Hello everyone! This is Alex Kim."
+    stripLeading(new RegExp(`^\\s*(?:hello|bonjour|salut)\\s+(?:everyone|team|all|tous|tout le monde)[!.,]?\\s*(?:this\\s+is|c['']est)?\\s*(?:${escaped})?\\s*[,.!:;\\-—]*\\s*`, 'i'));
   }
 
-  stripLeading(/^\s*en\s+tant\s+que\s+[^,\n]{1,80}[,.:\-—]+\s*/i);
-  stripLeading(/^\s*(?:bonjour|salut)\s*,\s*(?:c'|c’)?est\s+[^,\n]{1,80}[,.:\-—]+\s*/i);
+  // Generic self-intro patterns (name-agnostic)
+  stripLeading(/^\s*en\s+tant\s+qu['']?[^,.\n]{1,80}[,.:\-—]+\s*/i);
+  stripLeading(/^\s*(?:bonjour|salut|hello)\s*[,!]?\s*(?:c['']est|this\s+is)\s+[^,.\n]{1,80}[,.!:;\-—]+\s*/i);
+  stripLeading(/^\s*(?:hello|bonjour|salut)\s+(?:team|everyone|all|tous|tout le monde)[!.,]?\s*/i);
+  // "Hello team! <Name> here, ready to..."
+  stripLeading(/^\s*(?:hello|bonjour|salut)[^.!?]{0,40}[!,.]?\s*[A-Z][a-z]+(?:\s+[A-Z][a-z]+)?\s+(?:here|ici)\s*[,.!:;\-—]+\s*/i);
+  // Just the name at start: "Sarah Chen, ready to tackle..."
+  stripLeading(/^\s*[A-Z][a-z]+(?:\s+[A-Z][a-z]+)?\s*[,:]?\s*(?:ready|prêt|here|ici)\s+(?:to|pour|à)\s+/i);
 
   return text.trim();
 }
@@ -134,12 +150,12 @@ serve(async (req) => {
       }
 
       const data = await response.json();
-       const content = data.choices[0].message.content;
+      const content = data.choices[0].message.content;
       
       console.log('AI Response received:', content.substring(0, 100) + '...');
       
       return new Response(JSON.stringify({ 
-         response: content 
+        response: content 
       }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });

@@ -1,12 +1,10 @@
-import { useState, type FC } from 'react';
+import type { FC } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { RoleBadge, inferRoleFromSpecialty } from './RoleBadge';
-import { StanceLine } from './StanceLine';
 import { StructuredMessage } from './StructuredMessage';
 import { Agent, AgentRole } from '@/types';
-import { ChevronDown, ChevronUp, ThumbsUp, ThumbsDown, AlertTriangle, Lightbulb } from 'lucide-react';
+import { ThumbsUp, ThumbsDown, AlertTriangle, Lightbulb, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface MessageBubbleProps {
@@ -21,56 +19,21 @@ interface MessageBubbleProps {
   isConductor?: boolean;
 }
 
-// Role-based accent colors for visual identity
-const ROLE_ACCENT_COLORS: Record<AgentRole, {
-  ring: string;
-  bar: string;
-  bg: string;
-  subtitle: string;
-}> = {
-  ux: {
-    ring: 'ring-pink-400 dark:ring-pink-500',
-    bar: 'border-l-pink-400',
-    bg: 'bg-pink-50/50 dark:bg-pink-950/20',
-    subtitle: 'Optimise clarté et flow',
-  },
-  product: {
-    ring: 'ring-blue-400 dark:ring-blue-500',
-    bar: 'border-l-blue-400',
-    bg: 'bg-blue-50/50 dark:bg-blue-950/20',
-    subtitle: 'Équilibre vision et réalité',
-  },
-  data: {
-    ring: 'ring-emerald-400 dark:ring-emerald-500',
-    bar: 'border-l-emerald-400',
-    bg: 'bg-emerald-50/50 dark:bg-emerald-950/20',
-    subtitle: 'Mesure et valide l\'impact',
-  },
-  tech: {
-    ring: 'ring-orange-400 dark:ring-orange-500',
-    bar: 'border-l-orange-400',
-    bg: 'bg-orange-50/50 dark:bg-orange-950/20',
-    subtitle: 'Alerte sur les risques tech',
-  },
-  business: {
-    ring: 'ring-purple-400 dark:ring-purple-500',
-    bar: 'border-l-purple-400',
-    bg: 'bg-purple-50/50 dark:bg-purple-950/20',
-    subtitle: 'Protège la cohérence business',
-  },
-  strategy: {
-    ring: 'ring-amber-400 dark:ring-amber-500',
-    bar: 'border-l-amber-400',
-    bg: 'bg-amber-50/50 dark:bg-amber-950/20',
-    subtitle: 'Garde le cap stratégique',
-  },
+// Modern, subtle role colors
+const ROLE_COLORS: Record<AgentRole, { accent: string; bg: string }> = {
+  ux: { accent: 'text-pink-600 dark:text-pink-400', bg: 'bg-pink-500/10' },
+  product: { accent: 'text-blue-600 dark:text-blue-400', bg: 'bg-blue-500/10' },
+  data: { accent: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-500/10' },
+  tech: { accent: 'text-orange-600 dark:text-orange-400', bg: 'bg-orange-500/10' },
+  business: { accent: 'text-purple-600 dark:text-purple-400', bg: 'bg-purple-500/10' },
+  strategy: { accent: 'text-amber-600 dark:text-amber-400', bg: 'bg-amber-500/10' },
 };
 
-const REACTION_ICONS = {
-  agree: { icon: ThumbsUp, className: 'text-green-600', bg: 'bg-green-50 dark:bg-green-950/30' },
-  disagree: { icon: ThumbsDown, className: 'text-red-600', bg: 'bg-red-50 dark:bg-red-950/30' },
-  risk: { icon: AlertTriangle, className: 'text-amber-600', bg: 'bg-amber-50 dark:bg-amber-950/30' },
-  idea: { icon: Lightbulb, className: 'text-blue-600', bg: 'bg-blue-50 dark:bg-blue-950/30' },
+const REACTION_CONFIG = {
+  agree: { icon: ThumbsUp, label: 'Accord', className: 'text-emerald-600 bg-emerald-500/10' },
+  disagree: { icon: ThumbsDown, label: 'Nuance', className: 'text-red-500 bg-red-500/10' },
+  risk: { icon: AlertTriangle, label: 'Risque', className: 'text-amber-600 bg-amber-500/10' },
+  idea: { icon: Lightbulb, label: 'Idée', className: 'text-blue-600 bg-blue-500/10' },
 };
 
 export const MessageBubble: FC<MessageBubbleProps> = ({
@@ -86,35 +49,33 @@ export const MessageBubble: FC<MessageBubbleProps> = ({
   const isUser = sender === 'user';
   const agent = sender as Agent;
 
+  // User message - right aligned, primary color
   if (isUser) {
     return (
-      <div className="flex space-x-3 justify-end mb-4">
-        <div className="max-w-[80%] rounded-lg p-3 bg-primary text-primary-foreground ml-12">
-          <p className="text-sm leading-relaxed">{content}</p>
-          <span className="text-xs opacity-50 mt-2 block">
+      <div className="flex justify-end gap-3 group">
+        <div className="flex flex-col items-end max-w-[75%]">
+          <div className="bg-primary text-primary-foreground rounded-2xl rounded-br-md px-4 py-2.5 shadow-sm">
+            <p className="text-sm leading-relaxed whitespace-pre-wrap">{content}</p>
+          </div>
+          <span className="text-[10px] text-muted-foreground mt-1 opacity-0 group-hover:opacity-100 transition-opacity">
             {timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
           </span>
         </div>
-        <Avatar className="w-8 h-8">
-          <AvatarFallback>Moi</AvatarFallback>
-        </Avatar>
       </div>
     );
   }
 
   const role = agent.role || inferRoleFromSpecialty(agent.specialty);
-  const accentColors = role ? ROLE_ACCENT_COLORS[role] : ROLE_ACCENT_COLORS.product;
-  const ReactionIcon = reactionType ? REACTION_ICONS[reactionType] : null;
+  const colors = role ? ROLE_COLORS[role] : ROLE_COLORS.product;
 
-  // Conductor has a special style
+  // Conductor/Nova message - centered, distinct style
   if (isConductor) {
     return (
-      <div className="flex justify-center my-6">
-        <div className="bg-muted/80 border border-dashed border-muted-foreground/30 rounded-lg px-4 py-3 max-w-[85%]">
+      <div className="flex justify-center my-4">
+        <div className="bg-muted/60 backdrop-blur-sm border border-dashed border-border rounded-xl px-4 py-3 max-w-[85%]">
           <div className="flex items-center gap-2 mb-2">
-            <Badge variant="outline" className="text-xs bg-background">
-              🎯 Recentrage
-            </Badge>
+            <Sparkles className="w-3.5 h-3.5 text-primary" />
+            <span className="text-xs font-medium text-primary">Nova • Recentrage</span>
           </div>
           <StructuredMessage content={content} isCollapsible={false} />
         </div>
@@ -122,82 +83,73 @@ export const MessageBubble: FC<MessageBubbleProps> = ({
     );
   }
 
-  // Micro-reactions are compact
-  if (isReaction && ReactionIcon) {
+  // Micro-reaction - compact inline style
+  if (isReaction && reactionType) {
+    const config = REACTION_CONFIG[reactionType];
+    const Icon = config.icon;
+    
     return (
-      <div className="flex items-start space-x-2 ml-12 py-1.5 mb-2">
-        <Avatar className={cn("w-6 h-6 ring-1", accentColors.ring)}>
+      <div className="flex items-center gap-2 ml-12 py-1">
+        <Avatar className="w-5 h-5">
           <AvatarImage src={agent.avatar} />
-          <AvatarFallback className="text-xs">
+          <AvatarFallback className="text-[9px]">
             {agent.name.split(' ').map(n => n[0]).join('')}
           </AvatarFallback>
         </Avatar>
         <div className={cn(
-          "flex items-center gap-2 rounded-lg px-3 py-1.5",
-          ReactionIcon.bg
+          "flex items-center gap-1.5 rounded-full px-2.5 py-1",
+          config.className
         )}>
-          <ReactionIcon.icon className={cn("w-3.5 h-3.5", ReactionIcon.className)} />
-          <span className="text-xs font-medium">{agent.name}</span>
-          <span className="text-xs text-muted-foreground">·</span>
+          <Icon className="w-3 h-3" />
+          <span className="text-xs font-medium">{agent.name.split(' ')[0]}</span>
+          <span className="text-xs opacity-80">·</span>
           <span className="text-xs">{content}</span>
         </div>
       </div>
     );
   }
 
+  // Main agent message - modern card style
   return (
-    <div className="flex space-x-3 justify-start mb-5">
+    <div className="flex gap-3 group">
       <Avatar className={cn(
-        "w-10 h-10 ring-2 ring-offset-2 ring-offset-background",
-        accentColors.ring,
-        isLeadResponse && "ring-[3px]"
+        "w-9 h-9 ring-2 ring-offset-2 ring-offset-background flex-shrink-0",
+        isLeadResponse ? "ring-primary" : "ring-muted"
       )}>
         <AvatarImage src={agent.avatar} />
-        <AvatarFallback>
+        <AvatarFallback className="text-xs font-medium">
           {agent.name.split(' ').map(n => n[0]).join('')}
         </AvatarFallback>
       </Avatar>
 
-      <div className={cn(
-        "max-w-[80%] rounded-lg p-3.5 border-l-4",
-        accentColors.bar,
-        accentColors.bg
-      )}>
-        {/* Agent identity header */}
-        <div className="flex items-start justify-between gap-2 mb-1.5">
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-semibold">{agent.name}</span>
-              <RoleBadge role={role} specialty={agent.specialty} />
-              {isLeadResponse && (
-                <Badge variant="default" className="text-[10px] px-1.5 py-0 h-4 bg-primary/80">
-                  Lead
-                </Badge>
-              )}
-            </div>
-            {/* Role subtitle - personality signal */}
-            <p className="text-[11px] text-muted-foreground mt-0.5">
-              {accentColors.subtitle}
-            </p>
-          </div>
+      <div className="flex-1 min-w-0 max-w-[85%]">
+        {/* Header: Name + Role */}
+        <div className="flex items-center gap-2 mb-1">
+          <span className={cn("text-sm font-semibold", colors.accent)}>
+            {agent.name}
+          </span>
+          <RoleBadge specialty={agent.specialty} size="sm" />
+          {isLeadResponse && (
+            <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4">
+              Lead
+            </Badge>
+          )}
+          <span className="text-[10px] text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity">
+            {timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+          </span>
         </div>
         
-        {/* Stance line */}
-        <StanceLine stance={stance} role={role} specialty={agent.specialty} />
-        
-        {/* Structured message content */}
-        <div className="mt-2">
+        {/* Content */}
+        <div className={cn(
+          "rounded-2xl rounded-tl-md p-3.5",
+          colors.bg
+        )}>
           <StructuredMessage 
             content={content} 
-            isCollapsible={content.length > 300}
-            maxPreviewLines={5}
+            isCollapsible={content.length > 400}
+            maxPreviewLines={6}
           />
         </div>
-        
-        {/* Timestamp - lower contrast */}
-        <span className="text-[10px] text-muted-foreground/60 mt-2.5 block">
-          {timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-        </span>
       </div>
     </div>
   );
