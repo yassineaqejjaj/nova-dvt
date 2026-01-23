@@ -10,3 +10,4 @@ export { ConversationStatusPill } from './ConversationStatusPill';
 export { NextStepRail } from './NextStepRail';
 export { ModeSwitcher } from './ModeSwitcher';
 export { ArtifactDropZone } from './ArtifactDropZone';
+export { ChatControlHeader } from './ChatControlHeader';
