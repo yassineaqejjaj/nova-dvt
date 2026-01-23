@@ -1,6 +1,7 @@
 import { useState, type FC } from 'react';
 import { ChevronDown, ChevronUp, Lightbulb, MessageSquare, Target } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { FormattedText } from '@/components/ui/formatted-text';
 import { cn } from '@/lib/utils';
 
 interface StructuredMessageProps {
@@ -77,7 +78,7 @@ const parseMessageSections = (content: string): ParsedSection[] => {
 const SectionIcon: FC<{ type: ParsedSection['type'] }> = ({ type }) => {
   switch (type) {
     case 'insight':
-      return <Lightbulb className="w-3.5 h-3.5 text-amber-500" />;
+      return <Lightbulb className="w-3.5 h-3.5 text-primary" />;
     case 'reasoning':
       return <MessageSquare className="w-3.5 h-3.5 text-muted-foreground" />;
     case 'conclusion':
@@ -118,16 +119,10 @@ export const StructuredMessage: FC<StructuredMessageProps> = ({
               <SectionIcon type={section.type} />
             </span>
           )}
-          <span className={cn(
-            section.type === 'reasoning' && "text-muted-foreground"
-          )}>
-            {section.content.split('\n').map((line, i) => (
-              <span key={i}>
-                {line}
-                {i < section.content.split('\n').length - 1 && <br />}
-              </span>
-            ))}
-          </span>
+          <FormattedText
+            content={section.content}
+            className={cn(section.type === 'reasoning' && 'text-muted-foreground')}
+          />
         </div>
       ))}
       

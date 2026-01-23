@@ -10,6 +10,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Agent, ChatMessage, ResponseMode, SteeringCommand, LiveSynthesis, ThreadConclusion as ThreadConclusionType, Disagreement } from '@/types';
 import { toast } from '@/hooks/use-toast';
 import { Send, MessageCircle, Users, Loader2, AtSign, Grid3X3, FileText, TrendingUp, Sparkles, PanelRightOpen, PanelRightClose } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { CanvasGenerator } from './CanvasGenerator';
 import { StoryWriter } from './StoryWriter';
 import { ImpactPlotter } from './ImpactPlotter';
@@ -815,7 +816,7 @@ Pour le handler actionable:
   }
 
   return (
-    <div className="space-y-4">
+    <div className="h-full flex flex-col gap-4 min-h-0">
       <div className="text-center">
         <h2 className="text-2xl font-bold mb-2">Chat Multi-Agents</h2>
         <p className="text-muted-foreground">
@@ -849,9 +850,12 @@ Pour le handler actionable:
       </Card>
 
       {/* Main Chat Layout */}
-      <div className="flex gap-4">
+      <div className="flex flex-1 gap-4 min-h-0">
         {/* Chat Area */}
-        <Card className={`flex flex-col h-[650px] ${showSynthesisPanel ? 'flex-1' : 'w-full'}`}>
+        <Card className={cn(
+          'flex flex-col flex-1 min-h-0',
+          showSynthesisPanel ? 'flex-1' : 'w-full'
+        )}>
           {/* Header with Controls */}
           <div className="p-3 border-b space-y-2">
             <div className="flex items-center justify-between">
@@ -992,7 +996,7 @@ Pour le handler actionable:
 
         {/* Synthesis Panel */}
         {showSynthesisPanel && (
-          <div className="w-80">
+          <div className="w-80 min-h-0">
             <LiveSynthesisPanel 
               synthesis={liveSynthesis}
               onResolveDisagreement={handleResolveDisagreement}
