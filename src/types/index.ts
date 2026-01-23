@@ -34,6 +34,20 @@ export interface LiveSynthesis {
   decisionDraft?: string;
   disagreements: Disagreement[];
   lastUpdated: Date;
+  agentInsights?: AgentInsight[];
+  conversationMood?: 'exploratory' | 'convergent' | 'divergent' | 'decisive';
+}
+
+// NEW: Agent insights for transparency
+export interface AgentInsight {
+  agentId: string;
+  agentName: string;
+  specialty: string;
+  stance: string; // Their current position
+  contributionCount: number;
+  keyArguments: string[];
+  bias?: string; // e.g., "Prioritize user experience over speed"
+  agreementRate: number; // 0-100% how often they agree with others
 }
 
 export interface SynthesisOption {
