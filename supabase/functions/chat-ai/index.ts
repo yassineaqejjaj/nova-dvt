@@ -10,6 +10,31 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+function sanitizeAgentSelfReference(raw: string, agentName?: string): string {
+  if (!raw) return raw;
+  let text = raw.trim();
+
+  // Remove leading self-identification patterns that make the conversation feel unnatural.
+  // Examples seen: "Alex Kim ici, ...", "Sarah Chen ici: ...", "En tant que Sarah Chen, ..."
+  const safeName = (agentName || '').trim();
+
+  const stripLeading = (pattern: RegExp) => {
+    const m = text.match(pattern);
+    if (m?.[0]) text = text.slice(m[0].length).trimStart();
+  };
+
+  if (safeName) {
+    const escaped = safeName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    stripLeading(new RegExp(`^\"?\s*(?:${escaped})\s*(?:ici\s*)?[,.:\-—]+\s*`, 'i'));
+    stripLeading(new RegExp(`^\s*je\s+suis\s+(?:${escaped})\s*[,.:\-—]+\s*`, 'i'));
+  }
+
+  stripLeading(/^\s*en\s+tant\s+que\s+[^,\n]{1,80}[,.:\-—]+\s*/i);
+  stripLeading(/^\s*(?:bonjour|salut)\s*,\s*(?:c'|c’)?est\s+[^,\n]{1,80}[,.:\-—]+\s*/i);
+
+  return text.trim();
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -109,12 +134,12 @@ serve(async (req) => {
       }
 
       const data = await response.json();
-      const content = data.choices[0].message.content;
+       const content = data.choices[0].message.content;
       
       console.log('AI Response received:', content.substring(0, 100) + '...');
       
       return new Response(JSON.stringify({ 
-        response: content 
+         response: content 
       }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
@@ -181,7 +206,7 @@ serve(async (req) => {
       const data = await response.json();
       const responseData: any = {
         agent: agent,
-        message: data.choices[0].message.content
+        message: sanitizeAgentSelfReference(data.choices[0].message.content, agent?.name)
       };
       
       const toolSuggestion = getToolSuggestion(agent, messages);
