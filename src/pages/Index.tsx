@@ -483,10 +483,16 @@ const Index = () => {
             </div>
           </header>
           
-          <main className="container mx-auto px-4 py-8 flex-1">
-            <ConfidentialityBanner />
-            {renderTabContent()}
-          </main>
+          {activeTab === 'chat' ? (
+            <main className="flex-1 overflow-hidden">
+              {renderTabContent()}
+            </main>
+          ) : (
+            <main className="container mx-auto px-4 py-8 flex-1 overflow-auto">
+              <ConfidentialityBanner />
+              {renderTabContent()}
+            </main>
+          )}
         </div>
       </div>
 

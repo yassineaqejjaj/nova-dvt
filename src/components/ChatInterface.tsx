@@ -800,7 +800,7 @@ Pour le handler actionable:
   }
 
   return (
-    <div className="h-full flex flex-col overflow-hidden bg-background">
+    <div className="h-[calc(100vh-4rem)] flex flex-col overflow-hidden bg-background">
       {/* Persistent Control Header */}
       <ChatControlHeader
         synthesis={liveSynthesis}
