@@ -1,15 +1,13 @@
 import { useState, useEffect, useRef, type FC } from 'react';
-import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { supabase } from '@/integrations/supabase/client';
 import { Agent, ChatMessage, ResponseMode, SteeringCommand, LiveSynthesis, ThreadConclusion as ThreadConclusionType, Disagreement } from '@/types';
 import { toast } from '@/hooks/use-toast';
-import { Send, MessageCircle, Users, Loader2, AtSign, Grid3X3, FileText, TrendingUp, Sparkles, PanelRightOpen, PanelRightClose } from 'lucide-react';
+import { Send, Users, Loader2, AtSign } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { CanvasGenerator } from './CanvasGenerator';
 import { StoryWriter } from './StoryWriter';
@@ -19,15 +17,12 @@ import { ArtifactSelector, formatArtifactsForContext } from './ArtifactSelector'
 import { DeliverableCreator, DeliverableCreatorButton } from './tools/DeliverableCreator';
 import {
   RoleBadge,
-  ResponseModeToggle,
   MessageBubble,
   LiveSynthesisPanel,
   ThreadConclusion,
   inferRoleFromSpecialty,
-  ConversationStatusPill,
-  NextStepRail,
-  ModeSwitcher,
   ArtifactDropZone,
+  ChatControlHeader,
 } from './chat';
 
 type Artifact = {
@@ -784,61 +779,50 @@ Pour le handler actionable:
   // Empty state
   if (currentSquad.length === 0) {
     return (
-      <div className="space-y-6">
-        <div className="text-center">
-          <h2 className="text-2xl font-bold mb-2">Chat Multi-Agents</h2>
-          <p className="text-muted-foreground">
-            Construisez une squad pour collaborer avec plusieurs agents IA
-          </p>
-        </div>
-        
-        <Card className="p-8 border-2 border-dashed">
-          <div className="text-center space-y-6">
-            <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-primary/10">
-              <Users className="w-10 h-10 text-primary" />
-            </div>
-            <div className="space-y-2">
-              <h3 className="text-xl font-semibold">Prêt à collaborer ?</h3>
-              <p className="text-muted-foreground max-w-md mx-auto">
-                Créez une squad avec des agents IA spécialisés pour obtenir des perspectives multiples.
-              </p>
-            </div>
-            <div className="flex flex-col sm:flex-row gap-3 justify-center">
-              <Button size="lg" onClick={() => window.location.hash = '#squads'}>
-                <Users className="w-4 h-4 mr-2" />
-                Créer une Squad
-              </Button>
-            </div>
+      <div className="h-full flex items-center justify-center">
+        <div className="text-center space-y-6 max-w-md px-4">
+          <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-primary/10">
+            <Users className="w-10 h-10 text-primary" />
           </div>
-        </Card>
+          <div className="space-y-2">
+            <h3 className="text-xl font-semibold">Prêt à collaborer ?</h3>
+            <p className="text-muted-foreground">
+              Créez une squad avec des agents IA spécialisés pour obtenir des perspectives multiples.
+            </p>
+          </div>
+          <Button size="lg" onClick={() => window.location.hash = '#squads'}>
+            <Users className="w-4 h-4 mr-2" />
+            Créer une Squad
+          </Button>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="h-full flex flex-col gap-4 min-h-0">
-      <div className="text-center">
-        <h2 className="text-2xl font-bold mb-2">Chat Multi-Agents</h2>
-        <p className="text-muted-foreground">
-          {currentSquad.length} agents: {currentSquad.map(a => a.name).join(', ')}
-        </p>
-      </div>
+    <div className="h-full flex flex-col overflow-hidden">
+      {/* Persistent Control Header */}
+      <ChatControlHeader
+        synthesis={liveSynthesis}
+        messageCount={messages.length}
+        activeMode={activeSteeringMode}
+        onModeChange={handleSteeringModeChange}
+        responseMode={responseMode}
+        onResponseModeChange={setResponseMode}
+        showSynthesisPanel={showSynthesisPanel}
+        onToggleSynthesisPanel={() => setShowSynthesisPanel(!showSynthesisPanel)}
+        isLoading={isLoading}
+      />
 
-      {/* Squad Display with Role Badges */}
-      <Card className="p-3">
-        <div className="flex items-center justify-between mb-2">
-          <h3 className="text-sm font-semibold flex items-center gap-2">
-            <MessageCircle className="w-4 h-4" />
-            Squad Active
-          </h3>
-          <Badge variant="secondary" className="text-xs">{currentSquad.length} agents</Badge>
-        </div>
-        <div className="flex flex-wrap gap-2">
+      {/* Compact Squad Display */}
+      <div className="flex-shrink-0 px-4 py-2 border-b bg-muted/30">
+        <div className="flex items-center gap-2 overflow-x-auto">
+          <span className="text-xs text-muted-foreground flex-shrink-0">Squad:</span>
           {currentSquad.map(agent => (
-            <div key={agent.id} className="flex items-center gap-2 bg-muted/50 rounded-lg px-2 py-1.5">
-              <Avatar className="w-5 h-5">
+            <div key={agent.id} className="flex items-center gap-1.5 bg-background rounded-full px-2 py-1 flex-shrink-0">
+              <Avatar className="w-4 h-4">
                 <AvatarImage src={agent.avatar} />
-                <AvatarFallback className="text-xs">
+                <AvatarFallback className="text-[10px]">
                   {agent.name.split(' ').map(n => n[0]).join('')}
                 </AvatarFallback>
               </Avatar>
@@ -847,44 +831,18 @@ Pour le handler actionable:
             </div>
           ))}
         </div>
-      </Card>
+      </div>
 
-      {/* Main Chat Layout */}
-      <div className="flex flex-1 gap-4 min-h-0">
-        {/* Chat Area */}
-        <Card className={cn(
-          'flex flex-col flex-1 min-h-0',
-          showSynthesisPanel ? 'flex-1' : 'w-full'
+      {/* Main Content Area - Flex to fill remaining space */}
+      <div className="flex flex-1 min-h-0 overflow-hidden">
+        {/* Chat Messages Area */}
+        <div className={cn(
+          'flex flex-col flex-1 min-h-0 min-w-0',
+          showSynthesisPanel && 'border-r'
         )}>
-          {/* Header with Controls */}
-          <div className="p-3 border-b space-y-2">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <h3 className="font-semibold text-sm">Conversation</h3>
-                <ConversationStatusPill synthesis={liveSynthesis} messageCount={messages.length} />
-              </div>
-              <div className="flex items-center gap-3">
-                <ResponseModeToggle mode={responseMode} onChange={setResponseMode} />
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setShowSynthesisPanel(!showSynthesisPanel)}
-                  className="h-7 px-2"
-                >
-                  {showSynthesisPanel ? <PanelRightClose className="w-4 h-4" /> : <PanelRightOpen className="w-4 h-4" />}
-                </Button>
-              </div>
-            </div>
-            <ModeSwitcher 
-              activeMode={activeSteeringMode} 
-              onModeChange={handleSteeringModeChange}
-              disabled={isLoading}
-            />
-          </div>
-          
-          {/* Messages */}
-          <ScrollArea className="flex-1 p-4" ref={scrollAreaRef}>
-            <div className="space-y-3">
+          {/* Messages - Scrollable */}
+          <ScrollArea className="flex-1" ref={scrollAreaRef}>
+            <div className="p-4 space-y-3">
               {messages.map((message) => (
                 <MessageBubble
                   key={message.id}
@@ -926,8 +884,8 @@ Pour le handler actionable:
 
           <Separator />
           
-          {/* Input Area */}
-          <div className="p-3 relative">
+          {/* Input Area - Fixed at bottom */}
+          <div className="flex-shrink-0 p-3 bg-background relative">
             <div className="flex flex-wrap items-center gap-2 mb-2">
               <ArtifactSelector 
                 selectedArtifacts={selectedArtifacts}
@@ -935,7 +893,6 @@ Pour le handler actionable:
                 maxSelection={5}
               />
               <div className="h-5 w-px bg-border" />
-              {/* Main deliverable creation button - contextual */}
               <DeliverableCreatorButton 
                 variant="compact"
                 onClick={() => setShowDeliverableCreator(true)}
@@ -992,11 +949,11 @@ Pour le handler actionable:
               </Button>
             </div>
           </div>
-        </Card>
+        </div>
 
-        {/* Synthesis Panel */}
+        {/* Synthesis Panel - Fixed width */}
         {showSynthesisPanel && (
-          <div className="w-80 min-h-0">
+          <div className="w-80 flex-shrink-0 overflow-auto">
             <LiveSynthesisPanel 
               synthesis={liveSynthesis}
               onResolveDisagreement={handleResolveDisagreement}
