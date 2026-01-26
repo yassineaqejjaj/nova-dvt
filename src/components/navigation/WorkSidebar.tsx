@@ -10,7 +10,7 @@ import {
   Database,
   Workflow,
   BarChart3,
-  LayoutDashboard,
+  Home,
   Bot,
   Shield,
   ChevronDown,
@@ -72,6 +72,7 @@ export const WorkSidebar: React.FC<WorkSidebarProps> = ({
   const navigate = useNavigate();
   const { open, setOpen } = useSidebar();
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
+    home: true,
     work: true,
     build: true,
     structure: false,
@@ -83,8 +84,22 @@ export const WorkSidebar: React.FC<WorkSidebarProps> = ({
     setExpandedSections(prev => ({ ...prev, [sectionId]: !prev[sectionId] }));
   };
 
-  // Navigation sections - NO tools in main menu, only work contexts
+  // Navigation sections - Home first, then work contexts
   const navSections: NavSection[] = [
+    {
+      id: 'home',
+      title: 'Accueil',
+      icon: Home,
+      defaultExpanded: true,
+      items: [
+        {
+          id: 'dashboard' as TabType,
+          label: 'Accueil',
+          description: 'Démarrer et reprendre',
+          icon: Home
+        }
+      ]
+    },
     {
       id: 'work',
       title: 'Travail en cours',
@@ -175,12 +190,6 @@ export const WorkSidebar: React.FC<WorkSidebarProps> = ({
       title: 'Piloter',
       icon: BarChart3,
       items: [
-        {
-          id: 'dashboard' as TabType,
-          label: 'Dashboard',
-          description: 'Vue d\'ensemble',
-          icon: LayoutDashboard
-        },
         {
           id: 'analytics' as TabType,
           label: 'Analytics',
