@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -36,6 +36,16 @@ import { FrameworkFilter } from './FrameworkFilter';
 import { useFrameworkFilter } from '@/hooks/useFrameworkFilter';
 import { useWorkflowProgress } from '@/hooks/useWorkflowProgress';
 import { useNavigate } from 'react-router-dom';
+
+// New workflow components
+import { 
+  IntentEntryCards, 
+  getIntentWorkflowIds,
+  RecommendedWorkflows,
+  WorkflowCard,
+  getExpectedOutput 
+} from './workflows';
+
 import {
   Rocket,
   Target,
@@ -54,10 +64,10 @@ import {
   CheckCircle2,
   ListTree,
   BarChart3,
+  Layers,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
-import { useEffect } from 'react';
 
 interface Workflow {
   id: string;
@@ -788,6 +798,7 @@ export const Workflows: React.FC = () => {
   const [currentStep, setCurrentStep] = useState(0);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [selectedTag, setSelectedTag] = useState<string>('all');
+  const [selectedIntent, setSelectedIntent] = useState<string | null>(null);
   
   // Workflow progress management
   const [activeWorkflow, setActiveWorkflow] = useState<{ type: string; currentStep: number } | null>(null);
@@ -1072,14 +1083,66 @@ export const Workflows: React.FC = () => {
 
   const categories = Array.from(new Set(workflows.map(w => w.category)));
   const allTags = Array.from(new Set(workflows.flatMap(w => w.tags)));
+  
+  // Get intent-based workflow IDs
+  const intentWorkflowIds = getIntentWorkflowIds(selectedIntent);
 
-  const filteredWorkflows = applyFrameworkFilter(
-    workflows.filter(w => {
+  // Filter workflows based on all criteria including intent
+  const filteredWorkflows = useMemo(() => {
+    let result = workflows;
+    
+    // Apply intent filter first (highlights specific workflows)
+    if (intentWorkflowIds.length > 0) {
+      result = result.filter(w => intentWorkflowIds.includes(w.id));
+    }
+    
+    // Then apply category and tag filters
+    result = result.filter(w => {
       const categoryMatch = selectedCategory === 'all' || w.category === selectedCategory;
       const tagMatch = selectedTag === 'all' || w.tags.includes(selectedTag);
       return categoryMatch && tagMatch;
-    })
-  );
+    });
+    
+    // Apply framework filter
+    result = applyFrameworkFilter(result);
+    
+    // Sort by context relevance (if context is defined, prioritize related workflows)
+    if (activeContext) {
+      // Could add more sophisticated sorting based on context metadata
+    }
+    
+    return result;
+  }, [selectedIntent, selectedCategory, selectedTag, selectedFrameworks, activeContext, intentWorkflowIds, applyFrameworkFilter]);
+
+  // Get recommended workflows (based on context and usage)
+  const recommendedWorkflows = useMemo(() => {
+    // Prioritize certain workflows when no intent is selected
+    const recommendedIds = ['smart-discovery', 'insight-synthesizer', 'epic-to-stories'];
+    return workflows
+      .filter(w => recommendedIds.includes(w.id))
+      .map(w => ({
+        id: w.id,
+        name: w.name,
+        description: w.description,
+        icon: w.icon,
+        estimatedTime: w.estimatedTime,
+        expectedOutput: getExpectedOutput(w.id),
+      }));
+  }, []);
+
+  // Check framework compatibility for a workflow
+  const getCompatibleFrameworkNames = useCallback((workflow: Workflow): string[] => {
+    if (!workflow.frameworks) return [];
+    return frameworks
+      .filter(f => selectedFrameworks.includes(f.id) && workflow.frameworks?.includes(f.id))
+      .map(f => f.shortName);
+  }, [frameworks, selectedFrameworks]);
+
+  const isWorkflowCompatibleWithSelectedFrameworks = useCallback((workflow: Workflow): boolean => {
+    if (selectedFrameworks.length === 0) return true;
+    if (!workflow.frameworks || workflow.frameworks.length === 0) return true;
+    return workflow.frameworks.some(fw => selectedFrameworks.includes(fw));
+  }, [selectedFrameworks]);
 
   if (selectedWorkflow) {
     return (
@@ -1479,19 +1542,20 @@ export const Workflows: React.FC = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
+      {/* Header with context */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-3xl font-bold mb-2">PM Workflows</h2>
-          <p className="text-muted-foreground">
-            Guided step-by-step workflows for product management, design, and development
+          <h2 className="text-2xl font-bold">Workflows Produit</h2>
+          <p className="text-sm text-muted-foreground">
+            Processus guidés étape par étape pour le product management
           </p>
         </div>
         <div className="flex gap-2 items-center">
           {activeContext && (
-            <Badge variant="secondary" className="text-xs">
-              <CheckCircle className="w-3 h-3 mr-1" />
-              Contexte: {activeContext.name}
+            <Badge variant="secondary" className="text-xs bg-primary/10 text-primary border-primary/20">
+              <Layers className="w-3 h-3 mr-1" />
+              {activeContext.name}
             </Badge>
           )}
           <Button
@@ -1500,172 +1564,154 @@ export const Workflows: React.FC = () => {
             onClick={() => setShowContextManager(true)}
           >
             <Settings2 className="w-4 h-4 mr-2" />
-            Gérer Contextes
+            Contextes
           </Button>
         </div>
       </div>
 
-      {/* Filters */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2 text-base">
-              <Filter className="w-4 h-4" />
-              <span>Filter Workflows</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label className="text-sm font-medium">Category</Label>
-              <div className="flex flex-wrap gap-2">
-                <Badge
-                  variant={selectedCategory === 'all' ? 'default' : 'outline'}
-                  className="cursor-pointer"
-                  onClick={() => setSelectedCategory('all')}
-                >
-                  All
-                </Badge>
-                {categories.map(category => (
-                  <Badge
-                    key={category}
-                    variant={selectedCategory === category ? 'default' : 'outline'}
-                    className="cursor-pointer"
-                    onClick={() => setSelectedCategory(category)}
-                  >
-                    {category}
-                  </Badge>
-                ))}
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label className="text-sm font-medium">Tags</Label>
-              <div className="flex flex-wrap gap-2">
-                <Badge
-                  variant={selectedTag === 'all' ? 'default' : 'outline'}
-                  className="cursor-pointer text-xs"
-                  onClick={() => setSelectedTag('all')}
-                >
-                  All
-                </Badge>
-                {allTags.map(tag => (
-                  <Badge
-                    key={tag}
-                    variant={selectedTag === tag ? 'default' : 'outline'}
-                    className="cursor-pointer text-xs"
-                    onClick={() => setSelectedTag(tag)}
-                  >
-                    {tag}
-                  </Badge>
-                ))}
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Framework Filter */}
-        <FrameworkFilter
-          frameworks={frameworks}
-          selectedFrameworks={selectedFrameworks}
-          onToggleFramework={toggleFramework}
-          onClearAll={clearFrameworks}
-          onSelectAll={selectAllFrameworks}
+      {/* Intent-based entry points - KEY IMPROVEMENT */}
+      <div className="space-y-2">
+        <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+          <Target className="w-4 h-4" />
+          Par où commencer ?
+        </div>
+        <IntentEntryCards
+          selectedIntent={selectedIntent}
+          onSelectIntent={(intent) => {
+            setSelectedIntent(intent);
+            // Reset other filters when intent is selected
+            if (intent) {
+              setSelectedCategory('all');
+              setSelectedTag('all');
+            }
+          }}
         />
       </div>
 
-      {/* Workflows by Category */}
+      {/* Recommended workflows - show only when no intent selected */}
+      {!selectedIntent && (
+        <RecommendedWorkflows
+          workflows={recommendedWorkflows}
+          contextName={activeContext?.name || null}
+          onSelect={(workflowId) => {
+            const workflow = workflows.find(w => w.id === workflowId);
+            if (workflow) handleWorkflowSelect(workflow);
+          }}
+        />
+      )}
+
+      {/* Collapsible Filters - more compact */}
+      <details className="group" open={selectedIntent === null}>
+        <summary className="flex items-center gap-2 cursor-pointer text-sm font-medium text-muted-foreground hover:text-foreground">
+          <Filter className="w-4 h-4" />
+          Filtres avancés
+          <Badge variant="secondary" className="text-xs">
+            {selectedCategory !== 'all' || selectedTag !== 'all' || selectedFrameworks.length > 0 ? 'Actifs' : ''}
+          </Badge>
+        </summary>
+        
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-3">
+          <Card className="border-border/50">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm flex items-center gap-2">
+                <Filter className="w-3.5 h-3.5" />
+                Catégorie & Tags
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="space-y-1.5">
+                <Label className="text-xs text-muted-foreground">Catégorie</Label>
+                <div className="flex flex-wrap gap-1.5">
+                  <Badge
+                    variant={selectedCategory === 'all' ? 'default' : 'outline'}
+                    className="cursor-pointer text-xs"
+                    onClick={() => setSelectedCategory('all')}
+                  >
+                    Toutes
+                  </Badge>
+                  {categories.map(category => (
+                    <Badge
+                      key={category}
+                      variant={selectedCategory === category ? 'default' : 'outline'}
+                      className="cursor-pointer text-xs"
+                      onClick={() => setSelectedCategory(category)}
+                    >
+                      {category}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs text-muted-foreground">Tags</Label>
+                <div className="flex flex-wrap gap-1 max-h-20 overflow-y-auto">
+                  <Badge
+                    variant={selectedTag === 'all' ? 'default' : 'outline'}
+                    className="cursor-pointer text-xs"
+                    onClick={() => setSelectedTag('all')}
+                  >
+                    Tous
+                  </Badge>
+                  {allTags.slice(0, 12).map(tag => (
+                    <Badge
+                      key={tag}
+                      variant={selectedTag === tag ? 'default' : 'outline'}
+                      className="cursor-pointer text-xs"
+                      onClick={() => setSelectedTag(tag)}
+                    >
+                      {tag}
+                    </Badge>
+                  ))}
+                  {allTags.length > 12 && (
+                    <Badge variant="outline" className="text-xs">
+                      +{allTags.length - 12}
+                    </Badge>
+                  )}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Framework Filter - made more compact */}
+          <FrameworkFilter
+            frameworks={frameworks}
+            selectedFrameworks={selectedFrameworks}
+            onToggleFramework={toggleFramework}
+            onClearAll={clearFrameworks}
+            onSelectAll={selectAllFrameworks}
+            className="border-border/50"
+          />
+        </div>
+      </details>
+
+      {/* Workflows by Category - using new WorkflowCard */}
       {categories.filter(cat => filteredWorkflows.some(w => w.category === cat)).map(category => (
-        <div key={category} className="space-y-4">
-          <h3 className="text-xl font-semibold flex items-center space-x-2">
+        <div key={category} className="space-y-3">
+          <h3 className="text-lg font-semibold flex items-center gap-2">
             <span>{category}</span>
-            <Badge variant="secondary">
+            <Badge variant="secondary" className="text-xs">
               {filteredWorkflows.filter(w => w.category === category).length}
             </Badge>
           </h3>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
             {filteredWorkflows
               .filter(workflow => workflow.category === category)
               .map(workflow => (
-                <Card
+                <WorkflowCard
                   key={workflow.id}
-                  className="hover:shadow-lg transition-shadow cursor-pointer"
-                  onClick={() => handleWorkflowSelect(workflow)}
-                >
-                  <CardHeader>
-                    <div className="flex items-start justify-between">
-                      <div className="flex items-start space-x-3">
-                        <div className="p-2 rounded-lg bg-primary/10 text-primary">
-                          {workflow.icon}
-                        </div>
-                        <div className="flex-1">
-                          <CardTitle className="text-base">{workflow.name}</CardTitle>
-                          <div className="flex items-center space-x-2 mt-2">
-                            <Badge variant="outline" className="text-xs">
-                              {workflow.estimatedTime}
-                            </Badge>
-                            <Badge variant="secondary" className="text-xs">
-                              {workflow.difficulty}
-                            </Badge>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    <CardDescription>{workflow.description}</CardDescription>
-                    <div className="flex flex-wrap gap-1">
-                      {workflow.tags.slice(0, 3).map(tag => (
-                        <Badge key={tag} variant="outline" className="text-xs">
-                          {tag}
-                        </Badge>
-                      ))}
-                      {workflow.tags.length > 3 && (
-                        <Badge variant="outline" className="text-xs">
-                          +{workflow.tags.length - 3}
-                        </Badge>
-                      )}
-                    </div>
-                    <div className="flex items-center justify-between text-sm text-muted-foreground pt-2 border-t">
-                      <span>{workflow.steps.length} steps</span>
-                      <Button variant="ghost" size="sm">
-                        Start Workflow →
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
+                  workflow={workflow}
+                  expectedOutput={getExpectedOutput(workflow.id)}
+                  isCompatibleWithFramework={isWorkflowCompatibleWithSelectedFrameworks(workflow)}
+                  selectedFrameworks={selectedFrameworks}
+                  compatibleFrameworkNames={getCompatibleFrameworkNames(workflow)}
+                  onSelect={() => handleWorkflowSelect(workflow)}
+                />
               ))}
           </div>
         </div>
       ))}
 
-      <Card className="bg-muted/50">
-        <CardHeader>
-          <CardTitle className="flex items-center space-x-2">
-            <CheckCircle className="w-5 h-5 text-green-500" />
-            <span>Benefits of Guided Workflows</span>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ul className="space-y-2 text-sm text-muted-foreground">
-            <li className="flex items-start space-x-2">
-              <span className="text-green-500 mt-0.5">✓</span>
-              <span>Follow proven product management processes step-by-step</span>
-            </li>
-            <li className="flex items-start space-x-2">
-              <span className="text-green-500 mt-0.5">✓</span>
-              <span>Integrate multiple PM tools in a logical sequence</span>
-            </li>
-            <li className="flex items-start space-x-2">
-              <span className="text-green-500 mt-0.5">✓</span>
-              <span>Track progress and maintain consistency across initiatives</span>
-            </li>
-            <li className="flex items-start space-x-2">
-              <span className="text-green-500 mt-0.5">✓</span>
-              <span>Learn best practices while getting work done</span>
-            </li>
-          </ul>
-        </CardContent>
-      </Card>
+      {/* Removed the verbose "Benefits" card to reduce vertical space */}
       
       <ProductContextManager 
         open={showContextManager} 
