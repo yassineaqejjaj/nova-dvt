@@ -20,20 +20,18 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { AgentSelector } from './AgentSelector';
+import { SquadCard } from './squad/SquadCard';
+import { SquadTemplates, SquadTemplate } from './squad/SquadTemplates';
 import { supabase } from '@/integrations/supabase/client';
 import { Squad, Agent } from '@/types';
 import { toast } from '@/hooks/use-toast';
 import { 
   Users, 
   Plus, 
-  X, 
   MessageCircle, 
-  Calendar,
-  Trash2,
-  Edit,
-  CheckCircle,
   Sparkles,
-  Loader2
+  Loader2,
+  Lightbulb
 } from 'lucide-react';
 import { allAgents } from '@/data/mockData';
 
@@ -72,6 +70,10 @@ export const SquadManager: React.FC<SquadManagerProps> = ({
     context: ''
   });
 
+  // Separate active and inactive squads
+  const activeSquads = squads.filter(s => currentSquad?.id === s.id);
+  const inactiveSquads = squads.filter(s => currentSquad?.id !== s.id);
+
   React.useEffect(() => {
     loadUserProfile();
   }, []);
@@ -95,6 +97,14 @@ export const SquadManager: React.FC<SquadManagerProps> = ({
     } catch (error) {
       console.error('Error loading user profile:', error);
     }
+  };
+
+  const handleSelectTemplate = (template: SquadTemplate) => {
+    setNewSquadData({
+      name: template.name,
+      purpose: template.suggestedPurpose,
+      context: ''
+    });
   };
 
   const handleCreateSquad = async (e: React.FormEvent) => {
@@ -381,43 +391,79 @@ export const SquadManager: React.FC<SquadManagerProps> = ({
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold mb-2">Squad Management</h2>
+          <h2 className="text-2xl font-bold mb-1">Gestion des Squads</h2>
           <p className="text-muted-foreground">
-            Create and manage multiple AI squads for different projects.
+            Créez une squad par projet, client ou type de travail.
           </p>
         </div>
         
         <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
           <DialogTrigger asChild>
-            <Button className="flex items-center space-x-2">
+            <Button className="flex items-center gap-2">
               <Plus className="w-4 h-4" />
-              <span>Create Squad</span>
+              <span>Créer une Squad</span>
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle className="flex items-center space-x-2">
+              <DialogTitle className="flex items-center gap-2">
                 <Users className="w-5 h-5" />
-                <span>Create New Squad</span>
+                <span>Nouvelle Squad</span>
               </DialogTitle>
             </DialogHeader>
             <form onSubmit={handleCreateSquad} className="space-y-6">
+              {/* Squad Templates */}
+              <SquadTemplates onSelectTemplate={handleSelectTemplate} />
+              
+              <Separator />
+
               <div className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="squad-context">Project Context</Label>
-                  <Textarea
-                    id="squad-context"
-                    placeholder="Describe your project... e.g., 'Building a SaaS app for project management with real-time collaboration features'"
-                    value={newSquadData.context}
-                    onChange={(e) => setNewSquadData(prev => ({ ...prev, context: e.target.value }))}
-                    rows={4}
-                    className="resize-none"
+                  <Label htmlFor="squad-name">Nom de la Squad *</Label>
+                  <Input
+                    id="squad-name"
+                    placeholder="ex: Discovery Checkout, COPIL IA Retail..."
+                    value={newSquadData.name}
+                    onChange={(e) => setNewSquadData(prev => ({ ...prev, name: e.target.value }))}
+                    required
                   />
                   <p className="text-xs text-muted-foreground">
-                    AI will analyze this to recommend the best agents for your needs
+                    Utilisez un nom orienté objectif, pas générique
                   </p>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="squad-purpose">Rôle de la Squad *</Label>
+                  <Textarea
+                    id="squad-purpose"
+                    placeholder="Décrivez le rôle de cette squad... ex: Explorer les besoins utilisateurs et définir le périmètre produit"
+                    value={newSquadData.purpose}
+                    onChange={(e) => setNewSquadData(prev => ({ ...prev, purpose: e.target.value }))}
+                    rows={2}
+                    required
+                  />
+                </div>
+              </div>
+
+              <Separator />
+
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="squad-context" className="flex items-center gap-2">
+                    <Sparkles className="w-4 h-4 text-primary" />
+                    Contexte projet (optionnel)
+                  </Label>
+                  <Textarea
+                    id="squad-context"
+                    placeholder="Décrivez votre projet pour obtenir des recommandations d'agents personnalisées..."
+                    value={newSquadData.context}
+                    onChange={(e) => setNewSquadData(prev => ({ ...prev, context: e.target.value }))}
+                    rows={3}
+                    className="resize-none"
+                  />
                 </div>
 
                 <Button
@@ -425,17 +471,17 @@ export const SquadManager: React.FC<SquadManagerProps> = ({
                   variant="outline"
                   onClick={handleGetSuggestions}
                   disabled={isGettingSuggestions || !newSquadData.context.trim()}
-                  className="w-full flex items-center justify-center space-x-2"
+                  className="w-full flex items-center justify-center gap-2"
                 >
                   {isGettingSuggestions ? (
                     <>
                       <Loader2 className="w-4 h-4 animate-spin" />
-                      <span>Analyzing...</span>
+                      <span>Analyse en cours...</span>
                     </>
                   ) : (
                     <>
                       <Sparkles className="w-4 h-4" />
-                      <span>Get AI Squad Recommendations</span>
+                      <span>Obtenir des recommandations IA</span>
                     </>
                   )}
                 </Button>
@@ -443,22 +489,22 @@ export const SquadManager: React.FC<SquadManagerProps> = ({
 
               {recommendations && (
                 <div className="space-y-4 p-4 bg-muted/50 rounded-lg border">
-                  <div className="flex items-start space-x-2">
+                  <div className="flex items-start gap-2">
                     <Sparkles className="w-5 h-5 text-primary mt-1 flex-shrink-0" />
                     <div className="space-y-2 flex-1">
-                      <h4 className="font-semibold text-sm">AI Recommendations</h4>
+                      <h4 className="font-semibold text-sm">Recommandations IA</h4>
                       <p className="text-sm text-muted-foreground">{recommendations.reasoning}</p>
                       
                       <div className="space-y-2 mt-3">
-                        <Label className="text-xs">Recommended Agents ({recommendations.recommendedAgents.length})</Label>
-                        <ScrollArea className="h-64">
+                        <Label className="text-xs">Agents recommandés ({recommendations.recommendedAgents.length})</Label>
+                        <ScrollArea className="h-48">
                           <div className="grid grid-cols-1 gap-2 pr-4">
                             {recommendations.recommendedAgents.map((agentId) => {
                               const agent = allAgents.find(a => a.id === agentId);
                               if (!agent) return null;
                               
                               return (
-                                <div key={agent.id} className="flex items-center space-x-3 p-2 bg-background rounded border">
+                                <div key={agent.id} className="flex items-center gap-3 p-2 bg-background rounded border">
                                   <Avatar className="w-10 h-10 flex-shrink-0">
                                     <AvatarImage src={agent.avatar} />
                                     <AvatarFallback className="text-xs">
@@ -482,36 +528,10 @@ export const SquadManager: React.FC<SquadManagerProps> = ({
                   </div>
                 </div>
               )}
-
-              <Separator />
               
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="squad-name">Squad Name</Label>
-                  <Input
-                    id="squad-name"
-                    placeholder="e.g., Product Launch Team"
-                    value={newSquadData.name}
-                    onChange={(e) => setNewSquadData(prev => ({ ...prev, name: e.target.value }))}
-                    required
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="squad-purpose">Purpose (Optional)</Label>
-                  <Textarea
-                    id="squad-purpose"
-                    placeholder="Describe what this squad will work on..."
-                    value={newSquadData.purpose}
-                    onChange={(e) => setNewSquadData(prev => ({ ...prev, purpose: e.target.value }))}
-                    rows={2}
-                  />
-                </div>
-              </div>
-              
-              <div className="flex space-x-2 pt-4">
-                <Button type="submit" disabled={isLoading} className="flex-1">
-                  {isLoading ? 'Creating...' : 'Create Squad'}
+              <div className="flex gap-2 pt-2">
+                <Button type="submit" disabled={isLoading || !newSquadData.name.trim() || !newSquadData.purpose.trim()} className="flex-1">
+                  {isLoading ? 'Création...' : 'Créer la Squad'}
                 </Button>
                 <Button 
                   type="button" 
@@ -523,7 +543,7 @@ export const SquadManager: React.FC<SquadManagerProps> = ({
                   }}
                   disabled={isLoading}
                 >
-                  Cancel
+                  Annuler
                 </Button>
               </div>
             </form>
@@ -533,136 +553,71 @@ export const SquadManager: React.FC<SquadManagerProps> = ({
 
       {squads.length === 0 ? (
         <Card className="p-8">
-          <div className="text-center">
-            <Users className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-lg font-semibold mb-2">No Squads Yet</h3>
-            <p className="text-muted-foreground mb-4">
-              Create your first squad to start building AI teams.
-            </p>
-            <Button onClick={() => setShowCreateDialog(true)}>
+          <div className="text-center space-y-4">
+            <Users className="w-16 h-16 text-muted-foreground mx-auto" />
+            <div>
+              <h3 className="text-lg font-semibold mb-2">Aucune squad créée</h3>
+              <p className="text-muted-foreground mb-4">
+                Créez une squad par projet, client ou type de travail.
+              </p>
+            </div>
+            <Button onClick={() => setShowCreateDialog(true)} size="lg">
               <Plus className="w-4 h-4 mr-2" />
-              Create Your First Squad
+              Créer votre première Squad
             </Button>
           </div>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {squads.map((squad) => (
-            <Card 
-              key={squad.id} 
-              className={`relative transition-all hover:shadow-md ${
-                currentSquad?.id === squad.id ? 'ring-2 ring-primary' : ''
-              }`}
-            >
-              <CardHeader className="pb-3">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <CardTitle className="text-lg flex items-center space-x-2">
-                      <span>{squad.name}</span>
-                      {currentSquad?.id === squad.id && (
-                        <Badge variant="default" className="text-xs">Active</Badge>
-                      )}
-                    </CardTitle>
-                    {squad.purpose && (
-                      <p className="text-sm text-muted-foreground mt-1">
-                        {squad.purpose}
-                      </p>
-                    )}
-                  </div>
-                  
-                  <div className="flex items-center space-x-1">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setEditingSquad(squad)}
-                      className="h-8 w-8 p-0"
-                    >
-                      <Edit className="w-3 h-3" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleDeleteSquad(squad)}
-                      className="h-8 w-8 p-0 text-destructive hover:text-destructive"
-                    >
-                      <Trash2 className="w-3 h-3" />
-                    </Button>
-                  </div>
-                </div>
-              </CardHeader>
-              
-              <CardContent className="pt-0">
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between text-sm">
-                    <div className="flex items-center space-x-1">
-                      <Users className="w-4 h-4 text-muted-foreground" />
-                      <span>{squad.agents?.length || 0} agents</span>
-                    </div>
-                    <div className="flex items-center space-x-1 text-muted-foreground">
-                      <Calendar className="w-4 h-4" />
-                      <span>{new Date(squad.createdAt).toLocaleDateString()}</span>
-                    </div>
-                  </div>
-                  
-                  {squad.agents && squad.agents.length > 0 && (
-                    <div className="flex -space-x-2">
-                      {squad.agents.slice(0, 4).map((agent, index) => (
-                        <Avatar key={agent.id} className="w-8 h-8 border-2 border-background">
-                          <AvatarImage src={agent.avatar} />
-                          <AvatarFallback className="text-xs">
-                            {agent.name.split(' ').map(n => n[0]).join('')}
-                          </AvatarFallback>
-                        </Avatar>
-                      ))}
-                      {squad.agents.length > 4 && (
-                        <div className="w-8 h-8 rounded-full bg-muted border-2 border-background flex items-center justify-center">
-                          <span className="text-xs font-medium">+{squad.agents.length - 4}</span>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                  
-                  <Separator />
-                  
-                  <div className="flex space-x-2">
-                    {currentSquad?.id !== squad.id && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleSetActiveSquad(squad)}
-                        className="flex-1 text-xs"
-                      >
-                        <CheckCircle className="w-3 h-3 mr-1" />
-                        Make Active
-                      </Button>
-                    )}
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        setManagingSquad(squad);
-                        setShowAgentSelector(true);
-                      }}
-                      className="flex-1 text-xs"
-                    >
-                      <Plus className="w-3 h-3 mr-1" />
-                      Manage
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => onSquadChange(squad)}
-                      disabled={!squad.agents || squad.agents.length === 0}
-                      className="flex-1 text-xs"
-                    >
-                      <MessageCircle className="w-3 h-3 mr-1" />
-                      Chat
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+        <div className="space-y-6">
+          {/* Active Squad Section */}
+          {activeSquads.length > 0 && (
+            <div className="space-y-3">
+              <h3 className="text-sm font-medium text-muted-foreground">Squad active</h3>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                {activeSquads.map((squad) => (
+                  <SquadCard
+                    key={squad.id}
+                    squad={squad}
+                    isActive={true}
+                    onSetActive={() => {}}
+                    onManage={() => {
+                      setManagingSquad(squad);
+                      setShowAgentSelector(true);
+                    }}
+                    onChat={() => onSquadChange(squad)}
+                    onEdit={() => setEditingSquad(squad)}
+                    onDelete={() => handleDeleteSquad(squad)}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Inactive Squads Section */}
+          {inactiveSquads.length > 0 && (
+            <div className="space-y-3">
+              <h3 className="text-sm font-medium text-muted-foreground">
+                Autres squads ({inactiveSquads.length})
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {inactiveSquads.map((squad) => (
+                  <SquadCard
+                    key={squad.id}
+                    squad={squad}
+                    isActive={false}
+                    onSetActive={() => handleSetActiveSquad(squad)}
+                    onManage={() => {
+                      setManagingSquad(squad);
+                      setShowAgentSelector(true);
+                    }}
+                    onChat={() => onSquadChange(squad)}
+                    onEdit={() => setEditingSquad(squad)}
+                    onDelete={() => handleDeleteSquad(squad)}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
 
@@ -683,14 +638,14 @@ export const SquadManager: React.FC<SquadManagerProps> = ({
       <AlertDialog open={!!removeAgentId} onOpenChange={() => setRemoveAgentId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Remove Agent?</AlertDialogTitle>
+            <AlertDialogTitle>Retirer l'agent ?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will remove the agent from the squad. You can add them back later.
+              Cet agent sera retiré de la squad. Vous pourrez l'ajouter à nouveau plus tard.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleRemoveAgent}>Remove</AlertDialogAction>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction onClick={handleRemoveAgent}>Retirer</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
@@ -699,7 +654,7 @@ export const SquadManager: React.FC<SquadManagerProps> = ({
       <Dialog open={!!editingSquad} onOpenChange={() => setEditingSquad(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Edit Squad</DialogTitle>
+            <DialogTitle>Modifier la Squad</DialogTitle>
           </DialogHeader>
           {editingSquad && (
             <form 
@@ -714,7 +669,7 @@ export const SquadManager: React.FC<SquadManagerProps> = ({
               className="space-y-4"
             >
               <div className="space-y-2">
-                <Label htmlFor="edit-squad-name">Squad Name</Label>
+                <Label htmlFor="edit-squad-name">Nom de la Squad</Label>
                 <Input
                   id="edit-squad-name"
                   name="name"
@@ -724,18 +679,19 @@ export const SquadManager: React.FC<SquadManagerProps> = ({
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="edit-squad-purpose">Purpose</Label>
+                <Label htmlFor="edit-squad-purpose">Rôle de la Squad</Label>
                 <Textarea
                   id="edit-squad-purpose"
                   name="purpose"
                   defaultValue={editingSquad.purpose}
                   rows={3}
+                  placeholder="Décrivez le rôle de cette squad..."
                 />
               </div>
               
-              <div className="flex space-x-2">
+              <div className="flex gap-2">
                 <Button type="submit" disabled={isLoading} className="flex-1">
-                  {isLoading ? 'Saving...' : 'Save Changes'}
+                  {isLoading ? 'Enregistrement...' : 'Enregistrer'}
                 </Button>
                 <Button 
                   type="button" 
@@ -743,7 +699,7 @@ export const SquadManager: React.FC<SquadManagerProps> = ({
                   onClick={() => setEditingSquad(null)}
                   disabled={isLoading}
                 >
-                  Cancel
+                  Annuler
                 </Button>
               </div>
             </form>
