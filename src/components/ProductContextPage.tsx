@@ -2,17 +2,24 @@ import { useProductContexts } from '@/components/context/useProductContexts';
 import { ContextList } from '@/components/context/ContextList';
 import { ContextEditor } from '@/components/context/ContextEditor';
 import { ConfirmDeleteDialog } from '@/components/context/ConfirmDeleteDialog';
+import { ContextRoleExplainer } from '@/components/context/ContextRoleExplainer';
+import { ContextValueBanner } from '@/components/context/ContextValueBanner';
 
 export const ProductContextPage = () => {
   const ctx = useProductContexts();
 
   return (
-    <div className="container mx-auto py-8 px-4 max-w-7xl">
-      <div className="mb-8">
-        <h1 className="text-4xl font-bold mb-2 text-foreground">Contexte Produit Global</h1>
-        <p className="text-muted-foreground">Gérez et réutilisez vos contextes produit à travers toute l'application</p>
+    <div className="container mx-auto py-6 px-4 max-w-7xl space-y-6">
+      {/* Header with role explanation */}
+      <div className="space-y-2">
+        <h1 className="text-3xl font-bold text-foreground">Contexte Produit Global</h1>
+        <p className="text-muted-foreground">
+          Le contexte alimente les agents, les workflows et les décisions générées dans Nova.
+        </p>
+        <ContextRoleExplainer />
       </div>
 
+      {/* Main content */}
       <div className="flex flex-col gap-6">
         <ContextList
           contexts={ctx.contexts}
@@ -50,6 +57,9 @@ export const ProductContextPage = () => {
           updateObjective={ctx.updateObjective}
           updateKPI={ctx.updateKPI}
         />
+
+        {/* Value projection banner */}
+        <ContextValueBanner />
       </div>
 
       <ConfirmDeleteDialog
