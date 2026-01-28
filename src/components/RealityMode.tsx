@@ -29,7 +29,6 @@ import {
   FrictionHeatmap,
   ThinkingStyleFeedback,
   SilentModeView,
-  TENSION_AGENTS,
   STANCE_LABELS,
   WORD_LIMITS,
   Stance,
@@ -39,7 +38,8 @@ import {
   ConfidenceFactors,
   AgentSignal,
   CounterfactualAnalysis,
-  TensionAgent
+  TensionAgent,
+  useTensionAgentsForContext
 } from './reality-mode';
 
 interface Artifact {
@@ -63,6 +63,9 @@ export const RealityMode: React.FC<RealityModeProps> = ({
   onAddXP,
   userId 
 }) => {
+  // Get contextual tension agents
+  const { tensionAgents: contextualTensionAgents, isLoading: tensionLoading } = useTensionAgentsForContext();
+  
   // Core state
   const [prompt, setPrompt] = useState('');
   const [isDebating, setIsDebating] = useState(false);
@@ -785,27 +788,31 @@ Génère 2-3 options de décision concrètes.`
                 ))}
               </div>
 
-              {/* Tension Agents */}
+              {/* Tension Agents - Now contextual */}
               <div className="pt-3 border-t">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-xs font-medium text-muted-foreground">Agents de Tension</span>
                   <Badge variant="outline" className="text-[10px]">{activeTensionAgents.length}</Badge>
                 </div>
-                <div className="space-y-1">
-                  {TENSION_AGENTS.map(ta => {
-                    const isActive = activeTensionAgents.some(a => a.id === ta.id);
-                    return (
-                      <Button key={ta.id} size="sm" variant={isActive ? "secondary" : "ghost"} className="w-full justify-start text-xs h-8" onClick={() => isActive ? removeTensionAgent(ta.id) : addTensionAgent(ta)}>
-                        {ta.role === 'brand_guardian' && <Shield className="w-3 h-3 mr-1" />}
-                        {ta.role === 'store_manager' && <Store className="w-3 h-3 mr-1" />}
-                        {ta.role === 'finance_reality' && <Calculator className="w-3 h-3 mr-1" />}
-                        {ta.role === 'customer_advocate' && <UserCheck className="w-3 h-3 mr-1" />}
-                        {ta.name}
-                        {isActive && <X className="w-3 h-3 ml-auto" />}
-                      </Button>
-                    );
-                  })}
-                </div>
+                {tensionLoading ? (
+                  <div className="text-xs text-muted-foreground text-center py-2">Chargement...</div>
+                ) : (
+                  <div className="space-y-1">
+                    {contextualTensionAgents.map(ta => {
+                      const isActive = activeTensionAgents.some(a => a.id === ta.id);
+                      return (
+                        <Button key={ta.id} size="sm" variant={isActive ? "secondary" : "ghost"} className="w-full justify-start text-xs h-8" onClick={() => isActive ? removeTensionAgent(ta.id) : addTensionAgent(ta)}>
+                          {ta.role === 'brand_guardian' && <Shield className="w-3 h-3 mr-1" />}
+                          {ta.role === 'store_manager' && <Store className="w-3 h-3 mr-1" />}
+                          {ta.role === 'finance_reality' && <Calculator className="w-3 h-3 mr-1" />}
+                          {ta.role === 'customer_advocate' && <UserCheck className="w-3 h-3 mr-1" />}
+                          <span className="truncate">{ta.name}</span>
+                          {isActive && <X className="w-3 h-3 ml-auto shrink-0" />}
+                        </Button>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
 
               {currentRound > 0 && <Badge variant="outline" className="w-full justify-center">Round {currentRound}/3</Badge>}

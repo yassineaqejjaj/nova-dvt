@@ -8,3 +8,4 @@ export * from './FrictionHeatmap';
 export * from './ThinkingStyleFeedback';
 export * from './SilentModeView';
 export * from './TimeShiftedReplay';
+export * from './TensionAgentsGenerator';
