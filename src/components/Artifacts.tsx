@@ -4,40 +4,92 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ArtifactCard } from './ArtifactCard';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
 import { Artifact } from '@/types';
-import { Search, Filter, FileText, Grid3X3, TrendingUp, Loader2, Download, FolderOpen, Plus } from 'lucide-react';
+import { 
+  Search, FileText, Grid3X3, TrendingUp, Loader2, 
+  FolderOpen, Plus, Layers, Code, Clock, Star, SortAsc
+} from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { CanvasGenerator } from './CanvasGenerator';
 import { ProjectArtifactsView } from './ProjectArtifactsView';
+import { EnhancedArtifactCard } from './artifacts/EnhancedArtifactCard';
+import { ArtifactStats } from './artifacts/ArtifactStats';
 
 interface ArtifactsProps {
   userId: string;
 }
 
+interface EnhancedArtifact extends Artifact {
+  squad_name?: string;
+  product_context_name?: string;
+  product_context_id?: string;
+  workflow_source?: string;
+  status?: 'draft' | 'validated' | 'obsolete';
+  is_key?: boolean;
+  usage_count?: number;
+}
+
 export const Artifacts: React.FC<ArtifactsProps> = ({ userId }) => {
-  const [artifacts, setArtifacts] = useState<Artifact[]>([]);
+  const [artifacts, setArtifacts] = useState<EnhancedArtifact[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState<string>('all');
+  const [sortBy, setSortBy] = useState<'recent' | 'name' | 'type'>('recent');
   const [showGenerator, setShowGenerator] = useState(false);
+  const [activeContextId, setActiveContextId] = useState<string | null>(null);
 
   useEffect(() => {
     loadArtifacts();
+    loadActiveContext();
   }, [userId]);
+
+  const loadActiveContext = async () => {
+    try {
+      const { data } = await supabase
+        .from('product_contexts')
+        .select('id')
+        .eq('user_id', userId)
+        .eq('is_active', true)
+        .eq('is_deleted', false)
+        .maybeSingle();
+      if (data) setActiveContextId(data.id);
+    } catch (error) {
+      console.error('Error loading context:', error);
+    }
+  };
 
   const loadArtifacts = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
+      
+      // Load artifacts with related data
+      const { data: artifactsData, error: artifactsError } = await supabase
         .from('artifacts')
-        .select('*')
+        .select(`
+          *,
+          squads:squad_id(name),
+          product_contexts:product_context_id(name)
+        `)
         .eq('user_id', userId)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
-      setArtifacts(data || []);
+      if (artifactsError) throw artifactsError;
+      
+      // Enhance artifacts with additional data
+      const enhanced: EnhancedArtifact[] = (artifactsData || []).map((a: any) => ({
+        ...a,
+        squad_name: a.squads?.name,
+        product_context_name: a.product_contexts?.name,
+        // Derive status from metadata or default
+        status: a.metadata?.status || 'draft',
+        is_key: a.metadata?.is_key || false,
+        usage_count: a.metadata?.usage_count || 0,
+        workflow_source: a.metadata?.workflow_source,
+      }));
+
+      setArtifacts(enhanced);
     } catch (error) {
       console.error('Error loading artifacts:', error);
       toast({
@@ -74,42 +126,66 @@ export const Artifacts: React.FC<ArtifactsProps> = ({ userId }) => {
     }
   };
 
-  const handleExportAll = () => {
-    const exportData = artifacts.map(artifact => ({
-      title: artifact.title,
-      type: artifact.artifact_type,
-      content: artifact.content,
-      created: artifact.created_at,
-    }));
-
-    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `artifacts-export-${Date.now()}.json`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    toast({
-      title: 'Succès',
-      description: 'Tous les artefacts exportés',
+  const handleTransform = async (artifact: Artifact, targetType: string) => {
+    toast({ 
+      title: 'Transformation en cours...', 
+      description: `Génération de ${targetType} à partir de "${artifact.title}"` 
     });
+    // TODO: Implement AI transformation logic
   };
 
-  const filteredArtifacts = artifacts.filter(artifact => {
-    const matchesSearch = artifact.title.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesType = filterType === 'all' || artifact.artifact_type === filterType;
-    return matchesSearch && matchesType;
-  });
+  const handleAddToProject = (artifact: Artifact) => {
+    toast({ title: 'Fonctionnalité à venir', description: 'Ajout à un projet sera disponible prochainement' });
+  };
+
+  const handleContinueWith = (artifact: Artifact) => {
+    toast({ title: 'Fonctionnalité à venir', description: 'Continuer avec un agent sera disponible prochainement' });
+  };
+
+  // Smart filtering and sorting
+  const filteredAndSortedArtifacts = React.useMemo(() => {
+    let result = artifacts.filter(artifact => {
+      const matchesSearch = artifact.title.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesType = filterType === 'all' || artifact.artifact_type === filterType;
+      return matchesSearch && matchesType;
+    });
+
+    // Priority sort: key artifacts first, then context-related, then by sortBy
+    result.sort((a, b) => {
+      // Key artifacts first
+      if (a.is_key && !b.is_key) return -1;
+      if (!a.is_key && b.is_key) return 1;
+      
+      // Active context artifacts second
+      if (activeContextId) {
+        const aInContext = a.product_context_id === activeContextId;
+        const bInContext = b.product_context_id === activeContextId;
+        if (aInContext && !bInContext) return -1;
+        if (!aInContext && bInContext) return 1;
+      }
+
+      // Then by selected sort
+      switch (sortBy) {
+        case 'name':
+          return a.title.localeCompare(b.title);
+        case 'type':
+          return a.artifact_type.localeCompare(b.artifact_type);
+        case 'recent':
+        default:
+          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      }
+    });
+
+    return result;
+  }, [artifacts, searchTerm, filterType, sortBy, activeContextId]);
 
   const getTypeIcon = (type: string) => {
     switch (type) {
       case 'canvas': return <Grid3X3 className="w-4 h-4" />;
       case 'story': return <FileText className="w-4 h-4" />;
       case 'impact_analysis': return <TrendingUp className="w-4 h-4" />;
-      case 'epic': return <FileText className="w-4 h-4" />;
-      case 'tech_spec': return <FileText className="w-4 h-4" />;
+      case 'epic': return <Layers className="w-4 h-4" />;
+      case 'tech_spec': return <Code className="w-4 h-4" />;
       default: return <FileText className="w-4 h-4" />;
     }
   };
@@ -120,7 +196,7 @@ export const Artifacts: React.FC<ArtifactsProps> = ({ userId }) => {
     story: artifacts.filter(a => a.artifact_type === 'story').length,
     impact_analysis: artifacts.filter(a => a.artifact_type === 'impact_analysis').length,
     epic: artifacts.filter(a => a.artifact_type === 'epic').length,
-    tech_spec: artifacts.filter(a => a.artifact_type === 'tech_spec').length,
+    tech_spec: artifacts.filter(a => a.artifact_type === 'tech_spec' as any).length,
   };
 
   if (loading) {
@@ -162,65 +238,14 @@ export const Artifacts: React.FC<ArtifactsProps> = ({ userId }) => {
             </TabsList>
             
             <TabsContent value="all" className="space-y-6">
-              {/* Stats */}
-              <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Total</CardTitle>
-                    <FileText className="w-4 h-4 text-muted-foreground" />
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold">{stats.total}</div>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Canvas</CardTitle>
-                    <Grid3X3 className="w-4 h-4 text-muted-foreground" />
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold">{stats.canvas}</div>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Stories</CardTitle>
-                    <FileText className="w-4 h-4 text-muted-foreground" />
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold">{stats.story}</div>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Epics</CardTitle>
-                    <FileText className="w-4 h-4 text-muted-foreground" />
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold">{stats.epic}</div>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Spécs</CardTitle>
-                    <FileText className="w-4 h-4 text-muted-foreground" />
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold">{stats.tech_spec}</div>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Analyses</CardTitle>
-                    <TrendingUp className="w-4 h-4 text-muted-foreground" />
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold">{stats.impact_analysis}</div>
-                  </CardContent>
-                </Card>
-              </div>
+              {/* Clickable Stats */}
+              <ArtifactStats 
+                stats={stats} 
+                activeFilter={filterType} 
+                onFilterChange={setFilterType} 
+              />
 
-              {/* Search and Filter */}
+              {/* Search, Sort and Filter */}
               <div className="flex flex-col sm:flex-row gap-4">
                 <div className="relative flex-1">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -231,60 +256,81 @@ export const Artifacts: React.FC<ArtifactsProps> = ({ userId }) => {
                     className="pl-10"
                   />
                 </div>
-                <div className="flex gap-2">
-                  <Button
-                    variant={filterType === 'all' ? 'default' : 'outline'}
-                    size="sm"
-                    onClick={() => setFilterType('all')}
-                  >
-                    Tous
-                  </Button>
-                  <Button
-                    variant={filterType === 'canvas' ? 'default' : 'outline'}
-                    size="sm"
-                    onClick={() => setFilterType('canvas')}
-                  >
-                    Canvas
-                  </Button>
-                  <Button
-                    variant={filterType === 'story' ? 'default' : 'outline'}
-                    size="sm"
-                    onClick={() => setFilterType('story')}
-                  >
-                    Stories
-                  </Button>
-                  <Button
-                    variant={filterType === 'epic' ? 'default' : 'outline'}
-                    size="sm"
-                    onClick={() => setFilterType('epic')}
-                  >
-                    Epics
-                  </Button>
-                </div>
+                
+                <Select value={sortBy} onValueChange={(v) => setSortBy(v as any)}>
+                  <SelectTrigger className="w-[180px]">
+                    <SortAsc className="w-4 h-4 mr-2" />
+                    <SelectValue placeholder="Trier par" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="recent">
+                      <div className="flex items-center gap-2">
+                        <Clock className="w-4 h-4" />
+                        Plus récents
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="name">
+                      <div className="flex items-center gap-2">
+                        <FileText className="w-4 h-4" />
+                        Par nom
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="type">
+                      <div className="flex items-center gap-2">
+                        <Layers className="w-4 h-4" />
+                        Par type
+                      </div>
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
-              {/* Artifacts Grid */}
-              {loading ? (
-                <div className="flex justify-center py-8">
-                  <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+              {/* Active filter indicator */}
+              {filterType !== 'all' && (
+                <div className="flex items-center gap-2">
+                  <Badge variant="secondary" className="text-xs">
+                    Filtre: {filterType}
+                  </Badge>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="h-6 text-xs"
+                    onClick={() => setFilterType('all')}
+                  >
+                    Effacer
+                  </Button>
                 </div>
-              ) : filteredArtifacts.length === 0 ? (
+              )}
+
+              {/* Artifacts Grid */}
+              {filteredAndSortedArtifacts.length === 0 ? (
                 <Card>
                   <CardContent className="flex flex-col items-center justify-center py-12">
                     <FileText className="w-12 h-12 text-muted-foreground mb-4" />
                     <h3 className="text-lg font-semibold mb-2">Aucun artefact trouvé</h3>
                     <p className="text-muted-foreground text-center mb-4">
-                      Créez votre premier artefact pour commencer
+                      {searchTerm || filterType !== 'all' 
+                        ? 'Aucun artefact ne correspond à vos critères' 
+                        : 'Créez votre premier artefact pour commencer'}
                     </p>
+                    {!searchTerm && filterType === 'all' && (
+                      <Button onClick={() => setShowGenerator(true)}>
+                        <Plus className="mr-2 h-4 w-4" />
+                        Créer un artefact
+                      </Button>
+                    )}
                   </CardContent>
                 </Card>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {filteredArtifacts.map(artifact => (
-                    <ArtifactCard
+                  {filteredAndSortedArtifacts.map(artifact => (
+                    <EnhancedArtifactCard
                       key={artifact.id}
                       artifact={artifact}
                       onDelete={handleDelete}
+                      onTransform={handleTransform}
+                      onAddToProject={handleAddToProject}
+                      onContinueWith={handleContinueWith}
                       icon={getTypeIcon(artifact.artifact_type)}
                     />
                   ))}
