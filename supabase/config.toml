@@ -92,3 +92,6 @@ verify_jwt = true
 
 [functions.synthesize-insights]
 verify_jwt = true
+
+[functions.transform-artifact]
+verify_jwt = true
