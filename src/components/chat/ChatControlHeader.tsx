@@ -13,7 +13,9 @@ import {
   Minimize2,
   List,
   FileText,
-  Zap
+  Zap,
+  Plus,
+  Loader2
 } from 'lucide-react';
 import { LiveSynthesis, ResponseMode, SteeringCommand } from '@/types';
 import { cn } from '@/lib/utils';
@@ -28,6 +30,8 @@ interface ChatControlHeaderProps {
   showSynthesisPanel: boolean;
   onToggleSynthesisPanel: () => void;
   isLoading: boolean;
+  onNewChat: () => void;
+  isSavingChat?: boolean;
 }
 
 type ConversationStatus = 'starting' | 'exploring' | 'disagreement' | 'converging' | 'decision_ready';
@@ -74,6 +78,8 @@ export const ChatControlHeader: FC<ChatControlHeaderProps> = ({
   showSynthesisPanel,
   onToggleSynthesisPanel,
   isLoading,
+  onNewChat,
+  isSavingChat = false,
 }) => {
   const status = getConversationStatus(synthesis, messageCount);
   const statusConfig = STATUS_CONFIG[status];
@@ -82,7 +88,7 @@ export const ChatControlHeader: FC<ChatControlHeaderProps> = ({
     <TooltipProvider>
       <div className="flex-shrink-0 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="px-4 py-2.5 flex items-center justify-between gap-4">
-          {/* Left: Title + Status */}
+          {/* Left: Title + Status + New Chat */}
           <div className="flex items-center gap-3">
             <h3 className="font-semibold text-sm">Conversation</h3>
             <Badge 
@@ -91,6 +97,28 @@ export const ChatControlHeader: FC<ChatControlHeaderProps> = ({
             >
               {statusConfig.label}
             </Badge>
+            
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={onNewChat}
+                  disabled={isLoading || isSavingChat || messageCount < 2}
+                  className="h-7 px-2.5 text-xs gap-1.5"
+                >
+                  {isSavingChat ? (
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  ) : (
+                    <Plus className="w-3.5 h-3.5" />
+                  )}
+                  <span className="hidden sm:inline">Nouveau chat</span>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="text-xs max-w-[200px]">
+                Sauvegarder la synthèse comme artefact et démarrer une nouvelle conversation
+              </TooltipContent>
+            </Tooltip>
           </div>
 
           {/* Center: Steering Modes */}
