@@ -29,6 +29,8 @@ function sanitizeAgentSelfReference(raw: string, agentName?: string): string {
     const escaped = safeName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     // "Alex Kim ici," / "Alex Kim ici :" / "Alex Kim," / "Alex Kim :"
     stripLeading(new RegExp(`^\\s*(?:${escaped})\\s*(?:ici\\s*)?[,.!:;\\-—]+\\s*`, 'i'));
+    // "Alex Kim:" at the very start (common pattern)
+    stripLeading(new RegExp(`^\\s*${escaped}\\s*:\\s*`, 'i'));
     // "Je suis Alex Kim," / "C'est Alex Kim,"
     stripLeading(new RegExp(`^\\s*(?:je\\s+suis|c['']est)\\s+(?:${escaped})\\s*[,.!:;\\-—]+\\s*`, 'i'));
     // "This is Alex Kim." / "Hello, this is Alex Kim."
@@ -47,6 +49,15 @@ function sanitizeAgentSelfReference(raw: string, agentName?: string): string {
   stripLeading(/^\s*(?:hello|bonjour|salut)[^.!?]{0,40}[!,.]?\s*[A-Z][a-z]+(?:\s+[A-Z][a-z]+)?\s+(?:here|ici)\s*[,.!:;\-—]+\s*/i);
   // Just the name at start: "Sarah Chen, ready to tackle..."
   stripLeading(/^\s*[A-Z][a-z]+(?:\s+[A-Z][a-z]+)?\s*[,:]?\s*(?:ready|prêt|here|ici)\s+(?:to|pour|à)\s+/i);
+  
+  // NEW: Strip "Name Name:" pattern at start (e.g., "Alex Kim:", "David Chang:")
+  stripLeading(/^\s*[A-Z][a-z]+\s+[A-Z][a-z]+\s*:\s*/);
+  // NEW: Strip "Du point de vue de Name," / "Selon Name,"
+  stripLeading(/^\s*(?:du\s+point\s+de\s+vue\s+de|selon|d['']après)\s+[^,.\n]{1,40}[,.:]\s*/i);
+  // NEW: Strip "En tant que [role]," 
+  stripLeading(/^\s*en\s+tant\s+que\s+[^,.\n]{1,60}[,.:\-—]+\s*/i);
+  // NEW: Strip "From [Name]'s perspective,"
+  stripLeading(/^\s*from\s+[^,.\n]{1,40}['']s?\s+perspective[,.:]\s*/i);
 
   return text.trim();
 }

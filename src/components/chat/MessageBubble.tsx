@@ -3,7 +3,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { RoleBadge, inferRoleFromSpecialty } from './RoleBadge';
 import { StructuredMessage } from './StructuredMessage';
-import { Agent, AgentRole } from '@/types';
+import { Agent, AgentRole, ResponseMode } from '@/types';
 import { ThumbsUp, ThumbsDown, AlertTriangle, Lightbulb, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -17,6 +17,7 @@ interface MessageBubbleProps {
   reactionType?: 'agree' | 'disagree' | 'risk' | 'idea';
   isLeadResponse?: boolean;
   isConductor?: boolean;
+  responseMode?: ResponseMode;
 }
 
 // Modern, subtle role colors
@@ -45,6 +46,7 @@ export const MessageBubble: FC<MessageBubbleProps> = ({
   reactionType,
   isLeadResponse = false,
   isConductor = false,
+  responseMode = 'structured',
 }) => {
   const isUser = sender === 'user';
   const agent = sender as Agent;
@@ -77,7 +79,7 @@ export const MessageBubble: FC<MessageBubbleProps> = ({
             <Sparkles className="w-3.5 h-3.5 text-primary" />
             <span className="text-xs font-medium text-primary">Nova • Recentrage</span>
           </div>
-          <StructuredMessage content={content} isCollapsible={false} />
+          <StructuredMessage content={content} isCollapsible={false} responseMode={responseMode} />
         </div>
       </div>
     );
@@ -146,8 +148,8 @@ export const MessageBubble: FC<MessageBubbleProps> = ({
         )}>
           <StructuredMessage 
             content={content} 
-            isCollapsible={content.length > 400}
-            maxPreviewLines={6}
+            isCollapsible={content.length > 200}
+            responseMode={responseMode}
           />
         </div>
       </div>

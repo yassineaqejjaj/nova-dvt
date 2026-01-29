@@ -1,130 +1,101 @@
 import { useState, type FC } from 'react';
-import { ChevronDown, ChevronUp, Lightbulb, MessageSquare, Target } from 'lucide-react';
+import { ChevronDown, ChevronUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { FormattedText } from '@/components/ui/formatted-text';
-import { cn } from '@/lib/utils';
+import { ResponseMode } from '@/types';
 
 interface StructuredMessageProps {
   content: string;
   isCollapsible?: boolean;
-  maxPreviewLines?: number;
+  responseMode?: ResponseMode;
 }
 
-interface ParsedSection {
-  type: 'insight' | 'reasoning' | 'conclusion';
-  content: string;
-}
-
-// Parse message content into semantic sections
-const parseMessageSections = (content: string): ParsedSection[] => {
-  const sections: ParsedSection[] = [];
-  const lines = content.split('\n').filter(l => l.trim());
-  
-  if (lines.length === 0) return [{ type: 'reasoning', content }];
-  
-  // Simple heuristic: first meaningful sentence is insight, last is conclusion, rest is reasoning
-  if (lines.length === 1) {
-    return [{ type: 'insight', content: lines[0] }];
+// Get collapse threshold based on response mode
+const getCollapseThreshold = (mode: ResponseMode): number => {
+  switch (mode) {
+    case 'short':
+      return 150; // Very short - collapse quickly
+    case 'structured':
+      return 400; // Medium - collapse at 400 chars
+    case 'detailed':
+      return 800; // Long - allow more content before collapse
+    default:
+      return 400;
   }
-  
-  // Look for bullet points or structured content
-  const hasBullets = lines.some(l => l.trim().startsWith('-') || l.trim().startsWith('•') || l.trim().match(/^\d+\./));
-  
-  if (hasBullets) {
-    // First line before bullets = insight
-    const firstNonBullet = lines.findIndex(l => l.trim().startsWith('-') || l.trim().startsWith('•') || l.trim().match(/^\d+\./));
-    
-    if (firstNonBullet > 0) {
-      sections.push({ type: 'insight', content: lines.slice(0, firstNonBullet).join('\n') });
-    }
-    
-    // Find where bullets end
-    const bulletLines: string[] = [];
-    let lastBulletIdx = firstNonBullet >= 0 ? firstNonBullet : 0;
-    
-    for (let i = lastBulletIdx; i < lines.length; i++) {
-      const line = lines[i].trim();
-      if (line.startsWith('-') || line.startsWith('•') || line.match(/^\d+\./) || line.startsWith('  ')) {
-        bulletLines.push(lines[i]);
-        lastBulletIdx = i;
-      } else if (bulletLines.length > 0) {
-        break;
-      }
-    }
-    
-    if (bulletLines.length > 0) {
-      sections.push({ type: 'reasoning', content: bulletLines.join('\n') });
-    }
-    
-    // Remaining lines = conclusion
-    if (lastBulletIdx < lines.length - 1) {
-      sections.push({ type: 'conclusion', content: lines.slice(lastBulletIdx + 1).join('\n') });
-    }
-  } else {
-    // No bullets: split by paragraph structure
-    sections.push({ type: 'insight', content: lines[0] });
-    
-    if (lines.length > 2) {
-      sections.push({ type: 'reasoning', content: lines.slice(1, -1).join('\n') });
-      sections.push({ type: 'conclusion', content: lines[lines.length - 1] });
-    } else if (lines.length === 2) {
-      sections.push({ type: 'conclusion', content: lines[1] });
-    }
-  }
-  
-  return sections.length > 0 ? sections : [{ type: 'reasoning', content }];
 };
 
-const SectionIcon: FC<{ type: ParsedSection['type'] }> = ({ type }) => {
-  switch (type) {
-    case 'insight':
-      return <Lightbulb className="w-3.5 h-3.5 text-primary" />;
-    case 'reasoning':
-      return <MessageSquare className="w-3.5 h-3.5 text-muted-foreground" />;
-    case 'conclusion':
-      return <Target className="w-3.5 h-3.5 text-primary" />;
+// Get preview content for collapsed state
+const getPreviewContent = (content: string, mode: ResponseMode): string => {
+  const threshold = getCollapseThreshold(mode);
+  
+  if (mode === 'short') {
+    // For short mode: show first sentence or first 150 chars
+    const firstSentence = content.match(/^[^.!?\n]+[.!?]?\s*/);
+    if (firstSentence && firstSentence[0].length < threshold) {
+      return firstSentence[0].trim();
+    }
   }
+  
+  // For other modes: find a good break point
+  if (content.length <= threshold) {
+    return content;
+  }
+  
+  // Try to break at paragraph or sentence
+  const truncated = content.slice(0, threshold);
+  
+  // Look for last complete sentence
+  const lastSentenceEnd = Math.max(
+    truncated.lastIndexOf('. '),
+    truncated.lastIndexOf('.\n'),
+    truncated.lastIndexOf('? '),
+    truncated.lastIndexOf('! ')
+  );
+  
+  if (lastSentenceEnd > threshold * 0.5) {
+    return content.slice(0, lastSentenceEnd + 1);
+  }
+  
+  // Look for last newline
+  const lastNewline = truncated.lastIndexOf('\n');
+  if (lastNewline > threshold * 0.5) {
+    return content.slice(0, lastNewline);
+  }
+  
+  // Fallback: break at word boundary
+  const lastSpace = truncated.lastIndexOf(' ');
+  if (lastSpace > threshold * 0.7) {
+    return content.slice(0, lastSpace) + '…';
+  }
+  
+  return truncated + '…';
 };
 
 export const StructuredMessage: FC<StructuredMessageProps> = ({
   content,
   isCollapsible = true,
-  maxPreviewLines = 4,
+  responseMode = 'structured',
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
-  const sections = parseMessageSections(content);
   
-  // Calculate if content needs collapsing
-  const totalLines = content.split('\n').length;
-  const needsCollapsing = isCollapsible && totalLines > maxPreviewLines;
+  // Calculate if content needs collapsing based on mode
+  const threshold = getCollapseThreshold(responseMode);
+  const needsCollapsing = isCollapsible && content.length > threshold;
   
-  // In collapsed mode, show only insight
-  const visibleSections = needsCollapsing && !isExpanded 
-    ? sections.filter(s => s.type === 'insight').slice(0, 1)
-    : sections;
+  // Get visible content
+  const visibleContent = needsCollapsing && !isExpanded 
+    ? getPreviewContent(content, responseMode)
+    : content;
+
+  // Calculate how much is hidden
+  const hiddenChars = needsCollapsing ? content.length - visibleContent.length : 0;
+  const hiddenPercent = Math.round((hiddenChars / content.length) * 100);
 
   return (
     <div className="space-y-2">
-      {visibleSections.map((section, idx) => (
-        <div 
-          key={idx} 
-          className={cn(
-            "text-sm leading-relaxed",
-            section.type === 'insight' && "font-medium",
-            section.type === 'conclusion' && "bg-muted/50 rounded-md px-2.5 py-1.5 border-l-2 border-primary/50"
-          )}
-        >
-          {section.type !== 'reasoning' && (
-            <span className="inline-flex items-center gap-1.5 mr-1">
-              <SectionIcon type={section.type} />
-            </span>
-          )}
-          <FormattedText
-            content={section.content}
-            className={cn(section.type === 'reasoning' && 'text-muted-foreground')}
-          />
-        </div>
-      ))}
+      <div className="text-sm leading-relaxed">
+        <FormattedText content={visibleContent} />
+      </div>
       
       {needsCollapsing && (
         <Button
@@ -141,7 +112,7 @@ export const StructuredMessage: FC<StructuredMessageProps> = ({
           ) : (
             <>
               <ChevronDown className="w-3 h-3" />
-              Voir le raisonnement
+              Voir plus ({hiddenPercent}% masqué)
             </>
           )}
         </Button>
