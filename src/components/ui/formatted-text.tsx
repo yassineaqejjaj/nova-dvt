@@ -5,23 +5,59 @@ interface FormattedTextProps {
   className?: string;
 }
 
+// Orphan emoji pattern to clean up
+const ORPHAN_EMOJI_PATTERN = /^[\s]*[💡⚙️🎯📌✨🔹🔸⚡️🚀📋✅❌⬆️⬇️➡️⭐️🎨📊💎🔥📈📉🎁💼📝🔍🛠️💬🎯]*[\s]*$/u;
+
+// Check if line is just emojis/symbols without meaningful text
+const isOrphanLine = (line: string): boolean => {
+  const trimmed = line.trim();
+  if (!trimmed) return true;
+  if (ORPHAN_EMOJI_PATTERN.test(trimmed)) return true;
+  // Single @ or * or - with no text
+  if (/^[@*\-•●○◦▪▸►]\s*$/.test(trimmed)) return true;
+  return false;
+};
+
 /**
  * Renders text with formatting:
  * - **bold** → <strong>
  * - *italic* → <em>
  * - `code` → <code>
+ * - **Title:** → styled header
  * - Line breaks preserved
- * - Bullet points (- or •) styled
+ * - Bullet points (- or • or *) styled
  * - Numbered lists styled
+ * - Orphan emojis/symbols cleaned up
  */
 export const FormattedText: React.FC<FormattedTextProps> = ({ content, className = '' }) => {
   if (!content) return null;
 
   const formatLine = (line: string, index: number): React.ReactNode => {
-    // Check for bullet points
-    const bulletMatch = line.match(/^(\s*)([-•●]\s+)(.*)$/);
+    // Skip orphan lines (empty or just emojis)
+    if (isOrphanLine(line)) {
+      // Return small spacer for true empty lines
+      if (line.trim() === '') {
+        return <div key={index} className="h-2" />;
+      }
+      return null; // Skip orphan emoji lines
+    }
+
+    // Check for bold header pattern: **Title:** or **Title :**
+    const boldHeaderMatch = line.match(/^\*\*([^*]+):\s*\*\*\s*(.*)$/);
+    if (boldHeaderMatch) {
+      const [, headerText, rest] = boldHeaderMatch;
+      return (
+        <div key={index} className="mt-3 mb-1">
+          <span className="font-semibold text-foreground">{headerText}:</span>
+          {rest && <span className="ml-1">{formatInlineText(rest)}</span>}
+        </div>
+      );
+    }
+
+    // Check for bullet points (-, •, ●, *)
+    const bulletMatch = line.match(/^(\s*)([-•●*]\s+)(.*)$/);
     if (bulletMatch) {
-      const [, indent, bullet, text] = bulletMatch;
+      const [, indent, , text] = bulletMatch;
       const indentLevel = Math.floor(indent.length / 2);
       return (
         <div 
@@ -29,8 +65,8 @@ export const FormattedText: React.FC<FormattedTextProps> = ({ content, className
           className="flex items-start gap-2"
           style={{ paddingLeft: `${indentLevel * 1}rem` }}
         >
-          <span className="text-primary mt-1 flex-shrink-0">•</span>
-          <span>{formatInlineText(text)}</span>
+          <span className="text-primary mt-0.5 flex-shrink-0 text-xs">•</span>
+          <span className="flex-1">{formatInlineText(text)}</span>
         </div>
       );
     }
@@ -46,13 +82,13 @@ export const FormattedText: React.FC<FormattedTextProps> = ({ content, className
           className="flex items-start gap-2"
           style={{ paddingLeft: `${indentLevel * 1}rem` }}
         >
-          <span className="text-primary font-medium flex-shrink-0 min-w-[1.5rem]">{number.trim()}</span>
-          <span>{formatInlineText(text)}</span>
+          <span className="text-primary font-medium flex-shrink-0 min-w-[1.5rem] text-sm">{number.trim()}</span>
+          <span className="flex-1">{formatInlineText(text)}</span>
         </div>
       );
     }
 
-    // Check for headers (lines starting with # or ending with :)
+    // Check for markdown headers (lines starting with #)
     if (line.match(/^#{1,3}\s+/)) {
       const headerText = line.replace(/^#{1,3}\s+/, '');
       return (
@@ -62,20 +98,29 @@ export const FormattedText: React.FC<FormattedTextProps> = ({ content, className
       );
     }
 
-    // Check for section headers (text ending with colon, all caps, or emoji prefix)
-    if (line.match(/^[A-Z][A-Z\s]+:/) || line.match(/^[\u{1F300}-\u{1F9FF}]/u)) {
+    // Check for section headers (text ending with colon, like "Section Title:")
+    const sectionHeaderMatch = line.match(/^([A-Z][^:]{2,40}):\s*$/);
+    if (sectionHeaderMatch) {
       return (
-        <div key={index} className="font-medium text-foreground mt-2 mb-1">
-          {formatInlineText(line)}
+        <div key={index} className="font-medium text-foreground mt-3 mb-1">
+          {sectionHeaderMatch[1]}:
+        </div>
+      );
+    }
+
+    // Check for inline header (Bold text with colon at start)
+    const inlineHeaderMatch = line.match(/^([A-Z][A-Za-zÀ-ÿ\s]{1,30}):\s+(.+)$/);
+    if (inlineHeaderMatch) {
+      const [, header, rest] = inlineHeaderMatch;
+      return (
+        <div key={index}>
+          <span className="font-medium text-foreground">{header}:</span>
+          <span className="ml-1">{formatInlineText(rest)}</span>
         </div>
       );
     }
 
     // Regular line
-    if (line.trim() === '') {
-      return <div key={index} className="h-2" />;
-    }
-
     return (
       <div key={index}>
         {formatInlineText(line)}
@@ -84,24 +129,27 @@ export const FormattedText: React.FC<FormattedTextProps> = ({ content, className
   };
 
   const formatInlineText = (text: string): React.ReactNode => {
+    if (!text) return null;
+    
     const parts: React.ReactNode[] = [];
     let remaining = text;
     let keyIndex = 0;
 
     // Process bold, italic, and code in sequence
     while (remaining.length > 0) {
-      // Match **bold**
-      const boldMatch = remaining.match(/\*\*(.+?)\*\*/);
-      // Match *italic* (but not **)
-      const italicMatch = remaining.match(/(?<!\*)\*([^*]+)\*(?!\*)/);
+      // Match **bold** (including with colon like **Title:**)
+      const boldMatch = remaining.match(/\*\*([^*]+)\*\*/);
+      // Match *italic* - improved regex to avoid conflicts with **bold**
+      // Use negative lookbehind/lookahead to ensure it's not part of **
+      const italicMatch = remaining.match(/(?<!\*)\*([^*\n]+)\*(?!\*)/);
       // Match `code`
       const codeMatch = remaining.match(/`([^`]+)`/);
 
       // Find the earliest match
       const matches = [
-        boldMatch ? { type: 'bold', match: boldMatch, index: boldMatch.index! } : null,
-        italicMatch ? { type: 'italic', match: italicMatch, index: italicMatch.index! } : null,
-        codeMatch ? { type: 'code', match: codeMatch, index: codeMatch.index! } : null,
+        boldMatch ? { type: 'bold', match: boldMatch, index: remaining.indexOf(boldMatch[0]) } : null,
+        italicMatch ? { type: 'italic', match: italicMatch, index: remaining.indexOf(italicMatch[0]) } : null,
+        codeMatch ? { type: 'code', match: codeMatch, index: remaining.indexOf(codeMatch[0]) } : null,
       ].filter(Boolean) as Array<{ type: string; match: RegExpMatchArray; index: number }>;
 
       if (matches.length === 0) {
@@ -121,7 +169,7 @@ export const FormattedText: React.FC<FormattedTextProps> = ({ content, className
 
       // Add formatted text
       if (earliest.type === 'bold') {
-        parts.push(<strong key={keyIndex++} className="font-semibold">{earliest.match[1]}</strong>);
+        parts.push(<strong key={keyIndex++} className="font-semibold text-foreground">{earliest.match[1]}</strong>);
       } else if (earliest.type === 'italic') {
         parts.push(<em key={keyIndex++} className="italic">{earliest.match[1]}</em>);
       } else if (earliest.type === 'code') {
@@ -140,10 +188,11 @@ export const FormattedText: React.FC<FormattedTextProps> = ({ content, className
   };
 
   const lines = content.split('\n');
+  const formattedLines = lines.map((line, index) => formatLine(line, index)).filter(Boolean);
 
   return (
     <div className={`space-y-1 ${className}`}>
-      {lines.map((line, index) => formatLine(line, index))}
+      {formattedLines}
     </div>
   );
 };

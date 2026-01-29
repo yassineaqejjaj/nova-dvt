@@ -1083,6 +1083,7 @@ Pour le handler actionable:
                   reactionType={message.reactionType}
                   isLeadResponse={message.isLeadResponse}
                   isConductor={message.isConductor}
+                  responseMode={responseMode}
                 />
               ))}
               
