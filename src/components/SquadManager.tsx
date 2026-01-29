@@ -31,7 +31,8 @@ import {
   MessageCircle, 
   Sparkles,
   Loader2,
-  Lightbulb
+  Lightbulb,
+  Download
 } from 'lucide-react';
 import { allAgents } from '@/data/mockData';
 
@@ -54,6 +55,7 @@ export const SquadManager: React.FC<SquadManagerProps> = ({
   const [editingSquad, setEditingSquad] = useState<Squad | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isGettingSuggestions, setIsGettingSuggestions] = useState(false);
+  const [isImportingContext, setIsImportingContext] = useState(false);
   const [showAgentSelector, setShowAgentSelector] = useState(false);
   const [managingSquad, setManagingSquad] = useState<Squad | null>(null);
   const [userProfile, setUserProfile] = useState<{ xp: number; unlockedAgents: string[] }>({ xp: 0, unlockedAgents: [] });
@@ -288,6 +290,93 @@ export const SquadManager: React.FC<SquadManagerProps> = ({
     }
   };
 
+  const handleImportContext = async () => {
+    setIsImportingContext(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast({
+          title: "Connexion requise",
+          description: "Veuillez vous connecter pour importer un contexte",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Fetch the active product context
+      const { data: contexts, error } = await supabase
+        .from('product_contexts')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('is_active', true)
+        .eq('is_deleted', false)
+        .limit(1);
+
+      if (error) throw error;
+
+      if (!contexts || contexts.length === 0) {
+        toast({
+          title: "Aucun contexte actif",
+          description: "Créez d'abord un contexte produit dans la section Configuration > Contexte",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const context = contexts[0];
+      
+      // Format context for squad
+      const contextParts: string[] = [];
+      
+      if (context.name) {
+        contextParts.push(`**Projet:** ${context.name}`);
+      }
+      
+      if (context.vision) {
+        contextParts.push(`**Vision:** ${context.vision}`);
+      }
+      
+      if (context.target_audience) {
+        contextParts.push(`**Audience cible:** ${context.target_audience}`);
+      }
+      
+      const objectives = Array.isArray(context.objectives) ? context.objectives : [];
+      if (objectives.length > 0) {
+        contextParts.push(`**Objectifs:**\n${objectives.map((o: string) => `• ${o}`).join('\n')}`);
+      }
+      
+      const kpis = Array.isArray(context.target_kpis) ? context.target_kpis : [];
+      if (kpis.length > 0) {
+        contextParts.push(`**KPIs cibles:**\n${kpis.map((k: string) => `• ${k}`).join('\n')}`);
+      }
+      
+      if (context.constraints) {
+        contextParts.push(`**Contraintes:** ${context.constraints}`);
+      }
+
+      const formattedContext = contextParts.join('\n\n');
+      
+      setNewSquadData(prev => ({
+        ...prev,
+        context: formattedContext
+      }));
+
+      toast({
+        title: "Contexte importé",
+        description: `Le contexte "${context.name}" a été importé`,
+      });
+    } catch (error: any) {
+      console.error('Error importing context:', error);
+      toast({
+        title: "Erreur d'import",
+        description: error.message || "Impossible d'importer le contexte",
+        variant: "destructive",
+      });
+    } finally {
+      setIsImportingContext(false);
+    }
+  };
+
   const handleSetActiveSquad = async (squad: Squad) => {
     try {
       // Set all squads to inactive first
@@ -452,16 +541,33 @@ export const SquadManager: React.FC<SquadManagerProps> = ({
 
               <div className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="squad-context" className="flex items-center gap-2">
-                    <Sparkles className="w-4 h-4 text-primary" />
-                    Contexte projet (optionnel)
-                  </Label>
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="squad-context" className="flex items-center gap-2">
+                      <Sparkles className="w-4 h-4 text-primary" />
+                      Contexte projet (optionnel)
+                    </Label>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleImportContext}
+                      disabled={isImportingContext}
+                      className="h-7 text-xs gap-1.5"
+                    >
+                      {isImportingContext ? (
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      ) : (
+                        <Download className="w-3.5 h-3.5" />
+                      )}
+                      <span>Importer contexte actif</span>
+                    </Button>
+                  </div>
                   <Textarea
                     id="squad-context"
                     placeholder="Décrivez votre projet pour obtenir des recommandations d'agents personnalisées..."
                     value={newSquadData.context}
                     onChange={(e) => setNewSquadData(prev => ({ ...prev, context: e.target.value }))}
-                    rows={3}
+                    rows={4}
                     className="resize-none"
                   />
                 </div>
