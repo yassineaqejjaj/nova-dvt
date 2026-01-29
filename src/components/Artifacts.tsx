@@ -16,6 +16,7 @@ import { CanvasGenerator } from './CanvasGenerator';
 import { ProjectArtifactsView } from './ProjectArtifactsView';
 import { EnhancedArtifactCard } from './artifacts/EnhancedArtifactCard';
 import { ArtifactStats } from './artifacts/ArtifactStats';
+import { TransformArtifactDialog } from './artifacts/TransformArtifactDialog';
 
 interface ArtifactsProps {
   userId: string;
@@ -39,6 +40,11 @@ export const Artifacts: React.FC<ArtifactsProps> = ({ userId }) => {
   const [sortBy, setSortBy] = useState<'recent' | 'name' | 'type'>('recent');
   const [showGenerator, setShowGenerator] = useState(false);
   const [activeContextId, setActiveContextId] = useState<string | null>(null);
+  
+  // Transform dialog state
+  const [transformDialogOpen, setTransformDialogOpen] = useState(false);
+  const [transformSource, setTransformSource] = useState<Artifact | null>(null);
+  const [transformTarget, setTransformTarget] = useState<string>('');
 
   useEffect(() => {
     loadArtifacts();
@@ -126,12 +132,10 @@ export const Artifacts: React.FC<ArtifactsProps> = ({ userId }) => {
     }
   };
 
-  const handleTransform = async (artifact: Artifact, targetType: string) => {
-    toast({ 
-      title: 'Transformation en cours...', 
-      description: `Génération de ${targetType} à partir de "${artifact.title}"` 
-    });
-    // TODO: Implement AI transformation logic
+  const handleTransform = (artifact: Artifact, targetType: string) => {
+    setTransformSource(artifact);
+    setTransformTarget(targetType);
+    setTransformDialogOpen(true);
   };
 
   const handleAddToProject = (artifact: Artifact) => {
@@ -351,6 +355,19 @@ export const Artifacts: React.FC<ArtifactsProps> = ({ userId }) => {
           setShowGenerator(false);
           loadArtifacts();
         }}
+      />
+
+      <TransformArtifactDialog
+        open={transformDialogOpen}
+        onClose={() => {
+          setTransformDialogOpen(false);
+          setTransformSource(null);
+          setTransformTarget('');
+        }}
+        sourceArtifact={transformSource}
+        targetType={transformTarget}
+        userId={userId}
+        onSaveComplete={loadArtifacts}
       />
     </div>
   );
