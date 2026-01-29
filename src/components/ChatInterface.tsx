@@ -52,6 +52,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ currentSquad, squa
   const [messages, setMessages] = useState<ExtendedChatMessage[]>([]);
   const [inputMessage, setInputMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isSavingChat, setIsSavingChat] = useState(false);
   const [showMentionDropdown, setShowMentionDropdown] = useState(false);
   const [mentionSearch, setMentionSearch] = useState('');
   const [selectedMentionIndex, setSelectedMentionIndex] = useState(0);
@@ -802,6 +803,132 @@ Pour le handler actionable:
     }
   };
 
+  // Handle new chat - save synthesis as artifact and reset conversation
+  const handleNewChat = async () => {
+    if (messages.length < 2) return;
+    
+    setIsSavingChat(true);
+    
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast({ title: "Connectez-vous pour sauvegarder", variant: "destructive" });
+        setIsSavingChat(false);
+        return;
+      }
+      
+      // Build conversation summary for AI
+      const conversationContent = messages.map(m => 
+        `${m.sender === 'user' ? 'User' : (m.sender as Agent).name}: ${m.content}`
+      ).join('\n\n');
+      
+      const agentNames = currentSquad.map(a => a.name).join(', ');
+      
+      // Generate synthesis using AI
+      const { data: synthesisData, error: synthesisError } = await supabase.functions.invoke('chat-ai', {
+        body: {
+          message: `Analyse cette conversation multi-agent et génère une synthèse structurée.\n\nAgents: ${agentNames}\n\nConversation:\n${conversationContent}\n\nGénère un JSON avec:\n1. "summary": résumé exécutif de la discussion (2-3 phrases)\n2. "insights": tableau des insights clés émergents (max 5)\n3. "nextAction": la prochaine action recommandée\n4. "keyDecisions": décisions prises ou à prendre\n5. "openQuestions": questions encore ouvertes`,
+          systemPrompt: `Tu es un expert en synthèse de discussions produit. Réponds UNIQUEMENT en JSON valide (pas de markdown):\n{\n  "summary": "...",\n  "insights": ["insight 1", "insight 2", ...],\n  "nextAction": "...",\n  "keyDecisions": ["decision 1", ...],\n  "openQuestions": ["question 1", ...]\n}`
+        }
+      });
+      
+      if (synthesisError) throw synthesisError;
+      
+      // Parse AI response
+      let synthesis = {
+        summary: 'Synthèse de la conversation',
+        insights: [] as string[],
+        nextAction: 'À définir',
+        keyDecisions: [] as string[],
+        openQuestions: [] as string[],
+      };
+      
+      if (synthesisData?.response) {
+        try {
+          const cleanResponse = synthesisData.response.replace(/```json\s*/g, '').replace(/```/g, '').trim();
+          const parsed = JSON.parse(cleanResponse);
+          synthesis = { ...synthesis, ...parsed };
+        } catch {
+          // Use default if parsing fails
+          synthesis.summary = synthesisData.response.slice(0, 300);
+        }
+      }
+      
+      // Create artifact title based on first user message or thread topic
+      const firstUserMessage = messages.find(m => m.sender === 'user');
+      const topic = firstUserMessage?.content.slice(0, 50) || 'Discussion multi-agent';
+      const timestamp = new Date().toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
+      const artifactTitle = `Synthèse: ${topic}${topic.length >= 50 ? '...' : ''} - ${timestamp}`;
+      
+      // Save as artifact
+      const { error: artifactError } = await supabase.from('artifacts').insert({
+        user_id: user.id,
+        squad_id: squadId || null,
+        artifact_type: 'canvas', // Using canvas type for synthesis
+        title: artifactTitle,
+        content: {
+          type: 'chat_synthesis',
+          summary: synthesis.summary,
+          insights: synthesis.insights,
+          nextAction: synthesis.nextAction,
+          keyDecisions: synthesis.keyDecisions,
+          openQuestions: synthesis.openQuestions,
+          agentParticipants: currentSquad.map(a => ({ name: a.name, specialty: a.specialty })),
+          messageCount: messages.length,
+          conclusionFromThread: threadConclusion?.content || null,
+        },
+        metadata: {
+          source: 'multi_agent_chat',
+          squadId: squadId,
+          agentCount: currentSquad.length,
+          conversationMood: liveSynthesis.conversationMood,
+          disagreementsCount: liveSynthesis.disagreements.length,
+        }
+      });
+      
+      if (artifactError) throw artifactError;
+      
+      toast({
+        title: "Synthèse sauvegardée",
+        description: "La synthèse de votre conversation a été enregistrée comme artefact",
+      });
+      
+      onAddXP(30, 'chat synthesis saved');
+      
+      // Reset conversation
+      const welcomeMessage: ExtendedChatMessage = {
+        id: `welcome-${Date.now()}`,
+        squadId: squadId || 'current',
+        content: `Nouvelle conversation avec ${currentSquad.map(a => a.name).join(', ')}. Comment pouvons-nous vous aider ?`,
+        sender: currentSquad[0],
+        timestamp: new Date(),
+        stance: 'Prêt à collaborer',
+        isLeadResponse: true,
+      };
+      
+      setMessages([welcomeMessage]);
+      setThreadConclusion(null);
+      setLiveSynthesis({
+        options: [],
+        openPoints: [],
+        disagreements: [],
+        lastUpdated: new Date(),
+      });
+      setActiveSteeringMode(null);
+      setSelectedArtifacts([]);
+      
+    } catch (error) {
+      console.error('Error saving chat synthesis:', error);
+      toast({ 
+        title: "Erreur lors de la sauvegarde", 
+        description: "Impossible de sauvegarder la synthèse",
+        variant: "destructive" 
+      });
+    } finally {
+      setIsSavingChat(false);
+    }
+  };
+
   const extractMentions = (text: string): string[] => {
     const mentions = text.match(/@(\w+)/g);
     return mentions ? mentions.map(mention => mention.slice(1)) : [];
@@ -912,6 +1039,8 @@ Pour le handler actionable:
         showSynthesisPanel={showSynthesisPanel}
         onToggleSynthesisPanel={() => setShowSynthesisPanel(!showSynthesisPanel)}
         isLoading={isLoading}
+        onNewChat={handleNewChat}
+        isSavingChat={isSavingChat}
       />
 
       {/* Compact Squad Bar */}
