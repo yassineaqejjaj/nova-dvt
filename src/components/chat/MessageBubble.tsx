@@ -1,4 +1,5 @@
 import type { FC } from 'react';
+import { motion } from 'framer-motion';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { RoleBadge, inferRoleFromSpecialty } from './RoleBadge';
@@ -6,6 +7,83 @@ import { StructuredMessage } from './StructuredMessage';
 import { Agent, AgentRole, ResponseMode } from '@/types';
 import { ThumbsUp, ThumbsDown, AlertTriangle, Lightbulb, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
+
+// Animation variants for message entrance
+const messageVariants = {
+  hidden: { 
+    opacity: 0, 
+    y: 20,
+    scale: 0.95,
+  },
+  visible: { 
+    opacity: 1, 
+    y: 0,
+    scale: 1,
+    transition: {
+      type: 'spring' as const,
+      stiffness: 260,
+      damping: 20,
+      duration: 0.3,
+    }
+  },
+  exit: {
+    opacity: 0,
+    y: -10,
+    transition: { duration: 0.2 }
+  }
+};
+
+const userMessageVariants = {
+  hidden: { 
+    opacity: 0, 
+    x: 30,
+    scale: 0.95,
+  },
+  visible: { 
+    opacity: 1, 
+    x: 0,
+    scale: 1,
+    transition: {
+      type: 'spring' as const,
+      stiffness: 300,
+      damping: 25,
+    }
+  }
+};
+
+const reactionVariants = {
+  hidden: { 
+    opacity: 0, 
+    x: -20,
+    scale: 0.8,
+  },
+  visible: { 
+    opacity: 1, 
+    x: 0,
+    scale: 1,
+    transition: {
+      type: 'spring' as const,
+      stiffness: 400,
+      damping: 20,
+    }
+  }
+};
+
+const conductorVariants = {
+  hidden: { 
+    opacity: 0, 
+    scale: 0.9,
+  },
+  visible: { 
+    opacity: 1, 
+    scale: 1,
+    transition: {
+      type: 'spring' as const,
+      stiffness: 200,
+      damping: 20,
+    }
+  }
+};
 
 interface MessageBubbleProps {
   id: string;
@@ -93,10 +171,16 @@ export const MessageBubble: FC<MessageBubbleProps> = ({
   const isUser = sender === 'user';
   const agent = sender as Agent;
 
-  // User message - right aligned, primary color
+  // User message - right aligned, primary color with slide-in animation
   if (isUser) {
     return (
-      <div className="flex justify-end gap-3 group">
+      <motion.div 
+        className="flex justify-end gap-3 group"
+        variants={userMessageVariants}
+        initial="hidden"
+        animate="visible"
+        layout
+      >
         <div className="flex flex-col items-end max-w-[75%]">
           <div className="bg-primary text-primary-foreground rounded-2xl rounded-br-md px-4 py-2.5 shadow-sm">
             <p className="text-sm leading-relaxed whitespace-pre-wrap">{content}</p>
@@ -105,17 +189,23 @@ export const MessageBubble: FC<MessageBubbleProps> = ({
             {timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
           </span>
         </div>
-      </div>
+      </motion.div>
     );
   }
 
   const role = agent.role || inferRoleFromSpecialty(agent.specialty);
   const colors = role ? ROLE_COLORS[role] : ROLE_COLORS.product;
 
-  // Conductor/Nova message - centered, distinct style
+  // Conductor/Nova message - centered, distinct style with scale animation
   if (isConductor) {
     return (
-      <div className="flex justify-center my-4">
+      <motion.div 
+        className="flex justify-center my-4"
+        variants={conductorVariants}
+        initial="hidden"
+        animate="visible"
+        layout
+      >
         <div className="bg-muted/60 backdrop-blur-sm border border-dashed border-border rounded-xl px-4 py-3 max-w-[85%]">
           <div className="flex items-center gap-2 mb-2">
             <Sparkles className="w-3.5 h-3.5 text-primary" />
@@ -123,17 +213,23 @@ export const MessageBubble: FC<MessageBubbleProps> = ({
           </div>
           <StructuredMessage content={content} isCollapsible={false} responseMode={responseMode} />
         </div>
-      </div>
+      </motion.div>
     );
   }
 
-  // Micro-reaction - compact inline style
+  // Micro-reaction - compact inline style with quick pop animation
   if (isReaction && reactionType) {
     const config = REACTION_CONFIG[reactionType];
     const Icon = config.icon;
     
     return (
-      <div className="flex items-center gap-2 ml-12 py-1">
+      <motion.div 
+        className="flex items-center gap-2 ml-12 py-1"
+        variants={reactionVariants}
+        initial="hidden"
+        animate="visible"
+        layout
+      >
         <Avatar className="w-5 h-5">
           <AvatarImage src={agent.avatar} />
           <AvatarFallback className="text-[9px]">
@@ -149,16 +245,22 @@ export const MessageBubble: FC<MessageBubbleProps> = ({
           <span className="text-xs opacity-80">·</span>
           <span className="text-xs">{content}</span>
         </div>
-      </div>
+      </motion.div>
     );
   }
 
-  // Main agent message - distinctive card style with prominent colored borders
+  // Main agent message - distinctive card style with prominent colored borders and spring animation
   return (
-    <div className={cn(
-      "flex gap-3 group rounded-lg p-2 -ml-2 transition-colors",
-      isLeadResponse && colors.ring
-    )}>
+    <motion.div 
+      className={cn(
+        "flex gap-3 group rounded-lg p-2 -ml-2 transition-colors",
+        isLeadResponse && colors.ring
+      )}
+      variants={messageVariants}
+      initial="hidden"
+      animate="visible"
+      layout
+    >
       {/* Avatar with role-colored ring */}
       <Avatar className={cn(
         "w-10 h-10 ring-2 ring-offset-2 ring-offset-background flex-shrink-0 shadow-sm",
@@ -192,18 +294,23 @@ export const MessageBubble: FC<MessageBubbleProps> = ({
         </div>
         
         {/* Content with prominent left border */}
-        <div className={cn(
-          "rounded-xl rounded-tl-sm p-3.5 shadow-sm",
-          colors.bg,
-          colors.border
-        )}>
+        <motion.div 
+          className={cn(
+            "rounded-xl rounded-tl-sm p-3.5 shadow-sm",
+            colors.bg,
+            colors.border
+          )}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.1, duration: 0.2 }}
+        >
           <StructuredMessage 
             content={content} 
             isCollapsible={content.length > 200}
             responseMode={responseMode}
           />
-        </div>
+        </motion.div>
       </div>
-    </div>
+    </motion.div>
   );
 };
