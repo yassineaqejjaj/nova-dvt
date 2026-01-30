@@ -20,14 +20,56 @@ interface MessageBubbleProps {
   responseMode?: ResponseMode;
 }
 
-// Modern, subtle role colors
-const ROLE_COLORS: Record<AgentRole, { accent: string; bg: string }> = {
-  ux: { accent: 'text-pink-600 dark:text-pink-400', bg: 'bg-pink-500/10' },
-  product: { accent: 'text-blue-600 dark:text-blue-400', bg: 'bg-blue-500/10' },
-  data: { accent: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-500/10' },
-  tech: { accent: 'text-orange-600 dark:text-orange-400', bg: 'bg-orange-500/10' },
-  business: { accent: 'text-purple-600 dark:text-purple-400', bg: 'bg-purple-500/10' },
-  strategy: { accent: 'text-amber-600 dark:text-amber-400', bg: 'bg-amber-500/10' },
+// Bold, distinctive role colors with prominent borders
+const ROLE_COLORS: Record<AgentRole, { 
+  accent: string; 
+  bg: string; 
+  border: string; 
+  ring: string;
+  avatarRing: string;
+}> = {
+  ux: { 
+    accent: 'text-pink-600 dark:text-pink-400', 
+    bg: 'bg-pink-50 dark:bg-pink-950/40', 
+    border: 'border-l-4 border-l-pink-500',
+    ring: 'ring-pink-500/30',
+    avatarRing: 'ring-pink-500',
+  },
+  product: { 
+    accent: 'text-blue-600 dark:text-blue-400', 
+    bg: 'bg-blue-50 dark:bg-blue-950/40', 
+    border: 'border-l-4 border-l-blue-500',
+    ring: 'ring-blue-500/30',
+    avatarRing: 'ring-blue-500',
+  },
+  data: { 
+    accent: 'text-emerald-600 dark:text-emerald-400', 
+    bg: 'bg-emerald-50 dark:bg-emerald-950/40', 
+    border: 'border-l-4 border-l-emerald-500',
+    ring: 'ring-emerald-500/30',
+    avatarRing: 'ring-emerald-500',
+  },
+  tech: { 
+    accent: 'text-orange-600 dark:text-orange-400', 
+    bg: 'bg-orange-50 dark:bg-orange-950/40', 
+    border: 'border-l-4 border-l-orange-500',
+    ring: 'ring-orange-500/30',
+    avatarRing: 'ring-orange-500',
+  },
+  business: { 
+    accent: 'text-purple-600 dark:text-purple-400', 
+    bg: 'bg-purple-50 dark:bg-purple-950/40', 
+    border: 'border-l-4 border-l-purple-500',
+    ring: 'ring-purple-500/30',
+    avatarRing: 'ring-purple-500',
+  },
+  strategy: { 
+    accent: 'text-amber-600 dark:text-amber-400', 
+    bg: 'bg-amber-50 dark:bg-amber-950/40', 
+    border: 'border-l-4 border-l-amber-500',
+    ring: 'ring-amber-500/30',
+    avatarRing: 'ring-amber-500',
+  },
 };
 
 const REACTION_CONFIG = {
@@ -111,40 +153,49 @@ export const MessageBubble: FC<MessageBubbleProps> = ({
     );
   }
 
-  // Main agent message - modern card style
+  // Main agent message - distinctive card style with prominent colored borders
   return (
-    <div className="flex gap-3 group">
+    <div className={cn(
+      "flex gap-3 group rounded-lg p-2 -ml-2 transition-colors",
+      isLeadResponse && colors.ring
+    )}>
+      {/* Avatar with role-colored ring */}
       <Avatar className={cn(
-        "w-9 h-9 ring-2 ring-offset-2 ring-offset-background flex-shrink-0",
-        isLeadResponse ? "ring-primary" : "ring-muted"
+        "w-10 h-10 ring-2 ring-offset-2 ring-offset-background flex-shrink-0 shadow-sm",
+        colors.avatarRing
       )}>
         <AvatarImage src={agent.avatar} />
-        <AvatarFallback className="text-xs font-medium">
+        <AvatarFallback className={cn(
+          "text-xs font-semibold",
+          colors.bg,
+          colors.accent
+        )}>
           {agent.name.split(' ').map(n => n[0]).join('')}
         </AvatarFallback>
       </Avatar>
 
       <div className="flex-1 min-w-0 max-w-[85%]">
         {/* Header: Name + Role */}
-        <div className="flex items-center gap-2 mb-1">
-          <span className={cn("text-sm font-semibold", colors.accent)}>
+        <div className="flex items-center gap-2 mb-1.5">
+          <span className={cn("text-sm font-bold", colors.accent)}>
             {agent.name}
           </span>
           <RoleBadge specialty={agent.specialty} size="sm" />
           {isLeadResponse && (
-            <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4">
+            <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4 bg-primary/10 text-primary border-primary/20">
               Lead
             </Badge>
           )}
-          <span className="text-[10px] text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity">
+          <span className="text-[10px] text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity ml-auto">
             {timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
           </span>
         </div>
         
-        {/* Content */}
+        {/* Content with prominent left border */}
         <div className={cn(
-          "rounded-2xl rounded-tl-md p-3.5",
-          colors.bg
+          "rounded-xl rounded-tl-sm p-3.5 shadow-sm",
+          colors.bg,
+          colors.border
         )}>
           <StructuredMessage 
             content={content} 
