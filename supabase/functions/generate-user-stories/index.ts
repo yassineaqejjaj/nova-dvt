@@ -19,11 +19,48 @@ serve(async (req) => {
       throw new Error('LOVABLE_API_KEY not configured');
     }
 
+    // Determine story count based on granularity
+    const granularityConfig: Record<string, { min: number; max: number }> = {
+      macro: { min: 3, max: 5 },
+      standard: { min: 5, max: 8 },
+      fine: { min: 8, max: 12 }
+    };
+    const granularity = options?.granularity || 'standard';
+    const { min, max } = granularityConfig[granularity] || granularityConfig.standard;
+    const storyCountHint = options?.storyCount || `${min}-${max}`;
+
+    // Build format instructions
+    const formatInstructions = {
+      simple: 'Génère uniquement la structure As a / I want / So that sans critères d\'acceptation détaillés.',
+      with_ac: 'Génère la structure complète avec 2-4 critères d\'acceptation par story.',
+      with_ac_risks: 'Génère la structure complète avec 2-4 critères d\'acceptation ET 1-2 risques potentiels par story.'
+    };
+    const formatHint = formatInstructions[options?.format as keyof typeof formatInstructions] || formatInstructions.with_ac;
+
+    // Build orientation instructions
+    const orientationInstructions = {
+      user_value: 'Focus sur la VALEUR UTILISATEUR. Chaque story doit clairement articuler le bénéfice pour l\'utilisateur final.',
+      technical: 'Focus sur la FAISABILITÉ TECHNIQUE. Inclure des considérations d\'implémentation dans les notes techniques.',
+      balanced: 'Équilibre entre valeur utilisateur et faisabilité technique.'
+    };
+    const orientationHint = orientationInstructions[options?.orientation as keyof typeof orientationInstructions] || orientationInstructions.balanced;
+
     const systemPrompt = `You are a product management expert specialized in breaking down Epics into actionable User Stories.
 
     LANGUAGE: Réponds en français.
 
-    TASK: Analyze the Epic and generate ${options?.storyCount || '3-7'} detailed User Stories.
+    TASK: Analyze the Epic and generate ${storyCountHint} detailed User Stories.
+
+    GRANULARITY: ${granularity.toUpperCase()}
+    - macro: Stories larges pour MVP rapide
+    - standard: Stories équilibrées prêtes pour le sprint
+    - fine: Stories granulaires pour estimation précise
+
+    FORMAT: ${formatHint}
+
+    ORIENTATION: ${orientationHint}
+
+    ${options?.productContext ? `PRODUCT CONTEXT (use this to align stories with strategy):\n${options.productContext}\n` : ''}
 
     CRITICAL FORMAT RULES FOR USER STORIES:
     Each story object MUST have this exact JSON structure:
@@ -35,12 +72,11 @@ serve(async (req) => {
         "iWant": "action voulue SEULEMENT (ex: 'me déconnecter de l'application', 'voir mon historique', 'modifier mes paramètres')",
         "soThat": "bénéfice obtenu SEULEMENT (ex: 'sécuriser ma session', 'suivre mes activités', 'personnaliser mon expérience')"
       },
-      "acceptanceCriteria": ["Critère 1", "Critère 2", "Critère 3"],
-      "effortPoints": 3,
+      "acceptance_criteria": ["Critère 1", "Critère 2", "Critère 3"],
+      "effort": 3,
       "priority": "high",
-      "dependencies": [],
-      "status": "draft",
-      "tags": ["tag1"]
+      "technical_notes": "Notes techniques optionnelles",
+      "risks": ["Risque 1"] // Only if format includes risks
     }
 
     CRITICAL: Ne mets JAMAIS "En tant que", "Je veux", ou "Afin de" dans les champs asA, iWant, soThat !
@@ -77,7 +113,7 @@ ${epic.description}
 
 ${epic.context ? `Additional Context:\n${epic.context}` : ''}
 
-Generate ${options?.storyCount || 'an appropriate number of'} user stories from this Epic.`;
+Generate ${storyCountHint} user stories from this Epic following the specified granularity, format, and orientation.`;
 
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
