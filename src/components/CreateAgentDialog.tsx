@@ -1,87 +1,158 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
-import { X, Sparkles, Plus } from 'lucide-react';
+import { Sparkles, ArrowLeft, ArrowRight } from 'lucide-react';
 import { Agent } from '@/types';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import {
+  StepIndicator,
+  StepRole,
+  StepIdentity,
+  StepBehavior,
+  StepContext,
+  StepGenerate,
+  CreateAgentFormData,
+  CreateAgentContext,
+  AgentRole,
+  DecisionStyle,
+  ROLE_DEFINITIONS
+} from '@/components/create-agent';
 
 interface CreateAgentDialogProps {
   open: boolean;
   onClose: () => void;
   onAgentCreated: (agent: Agent) => void;
+  activeSquad?: { id: string; name: string } | null;
+  activeContext?: { id: string; name: string } | null;
 }
 
-const familyColors: Array<Agent['familyColor']> = ['blue', 'green', 'purple', 'orange'];
+const STEPS = [
+  { id: 1, label: 'Role' },
+  { id: 2, label: 'Identity' },
+  { id: 3, label: 'Behavior' },
+  { id: 4, label: 'Context' },
+  { id: 5, label: 'Generate' }
+];
+
+const initialFormData: CreateAgentFormData = {
+  role: null,
+  customRoleDescription: '',
+  name: '',
+  useCustomName: false,
+  mission: '',
+  decisionStyle: 'balanced',
+  capabilities: []
+};
 
 export const CreateAgentDialog: React.FC<CreateAgentDialogProps> = ({
   open,
   onClose,
-  onAgentCreated
+  onAgentCreated,
+  activeSquad,
+  activeContext
 }) => {
-  const [formData, setFormData] = useState({
-    name: '',
-    specialty: '',
-    familyColor: 'blue' as Agent['familyColor'],
-    personality: 'balanced' as Agent['personality'],
-    capabilities: [] as string[],
-    currentCapability: ''
-  });
+  const [currentStep, setCurrentStep] = useState(1);
+  const [formData, setFormData] = useState<CreateAgentFormData>(initialFormData);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [generatedAgent, setGeneratedAgent] = useState<Agent | null>(null);
 
-  const personalityTypes = [
-    { id: 'balanced', name: 'Équilibré', description: 'Balance parfaite entre analyse et créativité' },
-    { id: 'analytical', name: 'Analytique', description: 'Centré sur les données et la logique' },
-    { id: 'creative', name: 'Créatif', description: 'Pensée divergente et solutions innovantes' },
-    { id: 'socratic', name: 'Socratique', description: 'Pose des questions pour approfondir' }
-  ];
-
-  const handleAddCapability = () => {
-    if (formData.currentCapability.trim() && !formData.capabilities.includes(formData.currentCapability.trim())) {
-      setFormData(prev => ({
-        ...prev,
-        capabilities: [...prev.capabilities, prev.currentCapability.trim()],
-        currentCapability: ''
-      }));
-    }
+  const context: CreateAgentContext = {
+    squadId: activeSquad?.id || null,
+    squadName: activeSquad?.name || null,
+    contextId: activeContext?.id || null,
+    contextName: activeContext?.name || null
   };
 
-  const handleRemoveCapability = (capability: string) => {
+  // Reset form when dialog closes
+  useEffect(() => {
+    if (!open) {
+      setCurrentStep(1);
+      setFormData(initialFormData);
+      setGeneratedAgent(null);
+    }
+  }, [open]);
+
+  // Update name when role changes (if not using custom name)
+  useEffect(() => {
+    if (!formData.useCustomName && formData.role) {
+      const roleDefinition = ROLE_DEFINITIONS.find(r => r.id === formData.role);
+      if (roleDefinition) {
+        setFormData(prev => ({
+          ...prev,
+          name: `${roleDefinition.name} Agent`
+        }));
+      }
+    }
+  }, [formData.role, formData.useCustomName]);
+
+  const handleRoleSelect = (role: AgentRole) => {
     setFormData(prev => ({
       ...prev,
-      capabilities: prev.capabilities.filter(c => c !== capability)
+      role,
+      capabilities: [],
+      mission: ''
     }));
   };
 
-  const generateAgent = async () => {
-    if (!formData.name || !formData.specialty || formData.capabilities.length === 0) {
-      toast.error('Please fill in name, specialty, and at least one capability');
-      return;
+  const canProceed = (): boolean => {
+    switch (currentStep) {
+      case 1:
+        return formData.role !== null && (formData.role !== 'custom' || formData.customRoleDescription.trim() !== '');
+      case 2:
+        return formData.name.trim() !== '' && formData.mission.trim() !== '';
+      case 3:
+        return formData.capabilities.length > 0;
+      case 4:
+        return true;
+      case 5:
+        return generatedAgent !== null;
+      default:
+        return false;
     }
+  };
 
+  const handleNext = () => {
+    if (currentStep < 5 && canProceed()) {
+      setCurrentStep(prev => prev + 1);
+    }
+  };
+
+  const handleBack = () => {
+    if (currentStep > 1) {
+      setCurrentStep(prev => prev - 1);
+    }
+  };
+
+  const generateAgent = async () => {
     setIsGenerating(true);
+    setGeneratedAgent(null);
+
     try {
+      const roleDefinition = ROLE_DEFINITIONS.find(r => r.id === formData.role);
+      
       const { data, error } = await supabase.functions.invoke('chat-ai', {
         body: {
-          prompt: `Generate a professional backstory and additional tags for an AI agent with the following details:
-          
+          prompt: `Generate a professional backstory and tags for an AI agent with these specifications:
+
+Role: ${roleDefinition?.name || formData.customRoleDescription}
 Name: ${formData.name}
-Specialty: ${formData.specialty}
+Primary Mission: ${formData.mission}
+Decision Style: ${formData.decisionStyle}
 Capabilities: ${formData.capabilities.join(', ')}
+${context.contextName ? `Product Context: ${context.contextName}` : ''}
 
-Please respond with a JSON object containing:
-- backstory: A compelling 2-3 sentence professional background (150-200 characters)
-- tags: An array of 4 relevant professional tags
+Create a compelling, concise backstory (2-3 sentences, 150-200 characters) that:
+- Reflects the agent's expertise and decision style
+- Sounds professional and authentic
+- Matches the mission and capabilities
 
-Example format:
+Also generate 4 professional tags that represent key skills.
+
+Respond ONLY with valid JSON:
 {
-  "backstory": "Senior product manager with 8+ years at tech giants. Expert in user-centered design and agile methodologies.",
-  "tags": ["Product Management", "Strategy", "User Research", "Agile"]
+  "backstory": "Professional background description...",
+  "tags": ["Tag1", "Tag2", "Tag3", "Tag4"]
 }`,
           messages: []
         }
@@ -91,7 +162,6 @@ Example format:
 
       let generatedData;
       try {
-        // Extract JSON from the response
         const responseText = data.response || data.generatedText || '';
         const jsonMatch = responseText.match(/\{[\s\S]*\}/);
         if (jsonMatch) {
@@ -101,9 +171,8 @@ Example format:
         }
       } catch (parseError) {
         console.error('JSON parsing error:', parseError);
-        // Fallback to basic generation
         generatedData = {
-          backstory: `Experienced ${formData.specialty.toLowerCase()} with expertise in ${formData.capabilities.slice(0, 2).join(' and ').toLowerCase()}. Passionate about delivering high-quality results and innovative solutions.`,
+          backstory: `Expert in ${formData.mission.toLowerCase()}. Brings a ${formData.decisionStyle} approach to problem-solving with deep expertise in ${formData.capabilities.slice(0, 2).join(' and ')}.`,
           tags: formData.capabilities.slice(0, 4)
         };
       }
@@ -111,29 +180,17 @@ Example format:
       const newAgent: Agent = {
         id: `custom-${Date.now()}`,
         name: formData.name,
-        specialty: formData.specialty,
+        specialty: formData.mission,
         avatar: `/api/placeholder/64/64?text=${formData.name.split(' ').map(n => n[0]).join('')}`,
         backstory: generatedData.backstory,
         capabilities: formData.capabilities,
         tags: generatedData.tags || formData.capabilities.slice(0, 4),
         xpRequired: 0,
-        familyColor: formData.familyColor,
-        personality: formData.personality
+        familyColor: roleDefinition?.familyColor || 'blue',
+        personality: formData.decisionStyle
       };
 
-      onAgentCreated(newAgent);
-      toast.success(`${formData.name} has been created successfully!`);
-      
-      // Reset form
-      setFormData({
-        name: '',
-        specialty: '',
-        familyColor: 'blue',
-        personality: 'balanced',
-        capabilities: [],
-        currentCapability: ''
-      });
-      onClose();
+      setGeneratedAgent(newAgent);
     } catch (error) {
       console.error('Error generating agent:', error);
       toast.error('Failed to generate agent. Please try again.');
@@ -142,133 +199,119 @@ Example format:
     }
   };
 
+  const handleFinish = () => {
+    if (generatedAgent) {
+      onAgentCreated(generatedAgent);
+      toast.success(`${generatedAgent.name} has been created successfully!`);
+      onClose();
+    }
+  };
+
+  const renderStep = () => {
+    switch (currentStep) {
+      case 1:
+        return (
+          <StepRole
+            selectedRole={formData.role}
+            customRoleDescription={formData.customRoleDescription}
+            onRoleSelect={handleRoleSelect}
+            onCustomDescriptionChange={(desc) => setFormData(prev => ({ ...prev, customRoleDescription: desc }))}
+          />
+        );
+      case 2:
+        return (
+          <StepIdentity
+            role={formData.role!}
+            name={formData.name}
+            useCustomName={formData.useCustomName}
+            mission={formData.mission}
+            onNameChange={(name) => setFormData(prev => ({ ...prev, name }))}
+            onUseCustomNameChange={(use) => setFormData(prev => ({ ...prev, useCustomName: use }))}
+            onMissionChange={(mission) => setFormData(prev => ({ ...prev, mission }))}
+          />
+        );
+      case 3:
+        return (
+          <StepBehavior
+            role={formData.role!}
+            decisionStyle={formData.decisionStyle}
+            capabilities={formData.capabilities}
+            onDecisionStyleChange={(style) => setFormData(prev => ({ ...prev, decisionStyle: style }))}
+            onCapabilitiesChange={(caps) => setFormData(prev => ({ ...prev, capabilities: caps }))}
+          />
+        );
+      case 4:
+        return (
+          <StepContext
+            role={formData.role!}
+            name={formData.name}
+            mission={formData.mission}
+            context={context}
+          />
+        );
+      case 5:
+        return (
+          <StepGenerate
+            formData={formData}
+            isGenerating={isGenerating}
+            generatedAgent={generatedAgent}
+            onGenerate={generateAgent}
+            onRegenerate={generateAgent}
+          />
+        );
+      default:
+        return null;
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="flex items-center space-x-2">
+          <DialogTitle className="flex items-center gap-2">
             <Sparkles className="w-5 h-5 text-primary" />
-            <span>Create Custom Agent</span>
+            <span>Design a Custom Agent</span>
           </DialogTitle>
+          <p className="text-sm text-muted-foreground">
+            Define the role this agent will play in your squad.
+          </p>
         </DialogHeader>
 
-        <div className="space-y-6">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="name">Agent Name</Label>
-              <Input
-                id="name"
-                placeholder="e.g., Sarah Chen"
-                value={formData.name}
-                onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-              />
-            </div>
+        <StepIndicator steps={STEPS} currentStep={currentStep} />
 
-            <div className="space-y-2">
-              <Label htmlFor="specialty">Specialty</Label>
-              <Input
-                id="specialty"
-                placeholder="e.g., Product Strategy"
-                value={formData.specialty}
-                onChange={(e) => setFormData(prev => ({ ...prev, specialty: e.target.value }))}
-              />
-            </div>
-          </div>
+        <div className="min-h-[350px]">
+          {renderStep()}
+        </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="family">Family Color</Label>
-              <Select value={formData.familyColor} onValueChange={(value: Agent['familyColor']) => 
-                setFormData(prev => ({ ...prev, familyColor: value }))
-              }>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="blue">Blue (Product Management)</SelectItem>
-                  <SelectItem value="green">Green (Design)</SelectItem>
-                  <SelectItem value="purple">Purple (Development)</SelectItem>
-                  <SelectItem value="orange">Orange (Marketing & Growth)</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+        {/* Navigation */}
+        <div className="flex items-center justify-between pt-4 border-t">
+          <Button
+            variant="ghost"
+            onClick={handleBack}
+            disabled={currentStep === 1 || isGenerating}
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back
+          </Button>
 
-            <div className="space-y-2">
-              <Label htmlFor="personality">Personnalité</Label>
-              <Select value={formData.personality} onValueChange={(value: Agent['personality']) => 
-                setFormData(prev => ({ ...prev, personality: value }))
-              }>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {personalityTypes.map((type) => (
-                    <SelectItem key={type.id} value={type.id}>
-                      {type.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <p className="text-xs text-muted-foreground">
-                {personalityTypes.find(t => t.id === formData.personality)?.description}
-              </p>
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label>Capabilities</Label>
-            <div className="flex space-x-2">
-              <Input
-                placeholder="Add a capability..."
-                value={formData.currentCapability}
-                onChange={(e) => setFormData(prev => ({ ...prev, currentCapability: e.target.value }))}
-                onKeyPress={(e) => e.key === 'Enter' && handleAddCapability()}
-              />
-              <Button type="button" onClick={handleAddCapability} size="sm">
-                <Plus className="w-4 h-4" />
-              </Button>
-            </div>
-            
-            {formData.capabilities.length > 0 && (
-              <div className="flex flex-wrap gap-2 mt-2">
-                {formData.capabilities.map((capability) => (
-                  <Badge key={capability} variant="secondary" className="flex items-center space-x-1">
-                    <span>{capability}</span>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-4 w-4 p-0 hover:bg-destructive hover:text-destructive-foreground"
-                      onClick={() => handleRemoveCapability(capability)}
-                    >
-                      <X className="w-3 h-3" />
-                    </Button>
-                  </Badge>
-                ))}
-              </div>
-            )}
-          </div>
-
-          <div className="flex justify-end space-x-2 pt-4">
-            <Button variant="outline" onClick={onClose}>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={onClose} disabled={isGenerating}>
               Cancel
             </Button>
-            <Button 
-              onClick={generateAgent} 
-              disabled={isGenerating || !formData.name || !formData.specialty || formData.capabilities.length === 0}
-              className="flex items-center space-x-2"
-            >
-              {isGenerating ? (
-                <>
-                  <Sparkles className="w-4 h-4 animate-spin" />
-                  <span>Generating...</span>
-                </>
-              ) : (
-                <>
-                  <Sparkles className="w-4 h-4" />
-                  <span>Generate Agent</span>
-                </>
-              )}
-            </Button>
+            
+            {currentStep < 5 ? (
+              <Button
+                onClick={handleNext}
+                disabled={!canProceed() || isGenerating}
+              >
+                Next
+                <ArrowRight className="w-4 h-4 ml-2" />
+              </Button>
+            ) : generatedAgent ? (
+              <Button onClick={handleFinish}>
+                Add to Squad
+              </Button>
+            ) : null}
           </div>
         </div>
       </DialogContent>
