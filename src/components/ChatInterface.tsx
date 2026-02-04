@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, type FC } from 'react';
+import { useState, useEffect, useRef, useCallback, type FC } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -6,8 +6,9 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { supabase } from '@/integrations/supabase/client';
 import { Agent, ChatMessage, ResponseMode, SteeringCommand, LiveSynthesis, ThreadConclusion as ThreadConclusionType, Disagreement, AgentInsight } from '@/types';
+import { AgentAction, OrchestratorPlan, OrchestrationPhase } from '@/types/agentic';
 import { toast } from '@/hooks/use-toast';
-import { Send, Users, Loader2, AtSign } from 'lucide-react';
+import { Send, Users, Loader2, AtSign, Zap } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { CanvasGenerator } from './CanvasGenerator';
 import { StoryWriter } from './StoryWriter';
@@ -23,6 +24,9 @@ import {
   inferRoleFromSpecialty,
   ArtifactDropZone,
   ChatControlHeader,
+  PendingActionsRail,
+  OrchestratorStatus,
+  AgentConfidence,
 } from './chat';
 
 type Artifact = {
@@ -40,6 +44,8 @@ interface ExtendedChatMessage extends ChatMessage {
   reactionType?: 'agree' | 'disagree' | 'risk' | 'idea';
   isLeadResponse?: boolean;
   isConductor?: boolean;
+  confidence?: number;
+  keyPoints?: string[];
 }
 
 interface ChatInterfaceProps {
@@ -66,7 +72,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ currentSquad, squa
   const [previewArtifact, setPreviewArtifact] = useState<Artifact | null>(null);
   
   // UX Enhancement states
-  const [responseMode, setResponseMode] = useState<ResponseMode>('short');
+  const [responseMode, setResponseMode] = useState<ResponseMode>('structured');
   const [showSynthesisPanel, setShowSynthesisPanel] = useState(true);
   const [activeSteeringMode, setActiveSteeringMode] = useState<SteeringCommand | null>(null);
   const [liveSynthesis, setLiveSynthesis] = useState<LiveSynthesis>({
@@ -77,8 +83,40 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ currentSquad, squa
   });
   const [threadConclusion, setThreadConclusion] = useState<ThreadConclusionType | null>(null);
   
+  // Agentic orchestration states
+  const [pendingActions, setPendingActions] = useState<AgentAction[]>([]);
+  const [orchestratorActive, setOrchestratorActive] = useState(false);
+  const [currentPhase, setCurrentPhase] = useState<OrchestrationPhase>('proposal');
+  const [currentRound, setCurrentRound] = useState(1);
+  const [useOrchestrator, setUseOrchestrator] = useState(true); // Enable by default
+  
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // Load pending actions
+  const loadPendingActions = useCallback(async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data, error } = await supabase
+        .from('agent_actions')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('status', 'pending')
+        .order('created_at', { ascending: false })
+        .limit(10);
+
+      if (error) throw error;
+      setPendingActions((data || []) as AgentAction[]);
+    } catch (error) {
+      console.error('Error loading pending actions:', error);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadPendingActions();
+  }, [loadPendingActions]);
 
   useEffect(() => {
     if (squadId && currentSquad.length > 0) {
@@ -322,7 +360,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ currentSquad, squa
         }
       }
 
-      // Detect tool intent
+      // Detect tool intent first
       const conversationHistory = messages.slice(-3).map(msg => ({
         role: msg.sender === 'user' ? 'user' : 'assistant',
         content: msg.content,
@@ -343,10 +381,11 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ currentSquad, squa
         return;
       }
 
-      // Build full conversation
-      const fullConversationHistory = messages.slice(-10).map(msg => ({
+      // Build full conversation history
+      const fullConversationHistory: { role: string; content: string; agentName?: string }[] = messages.slice(-10).map(msg => ({
         role: msg.sender === 'user' ? 'user' : 'assistant',
         content: msg.content,
+        agentName: msg.sender !== 'user' ? (msg.sender as Agent).name : undefined,
       }));
       fullConversationHistory.push({ role: 'user', content: messageToSend });
 
@@ -366,85 +405,211 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ currentSquad, squa
         );
       }
 
-      // Build response mode instructions
-      const modeInstructions = getResponseModeInstructions(responseMode);
+      // Use orchestrator for complex multi-agent coordination
+      if (useOrchestrator && respondingAgents.length > 1) {
+        // Convert agents to registry format for orchestrator
+        const agentsForOrchestrator = respondingAgents.map(a => ({
+          agent_key: a.id,
+          name: a.name,
+          specialty: a.specialty,
+          system_prompt: `Expert en ${a.specialty}. ${a.backstory || ''}`,
+          decision_style: a.personality || 'balanced',
+          tools_allowed: ['canvas_generator', 'story_writer', 'impact_plotter'],
+          priorities: a.capabilities.slice(0, 3),
+          biases: null,
+          capabilities: a.capabilities,
+          is_conductor: false,
+          max_tokens: responseMode === 'short' ? 200 : responseMode === 'detailed' ? 600 : 400,
+          temperature: 0.7,
+        }));
 
-      const { data, error } = await supabase.functions.invoke('chat-ai', {
-        body: {
-          messages: fullConversationHistory,
-          agents: respondingAgents,
-          mentionedAgents: userMessage.mentionedAgents || [],
-          artifactContext: artifactContext || undefined,
-          responseMode: responseMode,
-          modeInstructions: modeInstructions,
-        },
-      });
+        const { data: orchestratorData, error: orchestratorError } = await supabase.functions.invoke('orchestrate-agents', {
+          body: {
+            message: messageToSend,
+            squadId,
+            agents: agentsForOrchestrator,
+            conversationHistory: fullConversationHistory,
+            projectContext: artifactContext || undefined,
+            responseMode,
+            phase: currentPhase,
+          }
+        });
 
-      if (error) throw error;
+        if (orchestratorError) throw orchestratorError;
 
-      // Process responses with coordinated turns
-      const responses = data.responses || [];
-      const leadAgent = responses[0];
-      
-      // Lead agent responds fully
-      if (leadAgent) {
-        const stance = generateStance(leadAgent.agent, messageToSend);
-        const agentMessage: ExtendedChatMessage = {
-          id: `lead-${Date.now()}`,
-          squadId: squadId || 'current',
-          content: leadAgent.message,
-          sender: leadAgent.agent,
-          timestamp: new Date(),
-          stance: stance,
-          isLeadResponse: true,
-        };
-        setMessages(prev => [...prev, agentMessage]);
+        // Update orchestration state
+        setOrchestratorActive(orchestratorData.conductorActive);
+        setCurrentPhase(orchestratorData.phase);
+        setCurrentRound(orchestratorData.round);
 
-        if (squadId) {
-          const { data: userData } = await supabase.auth.getUser();
-          if (userData.user) {
-            await supabase.from('chat_messages').insert({
-              squad_id: squadId,
-              user_id: userData.user.id,
-              content: leadAgent.message,
-              sender_type: 'agent',
-              sender_agent_id: leadAgent.agent.id,
-              sender_agent_name: leadAgent.agent.name
-            });
+        // Process orchestrator responses
+        const responses = orchestratorData.responses || [];
+        
+        // Add synthesis as conductor message if available
+        if (orchestratorData.synthesis) {
+          const conductorMessage: ExtendedChatMessage = {
+            id: `conductor-${Date.now()}`,
+            squadId: squadId || 'current',
+            content: orchestratorData.synthesis,
+            sender: { 
+              id: 'nova-conductor', 
+              name: 'Nova', 
+              specialty: 'Orchestration', 
+              avatar: '/icons/nova.svg', 
+              backstory: '', 
+              capabilities: ['Synthesis', 'Coordination'], 
+              tags: ['conductor'], 
+              xpRequired: 0, 
+              familyColor: 'blue' 
+            },
+            timestamp: new Date(),
+            isConductor: true,
+          };
+          setMessages(prev => [...prev, conductorMessage]);
+        }
+
+        // Process each agent response
+        for (let i = 0; i < responses.length; i++) {
+          const response = responses[i];
+          const agent = respondingAgents.find(a => a.id === response.agentKey) || {
+            id: response.agentKey,
+            name: response.agentName,
+            specialty: 'Expert',
+            avatar: '',
+            backstory: '',
+            capabilities: [],
+            tags: [],
+            xpRequired: 0,
+            familyColor: 'blue' as const
+          };
+
+          if (i > 0) {
+            await new Promise(resolve => setTimeout(resolve, 500));
+          }
+
+          const agentMessage: ExtendedChatMessage = {
+            id: `agent-${Date.now()}-${i}`,
+            squadId: squadId || 'current',
+            content: response.content,
+            sender: agent,
+            timestamp: new Date(),
+            stance: response.stance,
+            isLeadResponse: i === 0,
+            isReaction: i > 0,
+            reactionType: i > 0 ? detectReactionType(response.content) : undefined,
+            confidence: response.confidence,
+            keyPoints: response.keyPoints,
+          };
+          setMessages(prev => [...prev, agentMessage]);
+
+          // Save to chat_messages if squadId exists
+          if (squadId) {
+            const { data: userData } = await supabase.auth.getUser();
+            if (userData.user) {
+              await supabase.from('chat_messages').insert({
+                squad_id: squadId,
+                user_id: userData.user.id,
+                content: response.content,
+                sender_type: 'agent',
+                sender_agent_id: response.agentKey,
+                sender_agent_name: response.agentName
+              });
+            }
           }
         }
-      }
 
-      // Other agents provide micro-reactions
-      const otherResponses = responses.slice(1);
-      for (let i = 0; i < otherResponses.length; i++) {
-        const response = otherResponses[i];
-        await new Promise(resolve => setTimeout(resolve, 800));
-        
-        const reactionType = detectReactionType(response.message);
-        const shortContent = extractReactionContent(response.message, reactionType);
-        
-        const reactionMessage: ExtendedChatMessage = {
-          id: `reaction-${Date.now()}-${i}`,
-          squadId: squadId || 'current',
-          content: shortContent,
-          sender: response.agent,
-          timestamp: new Date(),
-          isReaction: true,
-          reactionType: reactionType,
-        };
-        setMessages(prev => [...prev, reactionMessage]);
-      }
+        // Refresh pending actions
+        if (orchestratorData.pendingActions?.length > 0) {
+          loadPendingActions();
+        }
 
-      // Update live synthesis
-      updateLiveSynthesis(messageToSend, responses);
+        // Update live synthesis with orchestrator data
+        updateLiveSynthesis(messageToSend, responses.map((r: any) => ({
+          agent: respondingAgents.find(a => a.id === r.agentKey) || { name: r.agentName, specialty: 'Expert' },
+          message: r.content
+        })));
+
+      } else {
+        // Fallback to original chat-ai for simple cases
+        const modeInstructions = getResponseModeInstructions(responseMode);
+
+        const { data, error } = await supabase.functions.invoke('chat-ai', {
+          body: {
+            messages: fullConversationHistory,
+            agents: respondingAgents,
+            mentionedAgents: userMessage.mentionedAgents || [],
+            artifactContext: artifactContext || undefined,
+            responseMode: responseMode,
+            modeInstructions: modeInstructions,
+          },
+        });
+
+        if (error) throw error;
+
+        // Process responses with coordinated turns
+        const responses = data.responses || [];
+        const leadAgent = responses[0];
+        
+        // Lead agent responds fully
+        if (leadAgent) {
+          const stance = generateStance(leadAgent.agent, messageToSend);
+          const agentMessage: ExtendedChatMessage = {
+            id: `lead-${Date.now()}`,
+            squadId: squadId || 'current',
+            content: leadAgent.message,
+            sender: leadAgent.agent,
+            timestamp: new Date(),
+            stance: stance,
+            isLeadResponse: true,
+          };
+          setMessages(prev => [...prev, agentMessage]);
+
+          if (squadId) {
+            const { data: userData } = await supabase.auth.getUser();
+            if (userData.user) {
+              await supabase.from('chat_messages').insert({
+                squad_id: squadId,
+                user_id: userData.user.id,
+                content: leadAgent.message,
+                sender_type: 'agent',
+                sender_agent_id: leadAgent.agent.id,
+                sender_agent_name: leadAgent.agent.name
+              });
+            }
+          }
+        }
+
+        // Other agents provide micro-reactions
+        const otherResponses = responses.slice(1);
+        for (let i = 0; i < otherResponses.length; i++) {
+          const response = otherResponses[i];
+          await new Promise(resolve => setTimeout(resolve, 800));
+        
+          const reactionType = detectReactionType(response.message);
+          const shortContent = extractReactionContent(response.message, reactionType);
+          
+          const reactionMessage: ExtendedChatMessage = {
+            id: `reaction-${Date.now()}-${i}`,
+            squadId: squadId || 'current',
+            content: shortContent,
+            sender: response.agent,
+            timestamp: new Date(),
+            isReaction: true,
+            reactionType: reactionType,
+          };
+          setMessages(prev => [...prev, reactionMessage]);
+        }
+
+        // Update live synthesis
+        updateLiveSynthesis(messageToSend, responses);
+      }
 
       // Generate thread conclusion after a few exchanges
       if (messages.length > 6) {
         await generateThreadConclusion();
       }
 
-      onAddXP(15 * responses.length, 'chatting with AI squad');
+      onAddXP(15, 'chatting with AI squad');
 
     } catch (error) {
       console.error('Error sending message:', error);

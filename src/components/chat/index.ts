@@ -11,3 +11,4 @@ export { NextStepRail } from './NextStepRail';
 export { ModeSwitcher } from './ModeSwitcher';
 export { ArtifactDropZone } from './ArtifactDropZone';
 export { ChatControlHeader } from './ChatControlHeader';
+export { PendingActionsRail, OrchestratorStatus, AgentConfidence } from './PendingActionsRail';

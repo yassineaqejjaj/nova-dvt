@@ -95,3 +95,6 @@ verify_jwt = true
 
 [functions.transform-artifact]
 verify_jwt = true
+
+[functions.orchestrate-agents]
+verify_jwt = true
