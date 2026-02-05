@@ -127,7 +127,10 @@ async function buildOrchestratorPlan(
   const planPrompt = `Tu es le Conducteur Nova, un orchestrateur de discussions multi-agents.
 
 AGENTS DISPONIBLES:
-${agents.filter(a => !a.is_conductor).map(a => `- ${a.name} (${a.specialty}): ${a.capabilities.join(', ')}`).join('\n')}
+${agents
+  .filter(a => !a.is_conductor)
+  .map(a => `- agent_key: ${a.agent_key} | name: ${a.name} | specialty: ${a.specialty} | capabilities: ${a.capabilities.join(', ')}`)
+  .join('\n')}
 
 MESSAGE UTILISATEUR: ${message}
 
@@ -140,7 +143,7 @@ Réponds en JSON:
 {
   "goals": ["Objectif 1 de cette discussion", "Objectif 2"],
   "assignedAgents": [
-    {"agentKey": "agent-key", "task": "Ce que cet agent doit faire", "priority": 1}
+    {"agentKey": "agent_key exact ci-dessus", "task": "Ce que cet agent doit faire", "priority": 1}
   ],
   "expectedRounds": 1-3,
   "conductorNotes": "Notes internes sur la stratégie",
@@ -150,7 +153,7 @@ Réponds en JSON:
 Règles:
 - Assigne 2-4 agents max
 - priority: 1 = parle en premier, 2 = réagit, 3 = synthétise
-- Active le conducteur si la discussion risque de diverger ou s'il y a des tensions prévisibles`;
+ - IMPORTANT: agentKey DOIT être un agent_key existant (pas un nom).`;
 
   try {
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
@@ -184,10 +187,26 @@ Règles:
     }
     
     const plan = JSON.parse(jsonMatch[0]);
+
+    // Normalize assigned agent keys (LLMs sometimes return names instead of agent_key)
+    const agentKeySet = new Set(agents.map(a => a.agent_key));
+    const normalizedAssignedAgents = Array.isArray(plan.assignedAgents)
+      ? plan.assignedAgents
+          .map((t: any) => {
+            const raw = String(t?.agentKey ?? '').trim();
+            if (agentKeySet.has(raw)) return t;
+            const byName = agents.find(a => a.name.toLowerCase() === raw.toLowerCase());
+            if (byName) return { ...t, agentKey: byName.agent_key };
+            return t;
+          })
+          .filter((t: any) => agentKeySet.has(String(t?.agentKey ?? '').trim()))
+      : [];
+
     return {
       ...plan,
+      assignedAgents: normalizedAssignedAgents,
       complexity,
-      shouldActivateConductor: plan.shouldActivateConductor ?? (complexity === 'complex')
+      shouldActivateConductor: plan.shouldActivateConductor ?? (complexity === 'complex'),
     };
   } catch (error) {
     console.error('Error building plan:', error);
