@@ -303,8 +303,36 @@ RÈGLES ABSOLUES:
 
 // Parse structured response from agent
 function parseAgentResponse(content: string, agentKey: string, agentName: string): any {
+  // Sanitize content: Remove [AgentName]: prefixes and self-introductions
+  let sanitized = content;
+
+  // Strip "[Name]:" or "[Name Name]:" at start
+  sanitized = sanitized.replace(/^\s*\[[^\]]+\]\s*:\s*/i, '');
+
+  // Strip "Name Name:" at start (e.g., "David Chang:")
+  sanitized = sanitized.replace(/^\s*[A-Z][a-z]+\s+[A-Z][a-z]+\s*:\s*/i, '');
+
+  // Strip "Mon analyse principale:" repeated patterns
+  sanitized = sanitized.replace(/^Mon analyse principale\s*:\s*/gi, '');
+
+  // Strip duplicate content: if content repeats itself, keep only one
+  const halfLen = Math.floor(sanitized.length / 2);
+  if (halfLen > 100) {
+    const firstHalf = sanitized.slice(0, halfLen);
+    const secondHalf = sanitized.slice(halfLen);
+    // Check if second half starts with same content
+    const overlapCheck = firstHalf.slice(-80);
+    if (secondHalf.includes(overlapCheck)) {
+      // Find where duplication starts and cut
+      const dupIndex = sanitized.indexOf(overlapCheck, overlapCheck.length);
+      if (dupIndex > 50) {
+        sanitized = sanitized.slice(0, dupIndex).trim();
+      }
+    }
+  }
+
   // Try to extract JSON metadata
-  const jsonMatch = content.match(/\{[\s\S]*?\"stance\"[\s\S]*?\}/);
+  const jsonMatch = sanitized.match(/\{[\s\S]*?\"stance\"[\s\S]*?\}/);
   let metadata = {
     stance: '',
     key_points: [],
@@ -317,7 +345,7 @@ function parseAgentResponse(content: string, agentKey: string, agentName: string
     try {
       metadata = { ...metadata, ...JSON.parse(jsonMatch[0]) };
       // Remove JSON from visible content
-      content = content.replace(jsonMatch[0], '').trim();
+      sanitized = sanitized.replace(jsonMatch[0], '').trim();
     } catch (e) {
       // Keep default metadata
     }
@@ -325,7 +353,7 @@ function parseAgentResponse(content: string, agentKey: string, agentName: string
 
   // Detect tool calls
   const toolCalls: any[] = [];
-  const toolMatches = content.matchAll(/\[OUTIL:\s*(\w+)\]([^[]*)/g);
+  const toolMatches = sanitized.matchAll(/\[OUTIL:\s*(\w+)\]([^[]*)/g);
   for (const match of toolMatches) {
     toolCalls.push({
       id: `tool-${Date.now()}-${Math.random().toString(36).slice(2)}`,
@@ -338,7 +366,7 @@ function parseAgentResponse(content: string, agentKey: string, agentName: string
   return {
     agentKey,
     agentName,
-    content: content.replace(/\[OUTIL:[^\]]*\][^[]*/g, '').trim(),
+    content: sanitized.replace(/\[OUTIL:[^\]]*\][^[]*/g, '').trim(),
     stance: metadata.stance,
     keyPoints: metadata.key_points || [],
     confidence: metadata.confidence || 0.7,
