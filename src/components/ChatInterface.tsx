@@ -487,16 +487,26 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ currentSquad, squa
             await new Promise(resolve => setTimeout(resolve, 500));
           }
 
+          const cleaned = sanitizeOrchestratorContent(
+            response.content,
+            response.agentName,
+            respondingAgents.map(a => a.name)
+          );
+          const reactionType = i > 0 ? detectReactionType(cleaned) : undefined;
+          const displayContent = i > 0 && reactionType
+            ? extractReactionContent(cleaned, reactionType)
+            : cleaned;
+
           const agentMessage: ExtendedChatMessage = {
             id: `agent-${Date.now()}-${i}`,
             squadId: squadId || 'current',
-            content: response.content,
+            content: displayContent,
             sender: agent,
             timestamp: new Date(),
             stance: response.stance,
             isLeadResponse: i === 0,
             isReaction: i > 0,
-            reactionType: i > 0 ? detectReactionType(response.content) : undefined,
+            reactionType,
             confidence: response.confidence,
             keyPoints: response.keyPoints,
           };
@@ -509,7 +519,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ currentSquad, squa
               await supabase.from('chat_messages').insert({
                 squad_id: squadId,
                 user_id: userData.user.id,
-                content: response.content,
+                content: displayContent,
                 sender_type: 'agent',
                 sender_agent_id: response.agentKey,
                 sender_agent_name: response.agentName
@@ -661,6 +671,45 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ currentSquad, squa
     const sentences = message.split(/[.!?]/);
     const meaningful = sentences.find(s => s.trim().length > 10) || sentences[0];
     return meaningful.trim().slice(0, 100) + (meaningful.length > 100 ? '...' : '');
+  };
+
+  // Defensive UI sanitization for orchestrator outputs.
+  // Prevents (1) JSON metadata blobs like "json { ... }" from being rendered,
+  // and (2) accidental multi-speaker prefixes inside a single agent message.
+  const sanitizeOrchestratorContent = (
+    raw: unknown,
+    currentAgentName: string | undefined,
+    allAgentNames: string[]
+  ): string => {
+    let text = typeof raw === 'string'
+      ? raw
+      : raw === null || raw === undefined
+        ? ''
+        : (typeof raw === 'number' || typeof raw === 'boolean')
+          ? String(raw)
+          : JSON.stringify(raw);
+
+    // Strip trailing "json { ... }" (case-insensitive)
+    text = text.replace(/\bjson\s*\{[\s\S]*\}\s*$/i, '').trim();
+    // Strip any trailing JSON blob containing "stance" (fallback)
+    text = text.replace(/\{[\s\S]*?"stance"[\s\S]*\}\s*$/i, '').trim();
+
+    const otherNames = allAgentNames
+      .filter(Boolean)
+      .filter(n => (currentAgentName ? n.toLowerCase() !== currentAgentName.toLowerCase() : true))
+      .sort((a, b) => b.length - a.length);
+
+    if (otherNames.length > 0) {
+      const escaped = otherNames.map(n => n.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+      const rx = new RegExp(`^(?:${escaped.join('|')})\\s*:\\s*`, 'i');
+      text = text
+        .split('\n')
+        .map(line => line.replace(rx, ''))
+        .join('\n')
+        .trim();
+    }
+
+    return text;
   };
 
   const updateLiveSynthesis = (question: string, responses: any[]) => {
