@@ -1,4 +1,4 @@
- import { useState } from 'react';
+import { useState, useMemo } from 'react';
  import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
  import { Button } from '@/components/ui/button';
  import { Badge } from '@/components/ui/badge';
@@ -25,6 +25,25 @@
  } from 'lucide-react';
  import { PRDDocument } from './types';
  
+// Helper to safely extract text from any value (including objects)
+const extractText = (val: any): string => {
+  if (val === null || val === undefined) return '';
+  if (typeof val === 'string') return val;
+  if (typeof val === 'number' || typeof val === 'boolean') return String(val);
+  if (Array.isArray(val)) return val.map(extractText).join(', ');
+  if (typeof val === 'object') {
+    if (val.name) return val.name;
+    if (val.title) return val.title;
+    if (val.description) return val.description;
+    try { 
+      const str = JSON.stringify(val);
+      if (str.length < 200) return str.replace(/[{}"]/g, '').replace(/,/g, ', ');
+      return '';
+    } catch { return ''; }
+  }
+  return String(val);
+};
+
  interface StepPreviewProps {
    document: PRDDocument;
    onDocumentChange: (doc: PRDDocument) => void;
@@ -41,18 +60,21 @@
      setIsEditMode(false);
    };
  
-   const safeText = (val: any): string => {
-     if (val === null || val === undefined) return '';
-     if (typeof val === 'string') return val;
-     if (typeof val === 'number' || typeof val === 'boolean') return String(val);
-     if (Array.isArray(val)) return val.map(safeText).join(', ');
-     try { return JSON.stringify(val); } catch { return String(val); }
-   };
- 
    const displayDocument = isEditMode ? editedDocument : document;
  
+  const normalizedPrioritization = useMemo(() => {
+    const prio = displayDocument.prioritization;
+    return {
+      mvp: (prio?.mvp || []).map(extractText).filter(Boolean),
+      must: (prio?.must || []).map(extractText).filter(Boolean),
+      should: (prio?.should || []).map(extractText).filter(Boolean),
+      could: (prio?.could || []).map(extractText).filter(Boolean),
+      wont: (prio?.wont || []).map(extractText).filter(Boolean),
+    };
+  }, [displayDocument.prioritization]);
+
    return (
-     <Card className="max-h-[80vh] flex flex-col">
+    <Card className="flex flex-col">
        <CardHeader className="flex-shrink-0">
          <div className="flex items-center justify-between">
            <div>
@@ -200,13 +222,47 @@
                <h3 className="font-semibold flex items-center gap-2">
                  <Target className="h-4 w-4" /> Priorisation MoSCoW
                </h3>
-               <div className="flex flex-wrap gap-2">
-                 {displayDocument.prioritization.mvp.map((item, idx) => (
-                   <Badge key={idx} variant="default">{safeText(item)}</Badge>
-                 ))}
-                 {displayDocument.prioritization.must.map((item, idx) => (
-                   <Badge key={idx} variant="secondary">{safeText(item)}</Badge>
-                 ))}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {normalizedPrioritization.mvp.length > 0 && (
+                  <div className="p-3 border rounded-lg bg-primary/10">
+                    <p className="text-xs font-medium text-primary mb-2">MVP</p>
+                    <div className="flex flex-wrap gap-1">
+                      {normalizedPrioritization.mvp.map((item, idx) => (
+                        <Badge key={idx} variant="default">{item}</Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {normalizedPrioritization.must.length > 0 && (
+                  <div className="p-3 border rounded-lg bg-secondary/30">
+                    <p className="text-xs font-medium mb-2">Must Have</p>
+                    <div className="flex flex-wrap gap-1">
+                      {normalizedPrioritization.must.map((item, idx) => (
+                        <Badge key={idx} variant="secondary">{item}</Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {normalizedPrioritization.should.length > 0 && (
+                  <div className="p-3 border rounded-lg bg-muted/50">
+                    <p className="text-xs font-medium text-muted-foreground mb-2">Should Have</p>
+                    <div className="flex flex-wrap gap-1">
+                      {normalizedPrioritization.should.map((item, idx) => (
+                        <Badge key={idx} variant="outline">{item}</Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {normalizedPrioritization.could.length > 0 && (
+                  <div className="p-3 border rounded-lg bg-muted/30">
+                    <p className="text-xs font-medium text-muted-foreground mb-2">Could Have</p>
+                    <div className="flex flex-wrap gap-1">
+                      {normalizedPrioritization.could.map((item, idx) => (
+                        <Badge key={idx} variant="outline">{item}</Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
                </div>
              </div>
  
@@ -220,7 +276,7 @@
                  {displayDocument.kpis.map((kpi, idx) => (
                    <li key={idx} className="text-sm flex items-start gap-2">
                      <CheckCircle2 className="h-4 w-4 text-primary flex-shrink-0 mt-0.5" />
-                     {safeText(kpi)}
+                    {extractText(kpi)}
                    </li>
                  ))}
                </ul>
@@ -240,7 +296,7 @@
                        <Badge variant="outline">{phase.timeline}</Badge>
                      </div>
                      <p className="text-xs text-muted-foreground">
-                       {phase.deliverables.map(safeText).join(', ')}
+                    {phase.deliverables.map(extractText).join(', ')}
                      </p>
                    </div>
                  ))}
@@ -249,7 +305,7 @@
            </div>
          </ScrollArea>
  
-         <div className="flex justify-between pt-4 mt-4 border-t">
+          <div className="flex justify-between p-4 border-t">
            <Button variant="outline" onClick={onBack}>
              <ArrowLeft className="h-4 w-4 mr-2" />
              Régénérer

@@ -217,7 +217,7 @@
        updateSectionStatus('prioritization', 'generating');
        setProgress(progressPerSection * 9);
        const { data: prioData } = await supabase.functions.invoke('chat-ai', {
-         body: { message: `Fonctionnalités: ${JSON.stringify(featuresResult.features)}\n\nGénère priorisation MoSCoW (JSON): { "prioritization": { "mvp": [], "must": [], "should": [], "could": [], "wont": [] } }`, mode: 'simple' }
+          body: { message: `Fonctionnalités: ${(featuresResult.features || []).map((f: any) => f.name || f.title).join(', ')}\n\nGénère une priorisation MoSCoW. Retourne UNIQUEMENT les NOMS des fonctionnalités (pas d'objets, juste des strings).\n\nFormat JSON: { "prioritization": { "mvp": ["Nom feature 1"], "must": ["Nom feature 2"], "should": ["Nom feature 3"], "could": ["Nom feature 4"], "wont": [] } }`, mode: 'simple' }
        });
        const prioResult = parseAIResponse(prioData);
        updateSectionStatus('prioritization', 'complete');

@@ -71,27 +71,27 @@
    }
  
    return (
-     <div className="container mx-auto py-8 px-4 max-w-4xl">
-       <div className="mb-8">
+    <div className="min-h-screen bg-background">
+      <div className="container mx-auto py-8 px-4 max-w-6xl">
+        <div className="mb-6">
          <div className="flex items-center gap-4 mb-4">
            <Button variant="ghost" size="sm" onClick={() => window.history.back()}>
              <ArrowLeft className="h-4 w-4 mr-2" />
              Retour
            </Button>
          </div>
-         <h1 className="text-3xl font-bold flex items-center gap-3">
+          <h1 className="text-3xl font-bold flex items-center gap-3">
            <Sparkles className="h-8 w-8 text-primary" />
            Instant Product Requirements Document
-         </h1>
-         <p className="text-muted-foreground mt-2">
+          </h1>
+          <p className="text-muted-foreground mt-2">
            Transformez une idée en PRD complet en quelques secondes
-         </p>
-       </div>
+          </p>
+        </div>
+        <StepIndicator currentStep={currentStep} completedSteps={completedSteps} />
  
-       <StepIndicator currentStep={currentStep} completedSteps={completedSteps} />
- 
-       <AnimatePresence mode="wait">
-         <motion.div key={currentStep} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.2 }}>
+        <AnimatePresence mode="wait">
+          <motion.div key={currentStep} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.2 }}>
            {currentStep === 'context' && (
              <StepContext
                selectedContext={selectedContext}
@@ -143,8 +143,9 @@
                onBack={() => setCurrentStep('preview')}
              />
            )}
-         </motion.div>
-       </AnimatePresence>
+          </motion.div>
+        </AnimatePresence>
+      </div>
      </div>
    );
  };
