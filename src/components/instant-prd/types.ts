@@ -48,13 +48,14 @@ export interface UserStory {
   technicalNotes?: string;
 }
  
- export interface JourneyStage {
-   stage: string;
-   actions: string[];
-   thoughts: string[];
-   painPoints: string[];
-   opportunities: string[];
- }
+export interface JourneyStage {
+  stage: string;
+  actions: string[];
+  thoughts: string[];
+  emotions?: string;
+  painPoints: string[];
+  opportunities: string[];
+}
  
  export interface PRDDocument {
    introduction: string;
