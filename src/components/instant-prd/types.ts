@@ -10,14 +10,18 @@
    content?: any;
  }
  
- export interface Persona {
-   name: string;
-   role: string;
-   age: number;
-   goals: string[];
-   painPoints: string[];
-   imageUrl?: string;
- }
+export interface Persona {
+  name: string;
+  role: string;
+  age: number;
+  bio?: string;
+  goals: string[];
+  painPoints: string[];
+  motivations?: string[];
+  behaviors?: string[];
+  quote?: string;
+  imageUrl?: string;
+}
  
  export interface Feature {
    id: string;
