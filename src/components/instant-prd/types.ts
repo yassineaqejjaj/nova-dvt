@@ -33,15 +33,20 @@ export interface Feature {
   userStories?: UserStory[];
 }
  
- export interface UserStory {
-   id: string;
-   featureId: string;
-   title: string;
-   description: string;
-   acceptanceCriteria: string[];
-   priority: 'high' | 'medium' | 'low';
-   complexity: 'XS' | 'S' | 'M' | 'L' | 'XL';
- }
+export interface UserStory {
+  id: string;
+  featureId: string;
+  title: string;
+  asA?: string;
+  iWant?: string;
+  soThat?: string;
+  description?: string;
+  acceptanceCriteria: string[];
+  priority: 'high' | 'medium' | 'low';
+  complexity: 'XS' | 'S' | 'M' | 'L' | 'XL';
+  storyPoints?: number;
+  technicalNotes?: string;
+}
  
  export interface JourneyStage {
    stage: string;
