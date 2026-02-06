@@ -165,52 +165,167 @@
        const constraintsResult = parseAIResponse(constraintsData);
        updateSectionStatus('constraints', 'complete');
  
-       // 6. Personas (optional)
-       let personasResult: any = { personas: [] };
-       if (config.includePersonas) {
-         setCurrentSection('Personas');
-         updateSectionStatus('personas', 'generating');
-         setProgress(progressPerSection * 6);
-         const { data: pData } = await supabase.functions.invoke('chat-ai', {
-           body: { message: `Idée: "${idea}"\n\nGénère 3 personas (JSON): { "personas": [{ "name": "", "role": "", "age": 30, "goals": [], "painPoints": [] }] }`, mode: 'simple' }
-         });
-         personasResult = parseAIResponse(pData);
-       }
-       updateSectionStatus('personas', 'complete');
- 
-       // 7. Journey Map (optional)
-       let journeyResult: any = { userJourneyMap: [] };
-       if (config.includeJourneyMap) {
-         setCurrentSection('User Journey Map');
-         updateSectionStatus('userJourneyMap', 'generating');
-         setProgress(progressPerSection * 7);
-         const { data: jData } = await supabase.functions.invoke('chat-ai', {
-           body: { message: `Idée: "${idea}"\n\nGénère user journey map 5 étapes (JSON): { "userJourneyMap": [{ "stage": "", "actions": [], "thoughts": [], "painPoints": [], "opportunities": [] }] }`, mode: 'simple' }
-         });
-         journeyResult = parseAIResponse(jData);
-       }
-       updateSectionStatus('userJourneyMap', 'complete');
- 
-       // 8. Features
-       setCurrentSection('Fonctionnalités');
-       updateSectionStatus('features', 'generating');
-       setProgress(progressPerSection * 8);
-       const { data: featuresData } = await supabase.functions.invoke('chat-ai', {
-         body: { message: `Idée: "${idea}"\n\nGénère 5-7 fonctionnalités (JSON): { "features": [{ "id": "F-001", "name": "", "description": "" }] }`, mode: 'simple' }
-       });
-       const featuresResult = parseAIResponse(featuresData);
-       updateSectionStatus('features', 'complete');
- 
-       // 9. User Stories (optional)
-       let storiesResult: any = { userStories: [] };
-       if (config.includeUserStories) {
-         setCurrentSection('User Stories');
-         setProgress(progressPerSection * 8.5);
-         const { data: sData } = await supabase.functions.invoke('chat-ai', {
-           body: { message: `Fonctionnalités: ${JSON.stringify(featuresResult.features)}\n\nGénère 2 user stories par fonctionnalité (JSON): { "userStories": [{ "id": "", "featureId": "", "title": "", "description": "", "acceptanceCriteria": [], "priority": "high", "complexity": "M" }] }`, mode: 'simple' }
-         });
-         storiesResult = parseAIResponse(sData);
-       }
+        // 6. Personas (optional but detailed)
+        let personasResult: any = { personas: [] };
+        if (config.includePersonas) {
+          setCurrentSection('Personas');
+          updateSectionStatus('personas', 'generating');
+          setProgress(progressPerSection * 6);
+          
+          const personaDetailLevel = config.detailLevel === 'detailed' ? 'très détaillés avec biographie complète' : 
+                                     config.detailLevel === 'standard' ? 'détaillés' : 'concis';
+          const personaCount = config.detailLevel === 'detailed' ? 4 : 3;
+          
+          const { data: pData } = await supabase.functions.invoke('chat-ai', {
+            body: { 
+              message: `Idée produit: "${idea}"
+${contextInfo}
+
+Génère ${personaCount} personas utilisateurs ${personaDetailLevel} pour ce produit.
+
+IMPORTANT: Retourne UNIQUEMENT un JSON valide, sans texte avant ou après.
+
+Format JSON EXACT attendu:
+{
+  "personas": [
+    {
+      "name": "Prénom Nom",
+      "role": "Titre professionnel détaillé",
+      "age": 35,
+      "bio": "Biographie détaillée de 2-3 phrases décrivant le contexte personnel et professionnel",
+      "goals": ["Objectif principal 1", "Objectif principal 2", "Objectif principal 3", "Objectif secondaire"],
+      "painPoints": ["Frustration majeure 1", "Frustration majeure 2", "Obstacle quotidien", "Besoin non satisfait"],
+      "motivations": ["Ce qui le/la motive au quotidien", "Aspiration professionnelle"],
+      "behaviors": ["Habitude d'utilisation tech", "Préférence de communication"],
+      "quote": "Une citation typique de ce persona"
+    }
+  ]
+}`, 
+              mode: 'simple' 
+            }
+          });
+          personasResult = parseAIResponse(pData);
+        }
+        updateSectionStatus('personas', 'complete');
+
+        // 7. Journey Map (optional but detailed)
+        let journeyResult: any = { userJourneyMap: [] };
+        if (config.includeJourneyMap) {
+          setCurrentSection('User Journey Map');
+          updateSectionStatus('userJourneyMap', 'generating');
+          setProgress(progressPerSection * 7);
+          
+          const stageCount = config.detailLevel === 'detailed' ? 7 : 5;
+          
+          const { data: jData } = await supabase.functions.invoke('chat-ai', {
+            body: { 
+              message: `Idée produit: "${idea}"
+${contextInfo}
+
+Génère une User Journey Map complète en ${stageCount} étapes pour le parcours utilisateur principal.
+
+IMPORTANT: Retourne UNIQUEMENT un JSON valide.
+
+Format JSON EXACT:
+{
+  "userJourneyMap": [
+    {
+      "stage": "Nom de l'étape (ex: Découverte, Inscription, Premier usage...)",
+      "actions": ["Action utilisateur 1", "Action utilisateur 2", "Action utilisateur 3"],
+      "thoughts": ["Pensée/question de l'utilisateur", "Attente à ce moment"],
+      "emotions": "positive/neutre/negative",
+      "painPoints": ["Point de friction potentiel", "Obstacle possible"],
+      "opportunities": ["Opportunité d'amélioration", "Quick win possible"]
+    }
+  ]
+}`, 
+              mode: 'simple' 
+            }
+          });
+          journeyResult = parseAIResponse(jData);
+        }
+        updateSectionStatus('userJourneyMap', 'complete');
+
+        // 8. Features (Epics) with detailed structure
+        setCurrentSection('Fonctionnalités (Epics)');
+        updateSectionStatus('features', 'generating');
+        setProgress(progressPerSection * 8);
+        
+        const featureCount = config.detailLevel === 'detailed' ? '8-10' : 
+                            config.detailLevel === 'standard' ? '6-8' : '5-6';
+        
+        const { data: featuresData } = await supabase.functions.invoke('chat-ai', {
+          body: { 
+            message: `Idée produit: "${idea}"
+${contextInfo}
+
+Génère ${featureCount} fonctionnalités majeures (Epics) pour ce produit.
+
+IMPORTANT: Retourne UNIQUEMENT un JSON valide.
+
+Format JSON EXACT:
+{
+  "features": [
+    {
+      "id": "EPIC-001",
+      "name": "Nom de la fonctionnalité",
+      "description": "Description détaillée de la fonctionnalité en 2-3 phrases, expliquant la valeur apportée",
+      "businessValue": "Valeur métier: pourquoi cette fonctionnalité est importante",
+      "scope": "Périmètre: ce qui est inclus et ce qui ne l'est pas",
+      "dependencies": ["Dépendance technique ou fonctionnelle si applicable"]
+    }
+  ]
+}`, 
+            mode: 'simple' 
+          }
+        });
+        const featuresResult = parseAIResponse(featuresData);
+        updateSectionStatus('features', 'complete');
+
+        // 9. User Stories (detailed with acceptance criteria)
+        let storiesResult: any = { userStories: [] };
+        if (config.includeUserStories) {
+          setCurrentSection('User Stories');
+          setProgress(progressPerSection * 8.5);
+          
+          const storiesPerFeature = config.detailLevel === 'detailed' ? 4 : 
+                                    config.detailLevel === 'standard' ? 3 : 2;
+          
+          const { data: sData } = await supabase.functions.invoke('chat-ai', {
+            body: { 
+              message: `Fonctionnalités (Epics): ${JSON.stringify(featuresResult.features)}
+
+Génère ${storiesPerFeature} user stories DÉTAILLÉES par fonctionnalité.
+
+IMPORTANT: Retourne UNIQUEMENT un JSON valide.
+
+Format JSON EXACT:
+{
+  "userStories": [
+    {
+      "id": "US-001",
+      "featureId": "EPIC-001",
+      "title": "Titre court de la story",
+      "asA": "type d'utilisateur",
+      "iWant": "action ou fonctionnalité souhaitée",
+      "soThat": "bénéfice ou valeur attendue",
+      "acceptanceCriteria": [
+        "GIVEN contexte initial WHEN action THEN résultat attendu",
+        "GIVEN autre contexte WHEN autre action THEN autre résultat",
+        "Le système doit valider que..."
+      ],
+      "priority": "high/medium/low",
+      "complexity": "XS/S/M/L/XL",
+      "storyPoints": 3,
+      "technicalNotes": "Notes techniques importantes pour l'implémentation"
+    }
+  ]
+}`, 
+              mode: 'simple' 
+            }
+          });
+          storiesResult = parseAIResponse(sData);
+        }
  
        // 10. Prioritization
        setCurrentSection('Priorisation');
