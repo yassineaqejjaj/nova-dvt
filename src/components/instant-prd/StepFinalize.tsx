@@ -89,18 +89,18 @@
      toast.success('PRD téléchargé');
    };
  
-   return (
-     <Card>
-       <CardHeader>
-         <CardTitle className="flex items-center gap-2">
-           <Save className="h-5 w-5 text-primary" />
-           Finalisation
-         </CardTitle>
-         <CardDescription>
-           Choisissez où sauvegarder votre PRD.
-         </CardDescription>
-       </CardHeader>
-       <CardContent className="space-y-6">
+    return (
+      <Card className="flex flex-col min-h-[60vh]">
+        <CardHeader className="flex-shrink-0">
+          <CardTitle className="flex items-center gap-2">
+            <Save className="h-5 w-5 text-primary" />
+            Finalisation
+          </CardTitle>
+          <CardDescription>
+            Choisissez où sauvegarder votre PRD.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="flex-1 flex flex-col space-y-6">
          <div className="p-4 border rounded-lg bg-muted/30 space-y-3">
            <div className="flex items-center gap-2">
              <FileText className="h-5 w-5 text-primary" />
