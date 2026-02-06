@@ -119,7 +119,7 @@
            </div>
          </div>
  
-         <div className="flex justify-between pt-4">
+         <div className="flex justify-between pt-4 mt-auto">
            <Button variant="outline" onClick={onBack}>
              <ArrowLeft className="h-4 w-4 mr-2" />
              Retour

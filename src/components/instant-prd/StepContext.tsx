@@ -253,7 +253,7 @@
            </>
          )}
  
-         <div className="flex justify-end pt-4">
+         <div className="flex justify-end pt-4 mt-auto">
            <Button onClick={onNext} disabled={!selectedContext}>
              Continuer
              <ArrowRight className="h-4 w-4 ml-2" />
