@@ -160,61 +160,224 @@ const extractText = (val: any): string => {
                <p className="text-sm text-muted-foreground">{displayDocument.vision}</p>
              </div>
  
-             {/* Personas */}
-             {displayDocument.personas.length > 0 && (
-               <>
-                 <Separator />
-                 <div className="space-y-3">
-                   <h3 className="font-semibold flex items-center gap-2">
-                     <Users className="h-4 w-4" /> Personas ({displayDocument.personas.length})
-                   </h3>
-                   <div className="grid gap-3">
-                     {displayDocument.personas.map((persona, idx) => (
-                       <div key={idx} className="p-3 border rounded-lg bg-muted/30">
-                         <p className="font-medium">{persona.name}</p>
-                         <p className="text-xs text-muted-foreground">{persona.role}, {persona.age} ans</p>
-                       </div>
-                     ))}
-                   </div>
-                 </div>
-               </>
-             )}
- 
-             {/* Journey Map */}
-             {displayDocument.userJourneyMap.length > 0 && (
-               <>
-                 <Separator />
-                 <div className="space-y-3">
-                   <h3 className="font-semibold flex items-center gap-2">
-                     <Map className="h-4 w-4" /> User Journey Map
-                   </h3>
-                   <div className="flex gap-2 overflow-x-auto pb-2">
-                     {displayDocument.userJourneyMap.map((stage, idx) => (
-                       <div key={idx} className="flex-shrink-0 w-40 p-3 border rounded-lg bg-muted/30">
-                         <Badge variant="secondary" className="mb-2">{idx + 1}</Badge>
-                         <p className="font-medium text-sm">{stage.stage}</p>
-                       </div>
-                     ))}
-                   </div>
-                 </div>
-               </>
-             )}
- 
-             {/* Features */}
-             <Separator />
-             <div className="space-y-3">
-               <h3 className="font-semibold flex items-center gap-2">
-                 <Zap className="h-4 w-4" /> Fonctionnalités ({displayDocument.features.length})
-               </h3>
-               <div className="space-y-2">
-                 {displayDocument.features.map((feature, idx) => (
-                   <div key={idx} className="p-3 border rounded-lg">
-                     <p className="font-medium text-sm">{feature.name}</p>
-                     <p className="text-xs text-muted-foreground">{feature.description}</p>
-                   </div>
-                 ))}
-               </div>
-             </div>
+              {/* Personas */}
+              {displayDocument.personas.length > 0 && (
+                <>
+                  <Separator />
+                  <div className="space-y-3">
+                    <h3 className="font-semibold flex items-center gap-2">
+                      <Users className="h-4 w-4" /> Personas ({displayDocument.personas.length})
+                    </h3>
+                    <div className="grid gap-4">
+                      {displayDocument.personas.map((persona, idx) => (
+                        <div key={idx} className="p-4 border rounded-lg bg-muted/30 space-y-3">
+                          <div className="flex items-start justify-between">
+                            <div>
+                              <p className="font-semibold text-lg">{persona.name}</p>
+                              <p className="text-sm text-muted-foreground">{persona.role}, {persona.age} ans</p>
+                            </div>
+                            <Badge variant="outline">Persona {idx + 1}</Badge>
+                          </div>
+                          
+                          {persona.bio && (
+                            <p className="text-sm italic text-muted-foreground border-l-2 border-primary/50 pl-3">
+                              {persona.bio}
+                            </p>
+                          )}
+                          
+                          {persona.quote && (
+                            <p className="text-sm italic">"{persona.quote}"</p>
+                          )}
+                          
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                            <div>
+                              <p className="font-medium text-xs uppercase text-muted-foreground mb-1">Objectifs</p>
+                              <ul className="space-y-1">
+                                {persona.goals.map((g, i) => (
+                                  <li key={i} className="flex items-start gap-2">
+                                    <Target className="h-3 w-3 text-primary mt-1 flex-shrink-0" />
+                                    {g}
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                            <div>
+                              <p className="font-medium text-xs uppercase text-muted-foreground mb-1">Points de friction</p>
+                              <ul className="space-y-1">
+                                {persona.painPoints.map((p, i) => (
+                                  <li key={i} className="flex items-start gap-2">
+                                    <AlertTriangle className="h-3 w-3 text-destructive mt-1 flex-shrink-0" />
+                                    {p}
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          </div>
+                          
+                          {(persona.motivations?.length || persona.behaviors?.length) && (
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                              {persona.motivations?.length > 0 && (
+                                <div>
+                                  <p className="font-medium text-xs uppercase text-muted-foreground mb-1">Motivations</p>
+                                  <ul className="space-y-1">
+                                    {persona.motivations.map((m, i) => (
+                                      <li key={i} className="flex items-start gap-2">
+                                        <Sparkles className="h-3 w-3 text-primary mt-1 flex-shrink-0" />
+                                        {m}
+                                      </li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              )}
+                              {persona.behaviors?.length > 0 && (
+                                <div>
+                                  <p className="font-medium text-xs uppercase text-muted-foreground mb-1">Comportements</p>
+                                  <ul className="space-y-1">
+                                    {persona.behaviors.map((b, i) => (
+                                      <li key={i} className="text-muted-foreground">{b}</li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {/* Journey Map */}
+              {displayDocument.userJourneyMap.length > 0 && (
+                <>
+                  <Separator />
+                  <div className="space-y-3">
+                    <h3 className="font-semibold flex items-center gap-2">
+                      <Map className="h-4 w-4" /> User Journey Map
+                    </h3>
+                    <div className="flex gap-2 overflow-x-auto pb-2">
+                      {displayDocument.userJourneyMap.map((stage, idx) => (
+                        <div key={idx} className="flex-shrink-0 w-48 p-3 border rounded-lg bg-muted/30 space-y-2">
+                          <div className="flex items-center gap-2">
+                            <Badge variant="secondary">{idx + 1}</Badge>
+                            <p className="font-medium text-sm">{stage.stage}</p>
+                          </div>
+                          {stage.emotions && (
+                            <Badge variant={stage.emotions === 'positive' ? 'default' : stage.emotions === 'negative' ? 'destructive' : 'outline'}>
+                              {stage.emotions}
+                            </Badge>
+                          )}
+                          {stage.actions.length > 0 && (
+                            <div className="text-xs">
+                              <p className="font-medium text-muted-foreground">Actions:</p>
+                              <ul className="text-muted-foreground">
+                                {stage.actions.slice(0, 2).map((a, i) => <li key={i}>• {a}</li>)}
+                              </ul>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {/* Features (Epics) with User Stories */}
+              <Separator />
+              <div className="space-y-4">
+                <h3 className="font-semibold flex items-center gap-2">
+                  <Zap className="h-4 w-4" /> Fonctionnalités / Epics ({displayDocument.features.length})
+                </h3>
+                <div className="space-y-4">
+                  {displayDocument.features.map((feature, idx) => (
+                    <div key={idx} className="border rounded-lg overflow-hidden">
+                      <div className="p-4 bg-muted/30">
+                        <div className="flex items-start justify-between mb-2">
+                          <div>
+                            <Badge variant="outline" className="mb-1">{feature.id}</Badge>
+                            <p className="font-semibold">{feature.name}</p>
+                          </div>
+                        </div>
+                        <p className="text-sm text-muted-foreground">{feature.description}</p>
+                        
+                        {feature.businessValue && (
+                          <p className="text-sm mt-2">
+                            <span className="font-medium">Valeur métier:</span> {feature.businessValue}
+                          </p>
+                        )}
+                        
+                        {feature.dependencies?.length > 0 && (
+                          <div className="flex gap-1 mt-2 flex-wrap">
+                            {feature.dependencies.map((d, i) => (
+                              <Badge key={i} variant="secondary" className="text-xs">{d}</Badge>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                      
+                      {/* User Stories for this feature */}
+                      {feature.userStories && feature.userStories.length > 0 && (
+                        <div className="p-3 bg-background space-y-2">
+                          <p className="text-xs font-medium uppercase text-muted-foreground">
+                            User Stories ({feature.userStories.length})
+                          </p>
+                          {feature.userStories.map((story, sIdx) => (
+                            <div key={sIdx} className="p-3 border rounded-lg text-sm space-y-2">
+                              <div className="flex items-start justify-between">
+                                <div className="flex-1">
+                                  <div className="flex items-center gap-2 mb-1">
+                                    <Badge variant="outline" className="text-xs">{story.id}</Badge>
+                                    <Badge 
+                                      variant={story.priority === 'high' ? 'destructive' : story.priority === 'medium' ? 'default' : 'secondary'}
+                                      className="text-xs"
+                                    >
+                                      {story.priority}
+                                    </Badge>
+                                    <Badge variant="outline" className="text-xs">{story.complexity}</Badge>
+                                    {story.storyPoints && (
+                                      <Badge variant="secondary" className="text-xs">{story.storyPoints} pts</Badge>
+                                    )}
+                                  </div>
+                                  <p className="font-medium">{story.title}</p>
+                                </div>
+                              </div>
+                              
+                              {(story.asA || story.iWant || story.soThat) && (
+                                <div className="bg-muted/50 p-2 rounded text-xs space-y-1">
+                                  {story.asA && <p><strong>En tant que</strong> {story.asA}</p>}
+                                  {story.iWant && <p><strong>Je veux</strong> {story.iWant}</p>}
+                                  {story.soThat && <p><strong>Afin de</strong> {story.soThat}</p>}
+                                </div>
+                              )}
+                              
+                              {story.acceptanceCriteria.length > 0 && (
+                                <div>
+                                  <p className="text-xs font-medium text-muted-foreground mb-1">Critères d'acceptation:</p>
+                                  <ul className="space-y-1">
+                                    {story.acceptanceCriteria.map((ac, acIdx) => (
+                                      <li key={acIdx} className="flex items-start gap-2 text-xs">
+                                        <CheckCircle2 className="h-3 w-3 text-primary mt-0.5 flex-shrink-0" />
+                                        {ac}
+                                      </li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              )}
+                              
+                              {story.technicalNotes && (
+                                <p className="text-xs text-muted-foreground border-l-2 border-primary/30 pl-2">
+                                  <strong>Notes techniques:</strong> {story.technicalNotes}
+                                </p>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
  
              {/* Prioritization */}
              <Separator />
