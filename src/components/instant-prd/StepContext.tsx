@@ -133,7 +133,7 @@
            Ce contexte sera utilisé pour cadrer le PRD généré et garantir sa pertinence.
          </CardDescription>
        </CardHeader>
-       <CardContent className="space-y-4">
+       <CardContent className="flex-1 flex flex-col space-y-4">
          {isLoading ? (
            <div className="flex items-center justify-center py-8">
              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
