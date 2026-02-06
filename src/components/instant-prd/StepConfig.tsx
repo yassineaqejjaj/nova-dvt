@@ -28,18 +28,18 @@
      onConfigChange({ ...config, [key]: value });
    };
  
-   return (
-     <Card>
-       <CardHeader>
-         <CardTitle className="flex items-center gap-2">
-           <Settings className="h-5 w-5 text-primary" />
-           Configurez votre PRD
-         </CardTitle>
-         <CardDescription>
-           Décrivez votre idée et personnalisez les options de génération.
-         </CardDescription>
-       </CardHeader>
-       <CardContent className="space-y-6">
+    return (
+      <Card className="flex flex-col min-h-[60vh]">
+        <CardHeader className="flex-shrink-0">
+          <CardTitle className="flex items-center gap-2">
+            <Settings className="h-5 w-5 text-primary" />
+            Configurez votre PRD
+          </CardTitle>
+          <CardDescription>
+            Décrivez votre idée et personnalisez les options de génération.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="flex-1 flex flex-col space-y-6">
          {/* Idea Input */}
          <div className="space-y-2">
            <Label htmlFor="idea" className="flex items-center gap-2">
