@@ -424,28 +424,63 @@ Format JSON EXACT:
  
        setProgress(100);
  
-       // Attach user stories to features
-       const features = (featuresResult.features || []).map((f: any, idx: number) => ({
-         id: f.id || `F-${idx + 1}`,
-         name: safeText(f.name || f.title || 'Feature'),
-         description: safeText(f.description || ''),
-         userStories: (storiesResult.userStories || []).filter((s: any) => s.featureId === f.id),
-       }));
- 
-       const document: PRDDocument = {
-         introduction: safeText(introResult.introduction),
-         context: safeText(ctxResult.context),
-         problem: safeText(problemResult.problem),
-         vision: safeText(visionResult.vision),
-         constraints: normalizeArrayOfStrings(constraintsResult.constraints),
-         personas: (personasResult.personas || []).map((p: any) => ({ ...p, imageUrl: '' })),
-         userJourneyMap: (journeyResult.userJourneyMap || []).map((stage: any) => ({
-           stage: safeText(stage.stage || ''),
-           actions: normalizeArrayOfStrings(stage.actions),
-           thoughts: normalizeArrayOfStrings(stage.thoughts),
-           painPoints: normalizeArrayOfStrings(stage.painPoints),
-           opportunities: normalizeArrayOfStrings(stage.opportunities),
-         })),
+        // Attach user stories to features with full data mapping
+        const features = (featuresResult.features || []).map((f: any, idx: number) => {
+          const featureId = f.id || `EPIC-${String(idx + 1).padStart(3, '0')}`;
+          const featureStories = (storiesResult.userStories || [])
+            .filter((s: any) => s.featureId === featureId || s.featureId === f.id)
+            .map((s: any) => ({
+              id: s.id || `US-${idx + 1}-${Math.random().toString(36).substr(2, 4)}`,
+              featureId: featureId,
+              title: safeText(s.title),
+              asA: safeText(s.asA),
+              iWant: safeText(s.iWant),
+              soThat: safeText(s.soThat),
+              description: safeText(s.description),
+              acceptanceCriteria: normalizeArrayOfStrings(s.acceptanceCriteria),
+              priority: s.priority || 'medium',
+              complexity: s.complexity || 'M',
+              storyPoints: s.storyPoints || null,
+              technicalNotes: safeText(s.technicalNotes),
+            }));
+
+          return {
+            id: featureId,
+            name: safeText(f.name || f.title || 'Feature'),
+            description: safeText(f.description || ''),
+            businessValue: safeText(f.businessValue),
+            scope: safeText(f.scope),
+            dependencies: normalizeArrayOfStrings(f.dependencies),
+            userStories: featureStories,
+          };
+        });
+
+        const document: PRDDocument = {
+          introduction: safeText(introResult.introduction),
+          context: safeText(ctxResult.context),
+          problem: safeText(problemResult.problem),
+          vision: safeText(visionResult.vision),
+          constraints: normalizeArrayOfStrings(constraintsResult.constraints),
+          personas: (personasResult.personas || []).map((p: any) => ({
+            name: safeText(p.name),
+            role: safeText(p.role),
+            age: p.age || 30,
+            bio: safeText(p.bio),
+            goals: normalizeArrayOfStrings(p.goals),
+            painPoints: normalizeArrayOfStrings(p.painPoints),
+            motivations: normalizeArrayOfStrings(p.motivations),
+            behaviors: normalizeArrayOfStrings(p.behaviors),
+            quote: safeText(p.quote),
+            imageUrl: '',
+          })),
+          userJourneyMap: (journeyResult.userJourneyMap || []).map((stage: any) => ({
+            stage: safeText(stage.stage || ''),
+            actions: normalizeArrayOfStrings(stage.actions),
+            thoughts: normalizeArrayOfStrings(stage.thoughts),
+            emotions: safeText(stage.emotions),
+            painPoints: normalizeArrayOfStrings(stage.painPoints),
+            opportunities: normalizeArrayOfStrings(stage.opportunities),
+          })),
          features,
          prioritization: {
            mvp: normalizeArrayOfStrings(prioResult.prioritization?.mvp),
