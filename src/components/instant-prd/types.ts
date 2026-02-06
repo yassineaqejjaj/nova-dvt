@@ -10,39 +10,52 @@
    content?: any;
  }
  
- export interface Persona {
-   name: string;
-   role: string;
-   age: number;
-   goals: string[];
-   painPoints: string[];
-   imageUrl?: string;
- }
+export interface Persona {
+  name: string;
+  role: string;
+  age: number;
+  bio?: string;
+  goals: string[];
+  painPoints: string[];
+  motivations?: string[];
+  behaviors?: string[];
+  quote?: string;
+  imageUrl?: string;
+}
  
- export interface Feature {
-   id: string;
-   name: string;
-   description: string;
-   userStories?: UserStory[];
- }
+export interface Feature {
+  id: string;
+  name: string;
+  description: string;
+  businessValue?: string;
+  scope?: string;
+  dependencies?: string[];
+  userStories?: UserStory[];
+}
  
- export interface UserStory {
-   id: string;
-   featureId: string;
-   title: string;
-   description: string;
-   acceptanceCriteria: string[];
-   priority: 'high' | 'medium' | 'low';
-   complexity: 'XS' | 'S' | 'M' | 'L' | 'XL';
- }
+export interface UserStory {
+  id: string;
+  featureId: string;
+  title: string;
+  asA?: string;
+  iWant?: string;
+  soThat?: string;
+  description?: string;
+  acceptanceCriteria: string[];
+  priority: 'high' | 'medium' | 'low';
+  complexity: 'XS' | 'S' | 'M' | 'L' | 'XL';
+  storyPoints?: number;
+  technicalNotes?: string;
+}
  
- export interface JourneyStage {
-   stage: string;
-   actions: string[];
-   thoughts: string[];
-   painPoints: string[];
-   opportunities: string[];
- }
+export interface JourneyStage {
+  stage: string;
+  actions: string[];
+  thoughts: string[];
+  emotions?: string;
+  painPoints: string[];
+  opportunities: string[];
+}
  
  export interface PRDDocument {
    introduction: string;
