@@ -122,9 +122,9 @@
      return labels[type] || type;
    };
  
-   return (
-     <Card>
-       <CardHeader>
+    return (
+      <Card className="flex flex-col min-h-[60vh]">
+        <CardHeader className="flex-shrink-0">
          <CardTitle className="flex items-center gap-2">
            <Target className="h-5 w-5 text-primary" />
            Contexte utilisé pour la génération
@@ -133,7 +133,7 @@
            Ce contexte sera utilisé pour cadrer le PRD généré et garantir sa pertinence.
          </CardDescription>
        </CardHeader>
-       <CardContent className="space-y-4">
+       <CardContent className="flex-1 flex flex-col space-y-4">
          {isLoading ? (
            <div className="flex items-center justify-center py-8">
              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
@@ -253,7 +253,7 @@
            </>
          )}
  
-         <div className="flex justify-end pt-4">
+         <div className="flex justify-end pt-4 mt-auto">
            <Button onClick={onNext} disabled={!selectedContext}>
              Continuer
              <ArrowRight className="h-4 w-4 ml-2" />

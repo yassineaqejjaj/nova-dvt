@@ -350,25 +350,25 @@
      }
    };
  
-   return (
-     <Card>
-       <CardHeader className="text-center">
-         <div className="flex justify-center mb-4">
-           <Loader2 className="w-16 h-16 text-primary animate-spin" />
-         </div>
-         <CardTitle>Génération de votre PRD</CardTitle>
-         <p className="text-muted-foreground">{currentSection}</p>
-       </CardHeader>
-       <CardContent className="space-y-6">
-         <div className="space-y-2">
-           <div className="flex justify-between text-sm">
-             <span className="font-medium">{Math.round(progress)}%</span>
-             <span className="text-muted-foreground">~{Math.round((100 - progress) / 6)}s restantes</span>
-           </div>
-           <Progress value={progress} className="h-3" />
-         </div>
- 
-         <ScrollArea className="h-[350px]">
+    return (
+      <Card className="flex flex-col min-h-[60vh]">
+        <CardHeader className="text-center flex-shrink-0">
+          <div className="flex justify-center mb-4">
+            <Loader2 className="w-16 h-16 text-primary animate-spin" />
+          </div>
+          <CardTitle>Génération de votre PRD</CardTitle>
+          <p className="text-muted-foreground">{currentSection}</p>
+        </CardHeader>
+        <CardContent className="flex-1 flex flex-col space-y-6">
+          <div className="space-y-2 flex-shrink-0">
+            <div className="flex justify-between text-sm">
+              <span className="font-medium">{Math.round(progress)}%</span>
+              <span className="text-muted-foreground">~{Math.round((100 - progress) / 6)}s restantes</span>
+            </div>
+            <Progress value={progress} className="h-3" />
+          </div>
+
+          <ScrollArea className="flex-1 min-h-[40vh]">
            <div className="space-y-2 pr-4">
              {sections.map((section) => (
                <div

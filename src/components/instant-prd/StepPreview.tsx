@@ -104,7 +104,7 @@ const extractText = (val: any): string => {
          </div>
        </CardHeader>
        <CardContent className="flex-1 overflow-hidden">
-         <ScrollArea className="h-[55vh] pr-4">
+         <ScrollArea className="h-[65vh] pr-4">
            <div className="space-y-6">
              {/* Introduction */}
              <div className="space-y-2">
