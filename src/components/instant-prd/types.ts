@@ -23,12 +23,15 @@ export interface Persona {
   imageUrl?: string;
 }
  
- export interface Feature {
-   id: string;
-   name: string;
-   description: string;
-   userStories?: UserStory[];
- }
+export interface Feature {
+  id: string;
+  name: string;
+  description: string;
+  businessValue?: string;
+  scope?: string;
+  dependencies?: string[];
+  userStories?: UserStory[];
+}
  
  export interface UserStory {
    id: string;
