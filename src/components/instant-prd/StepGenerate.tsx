@@ -17,12 +17,27 @@
    onBack: () => void;
  }
  
- interface SectionStatus {
-   id: string;
-   title: string;
-   icon: any;
-   status: 'pending' | 'generating' | 'complete';
- }
+interface SectionStatus {
+  id: string;
+  title: string;
+  icon: any;
+  status: 'pending' | 'generating' | 'complete';
+}
+
+interface DetailedUserStory {
+  id: string;
+  featureId: string;
+  title: string;
+  asA?: string;
+  iWant?: string;
+  soThat?: string;
+  description?: string;
+  acceptanceCriteria: string[];
+  priority: 'high' | 'medium' | 'low';
+  complexity: 'XS' | 'S' | 'M' | 'L' | 'XL';
+  storyPoints?: number;
+  technicalNotes?: string;
+}
  
  const SECTIONS: Omit<SectionStatus, 'status'>[] = [
    { id: 'introduction', title: 'Introduction', icon: BookOpen },
