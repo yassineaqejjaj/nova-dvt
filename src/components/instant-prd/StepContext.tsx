@@ -122,9 +122,9 @@
      return labels[type] || type;
    };
  
-   return (
-     <Card>
-       <CardHeader>
+    return (
+      <Card className="flex flex-col min-h-[60vh]">
+        <CardHeader className="flex-shrink-0">
          <CardTitle className="flex items-center gap-2">
            <Target className="h-5 w-5 text-primary" />
            Contexte utilisé pour la génération
