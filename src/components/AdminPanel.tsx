@@ -73,7 +73,7 @@ export const AdminPanel: React.FC = () => {
       if (artifactsResponse.error) throw artifactsResponse.error;
 
       setFeatureFlags(flagsResponse.data || []);
-      setArtifacts(artifactsResponse.data || []);
+      setArtifacts((artifactsResponse.data || []) as unknown as Artifact[]);
     } catch (error: any) {
       console.error('Error loading admin data:', error);
       toast.error('Failed to load admin data', {
@@ -141,7 +141,7 @@ export const AdminPanel: React.FC = () => {
   const handleDeployMysteryBox = async () => {
     setIsDeploying(true);
     setDeploymentReport(null);
-    
+
     try {
       const { data, error } = await supabase.functions.invoke('deploy-mystery-box', {
         body: {
@@ -366,9 +366,7 @@ export const AdminPanel: React.FC = () => {
                     </p>
                     <p>
                       <span className="text-muted-foreground">Total Users:</span>{' '}
-                      <span className="font-medium">
-                        {deploymentReport.deployment.total_users}
-                      </span>
+                      <span className="font-medium">{deploymentReport.deployment.total_users}</span>
                     </p>
                     <p>
                       <span className="text-muted-foreground">Successfully Deployed:</span>{' '}

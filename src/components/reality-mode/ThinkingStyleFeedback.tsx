@@ -6,16 +6,16 @@ import { Switch } from '@/components/ui/switch';
 import { Progress } from '@/components/ui/progress';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
-import { 
-  Brain, 
-  Lock, 
+import {
+  Brain,
+  Lock,
   Eye,
   EyeOff,
   Lightbulb,
   AlertTriangle,
   Handshake,
   Sparkles,
-  TrendingUp
+  TrendingUp,
 } from 'lucide-react';
 import { UserThinkingStyle } from './types';
 
@@ -41,18 +41,18 @@ export const ThinkingStyleFeedback: React.FC<ThinkingStyleFeedbackProps> = ({ us
         .single();
 
       if (error && error.code !== 'PGRST116') throw error;
-      
+
       if (data) {
         setStyle({
-          optIn: data.opt_in,
-          debatesParticipated: data.debates_participated,
+          optIn: data.opt_in ?? false,
+          debatesParticipated: data.debates_participated ?? 0,
           earlyAgreementRate: Number(data.early_agreement_rate),
           riskRaisingRate: Number(data.risk_raising_rate),
           alternativeProposalRate: Number(data.alternative_proposal_rate),
           synthesisContributionRate: Number(data.synthesis_contribution_rate),
           ideationContributionRate: Number(data.ideation_contribution_rate),
           strongestImpactArea: data.strongest_impact_area as any,
-          insights: data.insights as string[]
+          insights: data.insights as string[],
         });
       }
     } catch (error) {
@@ -64,33 +64,35 @@ export const ThinkingStyleFeedback: React.FC<ThinkingStyleFeedbackProps> = ({ us
     setLoading(true);
     try {
       const newOptIn = !style?.optIn;
-      
-      const { error } = await supabase
-        .from('user_thinking_analytics')
-        .upsert({
-          user_id: userId,
-          opt_in: newOptIn
-        });
+
+      const { error } = await supabase.from('user_thinking_analytics').upsert({
+        user_id: userId,
+        opt_in: newOptIn,
+      });
 
       if (error) throw error;
 
-      setStyle(prev => prev ? { ...prev, optIn: newOptIn } : {
-        optIn: newOptIn,
-        debatesParticipated: 0,
-        earlyAgreementRate: 0,
-        riskRaisingRate: 0,
-        alternativeProposalRate: 0,
-        synthesisContributionRate: 0,
-        ideationContributionRate: 0,
-        strongestImpactArea: null,
-        insights: []
-      });
+      setStyle((prev) =>
+        prev
+          ? { ...prev, optIn: newOptIn }
+          : {
+              optIn: newOptIn,
+              debatesParticipated: 0,
+              earlyAgreementRate: 0,
+              riskRaisingRate: 0,
+              alternativeProposalRate: 0,
+              synthesisContributionRate: 0,
+              ideationContributionRate: 0,
+              strongestImpactArea: null,
+              insights: [],
+            }
+      );
 
       toast({
-        title: newOptIn ? "Analytics activées" : "Analytics désactivées",
-        description: newOptIn 
-          ? "Vos insights de style de pensée seront générés" 
-          : "Vos données de style ne seront plus collectées"
+        title: newOptIn ? 'Analytics activées' : 'Analytics désactivées',
+        description: newOptIn
+          ? 'Vos insights de style de pensée seront générés'
+          : 'Vos données de style ne seront plus collectées',
       });
     } catch (error) {
       console.error('Error toggling opt-in:', error);
@@ -101,21 +103,31 @@ export const ThinkingStyleFeedback: React.FC<ThinkingStyleFeedbackProps> = ({ us
 
   const getImpactIcon = (area: string | null) => {
     switch (area) {
-      case 'synthesis': return <Sparkles className="w-4 h-4" />;
-      case 'ideation': return <Lightbulb className="w-4 h-4" />;
-      case 'risks': return <AlertTriangle className="w-4 h-4" />;
-      case 'proposals': return <TrendingUp className="w-4 h-4" />;
-      default: return <Brain className="w-4 h-4" />;
+      case 'synthesis':
+        return <Sparkles className="w-4 h-4" />;
+      case 'ideation':
+        return <Lightbulb className="w-4 h-4" />;
+      case 'risks':
+        return <AlertTriangle className="w-4 h-4" />;
+      case 'proposals':
+        return <TrendingUp className="w-4 h-4" />;
+      default:
+        return <Brain className="w-4 h-4" />;
     }
   };
 
   const getImpactLabel = (area: string | null) => {
     switch (area) {
-      case 'synthesis': return 'Synthèse';
-      case 'ideation': return 'Idéation';
-      case 'risks': return 'Identification des risques';
-      case 'proposals': return 'Propositions';
-      default: return 'Non déterminé';
+      case 'synthesis':
+        return 'Synthèse';
+      case 'ideation':
+        return 'Idéation';
+      case 'risks':
+        return 'Identification des risques';
+      case 'proposals':
+        return 'Propositions';
+      default:
+        return 'Non déterminé';
     }
   };
 
@@ -155,7 +167,8 @@ export const ThinkingStyleFeedback: React.FC<ThinkingStyleFeedbackProps> = ({ us
           <Brain className="w-8 h-8 mx-auto mb-2 opacity-50" />
           <p className="text-sm">Pas encore assez de données</p>
           <p className="text-xs mt-1">
-            Participez à {3 - style.debatesParticipated} débats supplémentaires pour obtenir vos insights
+            Participez à {3 - style.debatesParticipated} débats supplémentaires pour obtenir vos
+            insights
           </p>
         </div>
       ) : (
@@ -171,9 +184,9 @@ export const ThinkingStyleFeedback: React.FC<ThinkingStyleFeedbackProps> = ({ us
             </p>
           </div>
 
-          <Button 
-            variant="ghost" 
-            size="sm" 
+          <Button
+            variant="ghost"
+            size="sm"
             className="w-full"
             onClick={() => setShowDetails(!showDetails)}
           >

@@ -2,13 +2,36 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { Artifact } from '@/types';
-import { 
-  Copy, Download, Trash2, Eye, MoreVertical, 
-  Users, Workflow, Clock, Star, FileText,
-  ArrowRight, Share2, FolderPlus, Sparkles
+import {
+  Copy,
+  Download,
+  Trash2,
+  Eye,
+  MoreVertical,
+  Users,
+  Workflow,
+  Clock,
+  Star,
+  FileText,
+  ArrowRight,
+  Share2,
+  FolderPlus,
+  Sparkles,
 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { formatDistanceToNow } from 'date-fns';
@@ -31,13 +54,13 @@ interface EnhancedArtifactCardProps {
   icon: React.ReactNode;
 }
 
-export const EnhancedArtifactCard: React.FC<EnhancedArtifactCardProps> = ({ 
-  artifact, 
-  onDelete, 
+export const EnhancedArtifactCard: React.FC<EnhancedArtifactCardProps> = ({
+  artifact,
+  onDelete,
   onTransform,
   onAddToProject,
   onContinueWith,
-  icon 
+  icon,
 }) => {
   const [showDetails, setShowDetails] = useState(false);
   const [showActions, setShowActions] = useState(false);
@@ -58,20 +81,32 @@ export const EnhancedArtifactCard: React.FC<EnhancedArtifactCardProps> = ({
           .join('\n\n');
 
       case 'story':
-        return `TITLE: ${content.title || 'Untitled'}\n\n` +
+        return (
+          `TITLE: ${content.title || 'Untitled'}\n\n` +
           `AS A: ${content.as_a || 'N/A'}\n` +
           `I WANT: ${content.i_want || 'N/A'}\n` +
           `SO THAT: ${content.so_that || 'N/A'}\n\n` +
-          `ACCEPTANCE CRITERIA:\n${Array.isArray(content.acceptance_criteria) 
-            ? content.acceptance_criteria.map((c: string, i: number) => `${i + 1}. ${c}`).join('\n') 
-            : content.acceptance_criteria || 'None'}`;
+          `ACCEPTANCE CRITERIA:\n${
+            Array.isArray(content.acceptance_criteria)
+              ? content.acceptance_criteria
+                  .map((c: string, i: number) => `${i + 1}. ${c}`)
+                  .join('\n')
+              : content.acceptance_criteria || 'None'
+          }`
+        );
 
       case 'epic':
-        return `EPIC: ${content.title || 'Untitled'}\n\n` +
+        return (
+          `EPIC: ${content.title || 'Untitled'}\n\n` +
           `DESCRIPTION:\n${content.description || 'No description'}\n\n` +
-          `USER STORIES:\n${Array.isArray(content.user_stories) 
-            ? content.user_stories.map((s: any, i: number) => `${i + 1}. ${typeof s === 'object' ? s.title : s}`).join('\n') 
-            : 'None'}`;
+          `USER STORIES:\n${
+            Array.isArray(content.user_stories)
+              ? content.user_stories
+                  .map((s: any, i: number) => `${i + 1}. ${typeof s === 'object' ? s.title : s}`)
+                  .join('\n')
+              : 'None'
+          }`
+        );
 
       default:
         return JSON.stringify(content, null, 2);
@@ -114,7 +149,7 @@ export const EnhancedArtifactCard: React.FC<EnhancedArtifactCardProps> = ({
       tech_spec: 'Spéc Tech',
     };
     return (
-      <Badge variant="outline" className={cn("text-xs", styles[type] || '')}>
+      <Badge variant="outline" className={cn('text-xs', styles[type] || '')}>
         {labels[type] || type}
       </Badge>
     );
@@ -133,7 +168,7 @@ export const EnhancedArtifactCard: React.FC<EnhancedArtifactCardProps> = ({
       obsolete: 'Obsolète',
     };
     return (
-      <Badge variant="outline" className={cn("text-[10px]", styles[status])}>
+      <Badge variant="outline" className={cn('text-[10px]', styles[status])}>
         {labels[status]}
       </Badge>
     );
@@ -149,19 +184,19 @@ export const EnhancedArtifactCard: React.FC<EnhancedArtifactCardProps> = ({
         { label: 'Découper en Stories', target: 'story' },
         { label: 'Créer une Spéc Tech', target: 'tech_spec' },
       ],
-      story: [
-        { label: 'Analyser l\'impact', target: 'impact_analysis' },
-      ],
+      story: [{ label: "Analyser l'impact", target: 'impact_analysis' }],
     };
     return options[type] || [];
   };
 
   return (
     <>
-      <Card className={cn(
-        "hover:shadow-md transition-all group relative",
-        artifact.is_key && "ring-2 ring-primary/30 bg-primary/5"
-      )}>
+      <Card
+        className={cn(
+          'hover:shadow-md transition-all group relative',
+          artifact.is_key && 'ring-2 ring-primary/30 bg-primary/5'
+        )}
+      >
         {/* Key indicator */}
         {artifact.is_key && (
           <div className="absolute -top-2 -right-2 z-10">
@@ -175,16 +210,15 @@ export const EnhancedArtifactCard: React.FC<EnhancedArtifactCardProps> = ({
         <CardHeader className="pb-2">
           <div className="flex items-start justify-between gap-2">
             <div className="flex items-center gap-2 min-w-0">
-              <div className="p-1.5 rounded-md bg-muted shrink-0">
-                {icon}
-              </div>
+              <div className="p-1.5 rounded-md bg-muted shrink-0">{icon}</div>
               <div className="min-w-0">
-                <CardTitle className="text-sm font-medium line-clamp-1">
-                  {artifact.title}
-                </CardTitle>
+                <CardTitle className="text-sm font-medium line-clamp-1">{artifact.title}</CardTitle>
                 <div className="flex items-center gap-1 text-[11px] text-muted-foreground mt-0.5">
                   <Clock className="w-3 h-3" />
-                  {formatDistanceToNow(new Date(artifact.created_at), { addSuffix: true, locale: fr })}
+                  {formatDistanceToNow(new Date(artifact.created_at ?? ''), {
+                    addSuffix: true,
+                    locale: fr,
+                  })}
                 </div>
               </div>
             </div>
@@ -246,7 +280,7 @@ export const EnhancedArtifactCard: React.FC<EnhancedArtifactCardProps> = ({
               <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={handleDownload}>
                 <Download className="w-3.5 h-3.5" />
               </Button>
-              
+
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
@@ -255,7 +289,7 @@ export const EnhancedArtifactCard: React.FC<EnhancedArtifactCardProps> = ({
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-48">
                   {getTransformOptions(artifact.artifact_type).map((option) => (
-                    <DropdownMenuItem 
+                    <DropdownMenuItem
                       key={option.target}
                       onClick={() => onTransform?.(artifact, option.target)}
                     >
@@ -263,7 +297,9 @@ export const EnhancedArtifactCard: React.FC<EnhancedArtifactCardProps> = ({
                       {option.label}
                     </DropdownMenuItem>
                   ))}
-                  {getTransformOptions(artifact.artifact_type).length > 0 && <DropdownMenuSeparator />}
+                  {getTransformOptions(artifact.artifact_type).length > 0 && (
+                    <DropdownMenuSeparator />
+                  )}
                   <DropdownMenuItem onClick={() => onAddToProject?.(artifact)}>
                     <FolderPlus className="w-4 h-4 mr-2" />
                     Ajouter à un projet
@@ -273,7 +309,7 @@ export const EnhancedArtifactCard: React.FC<EnhancedArtifactCardProps> = ({
                     Continuer avec un agent
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem 
+                  <DropdownMenuItem
                     onClick={() => onDelete(artifact.id)}
                     className="text-destructive focus:text-destructive"
                   >
@@ -296,7 +332,7 @@ export const EnhancedArtifactCard: React.FC<EnhancedArtifactCardProps> = ({
               <span>{artifact.title}</span>
             </DialogTitle>
           </DialogHeader>
-          
+
           <div className="space-y-4">
             {/* Meta info */}
             <div className="flex flex-wrap items-center gap-2">
@@ -339,12 +375,12 @@ export const EnhancedArtifactCard: React.FC<EnhancedArtifactCardProps> = ({
                 Partager
               </Button>
             </div>
-            
+
             {/* Transform actions */}
             {getTransformOptions(artifact.artifact_type).length > 0 && (
               <div className="flex items-center gap-2">
                 {getTransformOptions(artifact.artifact_type).map((option) => (
-                  <Button 
+                  <Button
                     key={option.target}
                     size="sm"
                     onClick={() => {

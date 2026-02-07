@@ -38,13 +38,13 @@ import { useWorkflowProgress } from '@/hooks/useWorkflowProgress';
 import { useNavigate } from 'react-router-dom';
 
 // New workflow components
-import { 
-  IntentEntryCards, 
+import {
+  IntentEntryCards,
   getIntentWorkflowIds,
   RecommendedWorkflows,
   WorkflowCard,
-  getExpectedOutput 
-} from './workflows';
+  getExpectedOutput,
+} from './workflows/index';
 
 import {
   Rocket,
@@ -83,7 +83,31 @@ interface Workflow {
     id: string;
     title: string;
     description: string;
-    tool?: 'canvas' | 'story' | 'impact' | 'research' | 'design' | 'code' | 'roadmap' | 'launch' | 'sprint' | 'kpi' | 'epic-stories' | 'test-generator' | 'ac-validator' | 'git-to-specs' | 'critical-path-analyzer' | 'vision' | 'research-objectives' | 'research-plan' | 'research-conduct' | 'research-synthesize' | 'requirements-scope' | 'requirements-collection' | 'requirements-prioritization' | 'requirements-documentation';
+    tool?:
+      | 'canvas'
+      | 'story'
+      | 'impact'
+      | 'research'
+      | 'design'
+      | 'code'
+      | 'roadmap'
+      | 'launch'
+      | 'sprint'
+      | 'kpi'
+      | 'epic-stories'
+      | 'test-generator'
+      | 'ac-validator'
+      | 'git-to-specs'
+      | 'critical-path-analyzer'
+      | 'vision'
+      | 'research-objectives'
+      | 'research-plan'
+      | 'research-conduct'
+      | 'research-synthesize'
+      | 'requirements-scope'
+      | 'requirements-collection'
+      | 'requirements-prioritization'
+      | 'requirements-documentation';
     completed?: boolean;
   }>;
 }
@@ -92,7 +116,8 @@ const workflows: Workflow[] = [
   {
     id: 'insight-synthesizer',
     name: 'Insight Synthesizer',
-    description: 'Transformez vos avis stores, demandes métiers et incidents en recommandations roadmap avec Epics et User Stories',
+    description:
+      'Transformez vos avis stores, demandes métiers et incidents en recommandations roadmap avec Epics et User Stories',
     icon: <BarChart3 className="w-6 h-6" />,
     category: 'Discovery',
     tags: ['AI', 'Insights', 'Roadmap', 'Priorisation', 'Epic', 'Stores'],
@@ -123,8 +148,8 @@ const workflows: Workflow[] = [
         title: 'Epics & User Stories',
         description: 'Génération automatique avec AC',
         completed: false,
-      }
-    ]
+      },
+    ],
   },
   {
     id: 'smart-discovery',
@@ -140,16 +165,17 @@ const workflows: Workflow[] = [
       {
         id: 'input',
         title: 'Input Initial',
-        description: 'Collez le message du stakeholder ou décrivez l\'idée',
+        description: "Collez le message du stakeholder ou décrivez l'idée",
         completed: false,
-      }
-    ]
+      },
+    ],
   },
   // DISCOVERY
   {
     id: 'roadmap-planning',
     name: 'Planification Stratégique Roadmap',
-    description: 'Créez une roadmap produit complète avec jalons trimestriels et thèmes stratégiques',
+    description:
+      'Créez une roadmap produit complète avec jalons trimestriels et thèmes stratégiques',
     icon: <TrendingUp className="w-6 h-6" />,
     category: 'Discovery',
     tags: ['Stratégie', 'Roadmap', 'Planification', 'Long-terme'],
@@ -212,7 +238,7 @@ const workflows: Workflow[] = [
       },
       {
         id: 'hypothesis',
-        title: 'Formulation d\'Hypothèse',
+        title: "Formulation d'Hypothèse",
         description: 'Formuler hypothèse de solution et bénéfices attendus',
         completed: false,
       },
@@ -225,7 +251,7 @@ const workflows: Workflow[] = [
       },
       {
         id: 'epic',
-        title: 'Génération d\'Epic',
+        title: "Génération d'Epic",
         description: 'Générer Epic complet avec User Stories',
         completed: false,
       },
@@ -234,7 +260,8 @@ const workflows: Workflow[] = [
   {
     id: 'user-research',
     name: 'Recherche Utilisateur & Insights',
-    description: 'Planifiez, menez et synthétisez la recherche utilisateur pour générer des insights actionnables',
+    description:
+      'Planifiez, menez et synthétisez la recherche utilisateur pour générer des insights actionnables',
     icon: <Users className="w-6 h-6" />,
     category: 'Discovery',
     tags: ['Recherche', 'Utilisateurs', 'Interviews', 'Insights', 'UX'],
@@ -259,7 +286,7 @@ const workflows: Workflow[] = [
       {
         id: 'conduct',
         title: 'Mener la Recherche',
-        description: 'Exécuter interviews, sondages, tests d\'utilisabilité',
+        description: "Exécuter interviews, sondages, tests d'utilisabilité",
         tool: 'research-conduct',
         completed: false,
       },
@@ -274,7 +301,7 @@ const workflows: Workflow[] = [
   },
   {
     id: 'requirements-collection',
-    name: 'Collecte d\'Exigences',
+    name: "Collecte d'Exigences",
     description: 'Définir, collecter, prioriser et documenter les exigences projet',
     icon: <FileText className="w-6 h-6" />,
     category: 'Discovery',
@@ -283,18 +310,43 @@ const workflows: Workflow[] = [
     difficulty: 'Intermediate',
     estimatedTime: '60-90 min',
     steps: [
-      { id: 'scope', title: 'Définir le Périmètre', description: 'Vision, parties prenantes et contraintes', tool: 'requirements-scope', completed: false },
-      { id: 'collect', title: 'Collecter les Exigences', description: 'Exigences fonctionnelles et non-fonctionnelles', tool: 'requirements-collection', completed: false },
-      { id: 'prioritize', title: 'Prioriser', description: 'MoSCoW et matrice valeur/effort', tool: 'requirements-prioritization', completed: false },
-      { id: 'document', title: 'Documenter', description: 'Spécifications complètes', tool: 'requirements-documentation', completed: false },
+      {
+        id: 'scope',
+        title: 'Définir le Périmètre',
+        description: 'Vision, parties prenantes et contraintes',
+        tool: 'requirements-scope',
+        completed: false,
+      },
+      {
+        id: 'collect',
+        title: 'Collecter les Exigences',
+        description: 'Exigences fonctionnelles et non-fonctionnelles',
+        tool: 'requirements-collection',
+        completed: false,
+      },
+      {
+        id: 'prioritize',
+        title: 'Prioriser',
+        description: 'MoSCoW et matrice valeur/effort',
+        tool: 'requirements-prioritization',
+        completed: false,
+      },
+      {
+        id: 'document',
+        title: 'Documenter',
+        description: 'Spécifications complètes',
+        tool: 'requirements-documentation',
+        completed: false,
+      },
     ],
   },
-  
+
   // CADRAGE
   {
     id: 'sprint-planning',
     name: 'Planification de Sprint Agile',
-    description: 'Planifiez et gérez le backlog de sprint avec planification de capacité et tableau kanban',
+    description:
+      'Planifiez et gérez le backlog de sprint avec planification de capacité et tableau kanban',
     icon: <Calendar className="w-6 h-6" />,
     category: 'Cadrage',
     tags: ['Agile', 'Sprint', 'Scrum', 'Planification', 'Kanban'],
@@ -318,7 +370,7 @@ const workflows: Workflow[] = [
       {
         id: 'stories',
         title: 'Affiner les User Stories',
-        description: 'S\'assurer que les stories ont des critères d\'acceptation clairs',
+        description: "S'assurer que les stories ont des critères d'acceptation clairs",
         tool: 'story',
         completed: false,
       },
@@ -332,15 +384,16 @@ const workflows: Workflow[] = [
       {
         id: 'capacity',
         title: 'Planification de Capacité',
-        description: 'Allouer le travail selon la vélocité de l\'équipe',
+        description: "Allouer le travail selon la vélocité de l'équipe",
         completed: false,
       },
     ],
   },
   {
     id: 'requirements-gathering',
-    name: 'Collecte d\'Exigences',
-    description: 'Collectez et documentez les exigences produit complètes avec input des parties prenantes',
+    name: "Collecte d'Exigences",
+    description:
+      'Collectez et documentez les exigences produit complètes avec input des parties prenantes',
     icon: <FileText className="w-6 h-6" />,
     category: 'Cadrage',
     tags: ['Exigences', 'Documentation', 'Planification', 'Parties Prenantes'],
@@ -379,7 +432,8 @@ const workflows: Workflow[] = [
   {
     id: 'technical-spec',
     name: 'Spécification Technique',
-    description: 'Traduire User Story en spécification technique détaillée avec architecture, tests et DoD',
+    description:
+      'Traduire User Story en spécification technique détaillée avec architecture, tests et DoD',
     icon: <FileCode className="w-6 h-6" />,
     category: 'Cadrage',
     tags: ['Développement', 'Technique', 'Architecture', 'Testing', 'Spécification'],
@@ -418,7 +472,8 @@ const workflows: Workflow[] = [
   {
     id: 'comite-projet',
     name: 'Comité Projet',
-    description: 'Template prêt à l\'emploi pour préparer et animer un comité projet avec les bons outils',
+    description:
+      "Template prêt à l'emploi pour préparer et animer un comité projet avec les bons outils",
     icon: <FileText className="w-6 h-6" />,
     category: 'Comitologie',
     tags: ['Comité', 'Projet', 'Gouvernance', 'Suivi', 'Décision'],
@@ -429,14 +484,14 @@ const workflows: Workflow[] = [
       {
         id: 'preparation',
         title: 'Préparation du Comité',
-        description: 'Créer l\'ordre du jour et préparer les documents de support',
+        description: "Créer l'ordre du jour et préparer les documents de support",
         tool: 'canvas',
         completed: false,
       },
       {
         id: 'status',
-        title: 'État d\'Avancement',
-        description: 'Synthétiser l\'avancement du projet vs planning',
+        title: "État d'Avancement",
+        description: "Synthétiser l'avancement du projet vs planning",
         tool: 'roadmap',
         completed: false,
       },
@@ -465,7 +520,8 @@ const workflows: Workflow[] = [
   {
     id: 'comite-pilotage',
     name: 'Comité de Pilotage',
-    description: 'Template exécutif pour préparer un COPIL avec vision stratégique et décisions clés',
+    description:
+      'Template exécutif pour préparer un COPIL avec vision stratégique et décisions clés',
     icon: <TrendingUp className="w-6 h-6" />,
     category: 'Comitologie',
     tags: ['COPIL', 'Stratégie', 'Gouvernance', 'Direction', 'Exécutif'],
@@ -483,21 +539,21 @@ const workflows: Workflow[] = [
       {
         id: 'strategic-alignment',
         title: 'Alignement Stratégique',
-        description: 'Vérifier l\'alignement avec la roadmap et objectifs business',
+        description: "Vérifier l'alignement avec la roadmap et objectifs business",
         tool: 'roadmap',
         completed: false,
       },
       {
         id: 'business-impact',
         title: 'Impact Business',
-        description: 'Analyser l\'impact business et le ROI attendu',
+        description: "Analyser l'impact business et le ROI attendu",
         tool: 'impact',
         completed: false,
       },
       {
         id: 'market-position',
         title: 'Positionnement Marché',
-        description: 'Présenter l\'analyse concurrentielle et positionnement',
+        description: "Présenter l'analyse concurrentielle et positionnement",
         tool: 'research',
         completed: false,
       },
@@ -509,7 +565,7 @@ const workflows: Workflow[] = [
       },
       {
         id: 'action-plan',
-        title: 'Plan d\'Action',
+        title: "Plan d'Action",
         description: 'Définir les prochaines étapes et responsabilités',
         tool: 'sprint',
         completed: false,
@@ -519,7 +575,8 @@ const workflows: Workflow[] = [
   {
     id: 'product-launch',
     name: 'Exécution de Lancement Produit',
-    description: 'Planifiez et exécutez un lancement produit réussi avec checklist de tâches complète',
+    description:
+      'Planifiez et exécutez un lancement produit réussi avec checklist de tâches complète',
     icon: <Rocket className="w-6 h-6" />,
     category: 'Comitologie',
     tags: ['Lancement', 'GTM', 'Marketing', 'Exécution', 'Checklist'],
@@ -570,14 +627,14 @@ const workflows: Workflow[] = [
       {
         id: 'architecture',
         title: 'Architecture Technique',
-        description: 'Documenter l\'architecture système et les choix technologiques',
+        description: "Documenter l'architecture système et les choix technologiques",
         tool: 'design',
         completed: false,
       },
       {
         id: 'risques-techniques',
         title: 'Analyse des Risques Techniques',
-        description: 'Identifier les risques techniques et les stratégies d\'atténuation',
+        description: "Identifier les risques techniques et les stratégies d'atténuation",
         tool: 'impact',
         completed: false,
       },
@@ -591,7 +648,7 @@ const workflows: Workflow[] = [
       {
         id: 'raci-tech',
         title: 'RACI Technique',
-        description: 'Définir les responsabilités de l\'équipe technique',
+        description: "Définir les responsabilités de l'équipe technique",
         tool: 'kpi',
         completed: false,
       },
@@ -616,8 +673,8 @@ const workflows: Workflow[] = [
     steps: [
       {
         id: 'idea-validation',
-        title: 'Validation de l\'Idée Innovation',
-        description: 'Valider l\'opportunité et l\'alignement stratégique',
+        title: "Validation de l'Idée Innovation",
+        description: "Valider l'opportunité et l'alignement stratégique",
         tool: 'canvas',
         completed: false,
       },
@@ -651,7 +708,7 @@ const workflows: Workflow[] = [
     ],
   },
 
-  // MON QUOTIDIEN  
+  // MON QUOTIDIEN
   {
     id: 'epic-to-stories',
     name: 'Création de User Stories',
@@ -665,7 +722,7 @@ const workflows: Workflow[] = [
     steps: [
       {
         id: 'epic-definition',
-        title: 'Définir l\'Epic',
+        title: "Définir l'Epic",
         description: 'Créer ou sélectionner un Epic à décomposer en User Stories',
         tool: 'epic-stories',
         completed: false,
@@ -673,7 +730,7 @@ const workflows: Workflow[] = [
       {
         id: 'story-generation',
         title: 'Génération des Stories',
-        description: 'Utiliser l\'IA pour générer des User Stories structurées',
+        description: "Utiliser l'IA pour générer des User Stories structurées",
         tool: 'epic-stories',
         completed: false,
       },
@@ -695,7 +752,8 @@ const workflows: Workflow[] = [
   {
     id: 'design-system',
     name: 'Design System & Storybook',
-    description: 'Explorez le design system complet avec tokens, composants UI et documentation Storybook',
+    description:
+      'Explorez le design system complet avec tokens, composants UI et documentation Storybook',
     icon: <Palette className="w-6 h-6" />,
     category: 'Mon Quotidien',
     tags: ['Design', 'UI', 'Storybook', 'Composants', 'Documentation'],
@@ -708,13 +766,14 @@ const workflows: Workflow[] = [
         title: 'Explorer le Design System',
         description: 'Parcourir les tokens de couleurs, typographie et composants',
         completed: false,
-      }
+      },
     ],
   },
   {
     id: 'component-development',
     name: 'Développement de Composants',
-    description: 'Construisez et testez des composants UI réutilisables depuis les designs jusqu\'au code production',
+    description:
+      "Construisez et testez des composants UI réutilisables depuis les designs jusqu'au code production",
     icon: <Code2 className="w-6 h-6" />,
     category: 'Mon Quotidien',
     tags: ['Développement', 'Code', 'Composants', 'Testing', 'TypeScript'],
@@ -745,7 +804,7 @@ const workflows: Workflow[] = [
       {
         id: 'testing',
         title: 'Tests & Documentation',
-        description: 'Écrire tests et documenter l\'usage',
+        description: "Écrire tests et documenter l'usage",
         tool: 'code',
         completed: false,
       },
@@ -754,7 +813,8 @@ const workflows: Workflow[] = [
   {
     id: 'test-planning-automation',
     name: 'Test Planning & Automation Setup',
-    description: 'Workflow QA complet: définir le scope, identifier les chemins critiques, générer des tests automatisés',
+    description:
+      'Workflow QA complet: définir le scope, identifier les chemins critiques, générer des tests automatisés',
     icon: <CheckCircle2 className="w-6 h-6" />,
     category: 'QA & Testing',
     tags: ['QA', 'Testing', 'Automation', 'AI', 'Test-Cases'],
@@ -799,19 +859,22 @@ export const Workflows: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [selectedTag, setSelectedTag] = useState<string>('all');
   const [selectedIntent, setSelectedIntent] = useState<string | null>(null);
-  
+
   // Workflow progress management
-  const [activeWorkflow, setActiveWorkflow] = useState<{ type: string; currentStep: number } | null>(null);
+  const [activeWorkflow, setActiveWorkflow] = useState<{
+    type: string;
+    currentStep: number;
+  } | null>(null);
   const [workflowContext, setWorkflowContext] = useState<Record<string, any>>({});
-  
+
   // Mémoriser le callback pour éviter les re-renders infinis
   const handleStepComplete = useCallback((nextStep: number, context: any) => {
     setCurrentStep(nextStep);
     setWorkflowContext(context);
   }, []);
-  
+
   useWorkflowProgress(activeWorkflow, handleStepComplete);
-  
+
   // Framework filtering
   const {
     frameworks,
@@ -821,7 +884,7 @@ export const Workflows: React.FC = () => {
     selectAllFrameworks,
     filterWorkflows: applyFrameworkFilter,
   } = useFrameworkFilter();
-  
+
   const [showCanvasGenerator, setShowCanvasGenerator] = useState(false);
   const [showStoryWriter, setShowStoryWriter] = useState(false);
   const [showImpactPlotter, setShowImpactPlotter] = useState(false);
@@ -835,7 +898,7 @@ export const Workflows: React.FC = () => {
   const [showContextManager, setShowContextManager] = useState(false);
   const [showFeatureDiscovery, setShowFeatureDiscovery] = useState(false);
   const [showTechnicalSpec, setShowTechnicalSpec] = useState(false);
-  
+
   const [showEpicToStories, setShowEpicToStories] = useState(false);
   const [showACValidator, setShowACValidator] = useState(false);
   const [showGitToSpecs, setShowGitToSpecs] = useState(false);
@@ -863,7 +926,9 @@ export const Workflows: React.FC = () => {
   // Load active context on mount and when context manager closes
   const loadActiveContext = async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user) return;
 
       const { data, error } = await supabase
@@ -889,10 +954,14 @@ export const Workflows: React.FC = () => {
           setActiveContext({
             name: recentData.name,
             vision: recentData.vision,
-            objectives: Array.isArray(recentData.objectives) ? recentData.objectives as string[] : [],
-            target_kpis: Array.isArray(recentData.target_kpis) ? recentData.target_kpis as string[] : [],
+            objectives: Array.isArray(recentData.objectives)
+              ? (recentData.objectives as string[])
+              : [],
+            target_kpis: Array.isArray(recentData.target_kpis)
+              ? (recentData.target_kpis as string[])
+              : [],
             constraints: recentData.constraints,
-            target_audience: recentData.target_audience
+            target_audience: recentData.target_audience,
           });
         }
         return;
@@ -901,10 +970,10 @@ export const Workflows: React.FC = () => {
       setActiveContext({
         name: data.name,
         vision: data.vision,
-        objectives: Array.isArray(data.objectives) ? data.objectives as string[] : [],
-        target_kpis: Array.isArray(data.target_kpis) ? data.target_kpis as string[] : [],
+        objectives: Array.isArray(data.objectives) ? (data.objectives as string[]) : [],
+        target_kpis: Array.isArray(data.target_kpis) ? (data.target_kpis as string[]) : [],
         constraints: data.constraints,
-        target_audience: data.target_audience
+        target_audience: data.target_audience,
       });
     } catch (error) {
       console.error('Error loading active context:', error);
@@ -922,7 +991,7 @@ export const Workflows: React.FC = () => {
         {
           event: 'UPDATE',
           schema: 'public',
-          table: 'product_contexts'
+          table: 'product_contexts',
         },
         (payload) => {
           console.log('Context updated:', payload);
@@ -967,7 +1036,7 @@ export const Workflows: React.FC = () => {
       setShowInsightSynthesizer(true);
       return;
     }
-    
+
     setSelectedWorkflow(workflow);
     setCurrentStep(0);
     setActiveWorkflow({ type: workflow.id, currentStep: 0 });
@@ -1012,55 +1081,55 @@ export const Workflows: React.FC = () => {
         case 'sprint':
           setShowSprintPlanner(true);
           break;
-      case 'kpi':
-        setShowKPIGenerator(true);
-        break;
-      case 'epic-stories':
-        setShowEpicToStories(true);
-        break;
-      case 'test-generator':
-        navigate('/test-generator');
-        break;
-      case 'ac-validator':
-        setShowACValidator(true);
-        break;
-      case 'git-to-specs':
-        setShowGitToSpecs(true);
-        break;
-      case 'critical-path-analyzer':
-        navigate('/critical-path-analyzer');
-        break;
-      case 'vision':
-        setShowVisionDefiner(true);
-        break;
-      case 'research-objectives':
-        setShowResearchObjectives(true);
-        break;
-      case 'research-plan':
-        setShowResearchPlan(true);
-        break;
-      case 'research-conduct':
-        setShowResearchConduct(true);
-        break;
-      case 'research-synthesize':
-        setShowResearchSynthesize(true);
-        break;
-      case 'requirements-scope':
-        setShowRequirementsScope(true);
-        break;
-      case 'requirements-collection':
-        setShowRequirementsCollection(true);
-        break;
-      case 'requirements-prioritization':
-        setShowRequirementsPrioritization(true);
-        break;
-      case 'requirements-documentation':
-        setShowRequirementsDocumentation(true);
-        break;
-      default:
-        console.warn('Unknown tool:', tool);
-    }
-    toast.success(`Ouverture de l'outil: ${tool}`);
+        case 'kpi':
+          setShowKPIGenerator(true);
+          break;
+        case 'epic-stories':
+          setShowEpicToStories(true);
+          break;
+        case 'test-generator':
+          navigate('/test-generator');
+          break;
+        case 'ac-validator':
+          setShowACValidator(true);
+          break;
+        case 'git-to-specs':
+          setShowGitToSpecs(true);
+          break;
+        case 'critical-path-analyzer':
+          navigate('/critical-path-analyzer');
+          break;
+        case 'vision':
+          setShowVisionDefiner(true);
+          break;
+        case 'research-objectives':
+          setShowResearchObjectives(true);
+          break;
+        case 'research-plan':
+          setShowResearchPlan(true);
+          break;
+        case 'research-conduct':
+          setShowResearchConduct(true);
+          break;
+        case 'research-synthesize':
+          setShowResearchSynthesize(true);
+          break;
+        case 'requirements-scope':
+          setShowRequirementsScope(true);
+          break;
+        case 'requirements-collection':
+          setShowRequirementsCollection(true);
+          break;
+        case 'requirements-prioritization':
+          setShowRequirementsPrioritization(true);
+          break;
+        case 'requirements-documentation':
+          setShowRequirementsDocumentation(true);
+          break;
+        default:
+          console.warn('Unknown tool:', tool);
+      }
+      toast.success(`Ouverture de l'outil: ${tool}`);
     } catch (e) {
       console.error('Tool launch error', e);
       toast.error("Impossible d'ouvrir l'outil");
@@ -1073,7 +1142,7 @@ export const Workflows: React.FC = () => {
     });
     handleBackToWorkflows();
   }, [selectedWorkflow]);
-  
+
   // Vérifier si le workflow est terminé
   React.useEffect(() => {
     if (selectedWorkflow && currentStep >= selectedWorkflow.steps.length) {
@@ -1081,46 +1150,54 @@ export const Workflows: React.FC = () => {
     }
   }, [currentStep, selectedWorkflow, handleCompleteWorkflow]);
 
-  const categories = Array.from(new Set(workflows.map(w => w.category)));
-  const allTags = Array.from(new Set(workflows.flatMap(w => w.tags)));
-  
+  const categories = Array.from(new Set(workflows.map((w) => w.category)));
+  const allTags = Array.from(new Set(workflows.flatMap((w) => w.tags)));
+
   // Get intent-based workflow IDs
   const intentWorkflowIds = getIntentWorkflowIds(selectedIntent);
 
   // Filter workflows based on all criteria including intent
   const filteredWorkflows = useMemo(() => {
     let result = workflows;
-    
+
     // Apply intent filter first (highlights specific workflows)
     if (intentWorkflowIds.length > 0) {
-      result = result.filter(w => intentWorkflowIds.includes(w.id));
+      result = result.filter((w) => intentWorkflowIds.includes(w.id));
     }
-    
+
     // Then apply category and tag filters
-    result = result.filter(w => {
+    result = result.filter((w) => {
       const categoryMatch = selectedCategory === 'all' || w.category === selectedCategory;
       const tagMatch = selectedTag === 'all' || w.tags.includes(selectedTag);
       return categoryMatch && tagMatch;
     });
-    
+
     // Apply framework filter
     result = applyFrameworkFilter(result);
-    
+
     // Sort by context relevance (if context is defined, prioritize related workflows)
     if (activeContext) {
       // Could add more sophisticated sorting based on context metadata
     }
-    
+
     return result;
-  }, [selectedIntent, selectedCategory, selectedTag, selectedFrameworks, activeContext, intentWorkflowIds, applyFrameworkFilter]);
+  }, [
+    selectedIntent,
+    selectedCategory,
+    selectedTag,
+    selectedFrameworks,
+    activeContext,
+    intentWorkflowIds,
+    applyFrameworkFilter,
+  ]);
 
   // Get recommended workflows (based on context and usage)
   const recommendedWorkflows = useMemo(() => {
     // Prioritize certain workflows when no intent is selected
     const recommendedIds = ['smart-discovery', 'insight-synthesizer', 'epic-to-stories'];
     return workflows
-      .filter(w => recommendedIds.includes(w.id))
-      .map(w => ({
+      .filter((w) => recommendedIds.includes(w.id))
+      .map((w) => ({
         id: w.id,
         name: w.name,
         description: w.description,
@@ -1131,18 +1208,24 @@ export const Workflows: React.FC = () => {
   }, []);
 
   // Check framework compatibility for a workflow
-  const getCompatibleFrameworkNames = useCallback((workflow: Workflow): string[] => {
-    if (!workflow.frameworks) return [];
-    return frameworks
-      .filter(f => selectedFrameworks.includes(f.id) && workflow.frameworks?.includes(f.id))
-      .map(f => f.shortName);
-  }, [frameworks, selectedFrameworks]);
+  const getCompatibleFrameworkNames = useCallback(
+    (workflow: Workflow): string[] => {
+      if (!workflow.frameworks) return [];
+      return frameworks
+        .filter((f) => selectedFrameworks.includes(f.id) && workflow.frameworks?.includes(f.id))
+        .map((f) => f.shortName);
+    },
+    [frameworks, selectedFrameworks]
+  );
 
-  const isWorkflowCompatibleWithSelectedFrameworks = useCallback((workflow: Workflow): boolean => {
-    if (selectedFrameworks.length === 0) return true;
-    if (!workflow.frameworks || workflow.frameworks.length === 0) return true;
-    return workflow.frameworks.some(fw => selectedFrameworks.includes(fw));
-  }, [selectedFrameworks]);
+  const isWorkflowCompatibleWithSelectedFrameworks = useCallback(
+    (workflow: Workflow): boolean => {
+      if (selectedFrameworks.length === 0) return true;
+      if (!workflow.frameworks || workflow.frameworks.length === 0) return true;
+      return workflow.frameworks.some((fw) => selectedFrameworks.includes(fw));
+    },
+    [selectedFrameworks]
+  );
 
   if (selectedWorkflow) {
     return (
@@ -1165,8 +1248,10 @@ export const Workflows: React.FC = () => {
           </div>
           <p className="text-muted-foreground mb-3">{selectedWorkflow.description}</p>
           <div className="flex flex-wrap gap-1">
-            {selectedWorkflow.tags.map(tag => (
-              <Badge key={tag} variant="outline" className="text-xs">{tag}</Badge>
+            {selectedWorkflow.tags.map((tag) => (
+              <Badge key={tag} variant="outline" className="text-xs">
+                {tag}
+              </Badge>
             ))}
           </div>
         </div>
@@ -1207,14 +1292,14 @@ export const Workflows: React.FC = () => {
         {/* Tool Dialogs */}
         <CanvasGenerator open={showCanvasGenerator} onClose={() => setShowCanvasGenerator(false)} />
         <StoryWriter open={showStoryWriter} onClose={() => setShowStoryWriter(false)} />
-        <ImpactPlotter 
-          open={showImpactPlotter} 
+        <ImpactPlotter
+          open={showImpactPlotter}
           onClose={() => setShowImpactPlotter(false)}
           activeWorkflow={activeWorkflow}
           onStepComplete={(nextStep, context) => {
             setCurrentStep(nextStep);
             setWorkflowContext(context);
-            setActiveWorkflow(prev => prev ? { ...prev, currentStep: nextStep } : null);
+            setActiveWorkflow((prev) => (prev ? { ...prev, currentStep: nextStep } : null));
           }}
           workflowContext={workflowContext}
         />
@@ -1228,12 +1313,12 @@ export const Workflows: React.FC = () => {
               >
                 ✕
               </Button>
-              <MarketResearch 
+              <MarketResearch
                 activeWorkflow={activeWorkflow}
                 onStepComplete={(nextStep, context) => {
                   setCurrentStep(nextStep);
                   setWorkflowContext(context);
-                  setActiveWorkflow(prev => prev ? { ...prev, currentStep: nextStep } : null);
+                  setActiveWorkflow((prev) => (prev ? { ...prev, currentStep: nextStep } : null));
                   setShowMarketResearch(false);
                 }}
                 workflowContext={workflowContext}
@@ -1279,12 +1364,12 @@ export const Workflows: React.FC = () => {
               >
                 ✕
               </Button>
-              <RoadmapPlanner 
+              <RoadmapPlanner
                 activeWorkflow={activeWorkflow}
                 onStepComplete={(nextStep, context) => {
                   setCurrentStep(nextStep);
                   setWorkflowContext(context);
-                  setActiveWorkflow(prev => prev ? { ...prev, currentStep: nextStep } : null);
+                  setActiveWorkflow((prev) => (prev ? { ...prev, currentStep: nextStep } : null));
                   setShowRoadmapPlanner(false);
                 }}
                 workflowContext={workflowContext}
@@ -1330,12 +1415,12 @@ export const Workflows: React.FC = () => {
               >
                 ✕
               </Button>
-              <ProductVisionDefiner 
+              <ProductVisionDefiner
                 activeWorkflow={activeWorkflow}
                 onStepComplete={(nextStep, context) => {
                   setCurrentStep(nextStep);
                   setWorkflowContext(context);
-                  setActiveWorkflow(prev => prev ? { ...prev, currentStep: nextStep } : null);
+                  setActiveWorkflow((prev) => (prev ? { ...prev, currentStep: nextStep } : null));
                   setShowVisionDefiner(false);
                 }}
                 workflowContext={workflowContext}
@@ -1354,11 +1439,13 @@ export const Workflows: React.FC = () => {
                 ✕
               </Button>
               <h2 className="text-2xl font-bold mb-4">Objectifs de Recherche</h2>
-              <ResearchObjectivesGenerator 
+              <ResearchObjectivesGenerator
                 onSave={(data) => {
                   setCurrentStep(currentStep + 1);
                   setWorkflowContext({ ...workflowContext, objectives: data });
-                  setActiveWorkflow(prev => prev ? { ...prev, currentStep: currentStep + 1 } : null);
+                  setActiveWorkflow((prev) =>
+                    prev ? { ...prev, currentStep: currentStep + 1 } : null
+                  );
                   setShowResearchObjectives(false);
                 }}
                 workflowContext={workflowContext}
@@ -1377,11 +1464,13 @@ export const Workflows: React.FC = () => {
                 ✕
               </Button>
               <h2 className="text-2xl font-bold mb-4">Plan de Recherche</h2>
-              <ResearchPlanBuilder 
+              <ResearchPlanBuilder
                 onSave={(data) => {
                   setCurrentStep(currentStep + 1);
                   setWorkflowContext({ ...workflowContext, plan: data });
-                  setActiveWorkflow(prev => prev ? { ...prev, currentStep: currentStep + 1 } : null);
+                  setActiveWorkflow((prev) =>
+                    prev ? { ...prev, currentStep: currentStep + 1 } : null
+                  );
                   setShowResearchPlan(false);
                 }}
                 workflowContext={workflowContext}
@@ -1400,11 +1489,13 @@ export const Workflows: React.FC = () => {
                 ✕
               </Button>
               <h2 className="text-2xl font-bold mb-4">Mener la Recherche</h2>
-              <ResearchConductor 
+              <ResearchConductor
                 onSave={(data) => {
                   setCurrentStep(currentStep + 1);
                   setWorkflowContext({ ...workflowContext, researchData: data });
-                  setActiveWorkflow(prev => prev ? { ...prev, currentStep: currentStep + 1 } : null);
+                  setActiveWorkflow((prev) =>
+                    prev ? { ...prev, currentStep: currentStep + 1 } : null
+                  );
                   setShowResearchConduct(false);
                 }}
                 workflowContext={workflowContext}
@@ -1423,11 +1514,13 @@ export const Workflows: React.FC = () => {
                 ✕
               </Button>
               <h2 className="text-2xl font-bold mb-4">Synthèse de Recherche</h2>
-              <ResearchSynthesizer 
+              <ResearchSynthesizer
                 onSave={(data) => {
                   setCurrentStep(currentStep + 1);
                   setWorkflowContext({ ...workflowContext, synthesis: data });
-                  setActiveWorkflow(prev => prev ? { ...prev, currentStep: currentStep + 1 } : null);
+                  setActiveWorkflow((prev) =>
+                    prev ? { ...prev, currentStep: currentStep + 1 } : null
+                  );
                   setShowResearchSynthesize(false);
                 }}
                 workflowContext={workflowContext}
@@ -1446,11 +1539,13 @@ export const Workflows: React.FC = () => {
                 ✕
               </Button>
               <h2 className="text-2xl font-bold mb-4">Définir le Périmètre</h2>
-              <RequirementsScopeDefiner 
+              <RequirementsScopeDefiner
                 onSave={(data) => {
                   setCurrentStep(currentStep + 1);
                   setWorkflowContext({ ...workflowContext, scope: data });
-                  setActiveWorkflow(prev => prev ? { ...prev, currentStep: currentStep + 1 } : null);
+                  setActiveWorkflow((prev) =>
+                    prev ? { ...prev, currentStep: currentStep + 1 } : null
+                  );
                   setShowRequirementsScope(false);
                 }}
                 onClose={() => setShowRequirementsScope(false)}
@@ -1469,11 +1564,13 @@ export const Workflows: React.FC = () => {
                 ✕
               </Button>
               <h2 className="text-2xl font-bold mb-4">Collecter les Exigences</h2>
-              <RequirementsCollector 
+              <RequirementsCollector
                 onSave={(data) => {
                   setCurrentStep(currentStep + 1);
                   setWorkflowContext({ ...workflowContext, requirements: data });
-                  setActiveWorkflow(prev => prev ? { ...prev, currentStep: currentStep + 1 } : null);
+                  setActiveWorkflow((prev) =>
+                    prev ? { ...prev, currentStep: currentStep + 1 } : null
+                  );
                   setShowRequirementsCollection(false);
                 }}
                 onClose={() => setShowRequirementsCollection(false)}
@@ -1492,11 +1589,13 @@ export const Workflows: React.FC = () => {
                 ✕
               </Button>
               <h2 className="text-2xl font-bold mb-4">Prioriser les Exigences</h2>
-              <RequirementsPrioritizer 
+              <RequirementsPrioritizer
                 onSave={(data) => {
                   setCurrentStep(currentStep + 1);
                   setWorkflowContext({ ...workflowContext, prioritization: data });
-                  setActiveWorkflow(prev => prev ? { ...prev, currentStep: currentStep + 1 } : null);
+                  setActiveWorkflow((prev) =>
+                    prev ? { ...prev, currentStep: currentStep + 1 } : null
+                  );
                   setShowRequirementsPrioritization(false);
                 }}
                 onClose={() => setShowRequirementsPrioritization(false)}
@@ -1515,11 +1614,13 @@ export const Workflows: React.FC = () => {
                 ✕
               </Button>
               <h2 className="text-2xl font-bold mb-4">Documenter les Spécifications</h2>
-              <RequirementsDocumentor 
+              <RequirementsDocumentor
                 onSave={(data) => {
                   setCurrentStep(currentStep + 1);
                   setWorkflowContext({ ...workflowContext, documentation: data });
-                  setActiveWorkflow(prev => prev ? { ...prev, currentStep: currentStep + 1 } : null);
+                  setActiveWorkflow((prev) =>
+                    prev ? { ...prev, currentStep: currentStep + 1 } : null
+                  );
                   setShowRequirementsDocumentation(false);
                 }}
                 onClose={() => setShowRequirementsDocumentation(false)}
@@ -1528,12 +1629,12 @@ export const Workflows: React.FC = () => {
           </div>
         )}
         <KPIGenerator
-          open={showKPIGenerator} 
+          open={showKPIGenerator}
           onOpenChange={setShowKPIGenerator}
           activeContext={activeContext}
         />
-        <ProductContextManager 
-          open={showContextManager} 
+        <ProductContextManager
+          open={showContextManager}
           onOpenChange={setShowContextManager}
           onContextSelected={loadActiveContext}
         />
@@ -1553,16 +1654,15 @@ export const Workflows: React.FC = () => {
         </div>
         <div className="flex gap-2 items-center">
           {activeContext && (
-            <Badge variant="secondary" className="text-xs bg-primary/10 text-primary border-primary/20">
+            <Badge
+              variant="secondary"
+              className="text-xs bg-primary/10 text-primary border-primary/20"
+            >
               <Layers className="w-3 h-3 mr-1" />
               {activeContext.name}
             </Badge>
           )}
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setShowContextManager(true)}
-          >
+          <Button variant="outline" size="sm" onClick={() => setShowContextManager(true)}>
             <Settings2 className="w-4 h-4 mr-2" />
             Contextes
           </Button>
@@ -1594,7 +1694,7 @@ export const Workflows: React.FC = () => {
           workflows={recommendedWorkflows}
           contextName={activeContext?.name || null}
           onSelect={(workflowId) => {
-            const workflow = workflows.find(w => w.id === workflowId);
+            const workflow = workflows.find((w) => w.id === workflowId);
             if (workflow) handleWorkflowSelect(workflow);
           }}
         />
@@ -1606,10 +1706,12 @@ export const Workflows: React.FC = () => {
           <Filter className="w-4 h-4" />
           Filtres avancés
           <Badge variant="secondary" className="text-xs">
-            {selectedCategory !== 'all' || selectedTag !== 'all' || selectedFrameworks.length > 0 ? 'Actifs' : ''}
+            {selectedCategory !== 'all' || selectedTag !== 'all' || selectedFrameworks.length > 0
+              ? 'Actifs'
+              : ''}
           </Badge>
         </summary>
-        
+
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-3">
           <Card className="border-border/50">
             <CardHeader className="pb-2">
@@ -1629,7 +1731,7 @@ export const Workflows: React.FC = () => {
                   >
                     Toutes
                   </Badge>
-                  {categories.map(category => (
+                  {categories.map((category) => (
                     <Badge
                       key={category}
                       variant={selectedCategory === category ? 'default' : 'outline'}
@@ -1651,7 +1753,7 @@ export const Workflows: React.FC = () => {
                   >
                     Tous
                   </Badge>
-                  {allTags.slice(0, 12).map(tag => (
+                  {allTags.slice(0, 12).map((tag) => (
                     <Badge
                       key={tag}
                       variant={selectedTag === tag ? 'default' : 'outline'}
@@ -1684,52 +1786,50 @@ export const Workflows: React.FC = () => {
       </details>
 
       {/* Workflows by Category - using new WorkflowCard */}
-      {categories.filter(cat => filteredWorkflows.some(w => w.category === cat)).map(category => (
-        <div key={category} className="space-y-3">
-          <h3 className="text-lg font-semibold flex items-center gap-2">
-            <span>{category}</span>
-            <Badge variant="secondary" className="text-xs">
-              {filteredWorkflows.filter(w => w.category === category).length}
-            </Badge>
-          </h3>
+      {categories
+        .filter((cat) => filteredWorkflows.some((w) => w.category === cat))
+        .map((category) => (
+          <div key={category} className="space-y-3">
+            <h3 className="text-lg font-semibold flex items-center gap-2">
+              <span>{category}</span>
+              <Badge variant="secondary" className="text-xs">
+                {filteredWorkflows.filter((w) => w.category === category).length}
+              </Badge>
+            </h3>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-            {filteredWorkflows
-              .filter(workflow => workflow.category === category)
-              .map(workflow => (
-                <WorkflowCard
-                  key={workflow.id}
-                  workflow={workflow}
-                  expectedOutput={getExpectedOutput(workflow.id)}
-                  isCompatibleWithFramework={isWorkflowCompatibleWithSelectedFrameworks(workflow)}
-                  selectedFrameworks={selectedFrameworks}
-                  compatibleFrameworkNames={getCompatibleFrameworkNames(workflow)}
-                  onSelect={() => handleWorkflowSelect(workflow)}
-                />
-              ))}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+              {filteredWorkflows
+                .filter((workflow) => workflow.category === category)
+                .map((workflow) => (
+                  <WorkflowCard
+                    key={workflow.id}
+                    workflow={workflow}
+                    expectedOutput={getExpectedOutput(workflow.id)}
+                    isCompatibleWithFramework={isWorkflowCompatibleWithSelectedFrameworks(workflow)}
+                    selectedFrameworks={selectedFrameworks}
+                    compatibleFrameworkNames={getCompatibleFrameworkNames(workflow)}
+                    onSelect={() => handleWorkflowSelect(workflow)}
+                  />
+                ))}
+            </div>
           </div>
-        </div>
-      ))}
+        ))}
 
       {/* Removed the verbose "Benefits" card to reduce vertical space */}
-      
-      <ProductContextManager 
-        open={showContextManager} 
-        onOpenChange={setShowContextManager}
-      />
-      
+
+      <ProductContextManager open={showContextManager} onOpenChange={setShowContextManager} />
+
       <FeatureDiscoveryWorkflow
         open={showFeatureDiscovery}
         onOpenChange={setShowFeatureDiscovery}
         activeContext={activeContext}
       />
-      
+
       <TechnicalSpecification
         open={showTechnicalSpec}
         onClose={() => setShowTechnicalSpec(false)}
       />
-      
-      
+
       {showEpicToStories && (
         <div className="fixed inset-0 z-50 bg-background">
           <Button
@@ -1743,7 +1843,7 @@ export const Workflows: React.FC = () => {
           <EpicToUserStories />
         </div>
       )}
-      
+
       {showGitToSpecs && (
         <div className="fixed inset-0 z-50 bg-background overflow-auto">
           <Button
@@ -1759,7 +1859,7 @@ export const Workflows: React.FC = () => {
           </div>
         </div>
       )}
-      
+
       {showGitToSpecs && (
         <div className="fixed inset-0 z-50 bg-background overflow-auto">
           <Button
@@ -1775,7 +1875,7 @@ export const Workflows: React.FC = () => {
           </div>
         </div>
       )}
-      
+
       {showACValidator && (
         <div className="fixed inset-0 z-50 bg-background overflow-auto">
           <Button
@@ -1791,7 +1891,7 @@ export const Workflows: React.FC = () => {
           </div>
         </div>
       )}
-      
+
       {showDesignSystem && (
         <div className="fixed inset-0 z-50 bg-background overflow-auto">
           <Button
@@ -1805,10 +1905,10 @@ export const Workflows: React.FC = () => {
           <DesignSystem />
         </div>
       )}
-      
-      <InsightSynthesizer 
-        open={showInsightSynthesizer} 
-        onClose={() => setShowInsightSynthesizer(false)} 
+
+      <InsightSynthesizer
+        open={showInsightSynthesizer}
+        onClose={() => setShowInsightSynthesizer(false)}
       />
     </div>
   );

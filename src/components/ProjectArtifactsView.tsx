@@ -3,7 +3,18 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Folder, FileText, Download, Trash2, Loader2, FolderOpen, Eye, Target, Layers, TrendingUp } from 'lucide-react';
+import {
+  Folder,
+  FileText,
+  Download,
+  Trash2,
+  Loader2,
+  FolderOpen,
+  Eye,
+  Target,
+  Layers,
+  TrendingUp,
+} from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
@@ -63,22 +74,21 @@ export const ProjectArtifactsView = () => {
       const folders: ProjectFolder[] = [];
       const orphans: Artifact[] = [];
 
-      contexts?.forEach(context => {
-        const contextArtifacts = artifacts?.filter(
-          art => art.product_context_id === context.id
-        ) || [];
-        
+      contexts?.forEach((context) => {
+        const contextArtifacts =
+          artifacts?.filter((art) => art.product_context_id === context.id) || [];
+
         if (contextArtifacts.length > 0) {
           folders.push({
-            context,
-            artifacts: contextArtifacts
+            context: context as unknown as ProductContext,
+            artifacts: contextArtifacts as unknown as Artifact[],
           });
         }
       });
 
-      artifacts?.forEach(artifact => {
+      artifacts?.forEach((artifact) => {
         if (!artifact.product_context_id) {
-          orphans.push(artifact);
+          orphans.push(artifact as unknown as Artifact);
         }
       });
 
@@ -93,7 +103,7 @@ export const ProjectArtifactsView = () => {
   };
 
   const toggleFolder = (folderId: string) => {
-    setOpenFolders(prev => {
+    setOpenFolders((prev) => {
       const newSet = new Set(prev);
       if (newSet.has(folderId)) {
         newSet.delete(folderId);
@@ -106,10 +116,7 @@ export const ProjectArtifactsView = () => {
 
   const handleDelete = async (artifactId: string) => {
     try {
-      const { error } = await supabase
-        .from('artifacts')
-        .delete()
-        .eq('id', artifactId);
+      const { error } = await supabase.from('artifacts').delete().eq('id', artifactId);
 
       if (error) throw error;
 
@@ -149,25 +156,48 @@ export const ProjectArtifactsView = () => {
   };
 
   const getArtifactTypeBadge = (type: string) => {
-    const typeMap: Record<string, { label: string; variant: "default" | "secondary" | "outline"; className?: string }> = {
-      canvas: { label: 'Canvas', variant: 'default', className: 'bg-blue-500/20 text-blue-700 border-blue-500/30' },
-      story: { label: 'User Story', variant: 'secondary', className: 'bg-green-500/20 text-green-700 border-green-500/30' },
-      epic: { label: 'Epic', variant: 'outline', className: 'bg-purple-500/20 text-purple-700 border-purple-500/30' },
-      impact_analysis: { label: 'Analyse', variant: 'secondary', className: 'bg-amber-500/20 text-amber-700 border-amber-500/30' },
+    const typeMap: Record<
+      string,
+      { label: string; variant: 'default' | 'secondary' | 'outline'; className?: string }
+    > = {
+      canvas: {
+        label: 'Canvas',
+        variant: 'default',
+        className: 'bg-blue-500/20 text-blue-700 border-blue-500/30',
+      },
+      story: {
+        label: 'User Story',
+        variant: 'secondary',
+        className: 'bg-green-500/20 text-green-700 border-green-500/30',
+      },
+      epic: {
+        label: 'Epic',
+        variant: 'outline',
+        className: 'bg-purple-500/20 text-purple-700 border-purple-500/30',
+      },
+      impact_analysis: {
+        label: 'Analyse',
+        variant: 'secondary',
+        className: 'bg-amber-500/20 text-amber-700 border-amber-500/30',
+      },
     };
-    
+
     const typeInfo = typeMap[type] || { label: type, variant: 'default' as const };
-    return <Badge variant={typeInfo.variant} className={typeInfo.className}>{typeInfo.label}</Badge>;
+    return (
+      <Badge variant={typeInfo.variant} className={typeInfo.className}>
+        {typeInfo.label}
+      </Badge>
+    );
   };
 
   const renderArtifactCard = (artifact: Artifact) => (
-    <Card key={artifact.id} className="hover:shadow-md transition-all hover:border-primary/30 cursor-pointer group">
+    <Card
+      key={artifact.id}
+      className="hover:shadow-md transition-all hover:border-primary/30 cursor-pointer group"
+    >
       <CardContent className="p-4">
         <div className="flex items-start justify-between">
-          <div 
-            className="flex items-start gap-3 flex-1"
-            onClick={() => handlePreview(artifact)}
-          >
+          <div className="flex items-start gap-3 flex-1" onClick={() => handlePreview(artifact)}>
             <div className="p-2 bg-primary/10 rounded-lg text-primary">
               {getArtifactTypeIcon(artifact.artifact_type)}
             </div>
@@ -178,9 +208,7 @@ export const ProjectArtifactsView = () => {
               <p className="text-xs text-muted-foreground mt-1">
                 Créé le {new Date(artifact.created_at).toLocaleDateString('fr-FR')}
               </p>
-              <div className="mt-2">
-                {getArtifactTypeBadge(artifact.artifact_type)}
-              </div>
+              <div className="mt-2">{getArtifactTypeBadge(artifact.artifact_type)}</div>
             </div>
           </div>
           <div className="flex gap-1">
@@ -242,18 +270,14 @@ export const ProjectArtifactsView = () => {
             <FolderOpen className="h-5 w-5" />
             Artefacts par Projet
           </CardTitle>
-          <CardDescription>
-            Organisez et gérez vos artefacts par dossier projet
-          </CardDescription>
+          <CardDescription>Organisez et gérez vos artefacts par dossier projet</CardDescription>
         </CardHeader>
         <CardContent>
           {projectFolders.length === 0 && orphanArtifacts.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground">
               <Folder className="h-12 w-12 mx-auto mb-3 opacity-50" />
               <p>Aucun artefact créé</p>
-              <p className="text-sm mt-1">
-                Créez des artefacts depuis vos PRDs ou workflows
-              </p>
+              <p className="text-sm mt-1">Créez des artefacts depuis vos PRDs ou workflows</p>
             </div>
           ) : (
             <ScrollArea className="h-[600px] pr-4">
@@ -275,7 +299,8 @@ export const ProjectArtifactsView = () => {
                               <div className="text-left">
                                 <CardTitle className="text-lg">{folder.context.name}</CardTitle>
                                 <CardDescription className="text-sm mt-1">
-                                  {folder.artifacts.length} artefact{folder.artifacts.length > 1 ? 's' : ''}
+                                  {folder.artifacts.length} artefact
+                                  {folder.artifacts.length > 1 ? 's' : ''}
                                 </CardDescription>
                               </div>
                             </div>
@@ -283,7 +308,7 @@ export const ProjectArtifactsView = () => {
                           </div>
                         </CardHeader>
                       </CollapsibleTrigger>
-                      
+
                       <CollapsibleContent>
                         <CardContent className="space-y-2 pt-0">
                           {folder.artifacts.map((artifact) => renderArtifactCard(artifact))}
@@ -301,7 +326,8 @@ export const ProjectArtifactsView = () => {
                         Sans projet
                       </CardTitle>
                       <CardDescription className="text-sm">
-                        {orphanArtifacts.length} artefact{orphanArtifacts.length > 1 ? 's' : ''} non classé{orphanArtifacts.length > 1 ? 's' : ''}
+                        {orphanArtifacts.length} artefact{orphanArtifacts.length > 1 ? 's' : ''} non
+                        classé{orphanArtifacts.length > 1 ? 's' : ''}
                       </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-2">
