@@ -27,18 +27,18 @@ export function usePinnedItems(userId: string | undefined) {
       const { data, error } = await supabase
         .from('pinned_items')
         .select('*')
-        .eq('user_id', userId)
+        .eq('user_id', userId!)
         .order('position', { ascending: true });
 
       if (error) throw error;
 
       setPinnedItems(
-        data?.map(d => ({
+        data?.map((d) => ({
           id: d.id,
           itemType: d.item_type as any,
           itemId: d.item_id,
-          itemData: d.item_data,
-          position: d.position,
+          itemData: d.item_data as any,
+          position: d.position ?? 0,
         })) || []
       );
     } catch (error) {
@@ -48,11 +48,7 @@ export function usePinnedItems(userId: string | undefined) {
     }
   };
 
-  const pinItem = async (
-    itemType: PinnedItem['itemType'],
-    itemId: string,
-    itemData: any
-  ) => {
+  const pinItem = async (itemType: PinnedItem['itemType'], itemId: string, itemData: any) => {
     if (!userId) return;
 
     try {
@@ -74,13 +70,10 @@ export function usePinnedItems(userId: string | undefined) {
 
   const unpinItem = async (id: string) => {
     try {
-      const { error } = await supabase
-        .from('pinned_items')
-        .delete()
-        .eq('id', id);
+      const { error } = await supabase.from('pinned_items').delete().eq('id', id);
 
       if (error) throw error;
-      setPinnedItems(prev => prev.filter(i => i.id !== id));
+      setPinnedItems((prev) => prev.filter((i) => i.id !== id));
     } catch (error) {
       console.error('Error unpinning item:', error);
     }

@@ -5,7 +5,16 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { supabase } from '@/integrations/supabase/client';
-import { Agent, ChatMessage, ResponseMode, SteeringCommand, LiveSynthesis, ThreadConclusion as ThreadConclusionType, Disagreement, AgentInsight } from '@/types';
+import {
+  Agent,
+  ChatMessage,
+  ResponseMode,
+  SteeringCommand,
+  LiveSynthesis,
+  ThreadConclusion as ThreadConclusionType,
+  Disagreement,
+  AgentInsight,
+} from '@/types';
 import { toast } from '@/hooks/use-toast';
 import { Send, Users, Loader2, AtSign } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -64,7 +73,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ currentSquad, squa
   const [selectedArtifacts, setSelectedArtifacts] = useState<Artifact[]>([]);
   const [showArtifactPreview, setShowArtifactPreview] = useState(false);
   const [previewArtifact, setPreviewArtifact] = useState<Artifact | null>(null);
-  
+
   // UX Enhancement states
   const [responseMode, setResponseMode] = useState<ResponseMode>('short');
   const [showSynthesisPanel, setShowSynthesisPanel] = useState(true);
@@ -76,7 +85,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ currentSquad, squa
     lastUpdated: new Date(),
   });
   const [threadConclusion, setThreadConclusion] = useState<ThreadConclusionType | null>(null);
-  
+
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -87,7 +96,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ currentSquad, squa
       const welcomeMessage: ExtendedChatMessage = {
         id: `welcome-${Date.now()}`,
         squadId: 'current',
-        content: `Bonjour ! Votre squad est composée de ${currentSquad.map(a => a.name).join(', ')}. Comment pouvons-nous vous aider ?`,
+        content: `Bonjour ! Votre squad est composée de ${currentSquad.map((a) => a.name).join(', ')}. Comment pouvons-nous vous aider ?`,
         sender: currentSquad[0],
         timestamp: new Date(),
         stance: 'Prêt à collaborer',
@@ -109,36 +118,40 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ currentSquad, squa
 
       if (error) throw error;
 
-      const transformedMessages: ExtendedChatMessage[] = data?.map(msg => ({
-        id: msg.id,
-        squadId: msg.squad_id,
-        content: msg.content,
-        sender: msg.sender_type === 'user' ? 'user' : {
-          id: msg.sender_agent_id || '',
-          name: msg.sender_agent_name || '',
-          specialty: '',
-          avatar: '',
-          backstory: '',
-          capabilities: [],
-          tags: [],
-          xpRequired: 0,
-          familyColor: 'blue' as const
-        },
-        timestamp: new Date(msg.created_at),
-        mentionedAgents: msg.mentioned_agents || []
-      })) || [];
+      const transformedMessages: ExtendedChatMessage[] =
+        data?.map((msg) => ({
+          id: msg.id,
+          squadId: msg.squad_id,
+          content: msg.content,
+          sender:
+            msg.sender_type === 'user'
+              ? 'user'
+              : {
+                  id: msg.sender_agent_id || '',
+                  name: msg.sender_agent_name || '',
+                  specialty: '',
+                  avatar: '',
+                  backstory: '',
+                  capabilities: [],
+                  tags: [],
+                  xpRequired: 0,
+                  familyColor: 'blue' as const,
+                },
+          timestamp: new Date(msg.created_at),
+          mentionedAgents: msg.mentioned_agents || [],
+        })) || [];
 
       if (transformedMessages.length === 0 && currentSquad.length > 0) {
         const welcomeMessage: ExtendedChatMessage = {
           id: `welcome-${Date.now()}`,
           squadId: squadId,
-          content: `Bonjour ! Votre squad est composée de ${currentSquad.map(a => a.name).join(', ')}. Comment pouvons-nous vous aider ?`,
+          content: `Bonjour ! Votre squad est composée de ${currentSquad.map((a) => a.name).join(', ')}. Comment pouvons-nous vous aider ?`,
           sender: currentSquad[0],
           timestamp: new Date(),
           stance: 'Prêt à collaborer',
           isLeadResponse: true,
         };
-        
+
         const { data: userData } = await supabase.auth.getUser();
         if (userData.user) {
           await supabase.from('chat_messages').insert({
@@ -148,7 +161,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ currentSquad, squa
             sender_type: 'agent',
             sender_agent_id: currentSquad[0].id,
             sender_agent_name: currentSquad[0].name,
-            mentioned_agents: []
+            mentioned_agents: [],
           });
         }
 
@@ -172,8 +185,8 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ currentSquad, squa
     if (mode === activeSteeringMode) {
       setActiveSteeringMode(null);
       toast({
-        title: "Mode standard",
-        description: "Tous les agents participent normalement",
+        title: 'Mode standard',
+        description: 'Tous les agents participent normalement',
       });
       return;
     }
@@ -182,15 +195,17 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ currentSquad, squa
     if (mode === 'summarize') {
       setIsLoading(true);
       try {
-        const conversationContext = messages.slice(-15).map(m => 
-          `${m.sender === 'user' ? 'User' : (m.sender as Agent).name}: ${m.content}`
-        ).join('\n');
+        const conversationContext = messages
+          .slice(-15)
+          .map((m) => `${m.sender === 'user' ? 'User' : (m.sender as Agent).name}: ${m.content}`)
+          .join('\n');
 
         const { data } = await supabase.functions.invoke('chat-ai', {
           body: {
             message: `En tant que facilitateur, recentre cette discussion en 3 points:\n\n${conversationContext}`,
-            systemPrompt: 'Tu es un facilitateur. Fournis un résumé structuré pour remettre le groupe sur les rails.',
-          }
+            systemPrompt:
+              'Tu es un facilitateur. Fournis un résumé structuré pour remettre le groupe sur les rails.',
+          },
         });
 
         if (data?.response) {
@@ -198,21 +213,21 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ currentSquad, squa
             id: `conductor-${Date.now()}`,
             squadId: squadId || 'current',
             content: data.response,
-            sender: { 
-              id: 'conductor', 
-              name: 'Nova', 
-              specialty: 'Facilitation', 
-              avatar: '', 
-              backstory: '', 
-              capabilities: [], 
-              tags: [], 
-              xpRequired: 0, 
-              familyColor: 'blue' 
+            sender: {
+              id: 'conductor',
+              name: 'Nova',
+              specialty: 'Facilitation',
+              avatar: '',
+              backstory: '',
+              capabilities: [],
+              tags: [],
+              xpRequired: 0,
+              familyColor: 'blue',
             },
             timestamp: new Date(),
             isConductor: true,
           };
-          setMessages(prev => [...prev, conductorMessage]);
+          setMessages((prev) => [...prev, conductorMessage]);
         }
       } catch (error) {
         console.error('Error summarizing:', error);
@@ -224,7 +239,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ currentSquad, squa
 
     // Set the new active mode
     setActiveSteeringMode(mode);
-    
+
     const modeDescriptions: Record<SteeringCommand, string> = {
       pause_others: 'Un seul agent répond à la fois',
       only_ux_business: 'Dialogue UX-Business uniquement',
@@ -234,14 +249,14 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ currentSquad, squa
 
     if (mode) {
       toast({
-        title: "Mode activé",
+        title: 'Mode activé',
         description: modeDescriptions[mode],
       });
     }
   };
 
   const handleResolveDisagreement = async (disagreementId: string) => {
-    const disagreement = liveSynthesis.disagreements.find(d => d.id === disagreementId);
+    const disagreement = liveSynthesis.disagreements.find((d) => d.id === disagreementId);
     if (!disagreement) return;
 
     setIsLoading(true);
@@ -249,8 +264,9 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ currentSquad, squa
       const { data } = await supabase.functions.invoke('chat-ai', {
         body: {
           message: `${disagreement.agentA} pense "${disagreement.positionA}" tandis que ${disagreement.agentB} pense "${disagreement.positionB}" concernant "${disagreement.topic}". Propose une position de compromis.`,
-          systemPrompt: 'Tu es un médiateur. Trouve un terrain d\'entente constructif en une réponse courte.',
-        }
+          systemPrompt:
+            "Tu es un médiateur. Trouve un terrain d'entente constructif en une réponse courte.",
+        },
       });
 
       if (data?.response) {
@@ -258,26 +274,26 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ currentSquad, squa
           id: `resolution-${Date.now()}`,
           squadId: squadId || 'current',
           content: `**Résolution du désaccord sur "${disagreement.topic}":**\n\n${data.response}`,
-          sender: { 
-            id: 'conductor', 
-            name: 'Conducteur', 
-            specialty: 'Médiation', 
-            avatar: '', 
-            backstory: '', 
-            capabilities: [], 
-            tags: [], 
-            xpRequired: 0, 
-            familyColor: 'blue' 
+          sender: {
+            id: 'conductor',
+            name: 'Conducteur',
+            specialty: 'Médiation',
+            avatar: '',
+            backstory: '',
+            capabilities: [],
+            tags: [],
+            xpRequired: 0,
+            familyColor: 'blue',
           },
           timestamp: new Date(),
           isConductor: true,
         };
-        setMessages(prev => [...prev, resolutionMessage]);
+        setMessages((prev) => [...prev, resolutionMessage]);
 
         // Mark as resolved
-        setLiveSynthesis(prev => ({
+        setLiveSynthesis((prev) => ({
           ...prev,
-          disagreements: prev.disagreements.map(d => 
+          disagreements: prev.disagreements.map((d) =>
             d.id === disagreementId ? { ...d, resolved: true } : d
           ),
           lastUpdated: new Date(),
@@ -302,7 +318,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ currentSquad, squa
       mentionedAgents: extractMentions(inputMessage),
     };
 
-    setMessages(prev => [...prev, userMessage]);
+    setMessages((prev) => [...prev, userMessage]);
     const messageToSend = inputMessage;
     setInputMessage('');
     setIsLoading(true);
@@ -317,19 +333,19 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ currentSquad, squa
             user_id: userData.user.id,
             content: messageToSend,
             sender_type: 'user',
-            mentioned_agents: userMessage.mentionedAgents || []
+            mentioned_agents: userMessage.mentionedAgents || [],
           });
         }
       }
 
       // Detect tool intent
-      const conversationHistory = messages.slice(-3).map(msg => ({
+      const conversationHistory = messages.slice(-3).map((msg) => ({
         role: msg.sender === 'user' ? 'user' : 'assistant',
         content: msg.content,
       }));
 
       const { data: intentData } = await supabase.functions.invoke('detect-tool-intent', {
-        body: { message: messageToSend, conversationHistory }
+        body: { message: messageToSend, conversationHistory },
       });
 
       if (intentData?.detectedIntent === 'canvas_generator') {
@@ -337,14 +353,16 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ currentSquad, squa
         setIsLoading(false);
         return;
       } else if (intentData?.detectedIntent === 'instant_prd') {
-        toast({ title: "Ouverture Instant PRD", description: "Redirection..." });
-        setTimeout(() => { window.location.href = '/?tab=instant-prd'; }, 1000);
+        toast({ title: 'Ouverture Instant PRD', description: 'Redirection...' });
+        setTimeout(() => {
+          window.location.href = '/?tab=instant-prd';
+        }, 1000);
         setIsLoading(false);
         return;
       }
 
       // Build full conversation
-      const fullConversationHistory = messages.slice(-10).map(msg => ({
+      const fullConversationHistory = messages.slice(-10).map((msg) => ({
         role: msg.sender === 'user' ? 'user' : 'assistant',
         content: msg.content,
       }));
@@ -355,14 +373,14 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ currentSquad, squa
       // Filter agents based on steering mode
       let respondingAgents = [...currentSquad];
       if (activeSteeringMode === 'only_ux_business') {
-        respondingAgents = currentSquad.filter(a => {
+        respondingAgents = currentSquad.filter((a) => {
           const role = inferRoleFromSpecialty(a.specialty);
           return role === 'ux' || role === 'business';
         });
       }
       if (activeSteeringMode === 'pause_others' && userMessage.mentionedAgents?.length) {
-        respondingAgents = currentSquad.filter(a => 
-          userMessage.mentionedAgents?.some(m => a.name.toLowerCase().includes(m.toLowerCase()))
+        respondingAgents = currentSquad.filter((a) =>
+          userMessage.mentionedAgents?.some((m) => a.name.toLowerCase().includes(m.toLowerCase()))
         );
       }
 
@@ -385,7 +403,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ currentSquad, squa
       // Process responses with coordinated turns
       const responses = data.responses || [];
       const leadAgent = responses[0];
-      
+
       // Lead agent responds fully
       if (leadAgent) {
         const stance = generateStance(leadAgent.agent, messageToSend);
@@ -398,7 +416,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ currentSquad, squa
           stance: stance,
           isLeadResponse: true,
         };
-        setMessages(prev => [...prev, agentMessage]);
+        setMessages((prev) => [...prev, agentMessage]);
 
         if (squadId) {
           const { data: userData } = await supabase.auth.getUser();
@@ -409,7 +427,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ currentSquad, squa
               content: leadAgent.message,
               sender_type: 'agent',
               sender_agent_id: leadAgent.agent.id,
-              sender_agent_name: leadAgent.agent.name
+              sender_agent_name: leadAgent.agent.name,
             });
           }
         }
@@ -419,11 +437,11 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ currentSquad, squa
       const otherResponses = responses.slice(1);
       for (let i = 0; i < otherResponses.length; i++) {
         const response = otherResponses[i];
-        await new Promise(resolve => setTimeout(resolve, 800));
-        
+        await new Promise((resolve) => setTimeout(resolve, 800));
+
         const reactionType = detectReactionType(response.message);
         const shortContent = extractReactionContent(response.message, reactionType);
-        
+
         const reactionMessage: ExtendedChatMessage = {
           id: `reaction-${Date.now()}-${i}`,
           squadId: squadId || 'current',
@@ -433,7 +451,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ currentSquad, squa
           isReaction: true,
           reactionType: reactionType,
         };
-        setMessages(prev => [...prev, reactionMessage]);
+        setMessages((prev) => [...prev, reactionMessage]);
       }
 
       // Update live synthesis
@@ -445,13 +463,12 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ currentSquad, squa
       }
 
       onAddXP(15 * responses.length, 'chatting with AI squad');
-
     } catch (error) {
       console.error('Error sending message:', error);
       toast({
-        title: "Erreur",
+        title: 'Erreur',
         description: "Échec de l'envoi. Réessayez.",
-        variant: "destructive",
+        variant: 'destructive',
       });
     } finally {
       setIsLoading(false);
@@ -472,12 +489,12 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ currentSquad, squa
   const generateStance = (agent: Agent, question: string): string => {
     const role = inferRoleFromSpecialty(agent.specialty);
     const stances: Record<string, string[]> = {
-      ux: ['Protéger l\'expérience utilisateur', 'Simplicité avant tout', 'L\'humain d\'abord'],
+      ux: ["Protéger l'expérience utilisateur", 'Simplicité avant tout', "L'humain d'abord"],
       product: ['Vision long-terme', 'Équilibrer les besoins', 'Créer de la valeur'],
       tech: ['Faisabilité technique', 'Dette technique maîtrisée', 'Scalabilité'],
       business: ['ROI et impact business', 'Croissance durable', 'Avantage compétitif'],
-      data: ['Décision basée sur les données', 'Mesurer l\'impact', 'Insights actionnables'],
-      strategy: ['Alignement stratégique', 'Vision d\'ensemble', 'Priorités claires'],
+      data: ['Décision basée sur les données', "Mesurer l'impact", 'Insights actionnables'],
+      strategy: ['Alignement stratégique', "Vision d'ensemble", 'Priorités claires'],
     };
     const roleStances = role ? stances[role] : stances.product;
     return roleStances[Math.floor(Math.random() * roleStances.length)];
@@ -485,30 +502,38 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ currentSquad, squa
 
   const detectReactionType = (message: string): 'agree' | 'disagree' | 'risk' | 'idea' => {
     const lower = message.toLowerCase();
-    if (lower.includes('risque') || lower.includes('attention') || lower.includes('danger')) return 'risk';
-    if (lower.includes('désaccord') || lower.includes('mais') || lower.includes('cependant')) return 'disagree';
-    if (lower.includes('idée') || lower.includes('suggestion') || lower.includes('pourrait')) return 'idea';
+    if (lower.includes('risque') || lower.includes('attention') || lower.includes('danger'))
+      return 'risk';
+    if (lower.includes('désaccord') || lower.includes('mais') || lower.includes('cependant'))
+      return 'disagree';
+    if (lower.includes('idée') || lower.includes('suggestion') || lower.includes('pourrait'))
+      return 'idea';
     return 'agree';
   };
 
-  const extractReactionContent = (message: string, type: 'agree' | 'disagree' | 'risk' | 'idea'): string => {
+  const extractReactionContent = (
+    message: string,
+    type: 'agree' | 'disagree' | 'risk' | 'idea'
+  ): string => {
     // Extract first meaningful sentence, max 100 chars
     const sentences = message.split(/[.!?]/);
-    const meaningful = sentences.find(s => s.trim().length > 10) || sentences[0];
+    const meaningful = sentences.find((s) => s.trim().length > 10) || sentences[0];
     return meaningful.trim().slice(0, 100) + (meaningful.length > 100 ? '...' : '');
   };
 
   const updateLiveSynthesis = (question: string, responses: any[]) => {
     const newDisagreements: Disagreement[] = [];
-    
+
     // Detect disagreements between agents
     for (let i = 0; i < responses.length; i++) {
       for (let j = i + 1; j < responses.length; j++) {
         const contentI = responses[i].message.toLowerCase();
         const contentJ = responses[j].message.toLowerCase();
-        
-        if ((contentI.includes('mais') || contentI.includes('cependant')) && 
-            (contentJ.includes('mais') || contentJ.includes('cependant'))) {
+
+        if (
+          (contentI.includes('mais') || contentI.includes('cependant')) &&
+          (contentJ.includes('mais') || contentJ.includes('cependant'))
+        ) {
           newDisagreements.push({
             id: `disagreement-${Date.now()}-${i}-${j}`,
             agentA: responses[i].agent.name,
@@ -525,27 +550,27 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ currentSquad, squa
     const agentInsights: AgentInsight[] = responses.map((response, index) => {
       const agent = response.agent;
       const role = inferRoleFromSpecialty(agent.specialty);
-      
+
       // Extract key arguments from message
       const keyArgs = extractKeyArguments(response.message);
-      
+
       // Calculate agreement rate (simple heuristic)
       const agreementRate = calculateAgreementRate(response.message, responses, index);
-      
+
       // Detect stance from message content
       const stance = detectAgentStance(response.message, agent.specialty);
-      
+
       // Detect potential bias
       const bias = detectAgentBias(agent.specialty);
-      
+
       return {
         agentId: agent.id,
         agentName: agent.name,
         specialty: agent.specialty,
         stance,
-        contributionCount: messages.filter(m => 
-          m.sender !== 'user' && (m.sender as Agent).id === agent.id
-        ).length + 1,
+        contributionCount:
+          messages.filter((m) => m.sender !== 'user' && (m.sender as Agent).id === agent.id)
+            .length + 1,
         keyArguments: keyArgs,
         bias,
         agreementRate,
@@ -555,7 +580,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ currentSquad, squa
     // Detect conversation mood
     const conversationMood = detectConversationMood(responses);
 
-    setLiveSynthesis(prev => ({
+    setLiveSynthesis((prev) => ({
       ...prev,
       disagreements: [...prev.disagreements, ...newDisagreements].slice(-5),
       openPoints: [...prev.openPoints, question].slice(-3),
@@ -569,18 +594,24 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ currentSquad, squa
     const keywords = ['important', 'crucial', 'essentiel', 'priorité', 'focus', 'clé'];
     const sentences = message.split(/[.!?]/);
     return sentences
-      .filter(s => keywords.some(k => s.toLowerCase().includes(k)))
-      .map(s => s.trim().slice(0, 40))
+      .filter((s) => keywords.some((k) => s.toLowerCase().includes(k)))
+      .map((s) => s.trim().slice(0, 40))
       .slice(0, 2);
   };
 
   const calculateAgreementRate = (message: string, allResponses: any[], index: number): number => {
     const lower = message.toLowerCase();
-    const hasDisagreement = lower.includes('désaccord') || lower.includes('mais') || 
-                            lower.includes('cependant') || lower.includes('non');
-    const hasAgreement = lower.includes('accord') || lower.includes('exactement') || 
-                         lower.includes('tout à fait') || lower.includes('oui');
-    
+    const hasDisagreement =
+      lower.includes('désaccord') ||
+      lower.includes('mais') ||
+      lower.includes('cependant') ||
+      lower.includes('non');
+    const hasAgreement =
+      lower.includes('accord') ||
+      lower.includes('exactement') ||
+      lower.includes('tout à fait') ||
+      lower.includes('oui');
+
     if (hasDisagreement && !hasAgreement) return 30 + Math.random() * 20;
     if (hasAgreement && !hasDisagreement) return 70 + Math.random() * 25;
     return 50 + Math.random() * 20;
@@ -593,10 +624,10 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ currentSquad, squa
       product: ['Valeur long-terme', 'Équilibre des besoins', 'Vision produit'],
       tech: ['Faisabilité et scalabilité', 'Dette technique maîtrisée', 'Architecture solide'],
       business: ['ROI et croissance', 'Impact marché', 'Avantage compétitif'],
-      data: ['Décision data-driven', 'Mesurer avant d\'agir', 'Insights actionnables'],
-      strategy: ['Alignement stratégique', 'Priorisation claire', 'Vision d\'ensemble'],
+      data: ['Décision data-driven', "Mesurer avant d'agir", 'Insights actionnables'],
+      strategy: ['Alignement stratégique', 'Priorisation claire', "Vision d'ensemble"],
     };
-    
+
     const stances = role ? stanceMap[role] : stanceMap.product;
     return stances[Math.floor(Math.random() * stances.length)];
   };
@@ -604,26 +635,36 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ currentSquad, squa
   const detectAgentBias = (specialty: string): string | undefined => {
     const role = inferRoleFromSpecialty(specialty);
     const biases: Record<string, string> = {
-      ux: 'Tendance à privilégier l\'utilisateur sur la complexité technique',
+      ux: "Tendance à privilégier l'utilisateur sur la complexité technique",
       tech: 'Tendance à sur-estimer les risques techniques',
       business: 'Focus sur les métriques de croissance à court terme',
       product: 'Vision parfois trop ambitieuse vs ressources',
-      data: 'Peut négliger l\'intuition au profit des données',
+      data: "Peut négliger l'intuition au profit des données",
       strategy: 'Vue macro pouvant manquer de détails opérationnels',
     };
     return role ? biases[role] : undefined;
   };
 
-  const detectConversationMood = (responses: any[]): 'exploratory' | 'convergent' | 'divergent' | 'decisive' => {
-    const allContent = responses.map(r => r.message.toLowerCase()).join(' ');
-    
-    if (allContent.includes('décidons') || allContent.includes('conclusion') || allContent.includes('finalisons')) {
+  const detectConversationMood = (
+    responses: any[]
+  ): 'exploratory' | 'convergent' | 'divergent' | 'decisive' => {
+    const allContent = responses.map((r) => r.message.toLowerCase()).join(' ');
+
+    if (
+      allContent.includes('décidons') ||
+      allContent.includes('conclusion') ||
+      allContent.includes('finalisons')
+    ) {
       return 'decisive';
     }
-    if (allContent.includes('d\'accord') && !allContent.includes('désaccord')) {
+    if (allContent.includes("d'accord") && !allContent.includes('désaccord')) {
       return 'convergent';
     }
-    if (allContent.includes('mais') || allContent.includes('cependant') || allContent.includes('désaccord')) {
+    if (
+      allContent.includes('mais') ||
+      allContent.includes('cependant') ||
+      allContent.includes('désaccord')
+    ) {
       return 'divergent';
     }
     return 'exploratory';
@@ -631,14 +672,17 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ currentSquad, squa
 
   const generateThreadConclusion = async () => {
     const recentMessages = messages.slice(-8);
-    const summary = recentMessages.map(m => 
-      `${m.sender === 'user' ? 'User' : (m.sender as Agent).name}: ${m.content.slice(0, 100)}`
-    ).join('\n');
+    const summary = recentMessages
+      .map(
+        (m) =>
+          `${m.sender === 'user' ? 'User' : (m.sender as Agent).name}: ${m.content.slice(0, 100)}`
+      )
+      .join('\n');
 
     // Detect mentioned agents in recent messages
     const mentionedAgentNames = currentSquad
-      .filter(agent => summary.toLowerCase().includes(agent.name.toLowerCase()))
-      .map(a => a.name);
+      .filter((agent) => summary.toLowerCase().includes(agent.name.toLowerCase()))
+      .map((a) => a.name);
 
     try {
       const { data } = await supabase.functions.invoke('chat-ai', {
@@ -660,13 +704,16 @@ Pour le handler actionable:
 - Si un agent doit agir: "trigger_agent:NomAgent:résumer|proposer|analyser"
 - Pour sauvegarder: "save_decision"
 - Pour ouvrir un outil: "open_tool:canvas|story|impact"`,
-        }
+        },
       });
 
       if (data?.response) {
         try {
           // Clean markdown if present
-          const cleanResponse = data.response.replace(/```json\s*/g, '').replace(/```/g, '').trim();
+          const cleanResponse = data.response
+            .replace(/```json\s*/g, '')
+            .replace(/```/g, '')
+            .trim();
           const parsed = JSON.parse(cleanResponse);
           setThreadConclusion(parsed);
         } catch {
@@ -675,8 +722,8 @@ Pour le handler actionable:
             content: data.response,
             actionable: {
               label: 'Enregistrer la décision',
-              handler: 'save_decision'
-            }
+              handler: 'save_decision',
+            },
           });
         }
       }
@@ -687,18 +734,18 @@ Pour le handler actionable:
 
   const handleConclusionAction = async (handler: string) => {
     const [action, ...params] = handler.split(':');
-    
+
     switch (action) {
       case 'trigger_agent': {
         const [agentName, task] = params;
-        const agent = currentSquad.find(a => 
+        const agent = currentSquad.find((a) =>
           a.name.toLowerCase().includes(agentName.toLowerCase())
         );
         if (agent) {
           const taskPrompts: Record<string, string> = {
-            'résumer': 'peux-tu résumer les points clés de notre discussion ?',
-            'proposer': 'quelles seraient tes propositions concrètes ?',
-            'analyser': 'peux-tu analyser cette situation en détail ?',
+            résumer: 'peux-tu résumer les points clés de notre discussion ?',
+            proposer: 'quelles seraient tes propositions concrètes ?',
+            analyser: 'peux-tu analyser cette situation en détail ?',
           };
           const prompt = taskPrompts[task] || `peux-tu ${task} ?`;
           setInputMessage(`@${agent.name} ${prompt}`);
@@ -706,39 +753,41 @@ Pour le handler actionable:
           inputRef.current?.focus();
           toast({
             title: `Question préparée pour ${agent.name}`,
-            description: "Appuyez sur Entrée pour envoyer",
+            description: 'Appuyez sur Entrée pour envoyer',
           });
         }
         break;
       }
       case 'save_decision': {
         try {
-          const { data: { user } } = await supabase.auth.getUser();
+          const {
+            data: { user },
+          } = await supabase.auth.getUser();
           if (!user) {
-            toast({ title: "Connectez-vous pour sauvegarder", variant: "destructive" });
+            toast({ title: 'Connectez-vous pour sauvegarder', variant: 'destructive' });
             return;
           }
-          
+
           await supabase.from('decision_log').insert({
             user_id: user.id,
             squad_id: squadId || null,
             debate_topic: threadConclusion?.content || 'Discussion',
-            options_considered: messages.slice(-5).map(m => ({
+            options_considered: messages.slice(-5).map((m) => ({
               agent: m.sender === 'user' ? 'User' : (m.sender as Agent).name,
-              content: m.content.slice(0, 200)
+              content: m.content.slice(0, 200),
             })),
             option_chosen: { content: threadConclusion?.content },
             confidence_level: 'medium',
           });
-          
+
           toast({
-            title: "Décision enregistrée",
-            description: "Retrouvez-la dans votre historique des décisions",
+            title: 'Décision enregistrée',
+            description: 'Retrouvez-la dans votre historique des décisions',
           });
           onAddXP(25, 'decision saved');
         } catch (error) {
           console.error('Error saving decision:', error);
-          toast({ title: "Erreur lors de la sauvegarde", variant: "destructive" });
+          toast({ title: 'Erreur lors de la sauvegarde', variant: 'destructive' });
         }
         break;
       }
@@ -760,10 +809,10 @@ Pour le handler actionable:
       case 'open_artifact': {
         // Find artifact by name in selected artifacts or search
         const artifactName = params.join(':'); // Rejoin in case name contains ':'
-        const matchingArtifact = selectedArtifacts.find(a => 
+        const matchingArtifact = selectedArtifacts.find((a) =>
           a.title.toLowerCase().includes(artifactName.toLowerCase())
         );
-        
+
         if (matchingArtifact) {
           // Open artifact preview dialog
           setPreviewArtifact(matchingArtifact);
@@ -771,7 +820,9 @@ Pour le handler actionable:
         } else {
           // Search for artifact in database
           try {
-            const { data: { user } } = await supabase.auth.getUser();
+            const {
+              data: { user },
+            } = await supabase.auth.getUser();
             if (user) {
               const { data: artifacts } = await supabase
                 .from('artifacts')
@@ -779,21 +830,21 @@ Pour le handler actionable:
                 .eq('user_id', user.id)
                 .ilike('title', `%${artifactName}%`)
                 .limit(1);
-              
+
               if (artifacts && artifacts.length > 0) {
-                setPreviewArtifact(artifacts[0]);
+                setPreviewArtifact(artifacts[0] as unknown as Artifact);
                 setShowArtifactPreview(true);
               } else {
                 toast({
-                  title: "Artefact non trouvé",
+                  title: 'Artefact non trouvé',
                   description: `L'artefact "${artifactName}" n'a pas été trouvé`,
-                  variant: "destructive",
+                  variant: 'destructive',
                 });
               }
             }
           } catch (error) {
             console.error('Error fetching artifact:', error);
-            toast({ title: "Erreur de chargement", variant: "destructive" });
+            toast({ title: 'Erreur de chargement', variant: 'destructive' });
           }
         }
         break;
@@ -806,34 +857,39 @@ Pour le handler actionable:
   // Handle new chat - save synthesis as artifact and reset conversation
   const handleNewChat = async () => {
     if (messages.length < 2) return;
-    
+
     setIsSavingChat(true);
-    
+
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user) {
-        toast({ title: "Connectez-vous pour sauvegarder", variant: "destructive" });
+        toast({ title: 'Connectez-vous pour sauvegarder', variant: 'destructive' });
         setIsSavingChat(false);
         return;
       }
-      
+
       // Build conversation summary for AI
-      const conversationContent = messages.map(m => 
-        `${m.sender === 'user' ? 'User' : (m.sender as Agent).name}: ${m.content}`
-      ).join('\n\n');
-      
-      const agentNames = currentSquad.map(a => a.name).join(', ');
-      
+      const conversationContent = messages
+        .map((m) => `${m.sender === 'user' ? 'User' : (m.sender as Agent).name}: ${m.content}`)
+        .join('\n\n');
+
+      const agentNames = currentSquad.map((a) => a.name).join(', ');
+
       // Generate synthesis using AI
-      const { data: synthesisData, error: synthesisError } = await supabase.functions.invoke('chat-ai', {
-        body: {
-          message: `Analyse cette conversation multi-agent et génère une synthèse structurée.\n\nAgents: ${agentNames}\n\nConversation:\n${conversationContent}\n\nGénère un JSON avec:\n1. "summary": résumé exécutif de la discussion (2-3 phrases)\n2. "insights": tableau des insights clés émergents (max 5)\n3. "nextAction": la prochaine action recommandée\n4. "keyDecisions": décisions prises ou à prendre\n5. "openQuestions": questions encore ouvertes`,
-          systemPrompt: `Tu es un expert en synthèse de discussions produit. Réponds UNIQUEMENT en JSON valide (pas de markdown):\n{\n  "summary": "...",\n  "insights": ["insight 1", "insight 2", ...],\n  "nextAction": "...",\n  "keyDecisions": ["decision 1", ...],\n  "openQuestions": ["question 1", ...]\n}`
+      const { data: synthesisData, error: synthesisError } = await supabase.functions.invoke(
+        'chat-ai',
+        {
+          body: {
+            message: `Analyse cette conversation multi-agent et génère une synthèse structurée.\n\nAgents: ${agentNames}\n\nConversation:\n${conversationContent}\n\nGénère un JSON avec:\n1. "summary": résumé exécutif de la discussion (2-3 phrases)\n2. "insights": tableau des insights clés émergents (max 5)\n3. "nextAction": la prochaine action recommandée\n4. "keyDecisions": décisions prises ou à prendre\n5. "openQuestions": questions encore ouvertes`,
+            systemPrompt: `Tu es un expert en synthèse de discussions produit. Réponds UNIQUEMENT en JSON valide (pas de markdown):\n{\n  "summary": "...",\n  "insights": ["insight 1", "insight 2", ...],\n  "nextAction": "...",\n  "keyDecisions": ["decision 1", ...],\n  "openQuestions": ["question 1", ...]\n}`,
+          },
         }
-      });
-      
+      );
+
       if (synthesisError) throw synthesisError;
-      
+
       // Parse AI response
       let synthesis = {
         summary: 'Synthèse de la conversation',
@@ -842,10 +898,13 @@ Pour le handler actionable:
         keyDecisions: [] as string[],
         openQuestions: [] as string[],
       };
-      
+
       if (synthesisData?.response) {
         try {
-          const cleanResponse = synthesisData.response.replace(/```json\s*/g, '').replace(/```/g, '').trim();
+          const cleanResponse = synthesisData.response
+            .replace(/```json\s*/g, '')
+            .replace(/```/g, '')
+            .trim();
           const parsed = JSON.parse(cleanResponse);
           synthesis = { ...synthesis, ...parsed };
         } catch {
@@ -853,13 +912,18 @@ Pour le handler actionable:
           synthesis.summary = synthesisData.response.slice(0, 300);
         }
       }
-      
+
       // Create artifact title based on first user message or thread topic
-      const firstUserMessage = messages.find(m => m.sender === 'user');
+      const firstUserMessage = messages.find((m) => m.sender === 'user');
       const topic = firstUserMessage?.content.slice(0, 50) || 'Discussion multi-agent';
-      const timestamp = new Date().toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
+      const timestamp = new Date().toLocaleDateString('fr-FR', {
+        day: '2-digit',
+        month: 'short',
+        hour: '2-digit',
+        minute: '2-digit',
+      });
       const artifactTitle = `Synthèse: ${topic}${topic.length >= 50 ? '...' : ''} - ${timestamp}`;
-      
+
       // Save as artifact
       const { error: artifactError } = await supabase.from('artifacts').insert({
         user_id: user.id,
@@ -873,7 +937,7 @@ Pour le handler actionable:
           nextAction: synthesis.nextAction,
           keyDecisions: synthesis.keyDecisions,
           openQuestions: synthesis.openQuestions,
-          agentParticipants: currentSquad.map(a => ({ name: a.name, specialty: a.specialty })),
+          agentParticipants: currentSquad.map((a) => ({ name: a.name, specialty: a.specialty })),
           messageCount: messages.length,
           conclusionFromThread: threadConclusion?.content || null,
         },
@@ -883,29 +947,29 @@ Pour le handler actionable:
           agentCount: currentSquad.length,
           conversationMood: liveSynthesis.conversationMood,
           disagreementsCount: liveSynthesis.disagreements.length,
-        }
+        },
       });
-      
+
       if (artifactError) throw artifactError;
-      
+
       toast({
-        title: "Synthèse sauvegardée",
-        description: "La synthèse de votre conversation a été enregistrée comme artefact",
+        title: 'Synthèse sauvegardée',
+        description: 'La synthèse de votre conversation a été enregistrée comme artefact',
       });
-      
+
       onAddXP(30, 'chat synthesis saved');
-      
+
       // Reset conversation
       const welcomeMessage: ExtendedChatMessage = {
         id: `welcome-${Date.now()}`,
         squadId: squadId || 'current',
-        content: `Nouvelle conversation avec ${currentSquad.map(a => a.name).join(', ')}. Comment pouvons-nous vous aider ?`,
+        content: `Nouvelle conversation avec ${currentSquad.map((a) => a.name).join(', ')}. Comment pouvons-nous vous aider ?`,
         sender: currentSquad[0],
         timestamp: new Date(),
         stance: 'Prêt à collaborer',
         isLeadResponse: true,
       };
-      
+
       setMessages([welcomeMessage]);
       setThreadConclusion(null);
       setLiveSynthesis({
@@ -916,13 +980,12 @@ Pour le handler actionable:
       });
       setActiveSteeringMode(null);
       setSelectedArtifacts([]);
-      
     } catch (error) {
       console.error('Error saving chat synthesis:', error);
-      toast({ 
-        title: "Erreur lors de la sauvegarde", 
-        description: "Impossible de sauvegarder la synthèse",
-        variant: "destructive" 
+      toast({
+        title: 'Erreur lors de la sauvegarde',
+        description: 'Impossible de sauvegarder la synthèse',
+        variant: 'destructive',
       });
     } finally {
       setIsSavingChat(false);
@@ -931,18 +994,18 @@ Pour le handler actionable:
 
   const extractMentions = (text: string): string[] => {
     const mentions = text.match(/@(\w+)/g);
-    return mentions ? mentions.map(mention => mention.slice(1)) : [];
+    return mentions ? mentions.map((mention) => mention.slice(1)) : [];
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     const cursorPos = e.target.selectionStart || 0;
-    
+
     setInputMessage(value);
-    
+
     const beforeCursor = value.slice(0, cursorPos);
     const atIndex = beforeCursor.lastIndexOf('@');
-    
+
     if (atIndex !== -1) {
       const textAfterAt = beforeCursor.slice(atIndex + 1);
       if (!textAfterAt.includes(' ') && textAfterAt.length >= 0) {
@@ -958,19 +1021,22 @@ Pour le handler actionable:
     }
   };
 
-  const filteredAgents = currentSquad.filter(agent =>
-    agent.name.toLowerCase().includes(mentionSearch) ||
-    agent.specialty.toLowerCase().includes(mentionSearch)
+  const filteredAgents = currentSquad.filter(
+    (agent) =>
+      agent.name.toLowerCase().includes(mentionSearch) ||
+      agent.specialty.toLowerCase().includes(mentionSearch)
   );
 
   const selectMention = (agent: Agent) => {
     const beforeMention = inputMessage.slice(0, mentionStartPos);
-    const afterMention = inputMessage.slice(inputRef.current?.selectionStart || inputMessage.length);
+    const afterMention = inputMessage.slice(
+      inputRef.current?.selectionStart || inputMessage.length
+    );
     const newValue = beforeMention + `@${agent.name} ` + afterMention;
-    
+
     setInputMessage(newValue);
     setShowMentionDropdown(false);
-    
+
     setTimeout(() => {
       if (inputRef.current) {
         inputRef.current.focus();
@@ -984,10 +1050,10 @@ Pour le handler actionable:
     if (showMentionDropdown) {
       if (e.key === 'ArrowDown') {
         e.preventDefault();
-        setSelectedMentionIndex(prev => prev < filteredAgents.length - 1 ? prev + 1 : 0);
+        setSelectedMentionIndex((prev) => (prev < filteredAgents.length - 1 ? prev + 1 : 0));
       } else if (e.key === 'ArrowUp') {
         e.preventDefault();
-        setSelectedMentionIndex(prev => prev > 0 ? prev - 1 : filteredAgents.length - 1);
+        setSelectedMentionIndex((prev) => (prev > 0 ? prev - 1 : filteredAgents.length - 1));
       } else if (e.key === 'Enter') {
         e.preventDefault();
         if (filteredAgents[selectedMentionIndex]) {
@@ -1014,10 +1080,11 @@ Pour le handler actionable:
           <div className="space-y-2">
             <h3 className="text-xl font-semibold">Prêt à collaborer ?</h3>
             <p className="text-muted-foreground">
-              Créez une squad avec des agents IA spécialisés pour obtenir des perspectives multiples.
+              Créez une squad avec des agents IA spécialisés pour obtenir des perspectives
+              multiples.
             </p>
           </div>
-          <Button size="lg" onClick={() => window.location.hash = '#squads'}>
+          <Button size="lg" onClick={() => (window.location.hash = '#squads')}>
             <Users className="w-4 h-4 mr-2" />
             Créer une Squad
           </Button>
@@ -1046,12 +1113,18 @@ Pour le handler actionable:
       {/* Compact Squad Bar */}
       <div className="flex-shrink-0 px-4 py-1.5 border-b bg-muted/20">
         <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide">
-          {currentSquad.map(agent => (
-            <div key={agent.id} className="flex items-center gap-1.5 bg-background/80 rounded-full px-2.5 py-1 flex-shrink-0 border border-border/50">
+          {currentSquad.map((agent) => (
+            <div
+              key={agent.id}
+              className="flex items-center gap-1.5 bg-background/80 rounded-full px-2.5 py-1 flex-shrink-0 border border-border/50"
+            >
               <Avatar className="w-4 h-4">
                 <AvatarImage src={agent.avatar} />
                 <AvatarFallback className="text-[9px] font-medium">
-                  {agent.name.split(' ').map(n => n[0]).join('')}
+                  {agent.name
+                    .split(' ')
+                    .map((n) => n[0])
+                    .join('')}
                 </AvatarFallback>
               </Avatar>
               <span className="text-xs font-medium">{agent.name}</span>
@@ -1064,10 +1137,12 @@ Pour le handler actionable:
       {/* Main Content Area */}
       <div className="flex flex-1 min-h-0 overflow-hidden">
         {/* Chat Column */}
-        <div className={cn(
-          'flex flex-col flex-1 min-h-0 min-w-0',
-          showSynthesisPanel && 'border-r border-border/50'
-        )}>
+        <div
+          className={cn(
+            'flex flex-col flex-1 min-h-0 min-w-0',
+            showSynthesisPanel && 'border-r border-border/50'
+          )}
+        >
           {/* Messages */}
           <ScrollArea className="flex-1" ref={scrollAreaRef}>
             <div className="p-4 space-y-4">
@@ -1086,7 +1161,7 @@ Pour le handler actionable:
                   responseMode={responseMode}
                 />
               ))}
-              
+
               {isLoading && (
                 <div className="flex gap-3">
                   <div className="w-9 h-9 rounded-full bg-muted animate-pulse" />
@@ -1098,29 +1173,29 @@ Pour le handler actionable:
               )}
 
               {threadConclusion && !isLoading && (
-                <ThreadConclusion 
+                <ThreadConclusion
                   conclusion={threadConclusion}
                   onActionClick={handleConclusionAction}
                 />
               )}
             </div>
           </ScrollArea>
-          
+
           {/* Modern Input Area */}
           <div className="flex-shrink-0 p-4 border-t bg-muted/30">
             {/* Toolbar */}
             <div className="flex items-center gap-2 mb-3">
-              <ArtifactSelector 
+              <ArtifactSelector
                 selectedArtifacts={selectedArtifacts}
                 onSelectionChange={setSelectedArtifacts}
                 maxSelection={5}
               />
-              <DeliverableCreatorButton 
+              <DeliverableCreatorButton
                 variant="compact"
                 onClick={() => setShowDeliverableCreator(true)}
               />
             </div>
-            
+
             {/* Input */}
             <div className="flex gap-2">
               <div className="relative flex-1">
@@ -1133,7 +1208,7 @@ Pour le handler actionable:
                   disabled={isLoading}
                   className="h-11 rounded-xl bg-background border-border/60 focus-visible:ring-primary/30 pr-12"
                 />
-                
+
                 {/* Mention Dropdown */}
                 {showMentionDropdown && filteredAgents.length > 0 && (
                   <div className="absolute bottom-full left-0 mb-2 w-full max-w-sm bg-background border rounded-xl shadow-xl z-50 overflow-hidden">
@@ -1148,7 +1223,7 @@ Pour le handler actionable:
                         <div
                           key={agent.id}
                           className={cn(
-                            "flex items-center gap-2.5 p-2.5 cursor-pointer rounded-lg transition-colors",
+                            'flex items-center gap-2.5 p-2.5 cursor-pointer rounded-lg transition-colors',
                             index === selectedMentionIndex ? 'bg-primary/10' : 'hover:bg-muted'
                           )}
                           onClick={() => selectMention(agent)}
@@ -1156,7 +1231,10 @@ Pour le handler actionable:
                           <Avatar className="w-6 h-6">
                             <AvatarImage src={agent.avatar} />
                             <AvatarFallback className="text-[10px]">
-                              {agent.name.split(' ').map(n => n[0]).join('')}
+                              {agent.name
+                                .split(' ')
+                                .map((n) => n[0])
+                                .join('')}
                             </AvatarFallback>
                           </Avatar>
                           <span className="text-sm font-medium">{agent.name}</span>
@@ -1167,14 +1245,18 @@ Pour le handler actionable:
                   </div>
                 )}
               </div>
-              
-              <Button 
-                onClick={handleSendMessage} 
-                disabled={isLoading || !inputMessage.trim()} 
+
+              <Button
+                onClick={handleSendMessage}
+                disabled={isLoading || !inputMessage.trim()}
                 size="icon"
                 className="h-11 w-11 rounded-xl"
               >
-                {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                {isLoading ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Send className="w-4 h-4" />
+                )}
               </Button>
             </div>
           </div>
@@ -1183,7 +1265,7 @@ Pour le handler actionable:
         {/* Synthesis Panel */}
         {showSynthesisPanel && (
           <div className="w-80 flex-shrink-0 overflow-auto bg-muted/10">
-            <LiveSynthesisPanel 
+            <LiveSynthesisPanel
               synthesis={liveSynthesis}
               onResolveDisagreement={handleResolveDisagreement}
             />
@@ -1195,7 +1277,7 @@ Pour le handler actionable:
       <CanvasGenerator open={showCanvasGenerator} onClose={() => setShowCanvasGenerator(false)} />
       <StoryWriter open={showStoryWriter} onClose={() => setShowStoryWriter(false)} />
       <ImpactPlotter open={showImpactPlotter} onClose={() => setShowImpactPlotter(false)} />
-      
+
       {/* Contextual Deliverable Creator */}
       <DeliverableCreator
         open={showDeliverableCreator}
@@ -1219,7 +1301,7 @@ Pour le handler actionable:
         }}
         context="all"
       />
-      
+
       {/* Artifact Preview Dialog */}
       <ArtifactPreviewDialog
         open={showArtifactPreview}

@@ -32,10 +32,34 @@ const integrationConfigs: IntegrationConfig[] = [
     description: 'Sync user stories and tasks with Jira',
     icon: '🔷',
     fields: [
-      { name: 'domain', label: 'Jira Domain', type: 'text', placeholder: 'yourcompany.atlassian.net', required: true },
-      { name: 'email', label: 'Email', type: 'text', placeholder: 'you@company.com', required: true },
-      { name: 'api_token', label: 'API Token', type: 'password', placeholder: 'Your Jira API token', required: true },
-      { name: 'project_key', label: 'Project Key', type: 'text', placeholder: 'PROJ', required: true },
+      {
+        name: 'domain',
+        label: 'Jira Domain',
+        type: 'text',
+        placeholder: 'yourcompany.atlassian.net',
+        required: true,
+      },
+      {
+        name: 'email',
+        label: 'Email',
+        type: 'text',
+        placeholder: 'you@company.com',
+        required: true,
+      },
+      {
+        name: 'api_token',
+        label: 'API Token',
+        type: 'password',
+        placeholder: 'Your Jira API token',
+        required: true,
+      },
+      {
+        name: 'project_key',
+        label: 'Project Key',
+        type: 'text',
+        placeholder: 'PROJ',
+        required: true,
+      },
     ],
   },
   {
@@ -44,8 +68,20 @@ const integrationConfigs: IntegrationConfig[] = [
     description: 'Send notifications and updates to Slack',
     icon: '💬',
     fields: [
-      { name: 'webhook_url', label: 'Webhook URL', type: 'password', placeholder: 'https://hooks.slack.com/services/...', required: true },
-      { name: 'channel', label: 'Default Channel', type: 'text', placeholder: '#general', required: true },
+      {
+        name: 'webhook_url',
+        label: 'Webhook URL',
+        type: 'password',
+        placeholder: 'https://hooks.slack.com/services/...',
+        required: true,
+      },
+      {
+        name: 'channel',
+        label: 'Default Channel',
+        type: 'text',
+        placeholder: '#general',
+        required: true,
+      },
     ],
   },
   {
@@ -54,8 +90,20 @@ const integrationConfigs: IntegrationConfig[] = [
     description: 'Link designs and prototypes from Figma',
     icon: '🎨',
     fields: [
-      { name: 'access_token', label: 'Access Token', type: 'password', placeholder: 'Your Figma access token', required: true },
-      { name: 'team_id', label: 'Team ID', type: 'text', placeholder: 'Your team ID', required: false },
+      {
+        name: 'access_token',
+        label: 'Access Token',
+        type: 'password',
+        placeholder: 'Your Figma access token',
+        required: true,
+      },
+      {
+        name: 'team_id',
+        label: 'Team ID',
+        type: 'text',
+        placeholder: 'Your team ID',
+        required: false,
+      },
     ],
   },
 ];
@@ -90,7 +138,7 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ worksp
   };
 
   const openConfigDialog = (config: IntegrationConfig) => {
-    const existing = integrations.find(i => i.integration_type === config.id);
+    const existing = integrations.find((i) => i.integration_type === config.id);
     setSelectedIntegration(config);
     setConfigData(existing?.config || {});
     setShowConfigDialog(true);
@@ -101,8 +149,8 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ worksp
 
     // Validate required fields
     const missingFields = selectedIntegration.fields
-      .filter(f => f.required && !configData[f.name])
-      .map(f => f.label);
+      .filter((f) => f.required && !configData[f.name])
+      .map((f) => f.label);
 
     if (missingFields.length > 0) {
       toast({
@@ -115,7 +163,7 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ worksp
 
     try {
       setSaving(true);
-      const existing = integrations.find(i => i.integration_type === selectedIntegration.id);
+      const existing = integrations.find((i) => i.integration_type === selectedIntegration.id);
 
       if (existing) {
         // Update existing
@@ -127,14 +175,12 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ worksp
         if (error) throw error;
       } else {
         // Create new
-        const { error } = await supabase
-          .from('integrations')
-          .insert({
-            workspace_id: workspaceId,
-            integration_type: selectedIntegration.id,
-            config: configData,
-            is_active: true,
-          });
+        const { error } = await supabase.from('integrations').insert({
+          workspace_id: workspaceId,
+          integration_type: selectedIntegration.id,
+          config: configData,
+          is_active: true,
+        });
 
         if (error) throw error;
       }
@@ -142,7 +188,7 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ worksp
       await loadIntegrations();
       setShowConfigDialog(false);
       setConfigData({});
-      
+
       toast({
         title: 'Success',
         description: `${selectedIntegration.name} integration ${existing ? 'updated' : 'connected'}`,
@@ -168,7 +214,7 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ worksp
 
       if (error) throw error;
       await loadIntegrations();
-      
+
       toast({
         title: 'Success',
         description: `Integration ${integration.is_active ? 'disabled' : 'enabled'}`,
@@ -184,7 +230,7 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ worksp
   };
 
   const getIntegrationStatus = (config: IntegrationConfig) => {
-    return integrations.find(i => i.integration_type === config.id);
+    return integrations.find((i) => i.integration_type === config.id);
   };
 
   return (
@@ -197,10 +243,10 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ worksp
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {integrationConfigs.map(config => {
+        {integrationConfigs.map((config) => {
           const status = getIntegrationStatus(config);
           const isConnected = !!status;
-          const isActive = status?.is_active;
+          const isActive = status?.is_active ?? false;
 
           return (
             <Card key={config.id} className="hover:shadow-md transition-shadow">
@@ -210,9 +256,7 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ worksp
                     <div className="text-3xl">{config.icon}</div>
                     <div>
                       <CardTitle>{config.name}</CardTitle>
-                      <CardDescription className="text-xs">
-                        {config.description}
-                      </CardDescription>
+                      <CardDescription className="text-xs">{config.description}</CardDescription>
                     </div>
                   </div>
                   {isConnected && (
@@ -245,10 +289,7 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ worksp
                 {isConnected && status && (
                   <div className="flex items-center justify-between p-2 bg-muted rounded-md">
                     <span className="text-xs text-muted-foreground">Enable/Disable</span>
-                    <Switch
-                      checked={isActive}
-                      onCheckedChange={() => toggleIntegration(status)}
-                    />
+                    <Switch checked={isActive} onCheckedChange={() => toggleIntegration(status)} />
                   </div>
                 )}
               </CardContent>
@@ -266,7 +307,7 @@ export const IntegrationSettings: React.FC<IntegrationSettingsProps> = ({ worksp
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
-            {selectedIntegration?.fields.map(field => (
+            {selectedIntegration?.fields.map((field) => (
               <div key={field.name} className="space-y-2">
                 <Label htmlFor={field.name}>
                   {field.label}

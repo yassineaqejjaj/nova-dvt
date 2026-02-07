@@ -33,16 +33,20 @@ export const useAuth = () => {
               event: 'UPDATE',
               schema: 'public',
               table: 'profiles',
-              filter: `user_id=eq.${session.user.id}`
+              filter: `user_id=eq.${session.user.id}`,
             },
             (payload) => {
               console.log('Profile update received:', payload);
               if (payload.new) {
-                setUserProfile(prev => prev ? {
-                  ...prev,
-                  level: payload.new.level,
-                  xp: payload.new.xp
-                } : null);
+                setUserProfile((prev) =>
+                  prev
+                    ? {
+                        ...prev,
+                        level: payload.new.level,
+                        xp: payload.new.xp,
+                      }
+                    : null
+                );
               }
             }
           )
@@ -53,22 +57,22 @@ export const useAuth = () => {
     });
 
     // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        setUser(session?.user ?? null);
-        if (session?.user) {
-          loadUserProfile(session.user.id);
-          loadUserSquads(session.user.id);
-          setTimeout(() => {
-            loadUserTheme(session.user.id);
-          }, 0);
-        } else {
-          setUserProfile(null);
-          setSquads([]);
-          setLoading(false);
-        }
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      setUser(session?.user ?? null);
+      if (session?.user) {
+        loadUserProfile(session.user.id);
+        loadUserSquads(session.user.id);
+        setTimeout(() => {
+          loadUserTheme(session.user.id);
+        }, 0);
+      } else {
+        setUserProfile(null);
+        setSquads([]);
+        setLoading(false);
       }
-    );
+    });
 
     return () => {
       subscription.unsubscribe();
@@ -125,22 +129,23 @@ export const useAuth = () => {
         xp: profile?.xp || 0,
         streak: gamification?.current_streak || 0,
         coins: gamification?.coins || 0,
-        avatar_url: profile?.avatar_url,
-        unlockedAgents: unlockedAgents?.map(ua => ua.agent_id) || [],
-        badges: badges?.map(b => ({
-          id: b.badge_id,
-          name: b.badge_name,
-          description: b.badge_description,
-          icon: b.badge_icon,
-          unlockedAt: new Date(b.unlocked_at),
-          category: b.badge_category,
-          rarity: b.rarity
-        })) || [],
-        longestStreak: gamification?.longest_streak || 0
+        avatar_url: profile?.avatar_url ?? undefined,
+        unlockedAgents: unlockedAgents?.map((ua) => ua.agent_id) || [],
+        badges:
+          badges?.map((b) => ({
+            id: b.badge_id,
+            name: b.badge_name,
+            description: b.badge_description,
+            icon: b.badge_icon,
+            unlockedAt: new Date(b.unlocked_at),
+            category: b.badge_category,
+            rarity: b.rarity,
+          })) || [],
+        longestStreak: gamification?.longest_streak || 0,
       };
 
       setUserProfile(userProfile);
-      
+
       // Check if user needs onboarding (no display_name set yet)
       // Only set to true if onboarding hasn't been manually completed
       if ((!profile || !profile.display_name) && !onboardingCompleted) {
@@ -158,7 +163,8 @@ export const useAuth = () => {
       // Load squads with their agents
       const { data: squadsData, error: squadsError } = await supabase
         .from('squads')
-        .select(`
+        .select(
+          `
           *,
           squad_agents (
             agent_id,
@@ -171,29 +177,32 @@ export const useAuth = () => {
             agent_xp_required,
             agent_family_color
           )
-        `)
+        `
+        )
         .eq('user_id', userId)
         .order('created_at', { ascending: false });
 
       if (squadsError) throw squadsError;
 
-      const transformedSquads: Squad[] = squadsData?.map(squad => ({
-        id: squad.id,
-        name: squad.name,
-        purpose: squad.purpose || '',
-        agents: squad.squad_agents?.map((sa: any) => ({
-          id: sa.agent_id,
-          name: sa.agent_name,
-          specialty: sa.agent_specialty,
-          avatar: sa.agent_avatar,
-          backstory: sa.agent_backstory,
-          capabilities: sa.agent_capabilities || [],
-          tags: sa.agent_tags || [],
-          xpRequired: sa.agent_xp_required,
-          familyColor: sa.agent_family_color as 'blue' | 'green' | 'purple' | 'orange'
-        })) || [],
-        createdAt: new Date(squad.created_at)
-      })) || [];
+      const transformedSquads: Squad[] =
+        squadsData?.map((squad) => ({
+          id: squad.id,
+          name: squad.name,
+          purpose: squad.purpose || '',
+          agents:
+            squad.squad_agents?.map((sa: any) => ({
+              id: sa.agent_id,
+              name: sa.agent_name,
+              specialty: sa.agent_specialty,
+              avatar: sa.agent_avatar,
+              backstory: sa.agent_backstory,
+              capabilities: sa.agent_capabilities || [],
+              tags: sa.agent_tags || [],
+              xpRequired: sa.agent_xp_required,
+              familyColor: sa.agent_family_color as 'blue' | 'green' | 'purple' | 'orange',
+            })) || [],
+          createdAt: new Date(squad.created_at),
+        })) || [];
 
       setSquads(transformedSquads);
     } catch (error) {
@@ -218,18 +227,22 @@ export const useAuth = () => {
     try {
       await supabase
         .from('profiles')
-        .update({ 
-          xp: newXP, 
-          level: newLevel 
+        .update({
+          xp: newXP,
+          level: newLevel,
         })
         .eq('user_id', user.id);
 
       // Update local state
-      setUserProfile(prev => prev ? {
-        ...prev,
-        xp: newXP,
-        level: newLevel
-      } : null);
+      setUserProfile((prev) =>
+        prev
+          ? {
+              ...prev,
+              xp: newXP,
+              level: newLevel,
+            }
+          : null
+      );
 
       return { leveledUp, newLevel };
     } catch (error) {
@@ -251,6 +264,6 @@ export const useAuth = () => {
     needsOnboarding,
     refreshUserData,
     addXP,
-    completeOnboarding
+    completeOnboarding,
   };
 };

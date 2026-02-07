@@ -39,7 +39,7 @@ export const PRDArtifacts = ({ prdId }: PRDArtifactsProps) => {
 
       if (error) throw error;
 
-      setArtifacts(data || []);
+      setArtifacts((data || []) as unknown as Artifact[]);
     } catch (error) {
       console.error('Error loading artifacts:', error);
       toast.error('Erreur lors du chargement des artefacts');
@@ -50,14 +50,11 @@ export const PRDArtifacts = ({ prdId }: PRDArtifactsProps) => {
 
   const handleDelete = async (artifactId: string) => {
     try {
-      const { error } = await supabase
-        .from('artifacts')
-        .delete()
-        .eq('id', artifactId);
+      const { error } = await supabase.from('artifacts').delete().eq('id', artifactId);
 
       if (error) throw error;
 
-      setArtifacts(prev => prev.filter(a => a.id !== artifactId));
+      setArtifacts((prev) => prev.filter((a) => a.id !== artifactId));
       toast.success('Artefact supprimé');
     } catch (error) {
       console.error('Error deleting artifact:', error);
@@ -87,7 +84,7 @@ export const PRDArtifacts = ({ prdId }: PRDArtifactsProps) => {
       wireframe: { label: 'Wireframe', variant: 'secondary' },
       user_flow: { label: 'User Flow', variant: 'outline' },
     };
-    
+
     const typeInfo = typeMap[type] || { label: type, variant: 'default' };
     return <Badge variant={typeInfo.variant}>{typeInfo.label}</Badge>;
   };
@@ -109,18 +106,14 @@ export const PRDArtifacts = ({ prdId }: PRDArtifactsProps) => {
           <FileText className="h-5 w-5" />
           Artefacts associés
         </CardTitle>
-        <CardDescription>
-          Tous les artefacts créés à partir de ce PRD
-        </CardDescription>
+        <CardDescription>Tous les artefacts créés à partir de ce PRD</CardDescription>
       </CardHeader>
       <CardContent>
         {artifacts.length === 0 ? (
           <div className="text-center py-8 text-muted-foreground">
             <FileText className="h-12 w-12 mx-auto mb-3 opacity-50" />
             <p>Aucun artefact créé pour ce PRD</p>
-            <p className="text-sm mt-1">
-              Utilisez le bouton "Créer un artefact" pour commencer
-            </p>
+            <p className="text-sm mt-1">Utilisez le bouton "Créer un artefact" pour commencer</p>
           </div>
         ) : (
           <ScrollArea className="h-[400px]">
@@ -138,9 +131,7 @@ export const PRDArtifacts = ({ prdId }: PRDArtifactsProps) => {
                           <CardDescription className="text-sm mt-1">
                             Créé le {new Date(artifact.created_at).toLocaleDateString('fr-FR')}
                           </CardDescription>
-                          <div className="mt-2">
-                            {getArtifactTypeBadge(artifact.artifact_type)}
-                          </div>
+                          <div className="mt-2">{getArtifactTypeBadge(artifact.artifact_type)}</div>
                         </div>
                       </div>
                       <div className="flex gap-1">

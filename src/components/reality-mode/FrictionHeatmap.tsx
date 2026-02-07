@@ -3,12 +3,7 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { supabase } from '@/integrations/supabase/client';
-import { 
-  Flame, 
-  AlertTriangle, 
-  ArrowRight,
-  TrendingUp
-} from 'lucide-react';
+import { Flame, AlertTriangle, ArrowRight, TrendingUp } from 'lucide-react';
 import { FrictionPattern } from './types';
 
 interface FrictionHeatmapProps {
@@ -33,17 +28,19 @@ export const FrictionHeatmap: React.FC<FrictionHeatmapProps> = ({ userId }) => {
         .limit(10);
 
       if (error) throw error;
-      
-      setPatterns((data || []).map(p => ({
-        id: p.id,
-        tensionSignature: p.tension_signature,
-        tensionLeft: p.tension_left,
-        tensionRight: p.tension_right,
-        occurrenceCount: p.occurrence_count,
-        decisionIds: p.decision_ids as string[],
-        isStructural: p.is_structural,
-        resolutionRate: Number(p.resolution_rate)
-      })));
+
+      setPatterns(
+        (data || []).map((p) => ({
+          id: p.id,
+          tensionSignature: p.tension_signature,
+          tensionLeft: p.tension_left,
+          tensionRight: p.tension_right,
+          occurrenceCount: p.occurrence_count ?? 0,
+          decisionIds: p.decision_ids as string[],
+          isStructural: p.is_structural ?? false,
+          resolutionRate: Number(p.resolution_rate),
+        }))
+      );
     } catch (error) {
       console.error('Error loading friction patterns:', error);
     } finally {
@@ -63,7 +60,9 @@ export const FrictionHeatmap: React.FC<FrictionHeatmapProps> = ({ userId }) => {
       <div className="flex items-center gap-2 mb-4">
         <Flame className="w-5 h-5 text-primary" />
         <h4 className="font-semibold">Carte des Frictions</h4>
-        <Badge variant="outline" className="text-xs">Cross-débats</Badge>
+        <Badge variant="outline" className="text-xs">
+          Cross-débats
+        </Badge>
       </div>
 
       {patterns.length === 0 ? (
@@ -75,13 +74,15 @@ export const FrictionHeatmap: React.FC<FrictionHeatmapProps> = ({ userId }) => {
       ) : (
         <div className="space-y-3">
           {patterns.map((pattern) => (
-            <div 
+            <div
               key={pattern.id}
               className={`p-3 rounded-lg border ${pattern.isStructural ? 'border-red-500/50 bg-red-500/5' : ''}`}
             >
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
-                  <div className={`w-2 h-2 rounded-full ${getHeatColor(pattern.occurrenceCount)}`} />
+                  <div
+                    className={`w-2 h-2 rounded-full ${getHeatColor(pattern.occurrenceCount)}`}
+                  />
                   <span className="text-sm font-medium">{pattern.tensionLeft}</span>
                   <ArrowRight className="w-3 h-3 text-muted-foreground" />
                   <span className="text-sm font-medium">{pattern.tensionRight}</span>
@@ -108,7 +109,7 @@ export const FrictionHeatmap: React.FC<FrictionHeatmapProps> = ({ userId }) => {
             </div>
           ))}
 
-          {patterns.some(p => p.isStructural) && (
+          {patterns.some((p) => p.isStructural) && (
             <div className="p-3 bg-amber-500/10 border border-amber-500/30 rounded-lg">
               <div className="flex items-start gap-2">
                 <TrendingUp className="w-4 h-4 text-amber-500 mt-0.5" />
@@ -117,8 +118,8 @@ export const FrictionHeatmap: React.FC<FrictionHeatmapProps> = ({ userId }) => {
                     Tensions structurelles détectées
                   </p>
                   <p className="text-xs text-muted-foreground mt-1">
-                    Ces tensions réapparaissent dans plusieurs débats. 
-                    Elles nécessitent une décision stratégique de fond, pas un compromis.
+                    Ces tensions réapparaissent dans plusieurs débats. Elles nécessitent une
+                    décision stratégique de fond, pas un compromis.
                   </p>
                 </div>
               </div>

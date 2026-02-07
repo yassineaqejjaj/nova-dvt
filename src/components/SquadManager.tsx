@@ -6,10 +6,16 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { 
+import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -25,15 +31,7 @@ import { SquadTemplates, SquadTemplate } from './squad/SquadTemplates';
 import { supabase } from '@/integrations/supabase/client';
 import { Squad, Agent } from '@/types';
 import { toast } from '@/hooks/use-toast';
-import { 
-  Users, 
-  Plus, 
-  MessageCircle, 
-  Sparkles,
-  Loader2,
-  Lightbulb,
-  Download
-} from 'lucide-react';
+import { Users, Plus, MessageCircle, Sparkles, Loader2, Lightbulb, Download } from 'lucide-react';
 import { allAgents } from '@/data/mockData';
 
 interface SquadManagerProps {
@@ -49,7 +47,7 @@ export const SquadManager: React.FC<SquadManagerProps> = ({
   currentSquad,
   onSquadChange,
   onSquadUpdate,
-  userId
+  userId,
 }) => {
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [editingSquad, setEditingSquad] = useState<Squad | null>(null);
@@ -58,23 +56,26 @@ export const SquadManager: React.FC<SquadManagerProps> = ({
   const [isImportingContext, setIsImportingContext] = useState(false);
   const [showAgentSelector, setShowAgentSelector] = useState(false);
   const [managingSquad, setManagingSquad] = useState<Squad | null>(null);
-  const [userProfile, setUserProfile] = useState<{ xp: number; unlockedAgents: string[] }>({ xp: 0, unlockedAgents: [] });
+  const [userProfile, setUserProfile] = useState<{ xp: number; unlockedAgents: string[] }>({
+    xp: 0,
+    unlockedAgents: [],
+  });
   const [removeAgentId, setRemoveAgentId] = useState<string | null>(null);
   const [recommendations, setRecommendations] = useState<{
     recommendedAgents: string[];
     reasoning: string;
     squadName: string;
   } | null>(null);
-  
+
   const [newSquadData, setNewSquadData] = useState({
     name: '',
     purpose: '',
-    context: ''
+    context: '',
   });
 
   // Separate active and inactive squads
-  const activeSquads = squads.filter(s => currentSquad?.id === s.id);
-  const inactiveSquads = squads.filter(s => currentSquad?.id !== s.id);
+  const activeSquads = squads.filter((s) => currentSquad?.id === s.id);
+  const inactiveSquads = squads.filter((s) => currentSquad?.id !== s.id);
 
   React.useEffect(() => {
     loadUserProfile();
@@ -82,18 +83,20 @@ export const SquadManager: React.FC<SquadManagerProps> = ({
 
   const loadUserProfile = async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user) return;
 
       const [profileResult, unlockedResult] = await Promise.all([
         supabase.from('profiles').select('xp').eq('user_id', user.id).single(),
-        supabase.from('unlocked_agents').select('agent_id').eq('user_id', user.id)
+        supabase.from('unlocked_agents').select('agent_id').eq('user_id', user.id),
       ]);
 
       if (profileResult.data && unlockedResult.data) {
         setUserProfile({
           xp: profileResult.data.xp,
-          unlockedAgents: unlockedResult.data.map((a: any) => a.agent_id)
+          unlockedAgents: unlockedResult.data.map((a: any) => a.agent_id),
         });
       }
     } catch (error) {
@@ -105,7 +108,7 @@ export const SquadManager: React.FC<SquadManagerProps> = ({
     setNewSquadData({
       name: template.name,
       purpose: template.suggestedPurpose,
-      context: ''
+      context: '',
     });
   };
 
@@ -120,7 +123,7 @@ export const SquadManager: React.FC<SquadManagerProps> = ({
           user_id: userId,
           name: newSquadData.name,
           purpose: newSquadData.purpose,
-          is_active: true
+          is_active: true,
         })
         .select()
         .single();
@@ -130,10 +133,10 @@ export const SquadManager: React.FC<SquadManagerProps> = ({
       // If we have recommendations, add the recommended agents to the squad
       if (recommendations && recommendations.recommendedAgents.length > 0) {
         const agentsToAdd = recommendations.recommendedAgents
-          .map(agentId => allAgents.find(a => a.id === agentId))
+          .map((agentId) => allAgents.find((a) => a.id === agentId))
           .filter(Boolean);
 
-        const squadAgentsData = agentsToAdd.map(agent => ({
+        const squadAgentsData = agentsToAdd.map((agent) => ({
           squad_id: squadData.id,
           agent_id: agent!.id,
           agent_name: agent!.name,
@@ -143,19 +146,17 @@ export const SquadManager: React.FC<SquadManagerProps> = ({
           agent_capabilities: agent!.capabilities,
           agent_tags: agent!.tags,
           agent_xp_required: agent!.xpRequired,
-          agent_family_color: agent!.familyColor
+          agent_family_color: agent!.familyColor,
         }));
 
-        const { error: agentsError } = await supabase
-          .from('squad_agents')
-          .insert(squadAgentsData);
+        const { error: agentsError } = await supabase.from('squad_agents').insert(squadAgentsData);
 
         if (agentsError) throw agentsError;
       }
 
       toast({
-        title: "Squad created!",
-        description: recommendations 
+        title: 'Squad created!',
+        description: recommendations
           ? `${newSquadData.name} is ready with ${recommendations.recommendedAgents.length} AI-recommended agents.`
           : `${newSquadData.name} is ready for action.`,
       });
@@ -166,9 +167,9 @@ export const SquadManager: React.FC<SquadManagerProps> = ({
       onSquadUpdate();
     } catch (error: any) {
       toast({
-        title: "Failed to create squad",
+        title: 'Failed to create squad',
         description: error.message,
-        variant: "destructive",
+        variant: 'destructive',
       });
     } finally {
       setIsLoading(false);
@@ -183,24 +184,24 @@ export const SquadManager: React.FC<SquadManagerProps> = ({
         .from('squads')
         .update({
           name: updates.name,
-          purpose: updates.purpose
+          purpose: updates.purpose,
         })
         .eq('id', squad.id);
 
       if (error) throw error;
 
       toast({
-        title: "Squad updated!",
-        description: "Changes saved successfully.",
+        title: 'Squad updated!',
+        description: 'Changes saved successfully.',
       });
 
       setEditingSquad(null);
       onSquadUpdate();
     } catch (error: any) {
       toast({
-        title: "Failed to update squad",
+        title: 'Failed to update squad',
         description: error.message,
-        variant: "destructive",
+        variant: 'destructive',
       });
     } finally {
       setIsLoading(false);
@@ -208,38 +209,37 @@ export const SquadManager: React.FC<SquadManagerProps> = ({
   };
 
   const handleDeleteSquad = async (squad: Squad) => {
-    if (!confirm(`Are you sure you want to delete "${squad.name}"? This action cannot be undone.`)) {
+    if (
+      !confirm(`Are you sure you want to delete "${squad.name}"? This action cannot be undone.`)
+    ) {
       return;
     }
 
     setIsLoading(true);
 
     try {
-      const { error } = await supabase
-        .from('squads')
-        .delete()
-        .eq('id', squad.id);
+      const { error } = await supabase.from('squads').delete().eq('id', squad.id);
 
       if (error) throw error;
 
       toast({
-        title: "Squad deleted",
+        title: 'Squad deleted',
         description: `${squad.name} has been removed.`,
       });
 
       if (currentSquad?.id === squad.id) {
-        const remainingSquads = squads.filter(s => s.id !== squad.id);
+        const remainingSquads = squads.filter((s) => s.id !== squad.id);
         if (remainingSquads.length > 0) {
           onSquadChange(remainingSquads[0]);
         }
       }
-      
+
       onSquadUpdate();
     } catch (error: any) {
       toast({
-        title: "Failed to delete squad",
+        title: 'Failed to delete squad',
         description: error.message,
-        variant: "destructive",
+        variant: 'destructive',
       });
     } finally {
       setIsLoading(false);
@@ -249,9 +249,9 @@ export const SquadManager: React.FC<SquadManagerProps> = ({
   const handleGetSuggestions = async () => {
     if (!newSquadData.context.trim()) {
       toast({
-        title: "Context required",
-        description: "Please describe your project context to get AI recommendations.",
-        variant: "destructive",
+        title: 'Context required',
+        description: 'Please describe your project context to get AI recommendations.',
+        variant: 'destructive',
       });
       return;
     }
@@ -261,29 +261,29 @@ export const SquadManager: React.FC<SquadManagerProps> = ({
       const { data, error } = await supabase.functions.invoke('suggest-squad', {
         body: {
           context: newSquadData.context,
-          availableAgents: allAgents
-        }
+          availableAgents: allAgents,
+        },
       });
 
       if (error) throw error;
 
       setRecommendations(data);
-      
+
       // Auto-fill squad name if not already set
       if (!newSquadData.name && data.squadName) {
-        setNewSquadData(prev => ({ ...prev, name: data.squadName }));
+        setNewSquadData((prev) => ({ ...prev, name: data.squadName }));
       }
 
       toast({
-        title: "Recommendations ready!",
+        title: 'Recommendations ready!',
         description: `Found ${data.recommendedAgents.length} optimal agents for your squad.`,
       });
     } catch (error: any) {
       console.error('Error getting suggestions:', error);
       toast({
-        title: "Failed to get suggestions",
+        title: 'Failed to get suggestions',
         description: error.message,
-        variant: "destructive",
+        variant: 'destructive',
       });
     } finally {
       setIsGettingSuggestions(false);
@@ -293,12 +293,14 @@ export const SquadManager: React.FC<SquadManagerProps> = ({
   const handleImportContext = async () => {
     setIsImportingContext(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user) {
         toast({
-          title: "Connexion requise",
-          description: "Veuillez vous connecter pour importer un contexte",
-          variant: "destructive",
+          title: 'Connexion requise',
+          description: 'Veuillez vous connecter pour importer un contexte',
+          variant: 'destructive',
         });
         return;
       }
@@ -316,53 +318,57 @@ export const SquadManager: React.FC<SquadManagerProps> = ({
 
       if (!contexts || contexts.length === 0) {
         toast({
-          title: "Aucun contexte actif",
+          title: 'Aucun contexte actif',
           description: "Créez d'abord un contexte produit dans la section Configuration > Contexte",
-          variant: "destructive",
+          variant: 'destructive',
         });
         return;
       }
 
       const context = contexts[0];
-      
+
       // Format context for squad
       const contextParts: string[] = [];
-      
+
       if (context.name) {
         contextParts.push(`**Projet:** ${context.name}`);
       }
-      
+
       if (context.vision) {
         contextParts.push(`**Vision:** ${context.vision}`);
       }
-      
+
       if (context.target_audience) {
         contextParts.push(`**Audience cible:** ${context.target_audience}`);
       }
-      
+
       const objectives = Array.isArray(context.objectives) ? context.objectives : [];
       if (objectives.length > 0) {
-        contextParts.push(`**Objectifs:**\n${objectives.map((o: string) => `• ${o}`).join('\n')}`);
+        contextParts.push(
+          `**Objectifs:**\n${(objectives as string[]).map((o: string) => `• ${o}`).join('\n')}`
+        );
       }
-      
+
       const kpis = Array.isArray(context.target_kpis) ? context.target_kpis : [];
       if (kpis.length > 0) {
-        contextParts.push(`**KPIs cibles:**\n${kpis.map((k: string) => `• ${k}`).join('\n')}`);
+        contextParts.push(
+          `**KPIs cibles:**\n${(kpis as string[]).map((k: string) => `• ${k}`).join('\n')}`
+        );
       }
-      
+
       if (context.constraints) {
         contextParts.push(`**Contraintes:** ${context.constraints}`);
       }
 
       const formattedContext = contextParts.join('\n\n');
-      
-      setNewSquadData(prev => ({
+
+      setNewSquadData((prev) => ({
         ...prev,
-        context: formattedContext
+        context: formattedContext,
       }));
 
       toast({
-        title: "Contexte importé",
+        title: 'Contexte importé',
         description: `Le contexte "${context.name}" a été importé`,
       });
     } catch (error: any) {
@@ -370,7 +376,7 @@ export const SquadManager: React.FC<SquadManagerProps> = ({
       toast({
         title: "Erreur d'import",
         description: error.message || "Impossible d'importer le contexte",
-        variant: "destructive",
+        variant: 'destructive',
       });
     } finally {
       setIsImportingContext(false);
@@ -380,29 +386,23 @@ export const SquadManager: React.FC<SquadManagerProps> = ({
   const handleSetActiveSquad = async (squad: Squad) => {
     try {
       // Set all squads to inactive first
-      await supabase
-        .from('squads')
-        .update({ is_active: false })
-        .eq('user_id', userId);
+      await supabase.from('squads').update({ is_active: false }).eq('user_id', userId);
 
       // Set the selected squad as active
-      await supabase
-        .from('squads')
-        .update({ is_active: true })
-        .eq('id', squad.id);
+      await supabase.from('squads').update({ is_active: true }).eq('id', squad.id);
 
       onSquadChange(squad);
       onSquadUpdate();
-      
+
       toast({
-        title: "Active squad changed",
+        title: 'Active squad changed',
         description: `Switched to ${squad.name}`,
       });
     } catch (error: any) {
       toast({
-        title: "Failed to switch squad",
+        title: 'Failed to switch squad',
         description: error.message,
-        variant: "destructive",
+        variant: 'destructive',
       });
     }
   };
@@ -421,7 +421,7 @@ export const SquadManager: React.FC<SquadManagerProps> = ({
         agent_capabilities: agent.capabilities,
         agent_tags: agent.tags,
         agent_xp_required: agent.xpRequired,
-        agent_family_color: agent.familyColor
+        agent_family_color: agent.familyColor,
       });
 
       if (error) throw error;
@@ -430,12 +430,12 @@ export const SquadManager: React.FC<SquadManagerProps> = ({
       if (!userProfile.unlockedAgents.includes(agent.id)) {
         await supabase.from('unlocked_agents').insert({
           user_id: userId,
-          agent_id: agent.id
+          agent_id: agent.id,
         });
       }
 
       toast({
-        title: "Agent added",
+        title: 'Agent added',
         description: `${agent.name} has been added to ${managingSquad.name}`,
       });
 
@@ -443,9 +443,9 @@ export const SquadManager: React.FC<SquadManagerProps> = ({
       await loadUserProfile();
     } catch (error: any) {
       toast({
-        title: "Failed to add agent",
+        title: 'Failed to add agent',
         description: error.message,
-        variant: "destructive",
+        variant: 'destructive',
       });
     }
   };
@@ -454,7 +454,7 @@ export const SquadManager: React.FC<SquadManagerProps> = ({
     if (!removeAgentId || !managingSquad) return;
 
     try {
-      const { error} = await supabase
+      const { error } = await supabase
         .from('squad_agents')
         .delete()
         .eq('squad_id', managingSquad.id)
@@ -463,17 +463,17 @@ export const SquadManager: React.FC<SquadManagerProps> = ({
       if (error) throw error;
 
       toast({
-        title: "Agent removed",
-        description: "Agent has been removed from the squad",
+        title: 'Agent removed',
+        description: 'Agent has been removed from the squad',
       });
 
       setRemoveAgentId(null);
       await onSquadUpdate();
     } catch (error: any) {
       toast({
-        title: "Failed to remove agent",
+        title: 'Failed to remove agent',
         description: error.message,
-        variant: "destructive",
+        variant: 'destructive',
       });
     }
   };
@@ -488,7 +488,7 @@ export const SquadManager: React.FC<SquadManagerProps> = ({
             Créez une squad par projet, client ou type de travail.
           </p>
         </div>
-        
+
         <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
           <DialogTrigger asChild>
             <Button className="flex items-center gap-2">
@@ -506,7 +506,7 @@ export const SquadManager: React.FC<SquadManagerProps> = ({
             <form onSubmit={handleCreateSquad} className="space-y-6">
               {/* Squad Templates */}
               <SquadTemplates onSelectTemplate={handleSelectTemplate} />
-              
+
               <Separator />
 
               <div className="space-y-4">
@@ -516,21 +516,23 @@ export const SquadManager: React.FC<SquadManagerProps> = ({
                     id="squad-name"
                     placeholder="ex: Discovery Checkout, COPIL IA Retail..."
                     value={newSquadData.name}
-                    onChange={(e) => setNewSquadData(prev => ({ ...prev, name: e.target.value }))}
+                    onChange={(e) => setNewSquadData((prev) => ({ ...prev, name: e.target.value }))}
                     required
                   />
                   <p className="text-xs text-muted-foreground">
                     Utilisez un nom orienté objectif, pas générique
                   </p>
                 </div>
-                
+
                 <div className="space-y-2">
                   <Label htmlFor="squad-purpose">Rôle de la Squad *</Label>
                   <Textarea
                     id="squad-purpose"
                     placeholder="Décrivez le rôle de cette squad... ex: Explorer les besoins utilisateurs et définir le périmètre produit"
                     value={newSquadData.purpose}
-                    onChange={(e) => setNewSquadData(prev => ({ ...prev, purpose: e.target.value }))}
+                    onChange={(e) =>
+                      setNewSquadData((prev) => ({ ...prev, purpose: e.target.value }))
+                    }
                     rows={2}
                     required
                   />
@@ -566,7 +568,9 @@ export const SquadManager: React.FC<SquadManagerProps> = ({
                     id="squad-context"
                     placeholder="Décrivez votre projet pour obtenir des recommandations d'agents personnalisées..."
                     value={newSquadData.context}
-                    onChange={(e) => setNewSquadData(prev => ({ ...prev, context: e.target.value }))}
+                    onChange={(e) =>
+                      setNewSquadData((prev) => ({ ...prev, context: e.target.value }))
+                    }
                     rows={4}
                     className="resize-none"
                   />
@@ -600,26 +604,36 @@ export const SquadManager: React.FC<SquadManagerProps> = ({
                     <div className="space-y-2 flex-1">
                       <h4 className="font-semibold text-sm">Recommandations IA</h4>
                       <p className="text-sm text-muted-foreground">{recommendations.reasoning}</p>
-                      
+
                       <div className="space-y-2 mt-3">
-                        <Label className="text-xs">Agents recommandés ({recommendations.recommendedAgents.length})</Label>
+                        <Label className="text-xs">
+                          Agents recommandés ({recommendations.recommendedAgents.length})
+                        </Label>
                         <ScrollArea className="h-48">
                           <div className="grid grid-cols-1 gap-2 pr-4">
                             {recommendations.recommendedAgents.map((agentId) => {
-                              const agent = allAgents.find(a => a.id === agentId);
+                              const agent = allAgents.find((a) => a.id === agentId);
                               if (!agent) return null;
-                              
+
                               return (
-                                <div key={agent.id} className="flex items-center gap-3 p-2 bg-background rounded border">
+                                <div
+                                  key={agent.id}
+                                  className="flex items-center gap-3 p-2 bg-background rounded border"
+                                >
                                   <Avatar className="w-10 h-10 flex-shrink-0">
                                     <AvatarImage src={agent.avatar} />
                                     <AvatarFallback className="text-xs">
-                                      {agent.name.split(' ').map(n => n[0]).join('')}
+                                      {agent.name
+                                        .split(' ')
+                                        .map((n) => n[0])
+                                        .join('')}
                                     </AvatarFallback>
                                   </Avatar>
                                   <div className="flex-1 min-w-0">
                                     <p className="font-medium text-sm truncate">{agent.name}</p>
-                                    <p className="text-xs text-muted-foreground truncate">{agent.specialty}</p>
+                                    <p className="text-xs text-muted-foreground truncate">
+                                      {agent.specialty}
+                                    </p>
                                   </div>
                                   <Badge variant="secondary" className="text-xs flex-shrink-0">
                                     {agent.familyColor}
@@ -634,14 +648,18 @@ export const SquadManager: React.FC<SquadManagerProps> = ({
                   </div>
                 </div>
               )}
-              
+
               <div className="flex gap-2 pt-2">
-                <Button type="submit" disabled={isLoading || !newSquadData.name.trim() || !newSquadData.purpose.trim()} className="flex-1">
+                <Button
+                  type="submit"
+                  disabled={isLoading || !newSquadData.name.trim() || !newSquadData.purpose.trim()}
+                  className="flex-1"
+                >
                   {isLoading ? 'Création...' : 'Créer la Squad'}
                 </Button>
-                <Button 
-                  type="button" 
-                  variant="outline" 
+                <Button
+                  type="button"
+                  variant="outline"
                   onClick={() => {
                     setShowCreateDialog(false);
                     setRecommendations(null);
@@ -763,27 +781,22 @@ export const SquadManager: React.FC<SquadManagerProps> = ({
             <DialogTitle>Modifier la Squad</DialogTitle>
           </DialogHeader>
           {editingSquad && (
-            <form 
+            <form
               onSubmit={(e) => {
                 e.preventDefault();
                 const formData = new FormData(e.currentTarget);
                 handleUpdateSquad(editingSquad, {
                   name: formData.get('name') as string,
-                  purpose: formData.get('purpose') as string
+                  purpose: formData.get('purpose') as string,
                 });
-              }} 
+              }}
               className="space-y-4"
             >
               <div className="space-y-2">
                 <Label htmlFor="edit-squad-name">Nom de la Squad</Label>
-                <Input
-                  id="edit-squad-name"
-                  name="name"
-                  defaultValue={editingSquad.name}
-                  required
-                />
+                <Input id="edit-squad-name" name="name" defaultValue={editingSquad.name} required />
               </div>
-              
+
               <div className="space-y-2">
                 <Label htmlFor="edit-squad-purpose">Rôle de la Squad</Label>
                 <Textarea
@@ -794,14 +807,14 @@ export const SquadManager: React.FC<SquadManagerProps> = ({
                   placeholder="Décrivez le rôle de cette squad..."
                 />
               </div>
-              
+
               <div className="flex gap-2">
                 <Button type="submit" disabled={isLoading} className="flex-1">
                   {isLoading ? 'Enregistrement...' : 'Enregistrer'}
                 </Button>
-                <Button 
-                  type="button" 
-                  variant="outline" 
+                <Button
+                  type="button"
+                  variant="outline"
                   onClick={() => setEditingSquad(null)}
                   disabled={isLoading}
                 >

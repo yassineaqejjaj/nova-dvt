@@ -20,7 +20,7 @@ export const StepInput = ({
   activeContext,
   onContextSelect,
   isLoading,
-  onAnalyze
+  onAnalyze,
 }: StepInputProps) => {
   return (
     <div className="space-y-6">
@@ -31,16 +31,14 @@ export const StepInput = ({
             <Upload className="h-5 w-5" />
             Contexte depuis Nova Core
           </CardTitle>
-          <CardDescription>
-            Le système lit, résume et affiche ce qu'il a compris
-          </CardDescription>
+          <CardDescription>Le système lit, résume et affiche ce qu'il a compris</CardDescription>
         </CardHeader>
         <CardContent>
           <ContextSelector
             selectedContextId={activeContext?.id}
-            onContextSelected={onContextSelect}
+            onContextSelected={onContextSelect as any}
           />
-          
+
           {activeContext && (
             <div className="mt-4 p-4 bg-muted/50 rounded-lg space-y-2">
               <p className="font-medium text-sm">Contexte chargé : {activeContext.name}</p>
@@ -83,8 +81,8 @@ export const StepInput = ({
             rows={6}
             className="resize-none"
           />
-          
-          <Button 
+
+          <Button
             onClick={onAnalyze}
             disabled={isLoading || !ideaDescription.trim()}
             className="w-full"

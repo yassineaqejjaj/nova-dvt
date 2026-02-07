@@ -4,20 +4,8 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Card } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
-import { 
-  Popover, 
-  PopoverContent, 
-  PopoverTrigger 
-} from '@/components/ui/popover';
-import { 
-  FileText, 
-  Target, 
-  Layers, 
-  TrendingUp,
-  Loader2,
-  Package,
-  X
-} from 'lucide-react';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { FileText, Target, Layers, TrendingUp, Loader2, Package, X } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 
 interface Artifact {
@@ -34,10 +22,10 @@ interface ArtifactSelectorProps {
   maxSelection?: number;
 }
 
-export const ArtifactSelector = ({ 
-  selectedArtifacts, 
+export const ArtifactSelector = ({
+  selectedArtifacts,
   onSelectionChange,
-  maxSelection = 5
+  maxSelection = 5,
 }: ArtifactSelectorProps) => {
   const [artifacts, setArtifacts] = useState<Artifact[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -59,7 +47,7 @@ export const ArtifactSelector = ({
         .limit(50);
 
       if (error) throw error;
-      setArtifacts(data || []);
+      setArtifacts((data || []) as unknown as Artifact[]);
     } catch (error) {
       console.error('Error loading artifacts:', error);
     } finally {
@@ -88,17 +76,17 @@ export const ArtifactSelector = ({
   };
 
   const toggleArtifact = (artifact: Artifact) => {
-    const isSelected = selectedArtifacts.some(a => a.id === artifact.id);
-    
+    const isSelected = selectedArtifacts.some((a) => a.id === artifact.id);
+
     if (isSelected) {
-      onSelectionChange(selectedArtifacts.filter(a => a.id !== artifact.id));
+      onSelectionChange(selectedArtifacts.filter((a) => a.id !== artifact.id));
     } else if (selectedArtifacts.length < maxSelection) {
       onSelectionChange([...selectedArtifacts, artifact]);
     }
   };
 
   const removeArtifact = (artifactId: string) => {
-    onSelectionChange(selectedArtifacts.filter(a => a.id !== artifactId));
+    onSelectionChange(selectedArtifacts.filter((a) => a.id !== artifactId));
   };
 
   return (
@@ -106,12 +94,8 @@ export const ArtifactSelector = ({
       {/* Selected Artifacts Display */}
       {selectedArtifacts.length > 0 && (
         <div className="flex flex-wrap gap-2">
-          {selectedArtifacts.map(artifact => (
-            <Badge 
-              key={artifact.id} 
-              variant="secondary" 
-              className="gap-1 pr-1"
-            >
+          {selectedArtifacts.map((artifact) => (
+            <Badge key={artifact.id} variant="secondary" className="gap-1 pr-1">
               {getTypeIcon(artifact.artifact_type)}
               <span className="max-w-[120px] truncate">{artifact.title}</span>
               <Button
@@ -132,10 +116,9 @@ export const ArtifactSelector = ({
         <PopoverTrigger asChild>
           <Button variant="outline" size="sm" className="gap-2">
             <Package className="w-4 h-4" />
-            {selectedArtifacts.length > 0 
+            {selectedArtifacts.length > 0
               ? `${selectedArtifacts.length} artefact${selectedArtifacts.length > 1 ? 's' : ''} sélectionné${selectedArtifacts.length > 1 ? 's' : ''}`
-              : 'Ajouter des artefacts'
-            }
+              : 'Ajouter des artefacts'}
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-80 p-0" align="start">
@@ -145,7 +128,7 @@ export const ArtifactSelector = ({
               Les agents auront accès à ces artefacts pour leurs réponses
             </p>
           </div>
-          
+
           <ScrollArea className="h-[300px]">
             {isLoading ? (
               <div className="flex items-center justify-center py-8">
@@ -158,34 +141,28 @@ export const ArtifactSelector = ({
               </div>
             ) : (
               <div className="p-2 space-y-1">
-                {artifacts.map(artifact => {
-                  const isSelected = selectedArtifacts.some(a => a.id === artifact.id);
+                {artifacts.map((artifact) => {
+                  const isSelected = selectedArtifacts.some((a) => a.id === artifact.id);
                   const isDisabled = !isSelected && selectedArtifacts.length >= maxSelection;
-                  
+
                   return (
-                    <Card 
+                    <Card
                       key={artifact.id}
                       className={`p-2 cursor-pointer transition-colors ${
-                        isSelected 
-                          ? 'bg-primary/10 border-primary/30' 
-                          : isDisabled 
-                            ? 'opacity-50 cursor-not-allowed' 
+                        isSelected
+                          ? 'bg-primary/10 border-primary/30'
+                          : isDisabled
+                            ? 'opacity-50 cursor-not-allowed'
                             : 'hover:bg-muted/50'
                       }`}
                       onClick={() => !isDisabled && toggleArtifact(artifact)}
                     >
                       <div className="flex items-start gap-2">
-                        <Checkbox 
-                          checked={isSelected}
-                          disabled={isDisabled}
-                          className="mt-0.5"
-                        />
+                        <Checkbox checked={isSelected} disabled={isDisabled} className="mt-0.5" />
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">
                             {getTypeIcon(artifact.artifact_type)}
-                            <span className="font-medium text-sm truncate">
-                              {artifact.title}
-                            </span>
+                            <span className="font-medium text-sm truncate">{artifact.title}</span>
                           </div>
                           <div className="flex items-center gap-2 mt-1">
                             <Badge variant="outline" className="text-xs">
@@ -203,12 +180,12 @@ export const ArtifactSelector = ({
               </div>
             )}
           </ScrollArea>
-          
+
           {selectedArtifacts.length > 0 && (
             <div className="p-2 border-t">
-              <Button 
-                variant="ghost" 
-                size="sm" 
+              <Button
+                variant="ghost"
+                size="sm"
                 className="w-full text-destructive hover:text-destructive"
                 onClick={() => onSelectionChange([])}
               >
@@ -225,11 +202,11 @@ export const ArtifactSelector = ({
 // Helper function to format artifact content for AI context
 export const formatArtifactsForContext = (artifacts: Artifact[]): string => {
   if (artifacts.length === 0) return '';
-  
-  const sections = artifacts.map(artifact => {
+
+  const sections = artifacts.map((artifact) => {
     let contentSummary = '';
     const content = artifact.content;
-    
+
     if (typeof content === 'string') {
       contentSummary = content.substring(0, 2000);
     } else if (content) {
@@ -238,40 +215,59 @@ export const formatArtifactsForContext = (artifacts: Artifact[]): string => {
         contentSummary = [
           content.reformulatedProblem && `Problème: ${content.reformulatedProblem}`,
           content.ideaDescription && `Idée: ${content.ideaDescription}`,
-          content.discoveryData?.hypotheses && `Hypothèses: ${content.discoveryData.hypotheses.join('; ')}`,
-          content.discoveryData?.objectives && `Objectifs: ${content.discoveryData.objectives.join('; ')}`,
-          content.personas && `Personas: ${content.personas.map((p: any) => p.role).join(', ')}`
-        ].filter(Boolean).join('\n');
+          content.discoveryData?.hypotheses &&
+            `Hypothèses: ${content.discoveryData.hypotheses.join('; ')}`,
+          content.discoveryData?.objectives &&
+            `Objectifs: ${content.discoveryData.objectives.join('; ')}`,
+          content.personas && `Personas: ${content.personas.map((p: any) => p.role).join(', ')}`,
+        ]
+          .filter(Boolean)
+          .join('\n');
       } else if (content.type === 'discovery_stories' && content.stories) {
-        contentSummary = content.stories.slice(0, 5).map((s: any) => {
-          const story = s.story || s;
-          return `- ${s.title || ''}: En tant que ${story.asA || s.asA}, je veux ${story.iWant || s.iWant}`;
-        }).join('\n');
+        contentSummary = content.stories
+          .slice(0, 5)
+          .map((s: any) => {
+            const story = s.story || s;
+            return `- ${s.title || ''}: En tant que ${story.asA || s.asA}, je veux ${story.iWant || s.iWant}`;
+          })
+          .join('\n');
       } else if (content.type === 'discovery_epic' && content.epic) {
         const epic = content.epic;
         contentSummary = [
           `Epic: ${epic.title}`,
           epic.objective && `Objectif: ${epic.objective}`,
           epic.expectedValue && `Valeur: ${epic.expectedValue}`,
-          content.stories && `Stories: ${content.stories.length}`
-        ].filter(Boolean).join('\n');
+          content.stories && `Stories: ${content.stories.length}`,
+        ]
+          .filter(Boolean)
+          .join('\n');
       } else {
         // Generic extraction for canvas and other types
-        const keys = ['problem', 'solution', 'objective', 'description', 'uniqueValueProposition', 'summary'];
+        const keys = [
+          'problem',
+          'solution',
+          'objective',
+          'description',
+          'uniqueValueProposition',
+          'summary',
+        ];
         const extracted = keys
-          .filter(k => content[k])
-          .map(k => `${k}: ${typeof content[k] === 'string' ? content[k] : JSON.stringify(content[k]).substring(0, 500)}`)
+          .filter((k) => content[k])
+          .map(
+            (k) =>
+              `${k}: ${typeof content[k] === 'string' ? content[k] : JSON.stringify(content[k]).substring(0, 500)}`
+          )
           .join('\n');
         contentSummary = extracted || JSON.stringify(content).substring(0, 2000);
       }
     }
-    
+
     return `
 ### Artefact: ${artifact.title} (${artifact.artifact_type})
 ${contentSummary}
 `;
   });
-  
+
   return `
 === ARTEFACTS DE CONTEXTE ===
 Les artefacts suivants ont été sélectionnés pour enrichir cette discussion. 

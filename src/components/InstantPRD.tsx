@@ -1,23 +1,23 @@
-import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
-import { Separator } from "@/components/ui/separator";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Textarea } from "@/components/ui/textarea";
-import { 
-  Sparkles, 
-  Loader2, 
-  CheckCircle2, 
-  Target, 
-  Users, 
-  FileText, 
-  Layout, 
-  Code2, 
-  TrendingUp, 
-  Map, 
+import { useState, useEffect } from 'react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
+import { Separator } from '@/components/ui/separator';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Textarea } from '@/components/ui/textarea';
+import {
+  Sparkles,
+  Loader2,
+  CheckCircle2,
+  Target,
+  Users,
+  FileText,
+  Layout,
+  Code2,
+  TrendingUp,
+  Map,
   AlertTriangle,
   Download,
   Share2,
@@ -29,14 +29,14 @@ import {
   Save,
   FolderOpen,
   ChevronDown,
-  ChevronUp
-} from "lucide-react";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { ContextSelector } from "./ContextSelector";
-import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
-import { CanvasGenerator } from "./CanvasGenerator";
-import { PRDArtifacts } from "./PRDArtifacts";
+  ChevronUp,
+} from 'lucide-react';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { ContextSelector } from './ContextSelector';
+import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
+import { CanvasGenerator } from './CanvasGenerator';
+import { PRDArtifacts } from './PRDArtifacts';
 
 interface PRDSection {
   id: string;
@@ -89,7 +89,13 @@ interface PRDDocument {
   personas: Persona[];
   userJourneyMap: JourneyStage[];
   features: Feature[];
-  prioritization: { mvp: string[]; must: string[]; should: string[]; could: string[]; wont: string[] };
+  prioritization: {
+    mvp: string[];
+    must: string[];
+    should: string[];
+    could: string[];
+    wont: string[];
+  };
   acceptance: string[];
   wireframes: string[];
   architecture: any;
@@ -108,11 +114,11 @@ interface Artifact {
 }
 
 export const InstantPRD = () => {
-  const [idea, setIdea] = useState("");
+  const [idea, setIdea] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [showDocument, setShowDocument] = useState(false);
   const [progress, setProgress] = useState(0);
-  const [currentSection, setCurrentSection] = useState("");
+  const [currentSection, setCurrentSection] = useState('');
   const [prdDocument, setPrdDocument] = useState<PRDDocument | null>(null);
   const [isEditMode, setIsEditMode] = useState(false);
   const [activeContext, setActiveContext] = useState<any>(null);
@@ -129,7 +135,9 @@ export const InstantPRD = () => {
   const loadProjectArtifacts = async (contextId: string) => {
     setIsLoadingArtifacts(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user) return;
 
       const { data, error } = await supabase
@@ -140,7 +148,7 @@ export const InstantPRD = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setProjectArtifacts(data || []);
+      setProjectArtifacts((data || []) as unknown as Artifact[]);
     } catch (error) {
       console.error('Error loading artifacts:', error);
     } finally {
@@ -159,22 +167,20 @@ export const InstantPRD = () => {
   };
 
   const toggleArtifactSelection = (artifactId: string) => {
-    setSelectedArtifacts(prev => 
-      prev.includes(artifactId)
-        ? prev.filter(id => id !== artifactId)
-        : [...prev, artifactId]
+    setSelectedArtifacts((prev) =>
+      prev.includes(artifactId) ? prev.filter((id) => id !== artifactId) : [...prev, artifactId]
     );
   };
 
   const getArtifactTypeLabel = (type: string) => {
     const labels: Record<string, string> = {
-      'canvas': 'Canvas',
-      'story': 'User Story',
-      'epic': 'Epic',
-      'tech_spec': 'Spec Technique',
-      'roadmap': 'Roadmap',
-      'prd': 'PRD',
-      'impact_analysis': 'Analyse Impact'
+      canvas: 'Canvas',
+      story: 'User Story',
+      epic: 'Epic',
+      tech_spec: 'Spec Technique',
+      roadmap: 'Roadmap',
+      prd: 'PRD',
+      impact_analysis: 'Analyse Impact',
     };
     return labels[type] || type;
   };
@@ -184,12 +190,17 @@ export const InstantPRD = () => {
     { id: 'context', title: 'Contexte & Objectifs', icon: Target, status: 'pending' },
     { id: 'problem', title: 'Problème à résoudre', icon: AlertTriangle, status: 'pending' },
     { id: 'vision', title: 'Vision produit', icon: Sparkles, status: 'pending' },
-    { id: 'constraints', title: 'Hypothèses & Contraintes', icon: AlertTriangle, status: 'pending' },
+    {
+      id: 'constraints',
+      title: 'Hypothèses & Contraintes',
+      icon: AlertTriangle,
+      status: 'pending',
+    },
     { id: 'personas', title: 'Utilisateurs cibles / Personas', icon: Users, status: 'pending' },
     { id: 'userJourneyMap', title: 'User Journey Map', icon: Map, status: 'pending' },
     { id: 'features', title: 'Fonctionnalités & User Stories', icon: Zap, status: 'pending' },
     { id: 'prioritization', title: 'Priorisation (MoSCoW)', icon: Target, status: 'pending' },
-    { id: 'acceptance', title: 'Critères d\'acceptation', icon: CheckCircle2, status: 'pending' },
+    { id: 'acceptance', title: "Critères d'acceptation", icon: CheckCircle2, status: 'pending' },
     { id: 'wireframes', title: 'Design & UX', icon: Layout, status: 'pending' },
     { id: 'architecture', title: 'Architecture & Intégrations', icon: Code2, status: 'pending' },
     { id: 'risks', title: 'Dépendances & Risques', icon: AlertTriangle, status: 'pending' },
@@ -198,8 +209,11 @@ export const InstantPRD = () => {
     { id: 'appendix', title: 'Annexes & Références', icon: FileText, status: 'pending' },
   ]);
 
-  const updateSectionStatus = (sectionId: string, status: 'pending' | 'generating' | 'complete') => {
-    setSections(prev => prev.map(s => s.id === sectionId ? { ...s, status } : s));
+  const updateSectionStatus = (
+    sectionId: string,
+    status: 'pending' | 'generating' | 'complete'
+  ) => {
+    setSections((prev) => prev.map((s) => (s.id === sectionId ? { ...s, status } : s)));
   };
 
   // Helper function to parse AI responses
@@ -228,7 +242,11 @@ export const InstantPRD = () => {
     if (typeof val === 'string') return val;
     if (typeof val === 'number' || typeof val === 'boolean') return String(val);
     if (Array.isArray(val)) return val.map(safeText).join(', ');
-    try { return JSON.stringify(val); } catch { return String(val); }
+    try {
+      return JSON.stringify(val);
+    } catch {
+      return String(val);
+    }
   };
 
   const normalizeArrayOfStrings = (arr: any): string[] => {
@@ -240,19 +258,26 @@ export const InstantPRD = () => {
 
   const normalizeFeatures = (f: any): Feature[] => {
     if (Array.isArray(f)) {
-      return f.map((item: any, idx: number) => (
+      return f.map((item: any, idx: number) =>
         typeof item === 'string'
           ? { id: `F-${idx + 1}`, name: item, description: '', userStories: [] }
-          : { 
+          : {
               id: item.id || `F-${idx + 1}`,
-              name: safeText(item?.name ?? item?.title ?? 'Feature'), 
+              name: safeText(item?.name ?? item?.title ?? 'Feature'),
               description: safeText(item?.description ?? item?.details ?? ''),
-              userStories: []
+              userStories: [],
             }
-      ));
+      );
     }
     if (f && typeof f === 'object') {
-      return [{ id: 'F-1', name: safeText(f?.name ?? f?.title ?? 'Feature'), description: safeText(f?.description ?? f?.details ?? ''), userStories: [] }];
+      return [
+        {
+          id: 'F-1',
+          name: safeText(f?.name ?? f?.title ?? 'Feature'),
+          description: safeText(f?.description ?? f?.details ?? ''),
+          userStories: [],
+        },
+      ];
     }
     if (typeof f === 'string') return [{ id: 'F-1', name: f, description: '', userStories: [] }];
     return [];
@@ -277,59 +302,67 @@ export const InstantPRD = () => {
 
   const generatePRD = async () => {
     if (!idea.trim()) {
-      toast.error("Veuillez décrire votre idée");
+      toast.error('Veuillez décrire votre idée');
       return;
     }
 
     setIsGenerating(true);
     setProgress(0);
     setShowDocument(false);
-    
+
     const startTime = Date.now();
 
     try {
       // Build context info from selected context
-      const contextInfo = activeContext ? `
+      const contextInfo = activeContext
+        ? `
 Contexte Produit:
 - Vision: ${activeContext.vision || 'Non définie'}
 - Objectifs: ${(activeContext.objectives || []).join(', ')}
 - Audience cible: ${activeContext.target_audience || 'Non définie'}
 - Contraintes: ${activeContext.constraints || 'Aucune'}
-` : '';
+`
+        : '';
 
       // Build artifacts info from selected artifacts with size limit
       const MAX_ARTIFACT_CHARS = 3000; // Per artifact limit
       const MAX_TOTAL_ARTIFACTS_CHARS = 10000; // Total limit for all artifacts
-      
-      const selectedArtifactsData = projectArtifacts.filter(a => selectedArtifacts.includes(a.id));
-      
+
+      const selectedArtifactsData = projectArtifacts.filter((a) =>
+        selectedArtifacts.includes(a.id)
+      );
+
       const truncateContent = (content: any, maxLength: number): string => {
         const str = typeof content === 'string' ? content : JSON.stringify(content, null, 2);
         if (str.length <= maxLength) return str;
         return str.substring(0, maxLength) + '\n... [contenu tronqué pour limiter la taille]';
       };
-      
+
       let artifactsInfo = '';
       let totalChars = 0;
-      
+
       if (selectedArtifactsData.length > 0) {
         const artifactSummaries: string[] = [];
-        
+
         for (const artifact of selectedArtifactsData) {
           const content = truncateContent(artifact.content, MAX_ARTIFACT_CHARS);
           if (totalChars + content.length > MAX_TOTAL_ARTIFACTS_CHARS) {
-            artifactSummaries.push(`--- ${getArtifactTypeLabel(artifact.artifact_type)}: ${artifact.title} ---\n[Artefact ignoré - limite de taille atteinte]`);
+            artifactSummaries.push(
+              `--- ${getArtifactTypeLabel(artifact.artifact_type)}: ${artifact.title} ---\n[Artefact ignoré - limite de taille atteinte]`
+            );
             break;
           }
-          artifactSummaries.push(`--- ${getArtifactTypeLabel(artifact.artifact_type)}: ${artifact.title} ---\n${content}`);
+          artifactSummaries.push(
+            `--- ${getArtifactTypeLabel(artifact.artifact_type)}: ${artifact.title} ---\n${content}`
+          );
           totalChars += content.length;
         }
-        
+
         artifactsInfo = `\n\nArtefacts du projet à prendre en compte:\n${artifactSummaries.join('\n\n')}`;
       }
 
       // Step 1: Introduction (6%)
-      setCurrentSection("Introduction");
+      setCurrentSection('Introduction');
       updateSectionStatus('introduction', 'generating');
       setProgress(6);
 
@@ -339,15 +372,15 @@ Contexte Produit:
 
 Génère une introduction concise (JSON uniquement):
 { "introduction": "Texte en 2-3 phrases" }`,
-          mode: 'simple'
-        }
+          mode: 'simple',
+        },
       });
 
       const introResult = parseAIResponse(introData);
       updateSectionStatus('introduction', 'complete');
 
       // Step 2: Context (12%)
-      setCurrentSection("Contexte & Objectifs");
+      setCurrentSection('Contexte & Objectifs');
       updateSectionStatus('context', 'generating');
       setProgress(12);
 
@@ -359,15 +392,15 @@ ${artifactsInfo}
 
 Génère contexte et objectifs en tenant compte des informations fournies (JSON uniquement):
 { "context": "Texte en 3-4 phrases" }`,
-          mode: 'simple'
-        }
+          mode: 'simple',
+        },
       });
 
       const contextResult = parseAIResponse(contextData);
       updateSectionStatus('context', 'complete');
 
       // Step 3: Problem (18%)
-      setCurrentSection("Problème à résoudre");
+      setCurrentSection('Problème à résoudre');
       updateSectionStatus('problem', 'generating');
       setProgress(18);
 
@@ -377,15 +410,15 @@ Génère contexte et objectifs en tenant compte des informations fournies (JSON 
 
 Génère la description du problème (JSON uniquement):
 { "problem": "Texte en 2-3 phrases" }`,
-          mode: 'simple'
-        }
+          mode: 'simple',
+        },
       });
 
       const problemResult = parseAIResponse(problemData);
       updateSectionStatus('problem', 'complete');
 
       // Step 4: Vision (23%)
-      setCurrentSection("Vision produit");
+      setCurrentSection('Vision produit');
       updateSectionStatus('vision', 'generating');
       setProgress(23);
 
@@ -395,15 +428,15 @@ Génère la description du problème (JSON uniquement):
 
 Génère la vision (JSON uniquement):
 { "vision": "Vision inspirante en 2-3 phrases" }`,
-          mode: 'simple'
-        }
+          mode: 'simple',
+        },
       });
 
       const visionResult = parseAIResponse(visionData);
       updateSectionStatus('vision', 'complete');
 
       // Step 5: Constraints (28%)
-      setCurrentSection("Hypothèses & Contraintes");
+      setCurrentSection('Hypothèses & Contraintes');
       updateSectionStatus('constraints', 'generating');
       setProgress(28);
 
@@ -413,15 +446,15 @@ Génère la vision (JSON uniquement):
 
 Génère 4-5 contraintes (JSON uniquement):
 { "constraints": ["Contrainte 1", "Contrainte 2", ...] }`,
-          mode: 'simple'
-        }
+          mode: 'simple',
+        },
       });
 
       const constraintsResult = parseAIResponse(constraintsData);
       updateSectionStatus('constraints', 'complete');
 
       // Step 6: Personas (34%)
-      setCurrentSection("Utilisateurs cibles / Personas");
+      setCurrentSection('Utilisateurs cibles / Personas');
       updateSectionStatus('personas', 'generating');
       setProgress(34);
 
@@ -441,16 +474,19 @@ Génère 3 personas (JSON uniquement):
     }
   ]
 }`,
-          mode: 'simple'
-        }
+          mode: 'simple',
+        },
       });
 
       const personasResult = parseAIResponse(personasData);
-      const personasWithImages = personasResult.personas.map((p: Persona) => ({ ...p, imageUrl: '' }));
+      const personasWithImages = personasResult.personas.map((p: Persona) => ({
+        ...p,
+        imageUrl: '',
+      }));
       updateSectionStatus('personas', 'complete');
 
       // Step 7: User Journey Map (38%)
-      setCurrentSection("User Journey Map");
+      setCurrentSection('User Journey Map');
       updateSectionStatus('userJourneyMap', 'generating');
       setProgress(38);
 
@@ -473,15 +509,15 @@ Pour chaque étape, inclus les actions, pensées, pain points et opportunités:
     }
   ]
 }`,
-          mode: 'simple'
-        }
+          mode: 'simple',
+        },
       });
 
       const journeyResult = parseAIResponse(journeyData);
       updateSectionStatus('userJourneyMap', 'complete');
 
       // Step 8: Features (44%)
-      setCurrentSection("Fonctionnalités clés");
+      setCurrentSection('Fonctionnalités clés');
       updateSectionStatus('features', 'generating');
       setProgress(44);
 
@@ -499,21 +535,21 @@ Génère 5-7 fonctionnalités clés avec leurs user stories (JSON uniquement):
     }
   ]
 }`,
-          mode: 'simple'
-        }
+          mode: 'simple',
+        },
       });
 
       const featuresResult = parseAIResponse(featuresData);
       const normalizedFeatures = normalizeFeatures(featuresResult.features);
-      
+
       // Step 9: User Stories (51%) - Generate stories for each feature
-      setCurrentSection("User Stories basées sur les fonctionnalités");
+      setCurrentSection('User Stories basées sur les fonctionnalités');
       setProgress(51);
 
       // Generate user stories for each feature
       for (let i = 0; i < normalizedFeatures.length; i++) {
         const feature = normalizedFeatures[i];
-        setProgress(51 + (i * 7 / normalizedFeatures.length));
+        setProgress(51 + (i * 7) / normalizedFeatures.length);
 
         const { data: storiesData } = await supabase.functions.invoke('chat-ai', {
           body: {
@@ -542,8 +578,8 @@ Utilise le T-shirt sizing (XS, S, M, L, XL) pour la complexité:
     }
   ]
 }`,
-            mode: 'simple'
-          }
+            mode: 'simple',
+          },
         });
 
         const storiesResult = parseAIResponse(storiesData);
@@ -553,7 +589,7 @@ Utilise le T-shirt sizing (XS, S, M, L, XL) pour la complexité:
       updateSectionStatus('features', 'complete');
 
       // Step 10: Prioritization (58%)
-      setCurrentSection("Priorisation (MoSCoW)");
+      setCurrentSection('Priorisation (MoSCoW)');
       updateSectionStatus('prioritization', 'generating');
       setProgress(58);
 
@@ -571,8 +607,8 @@ Génère la priorisation MoSCoW (JSON uniquement):
     "wont": ["Won't have 1"]
   }
 }`,
-          mode: 'simple'
-        }
+          mode: 'simple',
+        },
       });
 
       const prioritizationResult = parseAIResponse(prioritizationData);
@@ -589,15 +625,15 @@ Génère la priorisation MoSCoW (JSON uniquement):
 
 Génère 5-6 critères d'acceptation globaux (JSON uniquement):
 { "acceptance": ["Critère 1", "Critère 2", ...] }`,
-          mode: 'simple'
-        }
+          mode: 'simple',
+        },
       });
 
       const acceptanceResult = parseAIResponse(acceptanceData);
       updateSectionStatus('acceptance', 'complete');
 
       // Step 12: Wireframes (70%)
-      setCurrentSection("Design & UX");
+      setCurrentSection('Design & UX');
       updateSectionStatus('wireframes', 'generating');
       setProgress(70);
 
@@ -607,15 +643,15 @@ Génère 5-6 critères d'acceptation globaux (JSON uniquement):
 
 Génère 3 descriptions de wireframes (JSON uniquement):
 { "wireframes": ["Description 1", "Description 2", "Description 3"] }`,
-          mode: 'simple'
-        }
+          mode: 'simple',
+        },
       });
 
       const wireframesResult = parseAIResponse(wireframesData);
       updateSectionStatus('wireframes', 'complete');
 
       // Step 13: Architecture (76%)
-      setCurrentSection("Architecture & Intégrations");
+      setCurrentSection('Architecture & Intégrations');
       updateSectionStatus('architecture', 'generating');
       setProgress(76);
 
@@ -625,15 +661,15 @@ Génère 3 descriptions de wireframes (JSON uniquement):
 
 Génère l'architecture technique (JSON uniquement):
 { "architecture": "Description de l'architecture en texte structuré" }`,
-          mode: 'simple'
-        }
+          mode: 'simple',
+        },
       });
 
       const archResult = parseAIResponse(archData);
       updateSectionStatus('architecture', 'complete');
 
       // Step 14: Risks (82%)
-      setCurrentSection("Dépendances & Risques");
+      setCurrentSection('Dépendances & Risques');
       updateSectionStatus('risks', 'generating');
       setProgress(82);
 
@@ -651,15 +687,15 @@ Génère 4-5 risques avec dépendances (JSON uniquement):
     }
   ]
 }`,
-          mode: 'simple'
-        }
+          mode: 'simple',
+        },
       });
 
       const risksResult = parseAIResponse(risksData);
       updateSectionStatus('risks', 'complete');
 
       // Step 15: KPIs (88%)
-      setCurrentSection("Mesure du succès (KPIs)");
+      setCurrentSection('Mesure du succès (KPIs)');
       updateSectionStatus('kpis', 'generating');
       setProgress(88);
 
@@ -669,15 +705,15 @@ Génère 4-5 risques avec dépendances (JSON uniquement):
 
 Génère 5 KPIs SMART (JSON uniquement):
 { "kpis": ["KPI 1 avec métrique et cible", "KPI 2", ...] }`,
-          mode: 'simple'
-        }
+          mode: 'simple',
+        },
       });
 
       const kpisResult = parseAIResponse(kpisData);
       updateSectionStatus('kpis', 'complete');
 
       // Step 16: Roadmap (94%)
-      setCurrentSection("Roadmap & Planning");
+      setCurrentSection('Roadmap & Planning');
       updateSectionStatus('roadmap', 'generating');
       setProgress(94);
 
@@ -695,15 +731,15 @@ Génère une roadmap en 3 phases (JSON uniquement):
     }
   ]
 }`,
-          mode: 'simple'
-        }
+          mode: 'simple',
+        },
       });
 
       const roadmapResult = parseAIResponse(roadmapData);
       updateSectionStatus('roadmap', 'complete');
 
       // Step 17: Appendix (99%)
-      setCurrentSection("Annexes & Références");
+      setCurrentSection('Annexes & Références');
       updateSectionStatus('appendix', 'generating');
       setProgress(99);
 
@@ -713,8 +749,8 @@ Génère une roadmap en 3 phases (JSON uniquement):
 
 Génère 3-4 références/annexes (JSON uniquement):
 { "appendix": ["Référence 1", "Référence 2", ...] }`,
-          mode: 'simple'
-        }
+          mode: 'simple',
+        },
       });
 
       const appendixResult = parseAIResponse(appendixData);
@@ -722,7 +758,7 @@ Génère 3-4 références/annexes (JSON uniquement):
 
       // Complete!
       setProgress(100);
-      
+
       const document: PRDDocument = {
         introduction: safeText(introResult.introduction),
         context: safeText(contextResult.context),
@@ -764,19 +800,18 @@ Génère 3-4 références/annexes (JSON uniquement):
 
       setTimeout(() => {
         setShowDocument(true);
-        toast.success("🎉 Votre PRD est prêt !", {
+        toast.success('🎉 Votre PRD est prêt !', {
           description: `Généré en ${Math.round(elapsed / 1000)}s`,
         });
       }, 500);
-
     } catch (error) {
       console.error('Error generating PRD:', error);
       const errorMessage = error instanceof Error ? error.message : 'Erreur inconnue';
-      toast.error("Erreur lors de la génération du PRD", {
-        description: errorMessage
+      toast.error('Erreur lors de la génération du PRD', {
+        description: errorMessage,
       });
-      
-      setSections(prev => prev.map(s => ({ ...s, status: 'pending' })));
+
+      setSections((prev) => prev.map((s) => ({ ...s, status: 'pending' })));
       setProgress(0);
     } finally {
       setIsGenerating(false);
@@ -819,7 +854,7 @@ Génère 3-4 références/annexes (JSON uniquement):
                 selectedContextId={activeContext?.id}
               />
             </div>
-            
+
             {activeContext && (
               <div className="mt-3 p-3 bg-background rounded-md border text-sm space-y-1">
                 <p className="font-medium">{activeContext.name}</p>
@@ -843,7 +878,11 @@ Génère 3-4 références/annexes (JSON uniquement):
                         </Badge>
                       )}
                     </span>
-                    {isArtifactsOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                    {isArtifactsOpen ? (
+                      <ChevronUp className="h-4 w-4" />
+                    ) : (
+                      <ChevronDown className="h-4 w-4" />
+                    )}
                   </Button>
                 </CollapsibleTrigger>
                 <CollapsibleContent className="mt-2">
@@ -903,8 +942,8 @@ Génère 3-4 références/annexes (JSON uniquement):
               className="text-base h-12"
               onKeyDown={(e) => e.key === 'Enter' && generatePRD()}
             />
-            <Button 
-              onClick={generatePRD} 
+            <Button
+              onClick={generatePRD}
               disabled={isGenerating || !idea.trim()}
               className="w-full h-12 text-base"
               size="lg"
@@ -941,7 +980,9 @@ Génère 3-4 références/annexes (JSON uniquement):
           <div className="space-y-2">
             <div className="flex justify-between text-sm">
               <span className="font-medium">{progress}%</span>
-              <span className="text-muted-foreground">~{Math.round((100 - progress) / 6)}s restantes</span>
+              <span className="text-muted-foreground">
+                ~{Math.round((100 - progress) / 6)}s restantes
+              </span>
             </div>
             <Progress value={progress} className="h-3" />
           </div>
@@ -952,9 +993,11 @@ Génère 3-4 références/annexes (JSON uniquement):
                 <div
                   key={section.id}
                   className={`flex items-center gap-3 p-3 rounded-lg transition-colors ${
-                    section.status === 'complete' ? 'bg-green-500/10' :
-                    section.status === 'generating' ? 'bg-primary/10' :
-                    'bg-muted/50'
+                    section.status === 'complete'
+                      ? 'bg-green-500/10'
+                      : section.status === 'generating'
+                        ? 'bg-primary/10'
+                        : 'bg-muted/50'
                   }`}
                 >
                   {section.status === 'complete' ? (
@@ -964,11 +1007,15 @@ Génère 3-4 références/annexes (JSON uniquement):
                   ) : (
                     <section.icon className="w-5 h-5 text-muted-foreground flex-shrink-0" />
                   )}
-                  <span className={`font-medium text-sm ${
-                    section.status === 'complete' ? 'text-green-600 dark:text-green-400' :
-                    section.status === 'generating' ? 'text-primary' :
-                    'text-muted-foreground'
-                  }`}>
+                  <span
+                    className={`font-medium text-sm ${
+                      section.status === 'complete'
+                        ? 'text-green-600 dark:text-green-400'
+                        : section.status === 'generating'
+                          ? 'text-primary'
+                          : 'text-muted-foreground'
+                    }`}
+                  >
                     {section.title}
                   </span>
                 </div>
@@ -989,9 +1036,11 @@ Génère 3-4 références/annexes (JSON uniquement):
     const handleSavePRD = async () => {
       setIsSaving(true);
       try {
-        const { data: { user } } = await supabase.auth.getUser();
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
         if (!user) {
-          toast.error("Vous devez être connecté pour sauvegarder");
+          toast.error('Vous devez être connecté pour sauvegarder');
           return;
         }
 
@@ -1000,13 +1049,15 @@ Génère 3-4 références/annexes (JSON uniquement):
         // Save PRD to prds table
         const { data: prdData, error: prdError } = await supabase
           .from('prds')
-          .insert([{
-            user_id: user.id,
-            title: `PRD - ${idea}`,
-            idea_description: idea,
-            document_content: contentToSave as any,
-            product_context_id: activeContext?.id || null
-          }])
+          .insert([
+            {
+              user_id: user.id,
+              title: `PRD - ${idea}`,
+              idea_description: idea,
+              document_content: contentToSave as any,
+              product_context_id: activeContext?.id || null,
+            },
+          ])
           .select()
           .single();
 
@@ -1014,11 +1065,11 @@ Génère 3-4 références/annexes (JSON uniquement):
 
         if (prdData) {
           setSavedPrdId(prdData.id);
-          toast.success("PRD sauvegardé avec succès !");
+          toast.success('PRD sauvegardé avec succès !');
         }
       } catch (error) {
         console.error('Error saving PRD:', error);
-        toast.error("Erreur lors de la sauvegarde");
+        toast.error('Erreur lors de la sauvegarde');
       } finally {
         setIsSaving(false);
       }
@@ -1027,7 +1078,7 @@ Génère 3-4 références/annexes (JSON uniquement):
     const handleSaveEdits = () => {
       setPrdDocument(editedDocument);
       setIsEditMode(false);
-      toast.success("Modifications enregistrées !");
+      toast.success('Modifications enregistrées !');
     };
 
     const handleCancelEdits = () => {
@@ -1036,13 +1087,13 @@ Génère 3-4 références/annexes (JSON uniquement):
     };
 
     const handleExportPDF = () => {
-      toast.info("Export PDF en cours de développement");
+      toast.info('Export PDF en cours de développement');
     };
 
     const handleShare = () => {
       const shareUrl = window.location.href;
       navigator.clipboard.writeText(shareUrl);
-      toast.success("Lien copié dans le presse-papiers !");
+      toast.success('Lien copié dans le presse-papiers !');
     };
 
     const handleBack = () => {
@@ -1088,8 +1139,8 @@ Génère 3-4 références/annexes (JSON uniquement):
                       <Download className="w-4 h-4 mr-2" />
                       Export PDF
                     </Button>
-                    <Button 
-                      variant="outline" 
+                    <Button
+                      variant="outline"
                       size="sm"
                       onClick={() => {
                         setEditedDocument(prdDocument);
@@ -1100,7 +1151,7 @@ Génère 3-4 références/annexes (JSON uniquement):
                       Edit
                     </Button>
                     {savedPrdId && (
-                      <Button 
+                      <Button
                         variant="secondary"
                         size="sm"
                         onClick={() => setShowArtifactCreator(true)}
@@ -1109,11 +1160,7 @@ Génère 3-4 références/annexes (JSON uniquement):
                         Créer un artefact
                       </Button>
                     )}
-                    <Button 
-                      size="sm"
-                      onClick={handleSavePRD}
-                      disabled={isSaving || !!savedPrdId}
-                    >
+                    <Button size="sm" onClick={handleSavePRD} disabled={isSaving || !!savedPrdId}>
                       {isSaving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
                       <Save className="w-4 h-4 mr-2" />
                       {savedPrdId ? 'Sauvegardé' : 'Sauvegarder'}
@@ -1140,7 +1187,11 @@ Génère 3-4 références/annexes (JSON uniquement):
                         <button
                           key={section.id}
                           className="w-full text-left px-3 py-2 rounded-md hover:bg-muted transition-colors text-sm flex items-center gap-2"
-                          onClick={() => document.getElementById(section.id)?.scrollIntoView({ behavior: 'smooth' })}
+                          onClick={() =>
+                            document
+                              .getElementById(section.id)
+                              ?.scrollIntoView({ behavior: 'smooth' })
+                          }
                         >
                           <section.icon className="w-4 h-4 flex-shrink-0" />
                           <span>{section.title}</span>
@@ -1166,7 +1217,11 @@ Génère 3-4 références/annexes (JSON uniquement):
                   {isEditMode ? (
                     <Textarea
                       value={editedDocument?.introduction || ''}
-                      onChange={(e) => setEditedDocument(prev => prev ? {...prev, introduction: e.target.value} : null)}
+                      onChange={(e) =>
+                        setEditedDocument((prev) =>
+                          prev ? { ...prev, introduction: e.target.value } : null
+                        )
+                      }
                       className="min-h-[100px] text-base"
                     />
                   ) : (
@@ -1187,7 +1242,11 @@ Génère 3-4 références/annexes (JSON uniquement):
                   {isEditMode ? (
                     <Textarea
                       value={editedDocument?.context || ''}
-                      onChange={(e) => setEditedDocument(prev => prev ? {...prev, context: e.target.value} : null)}
+                      onChange={(e) =>
+                        setEditedDocument((prev) =>
+                          prev ? { ...prev, context: e.target.value } : null
+                        )
+                      }
                       className="min-h-[100px] text-base"
                     />
                   ) : (
@@ -1208,7 +1267,11 @@ Génère 3-4 références/annexes (JSON uniquement):
                   {isEditMode ? (
                     <Textarea
                       value={editedDocument?.problem || ''}
-                      onChange={(e) => setEditedDocument(prev => prev ? {...prev, problem: e.target.value} : null)}
+                      onChange={(e) =>
+                        setEditedDocument((prev) =>
+                          prev ? { ...prev, problem: e.target.value } : null
+                        )
+                      }
                       className="min-h-[100px] text-base"
                     />
                   ) : (
@@ -1229,7 +1292,11 @@ Génère 3-4 références/annexes (JSON uniquement):
                   {isEditMode ? (
                     <Textarea
                       value={editedDocument?.vision || ''}
-                      onChange={(e) => setEditedDocument(prev => prev ? {...prev, vision: e.target.value} : null)}
+                      onChange={(e) =>
+                        setEditedDocument((prev) =>
+                          prev ? { ...prev, vision: e.target.value } : null
+                        )
+                      }
                       className="min-h-[100px] text-base"
                     />
                   ) : (
@@ -1250,14 +1317,18 @@ Génère 3-4 références/annexes (JSON uniquement):
                   <ul className="space-y-2">
                     {displayDocument.constraints.map((constraint, idx) => (
                       <li key={idx} className="flex items-start gap-2">
-                        <Badge variant="outline" className="mt-0.5">{idx + 1}</Badge>
+                        <Badge variant="outline" className="mt-0.5">
+                          {idx + 1}
+                        </Badge>
                         {isEditMode ? (
                           <Input
                             value={constraint}
                             onChange={(e) => {
                               const newConstraints = [...(editedDocument?.constraints || [])];
                               newConstraints[idx] = e.target.value;
-                              setEditedDocument(prev => prev ? {...prev, constraints: newConstraints} : null);
+                              setEditedDocument((prev) =>
+                                prev ? { ...prev, constraints: newConstraints } : null
+                              );
                             }}
                             className="flex-1 text-sm"
                           />
@@ -1329,7 +1400,7 @@ Génère 3-4 références/annexes (JSON uniquement):
                           <Badge className="text-lg px-3 py-1">{idx + 1}</Badge>
                           <h3 className="font-bold text-xl">{stage.stage}</h3>
                         </div>
-                        
+
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <div className="space-y-2">
                             <h4 className="font-semibold text-sm flex items-center gap-2">
@@ -1342,7 +1413,7 @@ Génère 3-4 références/annexes (JSON uniquement):
                               ))}
                             </ul>
                           </div>
-                          
+
                           <div className="space-y-2">
                             <h4 className="font-semibold text-sm flex items-center gap-2">
                               <Users className="w-4 h-4 text-purple-500" />
@@ -1354,7 +1425,7 @@ Génère 3-4 références/annexes (JSON uniquement):
                               ))}
                             </ul>
                           </div>
-                          
+
                           <div className="space-y-2">
                             <h4 className="font-semibold text-sm flex items-center gap-2">
                               <AlertTriangle className="w-4 h-4 text-red-500" />
@@ -1366,7 +1437,7 @@ Génère 3-4 références/annexes (JSON uniquement):
                               ))}
                             </ul>
                           </div>
-                          
+
                           <div className="space-y-2">
                             <h4 className="font-semibold text-sm flex items-center gap-2">
                               <Sparkles className="w-4 h-4 text-green-500" />
@@ -1404,7 +1475,7 @@ Génère 3-4 références/annexes (JSON uniquement):
                           </div>
                           <p className="text-sm text-muted-foreground">{feature.description}</p>
                         </div>
-                        
+
                         {/* User Stories for this feature */}
                         {feature.userStories && feature.userStories.length > 0 && (
                           <div className="ml-6 space-y-3">
@@ -1413,24 +1484,35 @@ Génère 3-4 références/annexes (JSON uniquement):
                                 <CardHeader className="pb-3">
                                   <div className="flex items-center justify-between flex-wrap gap-2">
                                     <div className="flex items-center gap-2">
-                                      <Badge variant="outline" className="font-mono">{story.id}</Badge>
+                                      <Badge variant="outline" className="font-mono">
+                                        {story.id}
+                                      </Badge>
                                       <h4 className="font-semibold">{story.title}</h4>
                                     </div>
                                     <div className="flex items-center gap-2">
-                                      <Badge variant={
-                                        story.priority === 'high' ? 'destructive' : 
-                                        story.priority === 'medium' ? 'default' : 'secondary'
-                                      }>
+                                      <Badge
+                                        variant={
+                                          story.priority === 'high'
+                                            ? 'destructive'
+                                            : story.priority === 'medium'
+                                              ? 'default'
+                                              : 'secondary'
+                                        }
+                                      >
                                         {story.priority}
                                       </Badge>
-                                      <Badge 
+                                      <Badge
                                         variant="outline"
                                         className={
-                                          story.complexity === 'XS' ? 'bg-green-100 text-green-800' :
-                                          story.complexity === 'S' ? 'bg-blue-100 text-blue-800' :
-                                          story.complexity === 'M' ? 'bg-yellow-100 text-yellow-800' :
-                                          story.complexity === 'L' ? 'bg-orange-100 text-orange-800' :
-                                          'bg-red-100 text-red-800'
+                                          story.complexity === 'XS'
+                                            ? 'bg-green-100 text-green-800'
+                                            : story.complexity === 'S'
+                                              ? 'bg-blue-100 text-blue-800'
+                                              : story.complexity === 'M'
+                                                ? 'bg-yellow-100 text-yellow-800'
+                                                : story.complexity === 'L'
+                                                  ? 'bg-orange-100 text-orange-800'
+                                                  : 'bg-red-100 text-red-800'
                                         }
                                       >
                                         {story.complexity}
@@ -1441,7 +1523,9 @@ Génère 3-4 références/annexes (JSON uniquement):
                                 <CardContent className="space-y-3 pt-0">
                                   <p className="text-sm italic">{story.description}</p>
                                   <div>
-                                    <p className="text-xs font-medium mb-2">Critères d'acceptation:</p>
+                                    <p className="text-xs font-medium mb-2">
+                                      Critères d'acceptation:
+                                    </p>
                                     <ul className="text-sm space-y-1">
                                       {story.acceptanceCriteria.map((criteria, idx) => (
                                         <li key={idx} className="flex items-start gap-2">
@@ -1476,43 +1560,61 @@ Génère 3-4 références/annexes (JSON uniquement):
                       <Badge className="mb-2">MVP</Badge>
                       <ul className="space-y-1 ml-4">
                         {displayDocument.prioritization.mvp.map((item, idx) => (
-                          <li key={idx} className="text-sm">• {safeText(item)}</li>
+                          <li key={idx} className="text-sm">
+                            • {safeText(item)}
+                          </li>
                         ))}
                       </ul>
                     </div>
                     <Separator />
                     <div>
-                      <Badge variant="destructive" className="mb-2">Must Have</Badge>
+                      <Badge variant="destructive" className="mb-2">
+                        Must Have
+                      </Badge>
                       <ul className="space-y-1 ml-4">
                         {displayDocument.prioritization.must.map((item, idx) => (
-                          <li key={idx} className="text-sm">• {safeText(item)}</li>
+                          <li key={idx} className="text-sm">
+                            • {safeText(item)}
+                          </li>
                         ))}
                       </ul>
                     </div>
                     <Separator />
                     <div>
-                      <Badge variant="default" className="mb-2">Should Have</Badge>
+                      <Badge variant="default" className="mb-2">
+                        Should Have
+                      </Badge>
                       <ul className="space-y-1 ml-4">
                         {displayDocument.prioritization.should.map((item, idx) => (
-                          <li key={idx} className="text-sm">• {safeText(item)}</li>
+                          <li key={idx} className="text-sm">
+                            • {safeText(item)}
+                          </li>
                         ))}
                       </ul>
                     </div>
                     <Separator />
                     <div>
-                      <Badge variant="secondary" className="mb-2">Could Have</Badge>
+                      <Badge variant="secondary" className="mb-2">
+                        Could Have
+                      </Badge>
                       <ul className="space-y-1 ml-4">
                         {displayDocument.prioritization.could.map((item, idx) => (
-                          <li key={idx} className="text-sm">• {safeText(item)}</li>
+                          <li key={idx} className="text-sm">
+                            • {safeText(item)}
+                          </li>
                         ))}
                       </ul>
                     </div>
                     <Separator />
                     <div>
-                      <Badge variant="outline" className="mb-2">Won't Have</Badge>
+                      <Badge variant="outline" className="mb-2">
+                        Won't Have
+                      </Badge>
                       <ul className="space-y-1 ml-4">
                         {displayDocument.prioritization.wont.map((item, idx) => (
-                          <li key={idx} className="text-sm">• {safeText(item)}</li>
+                          <li key={idx} className="text-sm">
+                            • {safeText(item)}
+                          </li>
                         ))}
                       </ul>
                     </div>
@@ -1571,8 +1673,8 @@ Génère 3-4 références/annexes (JSON uniquement):
                 <CardContent>
                   <div className="p-4 bg-muted rounded-lg">
                     <pre className="text-xs overflow-x-auto whitespace-pre-wrap">
-                      {typeof displayDocument.architecture === 'string' 
-                        ? displayDocument.architecture 
+                      {typeof displayDocument.architecture === 'string'
+                        ? displayDocument.architecture
                         : JSON.stringify(displayDocument.architecture, null, 2)}
                     </pre>
                   </div>
@@ -1636,7 +1738,8 @@ Génère 3-4 références/annexes (JSON uniquement):
                       }
 
                       // Check if it's a structured KPI object
-                      const isStructured = typeof parsedKpi === 'object' && parsedKpi !== null && 'name' in parsedKpi;
+                      const isStructured =
+                        typeof parsedKpi === 'object' && parsedKpi !== null && 'name' in parsedKpi;
 
                       return (
                         <div key={idx} className="border rounded-lg p-4 space-y-3">
@@ -1645,16 +1748,22 @@ Génère 3-4 références/annexes (JSON uniquement):
                             <div className="flex-1 space-y-2">
                               {isStructured ? (
                                 <>
-                                  <h4 className="font-semibold text-base">{parsedKpi?.name || ''}</h4>
+                                  <h4 className="font-semibold text-base">
+                                    {parsedKpi?.name || ''}
+                                  </h4>
                                   {parsedKpi?.metric && (
                                     <div className="text-sm">
-                                      <span className="font-medium text-muted-foreground">Métrique: </span>
+                                      <span className="font-medium text-muted-foreground">
+                                        Métrique:{' '}
+                                      </span>
                                       <span>{parsedKpi.metric}</span>
                                     </div>
                                   )}
                                   {parsedKpi?.target && (
                                     <div className="text-sm">
-                                      <span className="font-medium text-muted-foreground">Cible: </span>
+                                      <span className="font-medium text-muted-foreground">
+                                        Cible:{' '}
+                                      </span>
                                       <span className="font-medium">{parsedKpi.target}</span>
                                     </div>
                                   )}
@@ -1664,27 +1773,32 @@ Génère 3-4 références/annexes (JSON uniquement):
                                       <div className="grid grid-cols-1 gap-2 text-xs">
                                         {parsedKpi.smart_attributes.specific && (
                                           <div>
-                                            <span className="font-semibold">Spécifique:</span> {parsedKpi.smart_attributes.specific}
+                                            <span className="font-semibold">Spécifique:</span>{' '}
+                                            {parsedKpi.smart_attributes.specific}
                                           </div>
                                         )}
                                         {parsedKpi.smart_attributes.measurable && (
                                           <div>
-                                            <span className="font-semibold">Mesurable:</span> {parsedKpi.smart_attributes.measurable}
+                                            <span className="font-semibold">Mesurable:</span>{' '}
+                                            {parsedKpi.smart_attributes.measurable}
                                           </div>
                                         )}
                                         {parsedKpi.smart_attributes.achievable && (
                                           <div>
-                                            <span className="font-semibold">Atteignable:</span> {parsedKpi.smart_attributes.achievable}
+                                            <span className="font-semibold">Atteignable:</span>{' '}
+                                            {parsedKpi.smart_attributes.achievable}
                                           </div>
                                         )}
                                         {parsedKpi.smart_attributes.relevant && (
                                           <div>
-                                            <span className="font-semibold">Pertinent:</span> {parsedKpi.smart_attributes.relevant}
+                                            <span className="font-semibold">Pertinent:</span>{' '}
+                                            {parsedKpi.smart_attributes.relevant}
                                           </div>
                                         )}
                                         {parsedKpi.smart_attributes.time_bound && (
                                           <div>
-                                            <span className="font-semibold">Temporel:</span> {parsedKpi.smart_attributes.time_bound}
+                                            <span className="font-semibold">Temporel:</span>{' '}
+                                            {parsedKpi.smart_attributes.time_bound}
                                           </div>
                                         )}
                                       </div>
@@ -1749,7 +1863,9 @@ Génère 3-4 références/annexes (JSON uniquement):
                   <ul className="space-y-2">
                     {displayDocument.appendix.map((item, idx) => (
                       <li key={idx} className="flex items-start gap-2">
-                        <Badge variant="outline" className="mt-0.5">{idx + 1}</Badge>
+                        <Badge variant="outline" className="mt-0.5">
+                          {idx + 1}
+                        </Badge>
                         <span className="text-sm flex-1">{safeText(item)}</span>
                       </li>
                     ))}
@@ -1758,9 +1874,7 @@ Génère 3-4 références/annexes (JSON uniquement):
               </Card>
 
               {/* PRD Artifacts Section */}
-              {savedPrdId && (
-                <PRDArtifacts prdId={savedPrdId} />
-              )}
+              {savedPrdId && <PRDArtifacts prdId={savedPrdId} />}
             </div>
           </div>
         </div>
@@ -1772,8 +1886,8 @@ Génère 3-4 références/annexes (JSON uniquement):
     return (
       <>
         {renderDocumentScreen()}
-        <CanvasGenerator 
-          open={showArtifactCreator} 
+        <CanvasGenerator
+          open={showArtifactCreator}
           onClose={() => setShowArtifactCreator(false)}
           prdId={savedPrdId}
           prdContent={prdDocument}

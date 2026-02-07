@@ -32,49 +32,83 @@ export const ArtifactCard: React.FC<ArtifactCardProps> = ({ artifact, onDelete, 
           .join('\n\n');
 
       case 'story':
-        return `TITLE: ${content.title || 'Untitled'}\n\n` +
+        return (
+          `TITLE: ${content.title || 'Untitled'}\n\n` +
           `AS A: ${content.as_a || 'N/A'}\n` +
           `I WANT: ${content.i_want || 'N/A'}\n` +
           `SO THAT: ${content.so_that || 'N/A'}\n\n` +
-          `ACCEPTANCE CRITERIA:\n${Array.isArray(content.acceptance_criteria) 
-            ? content.acceptance_criteria.map((c: string, i: number) => `${i + 1}. ${c}`).join('\n') 
-            : content.acceptance_criteria || 'None'}\n\n` +
-          `TECHNICAL NOTES:\n${content.technical_notes || 'None'}`;
+          `ACCEPTANCE CRITERIA:\n${
+            Array.isArray(content.acceptance_criteria)
+              ? content.acceptance_criteria
+                  .map((c: string, i: number) => `${i + 1}. ${c}`)
+                  .join('\n')
+              : content.acceptance_criteria || 'None'
+          }\n\n` +
+          `TECHNICAL NOTES:\n${content.technical_notes || 'None'}`
+        );
 
       case 'epic':
-        return `EPIC: ${content.title || 'Untitled'}\n\n` +
+        return (
+          `EPIC: ${content.title || 'Untitled'}\n\n` +
           `DESCRIPTION:\n${content.description || 'No description'}\n\n` +
-          `GOALS:\n${Array.isArray(content.goals) 
-            ? content.goals.map((g: string, i: number) => `${i + 1}. ${g}`).join('\n') 
-            : content.goals || 'None'}\n\n` +
-          `USER STORIES:\n${Array.isArray(content.user_stories) 
-            ? content.user_stories.map((s: any, i: number) => `${i + 1}. ${typeof s === 'object' ? s.title || JSON.stringify(s) : s}`).join('\n') 
-            : content.user_stories || 'None'}`;
+          `GOALS:\n${
+            Array.isArray(content.goals)
+              ? content.goals.map((g: string, i: number) => `${i + 1}. ${g}`).join('\n')
+              : content.goals || 'None'
+          }\n\n` +
+          `USER STORIES:\n${
+            Array.isArray(content.user_stories)
+              ? content.user_stories
+                  .map(
+                    (s: any, i: number) =>
+                      `${i + 1}. ${typeof s === 'object' ? s.title || JSON.stringify(s) : s}`
+                  )
+                  .join('\n')
+              : content.user_stories || 'None'
+          }`
+        );
 
       case 'impact_analysis':
-        return `IMPACT ANALYSIS\n\n` +
+        return (
+          `IMPACT ANALYSIS\n\n` +
           `EFFORT: ${content.effort || 'N/A'}\n` +
           `IMPACT: ${content.impact || 'N/A'}\n` +
           `PRIORITY: ${content.priority || 'N/A'}\n\n` +
           `ANALYSIS:\n${content.analysis || 'No analysis available'}\n\n` +
-          `RISKS:\n${Array.isArray(content.risks) 
-            ? content.risks.map((r: string, i: number) => `${i + 1}. ${r}`).join('\n') 
-            : content.risks || 'None'}\n\n` +
-          `DEPENDENCIES:\n${Array.isArray(content.dependencies) 
-            ? content.dependencies.map((d: string, i: number) => `${i + 1}. ${d}`).join('\n') 
-            : content.dependencies || 'None'}`;
+          `RISKS:\n${
+            Array.isArray(content.risks)
+              ? content.risks.map((r: string, i: number) => `${i + 1}. ${r}`).join('\n')
+              : content.risks || 'None'
+          }\n\n` +
+          `DEPENDENCIES:\n${
+            Array.isArray(content.dependencies)
+              ? content.dependencies.map((d: string, i: number) => `${i + 1}. ${d}`).join('\n')
+              : content.dependencies || 'None'
+          }`
+        );
 
       case 'tech_spec':
-        return `TECHNICAL SPECIFICATION\n\n` +
+        return (
+          `TECHNICAL SPECIFICATION\n\n` +
           `TITLE: ${content.title || 'Untitled'}\n\n` +
           `OVERVIEW:\n${content.overview || 'No overview'}\n\n` +
           `ARCHITECTURE:\n${content.architecture || 'No architecture details'}\n\n` +
-          `TECHNOLOGIES:\n${Array.isArray(content.technologies) 
-            ? content.technologies.map((t: string, i: number) => `${i + 1}. ${t}`).join('\n') 
-            : content.technologies || 'None'}\n\n` +
-          `API ENDPOINTS:\n${Array.isArray(content.api_endpoints) 
-            ? content.api_endpoints.map((e: any, i: number) => `${i + 1}. ${typeof e === 'object' ? `${e.method} ${e.path}` : e}`).join('\n') 
-            : content.api_endpoints || 'None'}`;
+          `TECHNOLOGIES:\n${
+            Array.isArray(content.technologies)
+              ? content.technologies.map((t: string, i: number) => `${i + 1}. ${t}`).join('\n')
+              : content.technologies || 'None'
+          }\n\n` +
+          `API ENDPOINTS:\n${
+            Array.isArray(content.api_endpoints)
+              ? content.api_endpoints
+                  .map(
+                    (e: any, i: number) =>
+                      `${i + 1}. ${typeof e === 'object' ? `${e.method} ${e.path}` : e}`
+                  )
+                  .join('\n')
+              : content.api_endpoints || 'None'
+          }`
+        );
 
       default:
         return JSON.stringify(content, null, 2);
@@ -121,13 +155,29 @@ export const ArtifactCard: React.FC<ArtifactCardProps> = ({ artifact, onDelete, 
   const getTypeBadge = (type: string) => {
     switch (type) {
       case 'canvas':
-        return <Badge variant="default" className="bg-agent-purple">Canvas</Badge>;
+        return (
+          <Badge variant="default" className="bg-agent-purple">
+            Canvas
+          </Badge>
+        );
       case 'story':
-        return <Badge variant="default" className="bg-agent-blue">User Story</Badge>;
+        return (
+          <Badge variant="default" className="bg-agent-blue">
+            User Story
+          </Badge>
+        );
       case 'epic':
-        return <Badge variant="default" className="bg-agent-orange">Epic</Badge>;
+        return (
+          <Badge variant="default" className="bg-agent-orange">
+            Epic
+          </Badge>
+        );
       case 'impact_analysis':
-        return <Badge variant="default" className="bg-agent-green">Impact Analysis</Badge>;
+        return (
+          <Badge variant="default" className="bg-agent-green">
+            Impact Analysis
+          </Badge>
+        );
       default:
         return <Badge variant="outline">{type}</Badge>;
     }
@@ -143,7 +193,7 @@ export const ArtifactCard: React.FC<ArtifactCardProps> = ({ artifact, onDelete, 
               <div>
                 <CardTitle className="text-lg line-clamp-1">{artifact.title}</CardTitle>
                 <CardDescription className="text-xs">
-                  {formatDate(artifact.created_at)}
+                  {formatDate(artifact.created_at ?? '')}
                 </CardDescription>
               </div>
             </div>
@@ -152,34 +202,18 @@ export const ArtifactCard: React.FC<ArtifactCardProps> = ({ artifact, onDelete, 
         </CardHeader>
         <CardContent>
           <div className="flex items-center justify-between">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setShowDetails(true)}
-            >
+            <Button variant="outline" size="sm" onClick={() => setShowDetails(true)}>
               <Eye className="w-4 h-4 mr-2" />
               View
             </Button>
             <div className="flex space-x-1">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleCopy}
-              >
+              <Button variant="ghost" size="sm" onClick={handleCopy}>
                 <Copy className="w-4 h-4" />
               </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleDownload}
-              >
+              <Button variant="ghost" size="sm" onClick={handleDownload}>
                 <Download className="w-4 h-4" />
               </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => onDelete(artifact.id)}
-              >
+              <Button variant="ghost" size="sm" onClick={() => onDelete(artifact.id)}>
                 <Trash2 className="w-4 h-4" />
               </Button>
             </div>
@@ -200,7 +234,7 @@ export const ArtifactCard: React.FC<ArtifactCardProps> = ({ artifact, onDelete, 
               <div className="flex items-center space-x-2">
                 {getTypeBadge(artifact.artifact_type)}
                 <span className="text-sm text-muted-foreground">
-                  Created {formatDate(artifact.created_at)}
+                  Created {formatDate(artifact.created_at ?? '')}
                 </span>
               </div>
               <div className="flex space-x-2">
