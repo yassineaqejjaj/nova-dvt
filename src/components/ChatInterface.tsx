@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, type FC } from 'react';
+import { useState, useEffect, useRef, useCallback, type FC } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -16,7 +16,7 @@ import {
   AgentInsight,
 } from '@/types';
 import { toast } from '@/hooks/use-toast';
-import { Send, Users, Loader2, AtSign } from 'lucide-react';
+import { Send, Users, Loader2, AtSign, Zap } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { CanvasGenerator } from './CanvasGenerator';
 import { StoryWriter } from './StoryWriter';
@@ -32,6 +32,9 @@ import {
   inferRoleFromSpecialty,
   ArtifactDropZone,
   ChatControlHeader,
+  PendingActionsRail,
+  OrchestratorStatus,
+  AgentConfidence,
 } from './chat';
 
 type Artifact = {
@@ -49,6 +52,8 @@ interface ExtendedChatMessage extends ChatMessage {
   reactionType?: 'agree' | 'disagree' | 'risk' | 'idea';
   isLeadResponse?: boolean;
   isConductor?: boolean;
+  confidence?: number;
+  keyPoints?: string[];
 }
 
 interface ChatInterfaceProps {
@@ -75,7 +80,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ currentSquad, squa
   const [previewArtifact, setPreviewArtifact] = useState<Artifact | null>(null);
 
   // UX Enhancement states
-  const [responseMode, setResponseMode] = useState<ResponseMode>('short');
+  const [responseMode, setResponseMode] = useState<ResponseMode>('structured');
   const [showSynthesisPanel, setShowSynthesisPanel] = useState(true);
   const [activeSteeringMode, setActiveSteeringMode] = useState<SteeringCommand | null>(null);
   const [liveSynthesis, setLiveSynthesis] = useState<LiveSynthesis>({
@@ -88,6 +93,31 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ currentSquad, squa
 
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // Load pending actions
+  const loadPendingActions = useCallback(async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data, error } = await supabase
+        .from('agent_actions')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('status', 'pending')
+        .order('created_at', { ascending: false })
+        .limit(10);
+
+      if (error) throw error;
+      setPendingActions((data || []) as AgentAction[]);
+    } catch (error) {
+      console.error('Error loading pending actions:', error);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadPendingActions();
+  }, [loadPendingActions]);
 
   useEffect(() => {
     if (squadId && currentSquad.length > 0) {
@@ -365,6 +395,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ currentSquad, squa
       const fullConversationHistory = messages.slice(-10).map((msg) => ({
         role: msg.sender === 'user' ? 'user' : 'assistant',
         content: msg.content,
+        agentName: msg.sender !== 'user' ? (msg.sender as Agent).name : undefined,
       }));
       fullConversationHistory.push({ role: 'user', content: messageToSend });
 
@@ -384,21 +415,37 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ currentSquad, squa
         );
       }
 
-      // Build response mode instructions
-      const modeInstructions = getResponseModeInstructions(responseMode);
+      // Use orchestrator for complex multi-agent coordination
+      if (useOrchestrator && respondingAgents.length > 1) {
+        // Convert agents to registry format for orchestrator
+        const agentsForOrchestrator = respondingAgents.map(a => ({
+          agent_key: a.id,
+          name: a.name,
+          specialty: a.specialty,
+          system_prompt: `Expert en ${a.specialty}. ${a.backstory || ''}`,
+          decision_style: a.personality || 'balanced',
+          tools_allowed: ['canvas_generator', 'story_writer', 'impact_plotter'],
+          priorities: a.capabilities.slice(0, 3),
+          biases: null,
+          capabilities: a.capabilities,
+          is_conductor: false,
+          max_tokens: responseMode === 'short' ? 200 : responseMode === 'detailed' ? 600 : 400,
+          temperature: 0.7,
+        }));
 
-      const { data, error } = await supabase.functions.invoke('chat-ai', {
-        body: {
-          messages: fullConversationHistory,
-          agents: respondingAgents,
-          mentionedAgents: userMessage.mentionedAgents || [],
-          artifactContext: artifactContext || undefined,
-          responseMode: responseMode,
-          modeInstructions: modeInstructions,
-        },
-      });
+        const { data: orchestratorData, error: orchestratorError } = await supabase.functions.invoke('orchestrate-agents', {
+          body: {
+            message: messageToSend,
+            squadId,
+            agents: agentsForOrchestrator,
+            conversationHistory: fullConversationHistory,
+            projectContext: artifactContext || undefined,
+            responseMode,
+            phase: currentPhase,
+          }
+        });
 
-      if (error) throw error;
+        if (orchestratorError) throw orchestratorError;
 
       // Process responses with coordinated turns
       const responses = data.responses || [];
@@ -431,7 +478,6 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ currentSquad, squa
             });
           }
         }
-      }
 
       // Other agents provide micro-reactions
       const otherResponses = responses.slice(1);
@@ -454,8 +500,9 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ currentSquad, squa
         setMessages((prev) => [...prev, reactionMessage]);
       }
 
-      // Update live synthesis
-      updateLiveSynthesis(messageToSend, responses);
+        // Update live synthesis
+        updateLiveSynthesis(messageToSend, responses);
+      }
 
       // Generate thread conclusion after a few exchanges
       if (messages.length > 6) {
@@ -519,6 +566,45 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ currentSquad, squa
     const sentences = message.split(/[.!?]/);
     const meaningful = sentences.find((s) => s.trim().length > 10) || sentences[0];
     return meaningful.trim().slice(0, 100) + (meaningful.length > 100 ? '...' : '');
+  };
+
+  // Defensive UI sanitization for orchestrator outputs.
+  // Prevents (1) JSON metadata blobs like "json { ... }" from being rendered,
+  // and (2) accidental multi-speaker prefixes inside a single agent message.
+  const sanitizeOrchestratorContent = (
+    raw: unknown,
+    currentAgentName: string | undefined,
+    allAgentNames: string[]
+  ): string => {
+    let text = typeof raw === 'string'
+      ? raw
+      : raw === null || raw === undefined
+        ? ''
+        : (typeof raw === 'number' || typeof raw === 'boolean')
+          ? String(raw)
+          : JSON.stringify(raw);
+
+    // Strip trailing "json { ... }" (case-insensitive)
+    text = text.replace(/\bjson\s*\{[\s\S]*\}\s*$/i, '').trim();
+    // Strip any trailing JSON blob containing "stance" (fallback)
+    text = text.replace(/\{[\s\S]*?"stance"[\s\S]*\}\s*$/i, '').trim();
+
+    const otherNames = allAgentNames
+      .filter(Boolean)
+      .filter(n => (currentAgentName ? n.toLowerCase() !== currentAgentName.toLowerCase() : true))
+      .sort((a, b) => b.length - a.length);
+
+    if (otherNames.length > 0) {
+      const escaped = otherNames.map(n => n.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+      const rx = new RegExp(`^(?:${escaped.join('|')})\\s*:\\s*`, 'i');
+      text = text
+        .split('\n')
+        .map(line => line.replace(rx, ''))
+        .join('\n')
+        .trim();
+    }
+
+    return text;
   };
 
   const updateLiveSynthesis = (question: string, responses: any[]) => {

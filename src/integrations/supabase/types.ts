@@ -14,6 +14,68 @@ export type Database = {
   }
   public: {
     Tables: {
+      agent_actions: {
+        Row: {
+          action_args: Json | null
+          action_label: string
+          action_type: string
+          agent_key: string
+          agent_name: string
+          created_at: string
+          error_message: string | null
+          executed_at: string | null
+          expires_at: string | null
+          id: string
+          priority: number | null
+          result: Json | null
+          squad_id: string | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          action_args?: Json | null
+          action_label: string
+          action_type: string
+          agent_key: string
+          agent_name: string
+          created_at?: string
+          error_message?: string | null
+          executed_at?: string | null
+          expires_at?: string | null
+          id?: string
+          priority?: number | null
+          result?: Json | null
+          squad_id?: string | null
+          status?: string
+          user_id: string
+        }
+        Update: {
+          action_args?: Json | null
+          action_label?: string
+          action_type?: string
+          agent_key?: string
+          agent_name?: string
+          created_at?: string
+          error_message?: string | null
+          executed_at?: string | null
+          expires_at?: string | null
+          id?: string
+          priority?: number | null
+          result?: Json | null
+          squad_id?: string | null
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_actions_squad_id_fkey"
+            columns: ["squad_id"]
+            isOneToOne: false
+            referencedRelation: "squads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       agent_analytics: {
         Row: {
           agent_id: string
@@ -73,6 +135,66 @@ export type Database = {
           },
         ]
       }
+      agent_memory: {
+        Row: {
+          agent_key: string
+          content: string
+          context_id: string | null
+          created_at: string
+          expires_at: string | null
+          id: string
+          importance: number | null
+          memory_type: string
+          metadata: Json | null
+          squad_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          agent_key: string
+          content: string
+          context_id?: string | null
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          importance?: number | null
+          memory_type: string
+          metadata?: Json | null
+          squad_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          agent_key?: string
+          content?: string
+          context_id?: string | null
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          importance?: number | null
+          memory_type?: string
+          metadata?: Json | null
+          squad_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_memory_context_id_fkey"
+            columns: ["context_id"]
+            isOneToOne: false
+            referencedRelation: "product_contexts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agent_memory_squad_id_fkey"
+            columns: ["squad_id"]
+            isOneToOne: false
+            referencedRelation: "squads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       agent_personalities: {
         Row: {
           agent_id: string
@@ -103,6 +225,75 @@ export type Database = {
           updated_at?: string
           user_id?: string
           visual_style?: Json | null
+        }
+        Relationships: []
+      }
+      agent_registry: {
+        Row: {
+          agent_key: string
+          avatar: string | null
+          backstory: string | null
+          biases: string | null
+          capabilities: string[] | null
+          created_at: string
+          decision_style: string
+          family_color: string | null
+          id: string
+          is_conductor: boolean | null
+          max_tokens: number | null
+          name: string
+          priorities: string[] | null
+          role: string | null
+          specialty: string
+          system_prompt: string
+          tags: string[] | null
+          temperature: number | null
+          tools_allowed: string[] | null
+          updated_at: string
+        }
+        Insert: {
+          agent_key: string
+          avatar?: string | null
+          backstory?: string | null
+          biases?: string | null
+          capabilities?: string[] | null
+          created_at?: string
+          decision_style?: string
+          family_color?: string | null
+          id?: string
+          is_conductor?: boolean | null
+          max_tokens?: number | null
+          name: string
+          priorities?: string[] | null
+          role?: string | null
+          specialty: string
+          system_prompt: string
+          tags?: string[] | null
+          temperature?: number | null
+          tools_allowed?: string[] | null
+          updated_at?: string
+        }
+        Update: {
+          agent_key?: string
+          avatar?: string | null
+          backstory?: string | null
+          biases?: string | null
+          capabilities?: string[] | null
+          created_at?: string
+          decision_style?: string
+          family_color?: string | null
+          id?: string
+          is_conductor?: boolean | null
+          max_tokens?: number | null
+          name?: string
+          priorities?: string[] | null
+          role?: string | null
+          specialty?: string
+          system_prompt?: string
+          tags?: string[] | null
+          temperature?: number | null
+          tools_allowed?: string[] | null
+          updated_at?: string
         }
         Relationships: []
       }
@@ -768,6 +959,81 @@ export type Database = {
             columns: ["conversation_id"]
             isOneToOne: false
             referencedRelation: "nova_conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      orchestration_sessions: {
+        Row: {
+          assigned_agents: string[] | null
+          conductor_notes: string | null
+          context_id: string | null
+          created_at: string
+          current_round: number | null
+          final_synthesis: Json | null
+          goals: Json | null
+          id: string
+          is_active: boolean | null
+          max_rounds: number | null
+          phase: string
+          round_outputs: Json | null
+          session_type: string
+          squad_id: string | null
+          tasks: Json | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          assigned_agents?: string[] | null
+          conductor_notes?: string | null
+          context_id?: string | null
+          created_at?: string
+          current_round?: number | null
+          final_synthesis?: Json | null
+          goals?: Json | null
+          id?: string
+          is_active?: boolean | null
+          max_rounds?: number | null
+          phase?: string
+          round_outputs?: Json | null
+          session_type?: string
+          squad_id?: string | null
+          tasks?: Json | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          assigned_agents?: string[] | null
+          conductor_notes?: string | null
+          context_id?: string | null
+          created_at?: string
+          current_round?: number | null
+          final_synthesis?: Json | null
+          goals?: Json | null
+          id?: string
+          is_active?: boolean | null
+          max_rounds?: number | null
+          phase?: string
+          round_outputs?: Json | null
+          session_type?: string
+          squad_id?: string | null
+          tasks?: Json | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "orchestration_sessions_context_id_fkey"
+            columns: ["context_id"]
+            isOneToOne: false
+            referencedRelation: "product_contexts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orchestration_sessions_squad_id_fkey"
+            columns: ["squad_id"]
+            isOneToOne: false
+            referencedRelation: "squads"
             referencedColumns: ["id"]
           },
         ]
