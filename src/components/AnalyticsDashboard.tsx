@@ -4,18 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { supabase } from '@/integrations/supabase/client';
 import { AnalyticsEvent } from '@/types';
-import {
-  TrendingUp,
-  Users,
-  Zap,
-  FileText,
-  Grid3X3,
-  MessageSquare,
-  Loader2,
-  Activity,
-  Target,
-  BarChart3,
-} from 'lucide-react';
+import { TrendingUp, Users, Zap, FileText, Grid3X3, MessageSquare, Loader2, Activity, Target, BarChart3 } from 'lucide-react';
 import {
   BarChart,
   Bar,
@@ -29,7 +18,7 @@ import {
   CartesianGrid,
   Tooltip,
   Legend,
-  ResponsiveContainer,
+  ResponsiveContainer
 } from 'recharts';
 
 interface AnalyticsDashboardProps {
@@ -50,7 +39,7 @@ export const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ userId }
       // Load all events from last 30 days
       const thirtyDaysAgo = new Date();
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-
+      
       const { data, error } = await supabase
         .from('analytics_events')
         .select('*')
@@ -69,7 +58,7 @@ export const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ userId }
 
   const getEventCounts = () => {
     const counts: Record<string, number> = {};
-    events.forEach((event) => {
+    events.forEach(event => {
       counts[event.event_type] = (counts[event.event_type] || 0) + 1;
     });
     return counts;
@@ -82,21 +71,19 @@ export const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ userId }
       const date = new Date();
       date.setDate(date.getDate() - i);
       const dateStr = date.toLocaleDateString('fr-FR', { month: 'short', day: 'numeric' });
-
-      const dayEvents = events.filter((e) => {
-        const eventDate = new Date(e.created_at ?? '');
-        return (
-          eventDate.toDateString() === date.toDateString() && e.event_type.includes('workflow')
-        );
+      
+      const dayEvents = events.filter(e => {
+        const eventDate = new Date(e.created_at);
+        return eventDate.toDateString() === date.toDateString() && 
+               e.event_type.includes('workflow');
       });
-
+      
       last7Days.push({
         date: dateStr,
-        'Feature Discovery': dayEvents.filter((e) => e.event_type === 'workflow_feature_discovery')
-          .length,
-        'Roadmap Planning': dayEvents.filter((e) => e.event_type === 'workflow_roadmap').length,
-        'Sprint Planning': dayEvents.filter((e) => e.event_type === 'workflow_sprint').length,
-        'Tech Spec': dayEvents.filter((e) => e.event_type === 'workflow_tech_spec').length,
+        'Feature Discovery': dayEvents.filter(e => e.event_type === 'workflow_feature_discovery').length,
+        'Roadmap Planning': dayEvents.filter(e => e.event_type === 'workflow_roadmap').length,
+        'Sprint Planning': dayEvents.filter(e => e.event_type === 'workflow_sprint').length,
+        'Tech Spec': dayEvents.filter(e => e.event_type === 'workflow_tech_spec').length,
       });
     }
     return last7Days;
@@ -109,17 +96,18 @@ export const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ userId }
       const date = new Date();
       date.setDate(date.getDate() - i);
       const dateStr = date.toLocaleDateString('fr-FR', { month: 'short', day: 'numeric' });
-
-      const dayWorkflows = events.filter((e) => {
-        const eventDate = new Date(e.created_at ?? '');
-        return (
-          eventDate.toDateString() === date.toDateString() && e.event_type.includes('workflow')
-        );
+      
+      const dayWorkflows = events.filter(e => {
+        const eventDate = new Date(e.created_at);
+        return eventDate.toDateString() === date.toDateString() && 
+               e.event_type.includes('workflow');
       });
-
-      const completed = dayWorkflows.filter((e) => e.event_data?.status === 'completed').length;
+      
+      const completed = dayWorkflows.filter(e => 
+        e.event_data?.status === 'completed'
+      ).length;
       const total = dayWorkflows.length;
-
+      
       last7Days.push({
         date: dateStr,
         rate: total > 0 ? Math.round((completed / total) * 100) : 0,
@@ -130,12 +118,14 @@ export const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ userId }
 
   // Average Latency
   const getAvgLatency = () => {
-    const workflowEvents = events.filter(
-      (e) => e.event_type.includes('workflow') && e.event_data?.latency
+    const workflowEvents = events.filter(e => 
+      e.event_type.includes('workflow') && e.event_data?.latency
     );
     if (workflowEvents.length === 0) return 0;
-
-    const totalLatency = workflowEvents.reduce((sum, e) => sum + (e.event_data?.latency || 0), 0);
+    
+    const totalLatency = workflowEvents.reduce((sum, e) => 
+      sum + (e.event_data?.latency || 0), 0
+    );
     return Math.round(totalLatency / workflowEvents.length);
   };
 
@@ -143,24 +133,25 @@ export const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ userId }
   const getArtifactsByType = () => {
     const types = ['epic', 'story', 'canvas', 'impact_analysis'];
     const last7Days: any[] = [];
-
+    
     for (let i = 6; i >= 0; i--) {
       const date = new Date();
       date.setDate(date.getDate() - i);
       const dateStr = date.toLocaleDateString('fr-FR', { month: 'short', day: 'numeric' });
-
-      const dayArtifacts = events.filter((e) => {
-        const eventDate = new Date(e.created_at ?? '');
-        return (
-          eventDate.toDateString() === date.toDateString() && e.event_type.includes('artifact')
-        );
+      
+      const dayArtifacts = events.filter(e => {
+        const eventDate = new Date(e.created_at);
+        return eventDate.toDateString() === date.toDateString() && 
+               e.event_type.includes('artifact');
       });
-
+      
       const result: any = { date: dateStr };
-      types.forEach((type) => {
-        result[type] = dayArtifacts.filter((e) => e.event_data?.artifact_type === type).length;
+      types.forEach(type => {
+        result[type] = dayArtifacts.filter(e => 
+          e.event_data?.artifact_type === type
+        ).length;
       });
-
+      
       last7Days.push(result);
     }
     return last7Days;
@@ -168,24 +159,19 @@ export const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ userId }
 
   // Agent Conversations by role
   const getConversationsByRole = () => {
-    const conversations = events.filter((e) => e.event_type === 'agent_conversation');
-
+    const conversations = events.filter(e => 
+      e.event_type === 'agent_conversation'
+    );
+    
     const roleCount: Record<string, number> = {};
-    conversations.forEach((e) => {
+    conversations.forEach(e => {
       const role = e.event_data?.role || 'Unknown';
       roleCount[role] = (roleCount[role] || 0) + 1;
     });
-
+    
     return Object.entries(roleCount).map(([name, value]) => ({
-      name:
-        name === 'PM'
-          ? 'Product Manager'
-          : name === 'Designer'
-            ? 'Designer'
-            : name === 'Dev'
-              ? 'Developer'
-              : name,
-      value,
+      name: name === 'PM' ? 'Product Manager' : name === 'Designer' ? 'Designer' : name === 'Dev' ? 'Developer' : name,
+      value
     }));
   };
 
@@ -195,11 +181,11 @@ export const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ userId }
     const dayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
     const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
     const monthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-
+    
     return {
-      DAU: events.filter((e) => new Date(e.created_at ?? '') >= dayAgo).length,
-      WAU: events.filter((e) => new Date(e.created_at ?? '') >= weekAgo).length,
-      MAU: events.filter((e) => new Date(e.created_at ?? '') >= monthAgo).length,
+      DAU: events.filter(e => new Date(e.created_at) >= dayAgo).length,
+      WAU: events.filter(e => new Date(e.created_at) >= weekAgo).length,
+      MAU: events.filter(e => new Date(e.created_at) >= monthAgo).length,
     };
   };
 
@@ -207,16 +193,16 @@ export const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ userId }
   const getModuleHeatmap = () => {
     const modules = ['Core', 'Workflows', 'Agent'];
     const days = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
-
+    
     const heatmapData: any[] = [];
-    modules.forEach((module) => {
-      days.forEach((day) => {
-        const moduleEvents = events.filter((e) => {
-          const eventDate = new Date(e.created_at ?? '');
+    modules.forEach(module => {
+      days.forEach(day => {
+        const moduleEvents = events.filter(e => {
+          const eventDate = new Date(e.created_at);
           const dayName = eventDate.toLocaleDateString('fr-FR', { weekday: 'short' });
-
+          
           if (dayName !== day) return false;
-
+          
           if (module === 'Core') {
             return e.event_type.includes('artifact') || e.event_type.includes('context');
           } else if (module === 'Workflows') {
@@ -225,15 +211,15 @@ export const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ userId }
             return e.event_type.includes('agent') || e.event_type.includes('chat');
           }
         });
-
+        
         heatmapData.push({
           module,
           day,
-          value: moduleEvents.length,
+          value: moduleEvents.length
         });
       });
     });
-
+    
     return heatmapData;
   };
 
@@ -259,14 +245,8 @@ export const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ userId }
   const stats = [
     {
       title: 'Workflows Exécutés',
-      value: workflowsByDay.reduce(
-        (sum, day) =>
-          sum +
-          day['Feature Discovery'] +
-          day['Roadmap Planning'] +
-          day['Sprint Planning'] +
-          day['Tech Spec'],
-        0
+      value: workflowsByDay.reduce((sum, day) => 
+        sum + day['Feature Discovery'] + day['Roadmap Planning'] + day['Sprint Planning'] + day['Tech Spec'], 0
       ),
       icon: <BarChart3 className="w-4 h-4" />,
       color: 'text-primary',
@@ -303,7 +283,9 @@ export const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ userId }
     <div className="space-y-6">
       <div>
         <h2 className="text-3xl font-bold tracking-tight gradient-text">Analytics Basiques</h2>
-        <p className="text-muted-foreground">Monitoring usage et performance plateforme</p>
+        <p className="text-muted-foreground">
+          Monitoring usage et performance plateforme
+        </p>
       </div>
 
       {/* KPI Cards */}
@@ -334,11 +316,11 @@ export const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ userId }
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                 <XAxis dataKey="date" stroke="hsl(var(--muted-foreground))" />
                 <YAxis stroke="hsl(var(--muted-foreground))" />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: 'hsl(var(--card))',
-                    border: '1px solid hsl(var(--border))',
-                  }}
+                <Tooltip 
+                  contentStyle={{ 
+                    backgroundColor: 'hsl(var(--card))', 
+                    border: '1px solid hsl(var(--border))' 
+                  }} 
                 />
                 <Legend />
                 <Bar dataKey="Feature Discovery" stackId="a" fill={COLORS.blue} />
@@ -362,16 +344,16 @@ export const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ userId }
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                 <XAxis dataKey="date" stroke="hsl(var(--muted-foreground))" />
                 <YAxis stroke="hsl(var(--muted-foreground))" />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: 'hsl(var(--card))',
-                    border: '1px solid hsl(var(--border))',
-                  }}
+                <Tooltip 
+                  contentStyle={{ 
+                    backgroundColor: 'hsl(var(--card))', 
+                    border: '1px solid hsl(var(--border))' 
+                  }} 
                 />
-                <Line
-                  type="monotone"
-                  dataKey="rate"
-                  stroke={COLORS.green}
+                <Line 
+                  type="monotone" 
+                  dataKey="rate" 
+                  stroke={COLORS.green} 
                   strokeWidth={2}
                   dot={{ fill: COLORS.green }}
                 />
@@ -421,7 +403,10 @@ export const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ userId }
                 </text>
               </svg>
             </div>
-            <Badge variant={avgLatency > 6 ? 'destructive' : 'secondary'} className="mt-4">
+            <Badge 
+              variant={avgLatency > 6 ? "destructive" : "secondary"} 
+              className="mt-4"
+            >
               {avgLatency > 6 ? 'Au-dessus de la cible' : 'Dans la cible'}
             </Badge>
           </CardContent>
@@ -439,22 +424,17 @@ export const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ userId }
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                 <XAxis dataKey="date" stroke="hsl(var(--muted-foreground))" />
                 <YAxis stroke="hsl(var(--muted-foreground))" />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: 'hsl(var(--card))',
-                    border: '1px solid hsl(var(--border))',
-                  }}
+                <Tooltip 
+                  contentStyle={{ 
+                    backgroundColor: 'hsl(var(--card))', 
+                    border: '1px solid hsl(var(--border))' 
+                  }} 
                 />
                 <Legend />
                 <Bar dataKey="epic" stackId="a" fill={COLORS.blue} name="Epic" />
                 <Bar dataKey="story" stackId="a" fill={COLORS.green} name="Story" />
                 <Bar dataKey="canvas" stackId="a" fill={COLORS.purple} name="Canvas" />
-                <Bar
-                  dataKey="impact_analysis"
-                  stackId="a"
-                  fill={COLORS.orange}
-                  name="Impact Analysis"
-                />
+                <Bar dataKey="impact_analysis" stackId="a" fill={COLORS.orange} name="Impact Analysis" />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
@@ -486,11 +466,11 @@ export const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ userId }
                     <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
                   ))}
                 </Pie>
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: 'hsl(var(--card))',
-                    border: '1px solid hsl(var(--border))',
-                  }}
+                <Tooltip 
+                  contentStyle={{ 
+                    backgroundColor: 'hsl(var(--card))', 
+                    border: '1px solid hsl(var(--border))' 
+                  }} 
                 />
               </PieChart>
             </ResponsiveContainer>
@@ -540,29 +520,29 @@ export const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ userId }
         <CardContent>
           <div className="grid grid-cols-8 gap-2">
             <div className="col-span-1"></div>
-            {['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'].map((day) => (
+            {['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'].map(day => (
               <div key={day} className="text-center text-sm font-medium text-muted-foreground">
                 {day}
               </div>
             ))}
-
-            {['Core', 'Workflows', 'Agent'].map((module) => (
+            
+            {['Core', 'Workflows', 'Agent'].map(module => (
               <React.Fragment key={module}>
                 <div className="text-sm font-medium text-muted-foreground flex items-center">
                   {module}
                 </div>
-                {['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'].map((day) => {
-                  const cell = moduleHeatmap.find((h) => h.module === module && h.day === day);
+                {['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'].map(day => {
+                  const cell = moduleHeatmap.find(h => h.module === module && h.day === day);
                   const value = cell?.value || 0;
                   const intensity = Math.min(value / 10, 1);
-
+                  
                   return (
                     <div
                       key={`${module}-${day}`}
                       className="aspect-square rounded border flex items-center justify-center text-xs font-medium"
                       style={{
                         backgroundColor: `hsl(var(--primary) / ${intensity * 0.8})`,
-                        color: intensity > 0.5 ? 'white' : 'hsl(var(--foreground))',
+                        color: intensity > 0.5 ? 'white' : 'hsl(var(--foreground))'
                       }}
                       title={`${module} - ${day}: ${value} activités`}
                     >
@@ -580,7 +560,7 @@ export const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ userId }
                 key={i}
                 className="w-4 h-4 rounded border"
                 style={{
-                  backgroundColor: `hsl(var(--primary) / ${intensity * 0.8})`,
+                  backgroundColor: `hsl(var(--primary) / ${intensity * 0.8})`
                 }}
               />
             ))}

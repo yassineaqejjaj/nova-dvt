@@ -4,28 +4,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
 import { Artifact } from '@/types';
-import {
-  Search,
-  FileText,
-  Grid3X3,
-  TrendingUp,
-  Loader2,
-  FolderOpen,
-  Plus,
-  Layers,
-  Code,
-  Clock,
-  Star,
-  SortAsc,
+import { 
+  Search, FileText, Grid3X3, TrendingUp, Loader2, 
+  FolderOpen, Plus, Layers, Code, Clock, Star, SortAsc
 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { CanvasGenerator } from './CanvasGenerator';
@@ -56,7 +40,7 @@ export const Artifacts: React.FC<ArtifactsProps> = ({ userId }) => {
   const [sortBy, setSortBy] = useState<'recent' | 'name' | 'type'>('recent');
   const [showGenerator, setShowGenerator] = useState(false);
   const [activeContextId, setActiveContextId] = useState<string | null>(null);
-
+  
   // Transform dialog state
   const [transformDialogOpen, setTransformDialogOpen] = useState(false);
   const [transformSource, setTransformSource] = useState<Artifact | null>(null);
@@ -85,22 +69,20 @@ export const Artifacts: React.FC<ArtifactsProps> = ({ userId }) => {
   const loadArtifacts = async () => {
     try {
       setLoading(true);
-
+      
       // Load artifacts with related data
       const { data: artifactsData, error: artifactsError } = await supabase
         .from('artifacts')
-        .select(
-          `
+        .select(`
           *,
           squads:squad_id(name),
           product_contexts:product_context_id(name)
-        `
-        )
+        `)
         .eq('user_id', userId)
         .order('created_at', { ascending: false });
 
       if (artifactsError) throw artifactsError;
-
+      
       // Enhance artifacts with additional data
       const enhanced: EnhancedArtifact[] = (artifactsData || []).map((a: any) => ({
         ...a,
@@ -128,11 +110,14 @@ export const Artifacts: React.FC<ArtifactsProps> = ({ userId }) => {
 
   const handleDelete = async (id: string) => {
     try {
-      const { error } = await supabase.from('artifacts').delete().eq('id', id);
+      const { error } = await supabase
+        .from('artifacts')
+        .delete()
+        .eq('id', id);
 
       if (error) throw error;
-
-      setArtifacts(artifacts.filter((a) => a.id !== id));
+      
+      setArtifacts(artifacts.filter(a => a.id !== id));
       toast({
         title: 'Succès',
         description: 'Artefact supprimé avec succès',
@@ -141,7 +126,7 @@ export const Artifacts: React.FC<ArtifactsProps> = ({ userId }) => {
       console.error('Error deleting artifact:', error);
       toast({
         title: 'Erreur',
-        description: "Échec de suppression de l'artefact",
+        description: 'Échec de suppression de l\'artefact',
         variant: 'destructive',
       });
     }
@@ -154,22 +139,16 @@ export const Artifacts: React.FC<ArtifactsProps> = ({ userId }) => {
   };
 
   const handleAddToProject = (artifact: Artifact) => {
-    toast({
-      title: 'Fonctionnalité à venir',
-      description: 'Ajout à un projet sera disponible prochainement',
-    });
+    toast({ title: 'Fonctionnalité à venir', description: 'Ajout à un projet sera disponible prochainement' });
   };
 
   const handleContinueWith = (artifact: Artifact) => {
-    toast({
-      title: 'Fonctionnalité à venir',
-      description: 'Continuer avec un agent sera disponible prochainement',
-    });
+    toast({ title: 'Fonctionnalité à venir', description: 'Continuer avec un agent sera disponible prochainement' });
   };
 
   // Smart filtering and sorting
   const filteredAndSortedArtifacts = React.useMemo(() => {
-    let result = artifacts.filter((artifact) => {
+    let result = artifacts.filter(artifact => {
       const matchesSearch = artifact.title.toLowerCase().includes(searchTerm.toLowerCase());
       const matchesType = filterType === 'all' || artifact.artifact_type === filterType;
       return matchesSearch && matchesType;
@@ -180,7 +159,7 @@ export const Artifacts: React.FC<ArtifactsProps> = ({ userId }) => {
       // Key artifacts first
       if (a.is_key && !b.is_key) return -1;
       if (!a.is_key && b.is_key) return 1;
-
+      
       // Active context artifacts second
       if (activeContextId) {
         const aInContext = a.product_context_id === activeContextId;
@@ -197,7 +176,7 @@ export const Artifacts: React.FC<ArtifactsProps> = ({ userId }) => {
           return a.artifact_type.localeCompare(b.artifact_type);
         case 'recent':
         default:
-          return new Date(b.created_at ?? '').getTime() - new Date(a.created_at ?? '').getTime();
+          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
       }
     });
 
@@ -206,28 +185,22 @@ export const Artifacts: React.FC<ArtifactsProps> = ({ userId }) => {
 
   const getTypeIcon = (type: string) => {
     switch (type) {
-      case 'canvas':
-        return <Grid3X3 className="w-4 h-4" />;
-      case 'story':
-        return <FileText className="w-4 h-4" />;
-      case 'impact_analysis':
-        return <TrendingUp className="w-4 h-4" />;
-      case 'epic':
-        return <Layers className="w-4 h-4" />;
-      case 'tech_spec':
-        return <Code className="w-4 h-4" />;
-      default:
-        return <FileText className="w-4 h-4" />;
+      case 'canvas': return <Grid3X3 className="w-4 h-4" />;
+      case 'story': return <FileText className="w-4 h-4" />;
+      case 'impact_analysis': return <TrendingUp className="w-4 h-4" />;
+      case 'epic': return <Layers className="w-4 h-4" />;
+      case 'tech_spec': return <Code className="w-4 h-4" />;
+      default: return <FileText className="w-4 h-4" />;
     }
   };
 
   const stats = {
     total: artifacts.length,
-    canvas: artifacts.filter((a) => a.artifact_type === 'canvas').length,
-    story: artifacts.filter((a) => a.artifact_type === 'story').length,
-    impact_analysis: artifacts.filter((a) => a.artifact_type === 'impact_analysis').length,
-    epic: artifacts.filter((a) => a.artifact_type === 'epic').length,
-    tech_spec: artifacts.filter((a) => a.artifact_type === ('tech_spec' as any)).length,
+    canvas: artifacts.filter(a => a.artifact_type === 'canvas').length,
+    story: artifacts.filter(a => a.artifact_type === 'story').length,
+    impact_analysis: artifacts.filter(a => a.artifact_type === 'impact_analysis').length,
+    epic: artifacts.filter(a => a.artifact_type === 'epic').length,
+    tech_spec: artifacts.filter(a => a.artifact_type === 'tech_spec' as any).length,
   };
 
   if (loading) {
@@ -267,13 +240,13 @@ export const Artifacts: React.FC<ArtifactsProps> = ({ userId }) => {
                 Par projet
               </TabsTrigger>
             </TabsList>
-
+            
             <TabsContent value="all" className="space-y-6">
               {/* Clickable Stats */}
-              <ArtifactStats
-                stats={stats}
-                activeFilter={filterType}
-                onFilterChange={setFilterType}
+              <ArtifactStats 
+                stats={stats} 
+                activeFilter={filterType} 
+                onFilterChange={setFilterType} 
               />
 
               {/* Search, Sort and Filter */}
@@ -287,7 +260,7 @@ export const Artifacts: React.FC<ArtifactsProps> = ({ userId }) => {
                     className="pl-10"
                   />
                 </div>
-
+                
                 <Select value={sortBy} onValueChange={(v) => setSortBy(v as any)}>
                   <SelectTrigger className="w-[180px]">
                     <SortAsc className="w-4 h-4 mr-2" />
@@ -322,9 +295,9 @@ export const Artifacts: React.FC<ArtifactsProps> = ({ userId }) => {
                   <Badge variant="secondary" className="text-xs">
                     Filtre: {filterType}
                   </Badge>
-                  <Button
-                    variant="ghost"
-                    size="sm"
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
                     className="h-6 text-xs"
                     onClick={() => setFilterType('all')}
                   >
@@ -340,8 +313,8 @@ export const Artifacts: React.FC<ArtifactsProps> = ({ userId }) => {
                     <FileText className="w-12 h-12 text-muted-foreground mb-4" />
                     <h3 className="text-lg font-semibold mb-2">Aucun artefact trouvé</h3>
                     <p className="text-muted-foreground text-center mb-4">
-                      {searchTerm || filterType !== 'all'
-                        ? 'Aucun artefact ne correspond à vos critères'
+                      {searchTerm || filterType !== 'all' 
+                        ? 'Aucun artefact ne correspond à vos critères' 
                         : 'Créez votre premier artefact pour commencer'}
                     </p>
                     {!searchTerm && filterType === 'all' && (
@@ -354,7 +327,7 @@ export const Artifacts: React.FC<ArtifactsProps> = ({ userId }) => {
                 </Card>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {filteredAndSortedArtifacts.map((artifact) => (
+                  {filteredAndSortedArtifacts.map(artifact => (
                     <EnhancedArtifactCard
                       key={artifact.id}
                       artifact={artifact}
@@ -376,8 +349,8 @@ export const Artifacts: React.FC<ArtifactsProps> = ({ userId }) => {
         </CardContent>
       </Card>
 
-      <CanvasGenerator
-        open={showGenerator}
+      <CanvasGenerator 
+        open={showGenerator} 
         onClose={() => {
           setShowGenerator(false);
           loadArtifacts();

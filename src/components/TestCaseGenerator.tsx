@@ -5,24 +5,18 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import {
-  Loader2,
-  Save,
-  Sparkles,
-  CheckCircle2,
+import { 
+  Loader2, 
+  Save, 
+  Sparkles, 
+  CheckCircle2, 
   Code,
   FileText,
   TrendingUp,
   AlertTriangle,
-  Import,
+  Import
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -64,9 +58,7 @@ interface SavedArtifact {
 
 export const TestCaseGenerator = () => {
   const [artifactContent, setArtifactContent] = useState('');
-  const [artifactType, setArtifactType] = useState<'user-story' | 'tech-spec' | 'epic'>(
-    'user-story'
-  );
+  const [artifactType, setArtifactType] = useState<'user-story' | 'tech-spec' | 'epic'>('user-story');
   const [context, setContext] = useState('');
   const [testLevels, setTestLevels] = useState<string[]>(['unit', 'integration', 'e2e']);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -86,9 +78,7 @@ export const TestCaseGenerator = () => {
   const loadSavedArtifacts = async () => {
     setIsLoadingArtifacts(true);
     try {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
+      const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
       const { data, error } = await supabase
@@ -99,7 +89,7 @@ export const TestCaseGenerator = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setSavedArtifacts((data || []) as unknown as SavedArtifact[]);
+      setSavedArtifacts(data || []);
     } catch (error: any) {
       console.error('Error loading artifacts:', error);
       toast.error('Erreur lors du chargement des artefacts');
@@ -109,8 +99,10 @@ export const TestCaseGenerator = () => {
   };
 
   const handleArtifactToggle = (artifactId: string) => {
-    setSelectedArtifacts((prev) =>
-      prev.includes(artifactId) ? prev.filter((id) => id !== artifactId) : [...prev, artifactId]
+    setSelectedArtifacts(prev =>
+      prev.includes(artifactId)
+        ? prev.filter(id => id !== artifactId)
+        : [...prev, artifactId]
     );
   };
 
@@ -120,16 +112,13 @@ export const TestCaseGenerator = () => {
       return;
     }
 
-    const selected = savedArtifacts.filter((a) => selectedArtifacts.includes(a.id));
-    const combinedContent = selected
-      .map((artifact) => {
-        const content =
-          typeof artifact.content === 'string'
-            ? artifact.content
-            : JSON.stringify(artifact.content, null, 2);
-        return `=== ${artifact.title} ===\n${content}`;
-      })
-      .join('\n\n');
+    const selected = savedArtifacts.filter(a => selectedArtifacts.includes(a.id));
+    const combinedContent = selected.map(artifact => {
+      const content = typeof artifact.content === 'string' 
+        ? artifact.content 
+        : JSON.stringify(artifact.content, null, 2);
+      return `=== ${artifact.title} ===\n${content}`;
+    }).join('\n\n');
 
     setArtifactContent(combinedContent);
     setShowArtifactSelector(false);
@@ -137,14 +126,16 @@ export const TestCaseGenerator = () => {
   };
 
   const handleTestLevelToggle = (level: string) => {
-    setTestLevels((prev) =>
-      prev.includes(level) ? prev.filter((l) => l !== level) : [...prev, level]
+    setTestLevels(prev => 
+      prev.includes(level) 
+        ? prev.filter(l => l !== level)
+        : [...prev, level]
     );
   };
 
   const generateTestCases = async () => {
     if (!artifactContent.trim()) {
-      toast.error("Veuillez fournir le contenu de l'artefact");
+      toast.error('Veuillez fournir le contenu de l\'artefact');
       return;
     }
 
@@ -160,13 +151,13 @@ export const TestCaseGenerator = () => {
           artifactContent,
           artifactType,
           testLevels,
-          context,
-        },
+          context
+        }
       });
 
       if (error) {
         console.error('Supabase function error:', error);
-        throw new Error(error.message || "Erreur lors de l'appel à la fonction");
+        throw new Error(error.message || 'Erreur lors de l\'appel à la fonction');
       }
 
       if (data?.error) {
@@ -181,24 +172,23 @@ export const TestCaseGenerator = () => {
       setTestCases(data.testCases || []);
       setCoverageAnalysis(data.coverageAnalysis || null);
       setAutomationScript(data.automationScript || '');
-
+      
       toast.success(`${data.testCases?.length || 0} cas de test générés avec succès!`);
     } catch (error: any) {
       console.error('Error generating test cases:', error);
-
+      
       let errorMessage = 'Erreur lors de la génération des cas de test';
-
+      
       if (error.message?.includes('too large')) {
-        errorMessage =
-          "Le contenu sélectionné est trop volumineux. Veuillez sélectionner moins d'artefacts.";
+        errorMessage = 'Le contenu sélectionné est trop volumineux. Veuillez sélectionner moins d\'artefacts.';
       } else if (error.message?.includes('Rate limit')) {
         errorMessage = 'Limite de taux dépassée. Veuillez réessayer dans quelques instants.';
       } else if (error.message?.includes('usage limit')) {
-        errorMessage = "Limite d'utilisation atteinte. Veuillez ajouter des crédits.";
+        errorMessage = 'Limite d\'utilisation atteinte. Veuillez ajouter des crédits.';
       } else if (error.message) {
         errorMessage = error.message;
       }
-
+      
       toast.error(errorMessage);
     } finally {
       setIsGenerating(false);
@@ -213,23 +203,21 @@ export const TestCaseGenerator = () => {
 
     setIsSaving(true);
     try {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
+      const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('User not authenticated');
 
       const { error } = await supabase.from('artifacts').insert({
         user_id: user.id,
         artifact_type: 'canvas' as const,
         title: `Test Cases - ${artifactType} - ${new Date().toLocaleDateString('fr-FR')}`,
-        content: {
-          testCases,
-          coverageAnalysis,
+        content: { 
+          testCases, 
+          coverageAnalysis, 
           automationScript,
           artifactType,
-          generatedAt: new Date().toISOString(),
+          generatedAt: new Date().toISOString()
         },
-        metadata: { type: 'test-cases' },
+        metadata: { type: 'test-cases' }
       } as any);
 
       if (error) throw error;
@@ -246,7 +234,7 @@ export const TestCaseGenerator = () => {
     const colors = {
       high: 'bg-red-100 text-red-800 border-red-200',
       medium: 'bg-yellow-100 text-yellow-800 border-yellow-200',
-      low: 'bg-green-100 text-green-800 border-green-200',
+      low: 'bg-green-100 text-green-800 border-green-200'
     };
     return colors[priority as keyof typeof colors];
   };
@@ -256,7 +244,7 @@ export const TestCaseGenerator = () => {
       unit: 'bg-blue-100 text-blue-800',
       integration: 'bg-purple-100 text-purple-800',
       e2e: 'bg-orange-100 text-orange-800',
-      api: 'bg-teal-100 text-teal-800',
+      api: 'bg-teal-100 text-teal-800'
     };
     return colors[level as keyof typeof colors];
   };
@@ -312,7 +300,9 @@ export const TestCaseGenerator = () => {
             <Card className="mb-4">
               <CardHeader>
                 <CardTitle className="text-base">Sélectionner des artefacts</CardTitle>
-                <CardDescription>Choisissez un ou plusieurs artefacts à tester</CardDescription>
+                <CardDescription>
+                  Choisissez un ou plusieurs artefacts à tester
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 {isLoadingArtifacts ? (
@@ -337,7 +327,10 @@ export const TestCaseGenerator = () => {
                               onCheckedChange={() => handleArtifactToggle(artifact.id)}
                               id={artifact.id}
                             />
-                            <label htmlFor={artifact.id} className="flex-1 cursor-pointer">
+                            <label
+                              htmlFor={artifact.id}
+                              className="flex-1 cursor-pointer"
+                            >
                               <div className="flex items-center gap-2 mb-1">
                                 <span className="font-medium text-sm">{artifact.title}</span>
                                 <Badge variant="outline" className="text-xs">
@@ -453,11 +446,7 @@ export const TestCaseGenerator = () => {
         <>
           <div className="flex gap-2">
             <Button onClick={saveAsArtifact} disabled={isSaving} variant="outline">
-              {isSaving ? (
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              ) : (
-                <Save className="w-4 h-4 mr-2" />
-              )}
+              {isSaving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
               Sauvegarder
             </Button>
           </div>
@@ -477,27 +466,19 @@ export const TestCaseGenerator = () => {
                     <p className="text-sm text-muted-foreground">Total</p>
                   </div>
                   <div className="text-center p-4 bg-blue-50 rounded-lg">
-                    <p className="text-2xl font-bold text-blue-600">
-                      {coverageAnalysis.byLevel.unit}
-                    </p>
+                    <p className="text-2xl font-bold text-blue-600">{coverageAnalysis.byLevel.unit}</p>
                     <p className="text-sm text-muted-foreground">Unit</p>
                   </div>
                   <div className="text-center p-4 bg-purple-50 rounded-lg">
-                    <p className="text-2xl font-bold text-purple-600">
-                      {coverageAnalysis.byLevel.integration}
-                    </p>
+                    <p className="text-2xl font-bold text-purple-600">{coverageAnalysis.byLevel.integration}</p>
                     <p className="text-sm text-muted-foreground">Integration</p>
                   </div>
                   <div className="text-center p-4 bg-orange-50 rounded-lg">
-                    <p className="text-2xl font-bold text-orange-600">
-                      {coverageAnalysis.byLevel.e2e}
-                    </p>
+                    <p className="text-2xl font-bold text-orange-600">{coverageAnalysis.byLevel.e2e}</p>
                     <p className="text-sm text-muted-foreground">E2E</p>
                   </div>
                   <div className="text-center p-4 bg-teal-50 rounded-lg">
-                    <p className="text-2xl font-bold text-teal-600">
-                      {coverageAnalysis.byLevel.api}
-                    </p>
+                    <p className="text-2xl font-bold text-teal-600">{coverageAnalysis.byLevel.api}</p>
                     <p className="text-sm text-muted-foreground">API</p>
                   </div>
                 </div>
@@ -505,12 +486,10 @@ export const TestCaseGenerator = () => {
                 <div className="mb-4">
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-sm font-medium">Score de Couverture</span>
-                    <span className="text-2xl font-bold text-primary">
-                      {coverageAnalysis.coverageScore}%
-                    </span>
+                    <span className="text-2xl font-bold text-primary">{coverageAnalysis.coverageScore}%</span>
                   </div>
                   <div className="w-full bg-muted rounded-full h-3">
-                    <div
+                    <div 
                       className="bg-gradient-primary h-3 rounded-full transition-all duration-500"
                       style={{ width: `${coverageAnalysis.coverageScore}%` }}
                     />
@@ -559,10 +538,14 @@ export const TestCaseGenerator = () => {
                           <CardTitle className="text-base flex items-center gap-2">
                             {testCase.id}: {testCase.title}
                           </CardTitle>
-                          <CardDescription className="mt-1">{testCase.description}</CardDescription>
+                          <CardDescription className="mt-1">
+                            {testCase.description}
+                          </CardDescription>
                         </div>
                         <div className="flex gap-2">
-                          <Badge className={getLevelColor(testCase.level)}>{testCase.level}</Badge>
+                          <Badge className={getLevelColor(testCase.level)}>
+                            {testCase.level}
+                          </Badge>
                           <Badge className={getPriorityColor(testCase.priority)}>
                             {testCase.priority}
                           </Badge>
@@ -634,7 +617,9 @@ export const TestCaseGenerator = () => {
                     <Code className="w-5 h-5" />
                     Template d'Automatisation
                   </CardTitle>
-                  <CardDescription>Script Playwright/Jest généré automatiquement</CardDescription>
+                  <CardDescription>
+                    Script Playwright/Jest généré automatiquement
+                  </CardDescription>
                 </CardHeader>
                 <CardContent>
                   {automationScript ? (

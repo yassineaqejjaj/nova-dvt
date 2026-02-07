@@ -9,21 +9,25 @@ export interface Agent {
   xpRequired: number;
   familyColor: 'blue' | 'green' | 'purple' | 'orange';
   personality?: 'balanced' | 'analytical' | 'creative' | 'socratic';
-  role?: AgentRole;
+  role?: AgentRole; // NEW: Role badge
 }
 
+// NEW: Role types for badges
 export type AgentRole = 'ux' | 'product' | 'data' | 'tech' | 'business' | 'strategy';
 
+// NEW: Response mode for verbosity control
 export type ResponseMode = 'short' | 'structured' | 'detailed';
 
+// NEW: Agent message with stance and reaction type
 export interface AgentMessage extends ChatMessage {
-  stance?: string;
-  isReaction?: boolean;
+  stance?: string; // e.g., "protect human touch first"
+  isReaction?: boolean; // micro-input vs full response
   reactionType?: 'agree' | 'disagree' | 'risk' | 'idea';
-  isExpanded?: boolean;
-  truncatedContent?: string;
+  isExpanded?: boolean; // for inline expansion
+  truncatedContent?: string; // short version
 }
 
+// NEW: Live synthesis for side panel
 export interface LiveSynthesis {
   options: SynthesisOption[];
   openPoints: string[];
@@ -34,15 +38,16 @@ export interface LiveSynthesis {
   conversationMood?: 'exploratory' | 'convergent' | 'divergent' | 'decisive';
 }
 
+// NEW: Agent insights for transparency
 export interface AgentInsight {
   agentId: string;
   agentName: string;
   specialty: string;
-  stance: string;
+  stance: string; // Their current position
   contributionCount: number;
   keyArguments: string[];
-  bias?: string;
-  agreementRate: number;
+  bias?: string; // e.g., "Prioritize user experience over speed"
+  agreementRate: number; // 0-100% how often they agree with others
 }
 
 export interface SynthesisOption {
@@ -63,6 +68,7 @@ export interface Disagreement {
   resolved?: boolean;
 }
 
+// NEW: Thread conclusion types
 export interface ThreadConclusion {
   type: 'recommendation' | 'options' | 'question' | 'action';
   content: string;
@@ -70,7 +76,12 @@ export interface ThreadConclusion {
   actionable?: { label: string; handler: string };
 }
 
-export type SteeringCommand = 'pause_others' | 'only_ux_business' | 'tradeoffs_only' | 'summarize';
+// NEW: Steering commands
+export type SteeringCommand = 
+  | 'pause_others' 
+  | 'only_ux_business' 
+  | 'tradeoffs_only' 
+  | 'summarize';
 
 export interface Squad {
   id: string;
@@ -119,53 +130,27 @@ export interface ChatMessage {
   attachments?: File[];
 }
 
-export type TabType =
-  | 'dashboard'
-  | 'agents'
-  | 'squads'
-  | 'chat'
-  | 'workflows'
-  | 'artifacts'
-  | 'analytics'
-  | 'admin'
-  | 'gamification'
-  | 'instant-prd'
-  | 'document-roadmap'
-  | 'reality-mode'
-  | 'meeting-minutes'
-  | 'raci-generator'
-  | 'epic-to-stories'
-  | 'product-context'
-  | 'user-persona-builder'
-  | 'estimation-tool'
-  | 'release-notes-generator'
-  | 'git-to-specs'
-  | 'design-system'
-  | 'smart-discovery'
-  | 'toolbox';
+export type TabType = 'dashboard' | 'agents' | 'squads' | 'chat' | 'workflows' | 'artifacts' | 'analytics' | 'admin' | 'gamification' | 'instant-prd' | 'document-roadmap' | 'reality-mode' | 'meeting-minutes' | 'raci-generator' | 'epic-to-stories' | 'product-context' | 'user-persona-builder' | 'estimation-tool' | 'release-notes-generator' | 'git-to-specs' | 'design-system' | 'smart-discovery' | 'toolbox';
 
-// Artifact fields accept null to match Supabase schema
 export interface Artifact {
   id: string;
   user_id: string;
-  squad_id?: string | null;
+  squad_id?: string;
   artifact_type: 'canvas' | 'story' | 'impact_analysis' | 'epic' | 'tech_spec' | 'roadmap' | 'prd';
   title: string;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   content: any;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   metadata?: any;
-  created_at: string | null;
-  updated_at: string | null;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface Workspace {
   id: string;
   name: string;
-  description?: string | null;
+  description?: string;
   owner_id: string;
-  created_at: string | null;
-  updated_at: string | null;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface WorkspaceMember {
@@ -173,25 +158,23 @@ export interface WorkspaceMember {
   workspace_id: string;
   user_id: string;
   role: string;
-  joined_at: string | null;
+  joined_at: string;
 }
 
 export interface Integration {
   id: string;
   workspace_id: string;
   integration_type: 'jira' | 'slack' | 'figma';
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   config: any;
-  is_active: boolean | null;
-  created_at: string | null;
-  updated_at: string | null;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface AnalyticsEvent {
   id: string;
   user_id: string;
   event_type: string;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   event_data?: any;
-  created_at: string | null;
+  created_at: string;
 }

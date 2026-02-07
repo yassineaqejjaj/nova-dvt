@@ -12,37 +12,11 @@ import { supabase } from '@/integrations/supabase/client';
 import { Agent } from '@/types';
 import { toast } from '@/hooks/use-toast';
 import { FormattedText } from './ui/formatted-text';
-import {
-  Play,
-  Pause,
-  Users,
-  Sparkles,
-  Loader2,
-  UserMinus,
-  Volume2,
-  VolumeX,
-  FileText,
-  CheckCircle2,
-  Handshake,
-  GitFork,
-  ListChecks,
-  AlertTriangle,
-  ArrowRight,
-  Target,
-  ThumbsUp,
-  AlertCircle,
-  X,
-  Lightbulb,
-  Zap,
-  Map,
-  BarChart3,
-  Eye,
-  EyeOff,
-  Shield,
-  Store,
-  Calculator,
-  UserCheck,
-  Plus,
+import { 
+  Play, Pause, Users, Sparkles, Loader2, UserMinus, Volume2, VolumeX,
+  FileText, CheckCircle2, Handshake, GitFork, ListChecks, AlertTriangle,
+  ArrowRight, Target, ThumbsUp, AlertCircle, X, Lightbulb, Zap, Map,
+  BarChart3, Eye, EyeOff, Shield, Store, Calculator, UserCheck, Plus
 } from 'lucide-react';
 import { allAgents } from '@/data/mockData';
 import { ArtifactSelector, formatArtifactsForContext } from './ArtifactSelector';
@@ -65,7 +39,7 @@ import {
   AgentSignal,
   CounterfactualAnalysis,
   TensionAgent,
-  useTensionAgentsForContext,
+  useTensionAgentsForContext
 } from './reality-mode';
 
 interface Artifact {
@@ -83,16 +57,15 @@ interface RealityModeProps {
   userId: string;
 }
 
-export const RealityMode: React.FC<RealityModeProps> = ({
-  currentSquad,
-  squadId,
+export const RealityMode: React.FC<RealityModeProps> = ({ 
+  currentSquad, 
+  squadId, 
   onAddXP,
-  userId,
+  userId 
 }) => {
   // Get contextual tension agents
-  const { tensionAgents: contextualTensionAgents, isLoading: tensionLoading } =
-    useTensionAgentsForContext();
-
+  const { tensionAgents: contextualTensionAgents, isLoading: tensionLoading } = useTensionAgentsForContext();
+  
   // Core state
   const [prompt, setPrompt] = useState('');
   const [isDebating, setIsDebating] = useState(false);
@@ -104,7 +77,7 @@ export const RealityMode: React.FC<RealityModeProps> = ({
   const [isGeneratingOutcome, setIsGeneratingOutcome] = useState(false);
   const [debateOutcome, setDebateOutcome] = useState<DebateOutcome | null>(null);
   const [selectedArtifacts, setSelectedArtifacts] = useState<Artifact[]>([]);
-
+  
   // New feature state
   const [silentMode, setSilentMode] = useState(false);
   const [showAgentSwap, setShowAgentSwap] = useState(false);
@@ -114,34 +87,25 @@ export const RealityMode: React.FC<RealityModeProps> = ({
   const [chosenOption, setChosenOption] = useState<DecisionOption | null>(null);
   const [confidenceFactors, setConfidenceFactors] = useState<ConfidenceFactors | null>(null);
   const [agentSignals, setAgentSignals] = useState<AgentSignal[]>([]);
-  const [counterfactualAnalysis, setCounterfactualAnalysis] =
-    useState<CounterfactualAnalysis | null>(null);
+  const [counterfactualAnalysis, setCounterfactualAnalysis] = useState<CounterfactualAnalysis | null>(null);
   const [savedDecisionId, setSavedDecisionId] = useState<string | null>(null);
   const [stanceDistribution, setStanceDistribution] = useState<Record<Stance, number>>({
-    'advisor-first': 0,
-    'client-first': 0,
-    hybrid: 0,
-    'context-dependent': 0,
+    'advisor-first': 0, 'client-first': 0, 'hybrid': 0, 'context-dependent': 0
   });
-
+  
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const debateControllerRef = useRef<{ stop: boolean }>({ stop: false });
 
-  useEffect(() => {
-    setWorkingSquad(currentSquad);
-  }, [currentSquad]);
+  useEffect(() => { setWorkingSquad(currentSquad); }, [currentSquad]);
   useEffect(() => {
     if (scrollAreaRef.current) scrollAreaRef.current.scrollTop = scrollAreaRef.current.scrollHeight;
   }, [messages]);
 
   useEffect(() => {
     const distribution: Record<Stance, number> = {
-      'advisor-first': 0,
-      'client-first': 0,
-      hybrid: 0,
-      'context-dependent': 0,
+      'advisor-first': 0, 'client-first': 0, 'hybrid': 0, 'context-dependent': 0
     };
-    messages.forEach((m) => {
+    messages.forEach(m => {
       if (m.stance && !m.isRealityCheck && m.agent.id !== 'user' && m.agent.id !== 'system') {
         distribution[m.stance]++;
       }
@@ -158,25 +122,18 @@ export const RealityMode: React.FC<RealityModeProps> = ({
   };
 
   const addTensionAgent = (tensionAgent: TensionAgent) => {
-    if (activeTensionAgents.find((a) => a.id === tensionAgent.id)) return;
-    setActiveTensionAgents((prev) => [...prev, tensionAgent]);
-    toast({
-      title: 'Agent de Tension ajouté',
-      description: `${tensionAgent.name} va challenger le débat`,
-    });
+    if (activeTensionAgents.find(a => a.id === tensionAgent.id)) return;
+    setActiveTensionAgents(prev => [...prev, tensionAgent]);
+    toast({ title: "Agent de Tension ajouté", description: `${tensionAgent.name} va challenger le débat` });
   };
 
   const removeTensionAgent = (id: string) => {
-    setActiveTensionAgents((prev) => prev.filter((a) => a.id !== id));
+    setActiveTensionAgents(prev => prev.filter(a => a.id !== id));
   };
 
   const startDebate = async () => {
     if (!prompt.trim() || workingSquad.length === 0) {
-      toast({
-        title: 'Impossible de démarrer',
-        description: "Entrez un sujet et assurez-vous d'avoir des agents",
-        variant: 'destructive',
-      });
+      toast({ title: "Impossible de démarrer", description: "Entrez un sujet et assurez-vous d'avoir des agents", variant: "destructive" });
       return;
     }
     setIsDebating(true);
@@ -194,17 +151,7 @@ export const RealityMode: React.FC<RealityModeProps> = ({
 
     const initialMessage: DebateMessage = {
       id: `user-${Date.now()}`,
-      agent: {
-        id: 'user',
-        name: 'Vous',
-        specialty: 'Product Owner',
-        avatar: '',
-        backstory: '',
-        capabilities: [],
-        tags: [],
-        xpRequired: 0,
-        familyColor: 'blue',
-      },
+      agent: { id: 'user', name: 'Vous', specialty: 'Product Owner', avatar: '', backstory: '', capabilities: [], tags: [], xpRequired: 0, familyColor: 'blue' },
       content: prompt,
       timestamp: new Date(),
     };
@@ -215,35 +162,21 @@ export const RealityMode: React.FC<RealityModeProps> = ({
   const injectRealityCheck = async (round: number) => {
     const questions = [
       "Qu'est-ce que cela signifierait concrètement demain matin dans une boutique ?",
-      'Quelle tâche changerait pour le conseiller dans les 30 prochains jours ?',
-      "Qu'est-ce qui ne devrait PAS changer ?",
+      "Quelle tâche changerait pour le conseiller dans les 30 prochains jours ?",
+      "Qu'est-ce qui ne devrait PAS changer ?"
     ];
     const realityMessage: DebateMessage = {
       id: `reality-${Date.now()}`,
-      agent: {
-        id: 'nova',
-        name: 'Nova',
-        specialty: 'Reality Check',
-        avatar: '',
-        backstory: '',
-        capabilities: [],
-        tags: [],
-        xpRequired: 0,
-        familyColor: 'blue',
-      },
+      agent: { id: 'nova', name: 'Nova', specialty: 'Reality Check', avatar: '', backstory: '', capabilities: [], tags: [], xpRequired: 0, familyColor: 'blue' },
       content: `🎯 **REALITY CHECK - Round ${round + 1}**\n\n${questions.map((q, i) => `${i + 1}. ${q}`).join('\n')}`,
       timestamp: new Date(),
       isRealityCheck: true,
     };
-    setMessages((prev) => [...prev, realityMessage]);
-    await new Promise((resolve) => setTimeout(resolve, 2000));
+    setMessages(prev => [...prev, realityMessage]);
+    await new Promise(resolve => setTimeout(resolve, 2000));
   };
 
-  const injectTensionAgentResponse = async (
-    tensionAgent: TensionAgent,
-    topic: string,
-    conversationContext: string
-  ) => {
+  const injectTensionAgentResponse = async (tensionAgent: TensionAgent, topic: string, conversationContext: string) => {
     const thinkingId = `tension-thinking-${Date.now()}`;
     const tensionAgentAsAgent: Agent = {
       id: tensionAgent.id,
@@ -254,20 +187,17 @@ export const RealityMode: React.FC<RealityModeProps> = ({
       capabilities: ['challenge', 'critique'],
       tags: ['tension'],
       xpRequired: 0,
-      familyColor: 'orange',
+      familyColor: 'orange'
     };
 
-    setMessages((prev) => [
-      ...prev,
-      {
-        id: thinkingId,
-        agent: tensionAgentAsAgent,
-        content: '',
-        timestamp: new Date(),
-        isThinking: true,
-        isTensionAgent: true,
-      },
-    ]);
+    setMessages(prev => [...prev, {
+      id: thinkingId,
+      agent: tensionAgentAsAgent,
+      content: '',
+      timestamp: new Date(),
+      isThinking: true,
+      isTensionAgent: true
+    }]);
 
     try {
       const { data, error } = await supabase.functions.invoke('chat-ai', {
@@ -281,8 +211,8 @@ RÈGLES:
 - Pose une question provocatrice à la fin
 - FRANÇAIS uniquement
 
-Retourne un JSON: { "message": "ton argument" }`,
-        },
+Retourne un JSON: { "message": "ton argument" }`
+        }
       });
 
       if (error) throw error;
@@ -293,39 +223,33 @@ Retourne un JSON: { "message": "ton argument" }`,
         if (jsonMatch) messageContent = JSON.parse(jsonMatch[0]).message || data.response;
       } catch {}
 
-      setMessages((prev) => {
-        const filtered = prev.filter((m) => m.id !== thinkingId);
-        return [
-          ...filtered,
-          {
-            id: `tension-${Date.now()}`,
-            agent: tensionAgentAsAgent,
-            content: messageContent,
-            timestamp: new Date(),
-            isTensionAgent: true,
-          },
-        ];
+      setMessages(prev => {
+        const filtered = prev.filter(m => m.id !== thinkingId);
+        return [...filtered, {
+          id: `tension-${Date.now()}`,
+          agent: tensionAgentAsAgent,
+          content: messageContent,
+          timestamp: new Date(),
+          isTensionAgent: true
+        }];
       });
     } catch (error) {
       console.error('Tension agent error:', error);
-      setMessages((prev) => prev.filter((m) => m.id !== thinkingId));
+      setMessages(prev => prev.filter(m => m.id !== thinkingId));
     }
   };
 
   const runDebateSimulation = async (topic: string, round: number = 0) => {
     if (debateControllerRef.current.stop) return;
     const maxRounds = 3;
-
+    
     if (round === 2) await injectRealityCheck(round);
-
+    
     if (round >= maxRounds) {
       setIsDebating(false);
       setIsDebateComplete(true);
       calculateAgentSignals();
-      toast({
-        title: 'Débat Terminé',
-        description: `${workingSquad.length} agents ont complété ${maxRounds} rounds`,
-      });
+      toast({ title: "Débat Terminé", description: `${workingSquad.length} agents ont complété ${maxRounds} rounds` });
       onAddXP(50, 'completing reality mode simulation');
       return;
     }
@@ -334,18 +258,17 @@ Retourne un JSON: { "message": "ton argument" }`,
 
     // Inject tension agent after round 1
     if (round === 1 && activeTensionAgents.length > 0) {
-      const tensionAgent =
-        activeTensionAgents[Math.floor(Math.random() * activeTensionAgents.length)];
-      const context = messages.map((m) => `${m.agent.name}: ${m.content}`).join('\n');
+      const tensionAgent = activeTensionAgents[Math.floor(Math.random() * activeTensionAgents.length)];
+      const context = messages.map(m => `${m.agent.name}: ${m.content}`).join('\n');
       await injectTensionAgentResponse(tensionAgent, topic, context);
-      await new Promise((resolve) => setTimeout(resolve, 1500));
+      await new Promise(resolve => setTimeout(resolve, 1500));
     }
 
     for (let i = 0; i < workingSquad.length; i++) {
       if (debateControllerRef.current.stop) return;
       const agent = workingSquad[i];
       const wordLimit = getWordLimit(agent);
-
+      
       const thinkingMessage: DebateMessage = {
         id: `thinking-${Date.now()}-${i}`,
         agent,
@@ -353,25 +276,21 @@ Retourne un JSON: { "message": "ton argument" }`,
         timestamp: new Date(),
         isThinking: true,
       };
-      setMessages((prev) => [...prev, thinkingMessage]);
+      setMessages(prev => [...prev, thinkingMessage]);
 
       try {
-        const conversationContext = messages.map((m) => ({
+        const conversationContext = messages.map(m => ({
           role: m.agent.id === 'user' ? 'user' : 'assistant',
-          content: `${m.agent.name}${m.stance ? ` [${STANCE_LABELS[m.stance].label}]` : ''}: ${m.content}`,
+          content: `${m.agent.name}${m.stance ? ` [${STANCE_LABELS[m.stance].label}]` : ''}: ${m.content}`
         }));
 
         const artifactContext = formatArtifactsForContext(selectedArtifacts);
-        const recentReactions = messages
-          .filter((m) => m.reactions && m.reactions.length > 0)
-          .slice(-3)
-          .map((m) => {
-            const reactionSummary = m
-              .reactions!.map((r) => {
-                const reactingAgent = workingSquad.find((a) => a.id === r.agentId);
-                return `${reactingAgent?.name || 'Agent'}: ${r.reaction === 'agree' ? '👍' : r.reaction === 'risk' ? '⚠️' : '❌'}`;
-              })
-              .join(', ');
+        const recentReactions = messages.filter(m => m.reactions && m.reactions.length > 0).slice(-3)
+          .map(m => {
+            const reactionSummary = m.reactions!.map(r => {
+              const reactingAgent = workingSquad.find(a => a.id === r.agentId);
+              return `${reactingAgent?.name || 'Agent'}: ${r.reaction === 'agree' ? '👍' : r.reaction === 'risk' ? '⚠️' : '❌'}`;
+            }).join(', ');
             return `Réactions à "${m.content.substring(0, 50)}...": ${reactionSummary}`;
           });
 
@@ -394,16 +313,10 @@ FORMAT DE RÉPONSE (JSON uniquement):
 }
 
 SUJET: ${topic}
-Discussion:\n${conversationContext
-          .slice(-6)
-          .map((m) => m.content)
-          .join('\n')}`;
+Discussion:\n${conversationContext.slice(-6).map(m => m.content).join('\n')}`;
 
         const { data, error } = await supabase.functions.invoke('chat-ai', {
-          body: {
-            message: `Round ${round + 1}: Réponds au débat sur "${topic}".`,
-            systemPrompt: debateSystemPrompt,
-          },
+          body: { message: `Round ${round + 1}: Réponds au débat sur "${topic}".`, systemPrompt: debateSystemPrompt }
         });
 
         if (error) throw error;
@@ -419,45 +332,31 @@ Discussion:\n${conversationContext
           }
         } catch {}
 
-        setMessages((prev) => {
-          const filtered = prev.filter((m) => m.id !== thinkingMessage.id);
-          return [
-            ...filtered,
-            {
-              id: `agent-${Date.now()}-${i}`,
-              agent,
-              content: messageContent,
-              timestamp: new Date(),
-              stance,
-              reactions: [],
-            },
-          ];
+        setMessages(prev => {
+          const filtered = prev.filter(m => m.id !== thinkingMessage.id);
+          return [...filtered, { id: `agent-${Date.now()}-${i}`, agent, content: messageContent, timestamp: new Date(), stance, reactions: [] }];
         });
 
-        await new Promise((resolve) => setTimeout(resolve, 1500));
+        await new Promise(resolve => setTimeout(resolve, 1500));
       } catch (error) {
         console.error(`Erreur pour ${agent.name}:`, error);
-        setMessages((prev) => prev.filter((m) => m.id !== thinkingMessage.id));
+        setMessages(prev => prev.filter(m => m.id !== thinkingMessage.id));
       }
     }
 
-    await new Promise((resolve) => setTimeout(resolve, 2000));
+    await new Promise(resolve => setTimeout(resolve, 2000));
     if (!debateControllerRef.current.stop) runDebateSimulation(topic, round + 1);
   };
 
   const calculateAgentSignals = () => {
-    const signals: AgentSignal[] = workingSquad.map((agent) => {
-      const agentMessages = messages.filter((m) => m.agent.id === agent.id && !m.isThinking);
-      const wordCounts = agentMessages.map((m) => m.content.split(' ').length);
-      const avgWords =
-        wordCounts.length > 0
-          ? Math.round(wordCounts.reduce((a, b) => a + b, 0) / wordCounts.length)
-          : 0;
-
-      const signalScore = Math.min(
-        100,
-        Math.max(0, 50 + agentMessages.length * 10 - (avgWords > 100 ? 20 : 0) + Math.random() * 20)
-      );
+    const signals: AgentSignal[] = workingSquad.map(agent => {
+      const agentMessages = messages.filter(m => m.agent.id === agent.id && !m.isThinking);
+      const wordCounts = agentMessages.map(m => m.content.split(' ').length);
+      const avgWords = wordCounts.length > 0 ? Math.round(wordCounts.reduce((a, b) => a + b, 0) / wordCounts.length) : 0;
+      
+      const signalScore = Math.min(100, Math.max(0, 
+        50 + (agentMessages.length * 10) - (avgWords > 100 ? 20 : 0) + Math.random() * 20
+      ));
 
       let label: AgentSignal['label'] = 'balanced';
       if (signalScore >= 70) label = 'high_signal';
@@ -473,40 +372,30 @@ Discussion:\n${conversationContext
         ignoredCount: Math.floor(agentMessages.length * 0.2),
         wordCountAvg: avgWords,
         signalScore: Math.round(signalScore),
-        strengths:
-          signalScore > 60 ? ['Arguments concis', 'Impact élevé'] : ['Participation active'],
+        strengths: signalScore > 60 ? ['Arguments concis', 'Impact élevé'] : ['Participation active'],
         weaknesses: avgWords > 100 ? ['Trop verbeux'] : [],
-        label,
+        label
       };
     });
     setAgentSignals(signals);
   };
 
-  const addReaction = (
-    messageId: string,
-    agentId: string,
-    reaction: 'agree' | 'risk' | 'disagree'
-  ) => {
-    setMessages((prev) =>
-      prev.map((m) => {
-        if (m.id === messageId) {
-          const existingReactions = m.reactions || [];
-          const filteredReactions = existingReactions.filter((r) => r.agentId !== agentId);
-          return { ...m, reactions: [...filteredReactions, { agentId, reaction }] };
-        }
-        return m;
-      })
-    );
+  const addReaction = (messageId: string, agentId: string, reaction: 'agree' | 'risk' | 'disagree') => {
+    setMessages(prev => prev.map(m => {
+      if (m.id === messageId) {
+        const existingReactions = m.reactions || [];
+        const filteredReactions = existingReactions.filter(r => r.agentId !== agentId);
+        return { ...m, reactions: [...filteredReactions, { agentId, reaction }] };
+      }
+      return m;
+    }));
   };
 
-  const pauseDebate = () => {
-    setIsPaused(true);
-    debateControllerRef.current.stop = true;
-  };
+  const pauseDebate = () => { setIsPaused(true); debateControllerRef.current.stop = true; };
   const resumeDebate = () => {
     setIsPaused(false);
     debateControllerRef.current.stop = false;
-    const lastTopic = messages.find((m) => m.agent.id === 'user')?.content || prompt;
+    const lastTopic = messages.find(m => m.agent.id === 'user')?.content || prompt;
     runDebateSimulation(lastTopic, currentRound);
   };
   const stopDebate = () => {
@@ -517,36 +406,21 @@ Discussion:\n${conversationContext
     calculateAgentSignals();
   };
 
-  const handleReplaceAgent = (oldAgent: Agent) => {
-    setAgentToReplace(oldAgent);
-    setShowAgentSwap(true);
-  };
+  const handleReplaceAgent = (oldAgent: Agent) => { setAgentToReplace(oldAgent); setShowAgentSwap(true); };
   const confirmAgentSwap = async (newAgent: Agent) => {
     if (!agentToReplace) return;
-    const newSquad = workingSquad.map((agent) =>
-      agent.id === agentToReplace.id ? newAgent : agent
-    );
+    const newSquad = workingSquad.map(agent => agent.id === agentToReplace.id ? newAgent : agent);
     setWorkingSquad(newSquad);
     const swapMessage: DebateMessage = {
       id: `swap-${Date.now()}`,
-      agent: {
-        id: 'system',
-        name: 'Système',
-        specialty: '',
-        avatar: '',
-        backstory: '',
-        capabilities: [],
-        tags: [],
-        xpRequired: 0,
-        familyColor: 'blue',
-      },
+      agent: { id: 'system', name: 'Système', specialty: '', avatar: '', backstory: '', capabilities: [], tags: [], xpRequired: 0, familyColor: 'blue' },
       content: `🔄 ${agentToReplace.name} a été remplacé par ${newAgent.name}`,
       timestamp: new Date(),
     };
-    setMessages((prev) => [...prev, swapMessage]);
+    setMessages(prev => [...prev, swapMessage]);
     setShowAgentSwap(false);
     setAgentToReplace(null);
-    toast({ title: 'Agent Remplacé', description: `${newAgent.name} a rejoint le débat` });
+    toast({ title: "Agent Remplacé", description: `${newAgent.name} a rejoint le débat` });
   };
 
   const generateDebateOutcome = async () => {
@@ -554,12 +428,8 @@ Discussion:\n${conversationContext
     setIsGeneratingOutcome(true);
 
     try {
-      const debateContent = messages
-        .filter((m) => m.agent.id !== 'system' && !m.isThinking)
-        .map(
-          (m) =>
-            `${m.agent.name} (${m.agent.specialty})${m.stance ? ` [${STANCE_LABELS[m.stance].label}]` : ''}: ${m.content}`
-        )
+      const debateContent = messages.filter(m => m.agent.id !== 'system' && !m.isThinking)
+        .map(m => `${m.agent.name} (${m.agent.specialty})${m.stance ? ` [${STANCE_LABELS[m.stance].label}]` : ''}: ${m.content}`)
         .join('\n\n');
 
       const { data, error } = await supabase.functions.invoke('chat-ai', {
@@ -592,8 +462,8 @@ FORMAT JSON OBLIGATOIRE:
   }
 }
 
-Génère 2-3 options de décision concrètes.`,
-        },
+Génère 2-3 options de décision concrètes.`
+        }
       });
 
       if (error) throw error;
@@ -605,22 +475,13 @@ Génère 2-3 options de décision concrètes.`,
           setDebateOutcome(parsed);
           if (parsed.confidenceFactors) setConfidenceFactors(parsed.confidenceFactors);
         }
-      } catch {
-        console.error('Failed to parse outcome JSON');
-      }
+      } catch { console.error('Failed to parse outcome JSON'); }
 
       onAddXP(30, 'generating debate decisions');
-      toast({
-        title: 'Décisions Générées',
-        description: 'Options de décision concrètes disponibles',
-      });
+      toast({ title: "Décisions Générées", description: "Options de décision concrètes disponibles" });
     } catch (error) {
       console.error('Error generating outcome:', error);
-      toast({
-        title: 'Erreur',
-        description: 'Impossible de générer les décisions',
-        variant: 'destructive',
-      });
+      toast({ title: "Erreur", description: "Impossible de générer les décisions", variant: "destructive" });
     } finally {
       setIsGeneratingOutcome(false);
     }
@@ -628,7 +489,7 @@ Génère 2-3 options de décision concrètes.`,
 
   const selectDecisionOption = async (option: DecisionOption) => {
     setChosenOption(option);
-
+    
     // Save to decision log
     try {
       const insertData = {
@@ -642,25 +503,17 @@ Génère 2-3 options de décision concrètes.`,
         kpis_to_watch: option.suggestedKPIs,
         confidence_level: confidenceFactors?.overallConfidence || 'medium',
         confidence_factors: confidenceFactors || {},
-        debate_messages: messages.map((m) => ({
-          agent: m.agent.name,
-          content: m.content,
-          stance: m.stance,
-        })),
+        debate_messages: messages.map(m => ({ agent: m.agent.name, content: m.content, stance: m.stance })),
         outcome: debateOutcome,
         tensions_remaining: debateOutcome?.tensions || [],
         non_negotiables: debateOutcome?.nonNegotiables || [],
-        consensus_points: debateOutcome?.consensus || [],
+        consensus_points: debateOutcome?.consensus || []
       };
-      const { data, error } = await supabase
-        .from('decision_log')
-        .insert(insertData as any)
-        .select()
-        .single();
+      const { data, error } = await supabase.from('decision_log').insert(insertData as any).select().single();
 
       if (error) throw error;
       setSavedDecisionId(data.id);
-
+      
       // Update friction patterns
       if (debateOutcome?.tensions) {
         for (const tension of debateOutcome.tensions) {
@@ -672,22 +525,19 @@ Génère 2-3 options de décision concrètes.`,
             .single();
 
           if (existing) {
-            await supabase
-              .from('friction_patterns')
-              .update({
-                occurrence_count: (existing.occurrence_count ?? 0) + 1,
-                decision_ids: [...(existing.decision_ids as string[]), data.id],
-                last_occurred: new Date().toISOString(),
-                is_structural: (existing.occurrence_count ?? 0) >= 6,
-              })
-              .eq('id', existing.id);
+            await supabase.from('friction_patterns').update({
+              occurrence_count: existing.occurrence_count + 1,
+              decision_ids: [...(existing.decision_ids as string[]), data.id],
+              last_occurred: new Date().toISOString(),
+              is_structural: existing.occurrence_count >= 6
+            }).eq('id', existing.id);
           } else {
             await supabase.from('friction_patterns').insert({
               tension_signature: signature,
               tension_left: tension.left,
               tension_right: tension.right,
               occurrence_count: 1,
-              decision_ids: [data.id],
+              decision_ids: [data.id]
             });
           }
         }
@@ -706,14 +556,11 @@ Génère 2-3 options de décision concrètes.`,
           word_count_avg: signal.wordCountAvg,
           signal_score: signal.signalScore / 100,
           strengths: signal.strengths,
-          weaknesses: signal.weaknesses,
+          weaknesses: signal.weaknesses
         });
       }
 
-      toast({
-        title: 'Décision Enregistrée',
-        description: 'Sauvegardée dans le journal des décisions',
-      });
+      toast({ title: "Décision Enregistrée", description: "Sauvegardée dans le journal des décisions" });
       onAddXP(40, 'making a decision');
     } catch (error) {
       console.error('Error saving decision:', error);
@@ -722,27 +569,21 @@ Génère 2-3 options de décision concrètes.`,
 
   const createNextArtifact = async (type: 'discovery' | 'epic' | 'journey' | 'kpis') => {
     if (!debateOutcome) {
-      toast({
-        title: 'Erreur',
-        description: "Générez d'abord les décisions du débat",
-        variant: 'destructive',
-      });
+      toast({ title: "Erreur", description: "Générez d'abord les décisions du débat", variant: "destructive" });
       return;
     }
 
-    toast({ title: 'Création en cours...', description: `Génération de l'artefact ${type}` });
+    toast({ title: "Création en cours...", description: `Génération de l'artefact ${type}` });
 
     try {
-      const debateContext = messages
-        .filter((m) => m.agent.id !== 'system' && !m.isThinking)
-        .map((m) => `${m.agent.name}: ${m.content}`)
-        .join('\n\n');
+      const debateContext = messages.filter(m => m.agent.id !== 'system' && !m.isThinking)
+        .map(m => `${m.agent.name}: ${m.content}`).join('\n\n');
 
       const outcomeContext = `
 ## Résultat du Débat
-### Consensus\n${debateOutcome.consensus.map((c) => `- ${c}`).join('\n')}
-### Tensions\n${debateOutcome.tensions.map((t) => `- ${t.left} vs ${t.right}`).join('\n')}
-### Non-négociables\n${debateOutcome.nonNegotiables.map((n) => `- ${n}`).join('\n')}
+### Consensus\n${debateOutcome.consensus.map(c => `- ${c}`).join('\n')}
+### Tensions\n${debateOutcome.tensions.map(t => `- ${t.left} vs ${t.right}`).join('\n')}
+### Non-négociables\n${debateOutcome.nonNegotiables.map(n => `- ${n}`).join('\n')}
 ### Option Choisie\n${chosenOption ? `**${chosenOption.title}**: ${chosenOption.description}` : 'Aucune'}
 `;
 
@@ -779,8 +620,8 @@ Génère 2-3 options de décision concrètes.`,
       const { data, error } = await supabase.functions.invoke('chat-ai', {
         body: {
           message: `${artifactPrompt}\n\nContexte:\n${fullContext}`,
-          systemPrompt: `Tu es un expert en product management. Génère des artefacts structurés. Réponds UNIQUEMENT avec le JSON demandé, sans texte additionnel.`,
-        },
+          systemPrompt: `Tu es un expert en product management. Génère des artefacts structurés. Réponds UNIQUEMENT avec le JSON demandé, sans texte additionnel.`
+        }
       });
 
       if (error) throw error;
@@ -789,18 +630,16 @@ Génère 2-3 options de décision concrètes.`,
       try {
         const jsonMatch = data.response.match(/\{[\s\S]*\}/);
         if (jsonMatch) artifactContent = JSON.parse(jsonMatch[0]);
-      } catch {
-        artifactContent = { raw_content: data.response };
-      }
+      } catch { artifactContent = { raw_content: data.response }; }
 
       artifactContent.source = {
         type: 'reality_mode_debate',
         debate_topic: prompt,
         decision_id: savedDecisionId,
-        squad_members: workingSquad.map((a) => ({ name: a.name, specialty: a.specialty })),
+        squad_members: workingSquad.map(a => ({ name: a.name, specialty: a.specialty })),
         chosen_option: chosenOption?.title,
         consensus_points: debateOutcome.consensus,
-        non_negotiables: debateOutcome.nonNegotiables,
+        non_negotiables: debateOutcome.nonNegotiables
       };
 
       const validArtifactType = artifactType === 'epic' ? 'epic' : 'canvas';
@@ -808,19 +647,15 @@ Génère 2-3 options de décision concrètes.`,
         title: artifactTitle,
         artifact_type: validArtifactType as 'canvas' | 'epic' | 'story' | 'impact_analysis',
         content: artifactContent,
-        user_id: userId,
+        user_id: userId
       });
 
       if (saveError) throw saveError;
       onAddXP(30, `creating ${type} from debate`);
-      toast({ title: 'Artefact Créé', description: `${artifactTitle} a été sauvegardé` });
+      toast({ title: "Artefact Créé", description: `${artifactTitle} a été sauvegardé` });
     } catch (error) {
       console.error('Error creating artifact:', error);
-      toast({
-        title: 'Erreur',
-        description: "Impossible de créer l'artefact",
-        variant: 'destructive',
-      });
+      toast({ title: "Erreur", description: "Impossible de créer l'artefact", variant: "destructive" });
     }
   };
 
@@ -834,24 +669,13 @@ Génère 2-3 options de décision concrètes.`,
         <div className="flex-1 h-2 rounded-full overflow-hidden bg-muted flex">
           {(Object.entries(stanceDistribution) as [Stance, number][]).map(([stance, count]) => {
             if (count === 0) return null;
-            return (
-              <div
-                key={stance}
-                className={`h-full ${STANCE_LABELS[stance].color}`}
-                style={{ width: `${(count / total) * 100}%` }}
-                title={`${STANCE_LABELS[stance].label}: ${count}`}
-              />
-            );
+            return <div key={stance} className={`h-full ${STANCE_LABELS[stance].color}`} style={{ width: `${(count / total) * 100}%` }} title={`${STANCE_LABELS[stance].label}: ${count}`} />;
           })}
         </div>
         <div className="flex gap-1">
           {(Object.entries(stanceDistribution) as [Stance, number][]).map(([stance, count]) => {
             if (count === 0) return null;
-            return (
-              <Badge key={stance} variant="outline" className="text-[10px] px-1.5">
-                {STANCE_LABELS[stance].label.split(' ')[0]}: {count}
-              </Badge>
-            );
+            return <Badge key={stance} variant="outline" className="text-[10px] px-1.5">{STANCE_LABELS[stance].label.split(' ')[0]}: {count}</Badge>;
           })}
         </div>
       </div>
@@ -859,14 +683,9 @@ Génère 2-3 options de décision concrètes.`,
   };
 
   const DecisionOptionCard = ({ option, index }: { option: DecisionOption; index: number }) => (
-    <Card
-      className={`p-4 border-2 transition-colors cursor-pointer ${chosenOption?.id === option.id ? 'border-primary bg-primary/5' : 'hover:border-primary/50'}`}
-      onClick={() => selectDecisionOption(option)}
-    >
+    <Card className={`p-4 border-2 transition-colors cursor-pointer ${chosenOption?.id === option.id ? 'border-primary bg-primary/5' : 'hover:border-primary/50'}`} onClick={() => selectDecisionOption(option)}>
       <div className="flex items-start gap-3 mb-3">
-        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center font-bold text-primary">
-          {String.fromCharCode(65 + index)}
-        </div>
+        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center font-bold text-primary">{String.fromCharCode(65 + index)}</div>
         <div className="flex-1">
           <h5 className="font-bold text-sm">{option.title}</h5>
           <p className="text-xs text-muted-foreground">{option.description}</p>
@@ -875,47 +694,19 @@ Génère 2-3 options de décision concrètes.`,
       </div>
       <div className="grid grid-cols-2 gap-3 text-xs">
         <div>
-          <div className="flex items-center gap-1 text-green-600 dark:text-green-400 font-medium mb-1">
-            <Zap className="w-3 h-3" />
-            Ce qui change
-          </div>
-          <ul className="space-y-0.5">
-            {option.whatChanges.map((item, i) => (
-              <li key={i} className="text-muted-foreground">
-                • {item}
-              </li>
-            ))}
-          </ul>
+          <div className="flex items-center gap-1 text-green-600 dark:text-green-400 font-medium mb-1"><Zap className="w-3 h-3" />Ce qui change</div>
+          <ul className="space-y-0.5">{option.whatChanges.map((item, i) => <li key={i} className="text-muted-foreground">• {item}</li>)}</ul>
         </div>
         <div>
-          <div className="flex items-center gap-1 text-blue-600 dark:text-blue-400 font-medium mb-1">
-            <Users className="w-3 h-3" />
-            Ce qui reste humain
-          </div>
-          <ul className="space-y-0.5">
-            {option.whatStaysHuman.map((item, i) => (
-              <li key={i} className="text-muted-foreground">
-                • {item}
-              </li>
-            ))}
-          </ul>
+          <div className="flex items-center gap-1 text-blue-600 dark:text-blue-400 font-medium mb-1"><Users className="w-3 h-3" />Ce qui reste humain</div>
+          <ul className="space-y-0.5">{option.whatStaysHuman.map((item, i) => <li key={i} className="text-muted-foreground">• {item}</li>)}</ul>
         </div>
       </div>
       <div className="mt-3 pt-3 border-t flex items-center justify-between">
-        <div className="flex items-center gap-1 text-amber-600 dark:text-amber-400 text-xs">
-          <AlertTriangle className="w-3 h-3" />
-          <span className="font-medium">Risque:</span>
-          <span className="text-muted-foreground">{option.keyRisk}</span>
-        </div>
+        <div className="flex items-center gap-1 text-amber-600 dark:text-amber-400 text-xs"><AlertTriangle className="w-3 h-3" /><span className="font-medium">Risque:</span><span className="text-muted-foreground">{option.keyRisk}</span></div>
       </div>
       {option.suggestedKPIs?.length > 0 && (
-        <div className="mt-2 flex flex-wrap gap-1">
-          {option.suggestedKPIs.map((kpi, i) => (
-            <Badge key={i} variant="secondary" className="text-[10px]">
-              📊 {kpi}
-            </Badge>
-          ))}
-        </div>
+        <div className="mt-2 flex flex-wrap gap-1">{option.suggestedKPIs.map((kpi, i) => <Badge key={i} variant="secondary" className="text-[10px]">📊 {kpi}</Badge>)}</div>
       )}
     </Card>
   );
@@ -924,16 +715,9 @@ Génère 2-3 options de décision concrètes.`,
     return (
       <Card className="p-8">
         <div className="text-center space-y-4">
-          <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-primary/10">
-            <Sparkles className="w-10 h-10 text-primary" />
-          </div>
-          <div>
-            <h3 className="text-xl font-semibold mb-2">Reality Mode Indisponible</h3>
-            <p className="text-muted-foreground">
-              Vous devez créer une squad avec des agents IA pour utiliser Reality Mode
-            </p>
-          </div>
-          <Button onClick={() => (window.location.hash = '#squads')}>Créer Votre Squad</Button>
+          <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-primary/10"><Sparkles className="w-10 h-10 text-primary" /></div>
+          <div><h3 className="text-xl font-semibold mb-2">Reality Mode Indisponible</h3><p className="text-muted-foreground">Vous devez créer une squad avec des agents IA pour utiliser Reality Mode</p></div>
+          <Button onClick={() => window.location.hash = '#squads'}>Créer Votre Squad</Button>
         </div>
       </Card>
     );
@@ -985,47 +769,20 @@ Génère 2-3 options de décision concrètes.`,
             {/* Left Sidebar - Agents */}
             <div className="w-52 shrink-0 space-y-3">
               <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-2">
-                  <Users className="w-4 h-4" />
-                  <h3 className="font-semibold text-sm">Squad</h3>
-                </div>
-                <Badge variant="secondary" className="text-xs">
-                  {workingSquad.length}
-                </Badge>
+                <div className="flex items-center space-x-2"><Users className="w-4 h-4" /><h3 className="font-semibold text-sm">Squad</h3></div>
+                <Badge variant="secondary" className="text-xs">{workingSquad.length}</Badge>
               </div>
-
+              
               <div className="space-y-2">
-                {workingSquad.map((agent) => (
+                {workingSquad.map(agent => (
                   <Card key={agent.id} className="p-2 relative group">
                     <div className="flex items-center space-x-2">
-                      <Avatar className="w-8 h-8">
-                        <AvatarImage src={agent.avatar} />
-                        <AvatarFallback className="text-xs">
-                          {agent.name
-                            .split(' ')
-                            .map((n) => n[0])
-                            .join('')}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs font-medium truncate">{agent.name}</p>
-                        <p className="text-[10px] text-muted-foreground truncate">
-                          {agent.specialty}
-                        </p>
-                      </div>
+                      <Avatar className="w-8 h-8"><AvatarImage src={agent.avatar} /><AvatarFallback className="text-xs">{agent.name.split(' ').map(n => n[0]).join('')}</AvatarFallback></Avatar>
+                      <div className="flex-1 min-w-0"><p className="text-xs font-medium truncate">{agent.name}</p><p className="text-[10px] text-muted-foreground truncate">{agent.specialty}</p></div>
                     </div>
-                    <div className="text-[9px] text-muted-foreground mt-1">
-                      Max {getWordLimit(agent)} mots
-                    </div>
+                    <div className="text-[9px] text-muted-foreground mt-1">Max {getWordLimit(agent)} mots</div>
                     {isDebating && !isPaused && (
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="absolute -top-1 -right-1 h-5 w-5 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
-                        onClick={() => handleReplaceAgent(agent)}
-                      >
-                        <UserMinus className="w-3 h-3" />
-                      </Button>
+                      <Button size="sm" variant="ghost" className="absolute -top-1 -right-1 h-5 w-5 p-0 opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => handleReplaceAgent(agent)}><UserMinus className="w-3 h-3" /></Button>
                     )}
                   </Card>
                 ))}
@@ -1034,37 +791,21 @@ Génère 2-3 options de décision concrètes.`,
               {/* Tension Agents - Now contextual */}
               <div className="pt-3 border-t">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs font-medium text-muted-foreground">
-                    Agents de Tension
-                  </span>
-                  <Badge variant="outline" className="text-[10px]">
-                    {activeTensionAgents.length}
-                  </Badge>
+                  <span className="text-xs font-medium text-muted-foreground">Agents de Tension</span>
+                  <Badge variant="outline" className="text-[10px]">{activeTensionAgents.length}</Badge>
                 </div>
                 {tensionLoading ? (
-                  <div className="text-xs text-muted-foreground text-center py-2">
-                    Chargement...
-                  </div>
+                  <div className="text-xs text-muted-foreground text-center py-2">Chargement...</div>
                 ) : (
                   <div className="space-y-1">
-                    {contextualTensionAgents.map((ta) => {
-                      const isActive = activeTensionAgents.some((a) => a.id === ta.id);
+                    {contextualTensionAgents.map(ta => {
+                      const isActive = activeTensionAgents.some(a => a.id === ta.id);
                       return (
-                        <Button
-                          key={ta.id}
-                          size="sm"
-                          variant={isActive ? 'secondary' : 'ghost'}
-                          className="w-full justify-start text-xs h-8"
-                          onClick={() =>
-                            isActive ? removeTensionAgent(ta.id) : addTensionAgent(ta)
-                          }
-                        >
+                        <Button key={ta.id} size="sm" variant={isActive ? "secondary" : "ghost"} className="w-full justify-start text-xs h-8" onClick={() => isActive ? removeTensionAgent(ta.id) : addTensionAgent(ta)}>
                           {ta.role === 'brand_guardian' && <Shield className="w-3 h-3 mr-1" />}
                           {ta.role === 'store_manager' && <Store className="w-3 h-3 mr-1" />}
                           {ta.role === 'finance_reality' && <Calculator className="w-3 h-3 mr-1" />}
-                          {ta.role === 'customer_advocate' && (
-                            <UserCheck className="w-3 h-3 mr-1" />
-                          )}
+                          {ta.role === 'customer_advocate' && <UserCheck className="w-3 h-3 mr-1" />}
                           <span className="truncate">{ta.name}</span>
                           {isActive && <X className="w-3 h-3 ml-auto shrink-0" />}
                         </Button>
@@ -1074,11 +815,7 @@ Génère 2-3 options de décision concrètes.`,
                 )}
               </div>
 
-              {currentRound > 0 && (
-                <Badge variant="outline" className="w-full justify-center">
-                  Round {currentRound}/3
-                </Badge>
-              )}
+              {currentRound > 0 && <Badge variant="outline" className="w-full justify-center">Round {currentRound}/3</Badge>}
             </div>
 
             {/* Main Debate Arena */}
@@ -1086,156 +823,65 @@ Génère 2-3 options de décision concrètes.`,
               <div className="p-3 border-b bg-muted/30 flex items-center justify-between">
                 <h3 className="font-semibold">Arène de Débat</h3>
                 <div className="flex items-center space-x-2">
-                  <Button size="sm" variant="ghost" onClick={() => setIsSoundOn(!isSoundOn)}>
-                    {isSoundOn ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
-                  </Button>
-                  {isDebating && !isPaused && (
-                    <Badge variant="default" className="animate-pulse">
-                      <span className="w-2 h-2 rounded-full bg-white mr-2" />
-                      En Direct
-                    </Badge>
-                  )}
-                  {isDebateComplete && (
-                    <Badge variant="secondary" className="bg-green-500/20 text-green-700">
-                      <CheckCircle2 className="w-3 h-3 mr-1" />
-                      Terminé
-                    </Badge>
-                  )}
+                  <Button size="sm" variant="ghost" onClick={() => setIsSoundOn(!isSoundOn)}>{isSoundOn ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}</Button>
+                  {isDebating && !isPaused && <Badge variant="default" className="animate-pulse"><span className="w-2 h-2 rounded-full bg-white mr-2" />En Direct</Badge>}
+                  {isDebateComplete && <Badge variant="secondary" className="bg-green-500/20 text-green-700"><CheckCircle2 className="w-3 h-3 mr-1" />Terminé</Badge>}
                 </div>
               </div>
 
-              {messages.length > 0 && (
-                <div className="px-4 pt-3">
-                  <StanceBar />
-                </div>
-              )}
+              {messages.length > 0 && <div className="px-4 pt-3"><StanceBar /></div>}
 
               <ScrollArea className="flex-1 p-4" ref={scrollAreaRef}>
                 <div className="space-y-4">
                   {messages.map((message) => (
-                    <div
-                      key={message.id}
-                      className={`flex space-x-3 ${message.agent.id === 'user' ? 'justify-end' : message.agent.id === 'system' ? 'justify-center' : message.isRealityCheck ? 'justify-center' : 'justify-start'}`}
-                    >
-                      {message.agent.id !== 'user' &&
-                        message.agent.id !== 'system' &&
-                        !message.isRealityCheck && (
-                          <Avatar className="w-10 h-10 flex-shrink-0">
-                            <AvatarImage src={message.agent.avatar} />
-                            <AvatarFallback>
-                              {message.agent.name
-                                .split(' ')
-                                .map((n) => n[0])
-                                .join('')}
-                            </AvatarFallback>
-                          </Avatar>
-                        )}
-
+                    <div key={message.id} className={`flex space-x-3 ${message.agent.id === 'user' ? 'justify-end' : message.agent.id === 'system' ? 'justify-center' : message.isRealityCheck ? 'justify-center' : 'justify-start'}`}>
+                      {message.agent.id !== 'user' && message.agent.id !== 'system' && !message.isRealityCheck && (
+                        <Avatar className="w-10 h-10 flex-shrink-0"><AvatarImage src={message.agent.avatar} /><AvatarFallback>{message.agent.name.split(' ').map(n => n[0]).join('')}</AvatarFallback></Avatar>
+                      )}
+                      
                       {message.isRealityCheck ? (
                         <Card className="max-w-[90%] p-4 bg-gradient-to-r from-amber-500/10 to-orange-500/10 border-amber-500/30">
-                          <div className="flex items-center gap-2 mb-2">
-                            <Target className="w-5 h-5 text-amber-500" />
-                            <span className="font-bold text-amber-600 dark:text-amber-400">
-                              Reality Check
-                            </span>
-                          </div>
+                          <div className="flex items-center gap-2 mb-2"><Target className="w-5 h-5 text-amber-500" /><span className="font-bold text-amber-600 dark:text-amber-400">Reality Check</span></div>
                           <FormattedText content={message.content} className="text-sm" />
                         </Card>
                       ) : (
-                        <div
-                          className={`max-w-[80%] rounded-lg p-4 ${message.agent.id === 'user' ? 'bg-primary text-primary-foreground' : message.agent.id === 'system' ? 'bg-muted/50 text-muted-foreground text-center' : message.isTensionAgent ? 'bg-red-500/10 border-2 border-red-500/30' : 'bg-card border-2 border-primary/20'}`}
-                        >
+                        <div className={`max-w-[80%] rounded-lg p-4 ${message.agent.id === 'user' ? 'bg-primary text-primary-foreground' : message.agent.id === 'system' ? 'bg-muted/50 text-muted-foreground text-center' : message.isTensionAgent ? 'bg-red-500/10 border-2 border-red-500/30' : 'bg-card border-2 border-primary/20'}`}>
                           {message.agent.id !== 'user' && message.agent.id !== 'system' && (
                             <div className="flex items-center justify-between mb-2">
                               <div className="flex items-center space-x-2">
                                 <span className="text-sm font-bold">{message.agent.name}</span>
-                                <Badge variant="outline" className="text-xs">
-                                  {message.agent.specialty}
-                                </Badge>
-                                {message.isTensionAgent && (
-                                  <Badge className="bg-red-500/20 text-red-700 text-[10px]">
-                                    Tension
-                                  </Badge>
-                                )}
+                                <Badge variant="outline" className="text-xs">{message.agent.specialty}</Badge>
+                                {message.isTensionAgent && <Badge className="bg-red-500/20 text-red-700 text-[10px]">Tension</Badge>}
                               </div>
-                              {message.stance && (
-                                <Badge
-                                  className={`text-[10px] text-white ${STANCE_LABELS[message.stance].color}`}
-                                >
-                                  {STANCE_LABELS[message.stance].label}
-                                </Badge>
-                              )}
+                              {message.stance && <Badge className={`text-[10px] text-white ${STANCE_LABELS[message.stance].color}`}>{STANCE_LABELS[message.stance].label}</Badge>}
                             </div>
                           )}
-
+                          
                           {message.isThinking ? (
-                            <div className="flex items-center space-x-2 text-muted-foreground">
-                              <Loader2 className="w-4 h-4 animate-spin" />
-                              <span className="text-sm">Formulation...</span>
-                            </div>
+                            <div className="flex items-center space-x-2 text-muted-foreground"><Loader2 className="w-4 h-4 animate-spin" /><span className="text-sm">Formulation...</span></div>
                           ) : (
                             <>
-                              <FormattedText
-                                content={message.content}
-                                className="text-sm leading-relaxed"
-                              />
-                              {message.agent.id !== 'user' &&
-                                message.agent.id !== 'system' &&
-                                !message.isThinking &&
-                                isDebating && (
-                                  <div className="flex items-center gap-2 mt-3 pt-2 border-t">
-                                    <span className="text-[10px] text-muted-foreground">
-                                      Réagir:
-                                    </span>
-                                    {workingSquad
-                                      .filter((a) => a.id !== message.agent.id)
-                                      .slice(0, 2)
-                                      .map((agent) => (
-                                        <div key={agent.id} className="flex items-center gap-1">
-                                          <span className="text-[9px] text-muted-foreground">
-                                            {agent.name.split(' ')[0]}:
-                                          </span>
-                                          <button
-                                            className={`p-1 rounded hover:bg-green-500/20 ${message.reactions?.find((r) => r.agentId === agent.id && r.reaction === 'agree') ? 'bg-green-500/30' : ''}`}
-                                            onClick={() =>
-                                              addReaction(message.id, agent.id, 'agree')
-                                            }
-                                          >
-                                            <ThumbsUp className="w-3 h-3 text-green-500" />
-                                          </button>
-                                          <button
-                                            className={`p-1 rounded hover:bg-amber-500/20 ${message.reactions?.find((r) => r.agentId === agent.id && r.reaction === 'risk') ? 'bg-amber-500/30' : ''}`}
-                                            onClick={() =>
-                                              addReaction(message.id, agent.id, 'risk')
-                                            }
-                                          >
-                                            <AlertCircle className="w-3 h-3 text-amber-500" />
-                                          </button>
-                                          <button
-                                            className={`p-1 rounded hover:bg-red-500/20 ${message.reactions?.find((r) => r.agentId === agent.id && r.reaction === 'disagree') ? 'bg-red-500/30' : ''}`}
-                                            onClick={() =>
-                                              addReaction(message.id, agent.id, 'disagree')
-                                            }
-                                          >
-                                            <X className="w-3 h-3 text-red-500" />
-                                          </button>
-                                        </div>
-                                      ))}
-                                  </div>
-                                )}
-                              <span className="text-xs opacity-70 mt-2 block">
-                                {message.timestamp.toLocaleTimeString()}
-                              </span>
+                              <FormattedText content={message.content} className="text-sm leading-relaxed" />
+                              {message.agent.id !== 'user' && message.agent.id !== 'system' && !message.isThinking && isDebating && (
+                                <div className="flex items-center gap-2 mt-3 pt-2 border-t">
+                                  <span className="text-[10px] text-muted-foreground">Réagir:</span>
+                                  {workingSquad.filter(a => a.id !== message.agent.id).slice(0, 2).map(agent => (
+                                    <div key={agent.id} className="flex items-center gap-1">
+                                      <span className="text-[9px] text-muted-foreground">{agent.name.split(' ')[0]}:</span>
+                                      <button className={`p-1 rounded hover:bg-green-500/20 ${message.reactions?.find(r => r.agentId === agent.id && r.reaction === 'agree') ? 'bg-green-500/30' : ''}`} onClick={() => addReaction(message.id, agent.id, 'agree')}><ThumbsUp className="w-3 h-3 text-green-500" /></button>
+                                      <button className={`p-1 rounded hover:bg-amber-500/20 ${message.reactions?.find(r => r.agentId === agent.id && r.reaction === 'risk') ? 'bg-amber-500/30' : ''}`} onClick={() => addReaction(message.id, agent.id, 'risk')}><AlertCircle className="w-3 h-3 text-amber-500" /></button>
+                                      <button className={`p-1 rounded hover:bg-red-500/20 ${message.reactions?.find(r => r.agentId === agent.id && r.reaction === 'disagree') ? 'bg-red-500/30' : ''}`} onClick={() => addReaction(message.id, agent.id, 'disagree')}><X className="w-3 h-3 text-red-500" /></button>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                              <span className="text-xs opacity-70 mt-2 block">{message.timestamp.toLocaleTimeString()}</span>
                             </>
                           )}
                         </div>
                       )}
 
-                      {message.agent.id === 'user' && (
-                        <Avatar className="w-10 h-10 flex-shrink-0">
-                          <AvatarFallback>Vous</AvatarFallback>
-                        </Avatar>
-                      )}
+                      {message.agent.id === 'user' && <Avatar className="w-10 h-10 flex-shrink-0"><AvatarFallback>Vous</AvatarFallback></Avatar>}
                     </div>
                   ))}
 
@@ -1243,59 +889,23 @@ Génère 2-3 options de décision concrètes.`,
                   {debateOutcome && (
                     <div className="space-y-4 mt-6">
                       <div className="flex items-center gap-3">
-                        <div className="p-2 rounded-lg bg-primary/10">
-                          <Target className="w-6 h-6 text-primary" />
-                        </div>
+                        <div className="p-2 rounded-lg bg-primary/10"><Target className="w-6 h-6 text-primary" /></div>
                         <h4 className="text-lg font-bold">Résultat du Débat</h4>
-                        {chosenOption && (
-                          <Badge className="bg-green-500 text-white">Décision prise</Badge>
-                        )}
+                        {chosenOption && <Badge className="bg-green-500 text-white">Décision prise</Badge>}
                       </div>
 
                       <div className="grid grid-cols-3 gap-3">
                         <Card className="p-3 bg-green-500/5 border-green-500/20">
-                          <div className="flex items-center gap-2 mb-2 text-green-600 dark:text-green-400">
-                            <Handshake className="w-4 h-4" />
-                            <span className="font-semibold text-sm">Consensus</span>
-                          </div>
-                          <ul className="space-y-1">
-                            {debateOutcome.consensus.map((item, i) => (
-                              <li key={i} className="text-xs text-muted-foreground">
-                                • {item}
-                              </li>
-                            ))}
-                          </ul>
+                          <div className="flex items-center gap-2 mb-2 text-green-600 dark:text-green-400"><Handshake className="w-4 h-4" /><span className="font-semibold text-sm">Consensus</span></div>
+                          <ul className="space-y-1">{debateOutcome.consensus.map((item, i) => <li key={i} className="text-xs text-muted-foreground">• {item}</li>)}</ul>
                         </Card>
                         <Card className="p-3 bg-amber-500/5 border-amber-500/20">
-                          <div className="flex items-center gap-2 mb-2 text-amber-600 dark:text-amber-400">
-                            <GitFork className="w-4 h-4" />
-                            <span className="font-semibold text-sm">Tensions</span>
-                          </div>
-                          <ul className="space-y-1">
-                            {debateOutcome.tensions.map((tension, i) => (
-                              <li
-                                key={i}
-                                className="text-xs text-muted-foreground flex items-center gap-1"
-                              >
-                                <span>{tension.left}</span>
-                                <ArrowRight className="w-3 h-3 text-amber-500" />
-                                <span>{tension.right}</span>
-                              </li>
-                            ))}
-                          </ul>
+                          <div className="flex items-center gap-2 mb-2 text-amber-600 dark:text-amber-400"><GitFork className="w-4 h-4" /><span className="font-semibold text-sm">Tensions</span></div>
+                          <ul className="space-y-1">{debateOutcome.tensions.map((tension, i) => <li key={i} className="text-xs text-muted-foreground flex items-center gap-1"><span>{tension.left}</span><ArrowRight className="w-3 h-3 text-amber-500" /><span>{tension.right}</span></li>)}</ul>
                         </Card>
                         <Card className="p-3 bg-red-500/5 border-red-500/20">
-                          <div className="flex items-center gap-2 mb-2 text-red-600 dark:text-red-400">
-                            <AlertTriangle className="w-4 h-4" />
-                            <span className="font-semibold text-sm">Non-négociables</span>
-                          </div>
-                          <ul className="space-y-1">
-                            {debateOutcome.nonNegotiables.map((item, i) => (
-                              <li key={i} className="text-xs text-muted-foreground">
-                                🔒 {item}
-                              </li>
-                            ))}
-                          </ul>
+                          <div className="flex items-center gap-2 mb-2 text-red-600 dark:text-red-400"><AlertTriangle className="w-4 h-4" /><span className="font-semibold text-sm">Non-négociables</span></div>
+                          <ul className="space-y-1">{debateOutcome.nonNegotiables.map((item, i) => <li key={i} className="text-xs text-muted-foreground">🔒 {item}</li>)}</ul>
                         </Card>
                       </div>
 
@@ -1304,17 +914,9 @@ Génère 2-3 options de décision concrètes.`,
 
                       {/* Decision Options */}
                       <div className="space-y-3">
-                        <h5 className="font-semibold flex items-center gap-2">
-                          <Lightbulb className="w-4 h-4 text-primary" />
-                          Options de Décision{' '}
-                          <span className="text-xs text-muted-foreground">
-                            (cliquez pour choisir)
-                          </span>
-                        </h5>
+                        <h5 className="font-semibold flex items-center gap-2"><Lightbulb className="w-4 h-4 text-primary" />Options de Décision <span className="text-xs text-muted-foreground">(cliquez pour choisir)</span></h5>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                          {debateOutcome.decisionOptions.map((option, index) => (
-                            <DecisionOptionCard key={option.id} option={option} index={index} />
-                          ))}
+                          {debateOutcome.decisionOptions.map((option, index) => <DecisionOptionCard key={option.id} option={option} index={index} />)}
                         </div>
                       </div>
 
@@ -1322,55 +924,20 @@ Génère 2-3 options de décision concrètes.`,
                       {chosenOption && debateOutcome.decisionOptions.length > 1 && (
                         <CounterfactualPanel
                           chosenOption={chosenOption}
-                          alternativeOptions={debateOutcome.decisionOptions.filter(
-                            (o) => o.id !== chosenOption.id
-                          )}
-                          debateContext={messages
-                            .map((m) => `${m.agent.name}: ${m.content}`)
-                            .join('\n')}
+                          alternativeOptions={debateOutcome.decisionOptions.filter(o => o.id !== chosenOption.id)}
+                          debateContext={messages.map(m => `${m.agent.name}: ${m.content}`).join('\n')}
                           onAnalysisComplete={setCounterfactualAnalysis}
                         />
                       )}
 
                       {/* Next Actions */}
                       <Card className="p-4 bg-gradient-to-r from-primary/5 to-primary/10">
-                        <h5 className="font-semibold mb-3 flex items-center gap-2">
-                          <ArrowRight className="w-4 h-4 text-primary" />
-                          Prochaine Action
-                        </h5>
+                        <h5 className="font-semibold mb-3 flex items-center gap-2"><ArrowRight className="w-4 h-4 text-primary" />Prochaine Action</h5>
                         <div className="flex flex-wrap gap-2">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => createNextArtifact('discovery')}
-                          >
-                            <FileText className="w-4 h-4 mr-1" />
-                            Créer Discovery
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => createNextArtifact('epic')}
-                          >
-                            <ListChecks className="w-4 h-4 mr-1" />
-                            Créer 1 Epic
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => createNextArtifact('journey')}
-                          >
-                            <Map className="w-4 h-4 mr-1" />
-                            Parcours Conseiller
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => createNextArtifact('kpis')}
-                          >
-                            <BarChart3 className="w-4 h-4 mr-1" />
-                            KPIs à Valider
-                          </Button>
+                          <Button size="sm" variant="outline" onClick={() => createNextArtifact('discovery')}><FileText className="w-4 h-4 mr-1" />Créer Discovery</Button>
+                          <Button size="sm" variant="outline" onClick={() => createNextArtifact('epic')}><ListChecks className="w-4 h-4 mr-1" />Créer 1 Epic</Button>
+                          <Button size="sm" variant="outline" onClick={() => createNextArtifact('journey')}><Map className="w-4 h-4 mr-1" />Parcours Conseiller</Button>
+                          <Button size="sm" variant="outline" onClick={() => createNextArtifact('kpis')}><BarChart3 className="w-4 h-4 mr-1" />KPIs à Valider</Button>
                         </div>
                       </Card>
 
@@ -1391,77 +958,21 @@ Génère 2-3 options de décision concrètes.`,
               <div className="p-4 border-t bg-muted/30">
                 {!isDebating && !isDebateComplete ? (
                   <div className="space-y-3">
-                    <ArtifactSelector
-                      selectedArtifacts={selectedArtifacts}
-                      onSelectionChange={setSelectedArtifacts}
-                      maxSelection={5}
-                    />
-                    <Input
-                      placeholder="Entrez le sujet de débat..."
-                      value={prompt}
-                      onChange={(e) => setPrompt(e.target.value)}
-                      onKeyPress={(e) => e.key === 'Enter' && startDebate()}
-                      className="text-base"
-                    />
-                    <Button onClick={startDebate} className="w-full" disabled={!prompt.trim()}>
-                      <Play className="w-4 h-4 mr-2" />
-                      Démarrer le Débat
-                    </Button>
+                    <ArtifactSelector selectedArtifacts={selectedArtifacts} onSelectionChange={setSelectedArtifacts} maxSelection={5} />
+                    <Input placeholder="Entrez le sujet de débat..." value={prompt} onChange={(e) => setPrompt(e.target.value)} onKeyPress={(e) => e.key === 'Enter' && startDebate()} className="text-base" />
+                    <Button onClick={startDebate} className="w-full" disabled={!prompt.trim()}><Play className="w-4 h-4 mr-2" />Démarrer le Débat</Button>
                   </div>
                 ) : isDebating ? (
                   <div className="flex items-center space-x-2">
-                    {!isPaused ? (
-                      <Button onClick={pauseDebate} variant="outline" className="flex-1">
-                        <Pause className="w-4 h-4 mr-2" />
-                        Pause
-                      </Button>
-                    ) : (
-                      <Button onClick={resumeDebate} className="flex-1">
-                        <Play className="w-4 h-4 mr-2" />
-                        Reprendre
-                      </Button>
-                    )}
-                    <Button onClick={stopDebate} variant="destructive">
-                      Arrêter
-                    </Button>
+                    {!isPaused ? <Button onClick={pauseDebate} variant="outline" className="flex-1"><Pause className="w-4 h-4 mr-2" />Pause</Button> : <Button onClick={resumeDebate} className="flex-1"><Play className="w-4 h-4 mr-2" />Reprendre</Button>}
+                    <Button onClick={stopDebate} variant="destructive">Arrêter</Button>
                   </div>
                 ) : (
                   <div className="flex items-center space-x-2">
-                    <Button
-                      onClick={generateDebateOutcome}
-                      className="flex-1"
-                      disabled={isGeneratingOutcome || !!debateOutcome}
-                    >
-                      {isGeneratingOutcome ? (
-                        <>
-                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                          Génération...
-                        </>
-                      ) : debateOutcome ? (
-                        <>
-                          <CheckCircle2 className="w-4 h-4 mr-2" />
-                          Décisions Générées
-                        </>
-                      ) : (
-                        <>
-                          <Target className="w-4 h-4 mr-2" />
-                          Générer les Décisions
-                        </>
-                      )}
+                    <Button onClick={generateDebateOutcome} className="flex-1" disabled={isGeneratingOutcome || !!debateOutcome}>
+                      {isGeneratingOutcome ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Génération...</> : debateOutcome ? <><CheckCircle2 className="w-4 h-4 mr-2" />Décisions Générées</> : <><Target className="w-4 h-4 mr-2" />Générer les Décisions</>}
                     </Button>
-                    <Button
-                      onClick={() => {
-                        setIsDebateComplete(false);
-                        setMessages([]);
-                        setDebateOutcome(null);
-                        setPrompt('');
-                        setChosenOption(null);
-                        setConfidenceFactors(null);
-                      }}
-                      variant="outline"
-                    >
-                      Nouveau Débat
-                    </Button>
+                    <Button onClick={() => { setIsDebateComplete(false); setMessages([]); setDebateOutcome(null); setPrompt(''); setChosenOption(null); setConfidenceFactors(null); }} variant="outline">Nouveau Débat</Button>
                   </div>
                 )}
               </div>
@@ -1488,47 +999,22 @@ Génère 2-3 options de décision concrètes.`,
       {/* Agent Swap Dialog */}
       <Dialog open={showAgentSwap} onOpenChange={setShowAgentSwap}>
         <DialogContent className="max-w-4xl max-h-[80vh]">
-          <DialogHeader>
-            <DialogTitle>Remplacer {agentToReplace?.name}</DialogTitle>
-          </DialogHeader>
+          <DialogHeader><DialogTitle>Remplacer {agentToReplace?.name}</DialogTitle></DialogHeader>
           <div className="space-y-4">
             <Input placeholder="Rechercher des agents..." className="w-full" />
             <ScrollArea className="h-[400px]">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pr-4">
-                {allAgents
-                  .filter(
-                    (a) => !workingSquad.some((sa) => sa.id === a.id) || a.id === agentToReplace?.id
-                  )
-                  .map((agent) => (
-                    <div
-                      key={agent.id}
-                      className="p-4 rounded-lg border hover:bg-muted/30 cursor-pointer transition-all"
-                      onClick={() => confirmAgentSwap(agent)}
-                    >
-                      <div className="flex items-start space-x-3">
-                        <Avatar className="w-12 h-12">
-                          <AvatarImage src={agent.avatar} />
-                          <AvatarFallback>
-                            {agent.name
-                              .split(' ')
-                              .map((n) => n[0])
-                              .join('')}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between mb-1">
-                            <h4 className="font-semibold text-sm truncate">{agent.name}</h4>
-                            <Badge variant="outline" className="text-xs">
-                              {agent.specialty}
-                            </Badge>
-                          </div>
-                          <p className="text-xs text-muted-foreground line-clamp-2">
-                            {agent.backstory}
-                          </p>
-                        </div>
+                {allAgents.filter(a => !workingSquad.some(sa => sa.id === a.id) || a.id === agentToReplace?.id).map((agent) => (
+                  <div key={agent.id} className="p-4 rounded-lg border hover:bg-muted/30 cursor-pointer transition-all" onClick={() => confirmAgentSwap(agent)}>
+                    <div className="flex items-start space-x-3">
+                      <Avatar className="w-12 h-12"><AvatarImage src={agent.avatar} /><AvatarFallback>{agent.name.split(' ').map(n => n[0]).join('')}</AvatarFallback></Avatar>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between mb-1"><h4 className="font-semibold text-sm truncate">{agent.name}</h4><Badge variant="outline" className="text-xs">{agent.specialty}</Badge></div>
+                        <p className="text-xs text-muted-foreground line-clamp-2">{agent.backstory}</p>
                       </div>
                     </div>
-                  ))}
+                  </div>
+                ))}
               </div>
             </ScrollArea>
           </div>

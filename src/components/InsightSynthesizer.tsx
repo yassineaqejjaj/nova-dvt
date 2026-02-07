@@ -115,7 +115,7 @@ export const InsightSynthesizer: React.FC<InsightSynthesizerProps> = ({ open, on
   const [isSaving, setIsSaving] = useState(false);
   const [synthesis, setSynthesis] = useState<Synthesis | null>(null);
   const [expandedEpics, setExpandedEpics] = useState<Set<number>>(new Set());
-
+  
   // Input states
   const [storeReviewsInput, setStoreReviewsInput] = useState('');
   const [businessRequestsInput, setBusinessRequestsInput] = useState('');
@@ -126,27 +126,27 @@ export const InsightSynthesizer: React.FC<InsightSynthesizerProps> = ({ open, on
   const formatContextToString = (context: ProductContext): string => {
     const parts: string[] = [];
     parts.push(`📋 Produit: ${context.name}`);
-
+    
     if (context.vision) {
       parts.push(`\n🎯 Vision: ${context.vision}`);
     }
-
+    
     if (context.objectives && context.objectives.length > 0) {
-      parts.push(`\n📌 Objectifs:\n${context.objectives.map((o) => `  • ${o}`).join('\n')}`);
+      parts.push(`\n📌 Objectifs:\n${context.objectives.map(o => `  • ${o}`).join('\n')}`);
     }
-
+    
     if (context.target_kpis && context.target_kpis.length > 0) {
-      parts.push(`\n📊 KPIs cibles:\n${context.target_kpis.map((k) => `  • ${k}`).join('\n')}`);
+      parts.push(`\n📊 KPIs cibles:\n${context.target_kpis.map(k => `  • ${k}`).join('\n')}`);
     }
-
+    
     if (context.target_audience) {
       parts.push(`\n👥 Audience cible: ${context.target_audience}`);
     }
-
+    
     if (context.constraints) {
       parts.push(`\n⚠️ Contraintes: ${context.constraints}`);
     }
-
+    
     return parts.join('');
   };
 
@@ -162,18 +162,15 @@ export const InsightSynthesizer: React.FC<InsightSynthesizerProps> = ({ open, on
       return Array.isArray(parsed) ? parsed : [parsed];
     } catch {
       // Parse line by line as simple format
-      return input
-        .split('\n')
-        .filter((line) => line.trim())
-        .map((line) => {
-          const ratingMatch = line.match(/(\d)\/5|★(\d)/);
-          const rating = ratingMatch ? parseInt(ratingMatch[1] || ratingMatch[2]) : 3;
-          return {
-            source: line.toLowerCase().includes('google') ? 'google_play' : 'apple_store',
-            rating,
-            content: line.replace(/(\d\/5|★\d)/g, '').trim(),
-          };
-        });
+      return input.split('\n').filter(line => line.trim()).map(line => {
+        const ratingMatch = line.match(/(\d)\/5|★(\d)/);
+        const rating = ratingMatch ? parseInt(ratingMatch[1] || ratingMatch[2]) : 3;
+        return {
+          source: line.toLowerCase().includes('google') ? 'google_play' : 'apple_store',
+          rating,
+          content: line.replace(/(\d\/5|★\d)/g, '').trim()
+        };
+      });
     }
   };
 
@@ -183,16 +180,13 @@ export const InsightSynthesizer: React.FC<InsightSynthesizerProps> = ({ open, on
       const parsed = JSON.parse(input);
       return Array.isArray(parsed) ? parsed : [parsed];
     } catch {
-      return input
-        .split('\n')
-        .filter((line) => line.trim())
-        .map((line) => {
-          const sourceMatch = line.match(/^\[(.*?)\]/);
-          return {
-            source: sourceMatch ? sourceMatch[1] : 'General',
-            content: sourceMatch ? line.replace(/^\[.*?\]/, '').trim() : line.trim(),
-          };
-        });
+      return input.split('\n').filter(line => line.trim()).map(line => {
+        const sourceMatch = line.match(/^\[(.*?)\]/);
+        return {
+          source: sourceMatch ? sourceMatch[1] : 'General',
+          content: sourceMatch ? line.replace(/^\[.*?\]/, '').trim() : line.trim()
+        };
+      });
     }
   };
 
@@ -202,17 +196,14 @@ export const InsightSynthesizer: React.FC<InsightSynthesizerProps> = ({ open, on
       const parsed = JSON.parse(input);
       return Array.isArray(parsed) ? parsed : [parsed];
     } catch {
-      return input
-        .split('\n')
-        .filter((line) => line.trim())
-        .map((line) => {
-          const severityMatch = line.match(/P([1-4])/i);
-          return {
-            title: line.replace(/P[1-4]/gi, '').trim(),
-            severity: severityMatch ? (`P${severityMatch[1]}` as 'P1' | 'P2' | 'P3' | 'P4') : 'P3',
-            frequency: 1,
-          };
-        });
+      return input.split('\n').filter(line => line.trim()).map(line => {
+        const severityMatch = line.match(/P([1-4])/i);
+        return {
+          title: line.replace(/P[1-4]/gi, '').trim(),
+          severity: severityMatch ? `P${severityMatch[1]}` as 'P1' | 'P2' | 'P3' | 'P4' : 'P3',
+          frequency: 1
+        };
+      });
     }
   };
 
@@ -233,8 +224,8 @@ export const InsightSynthesizer: React.FC<InsightSynthesizerProps> = ({ open, on
           storeReviews,
           businessRequests,
           incidents,
-          productContext,
-        },
+          productContext
+        }
       });
 
       if (error) throw error;
@@ -255,11 +246,9 @@ export const InsightSynthesizer: React.FC<InsightSynthesizerProps> = ({ open, on
   const handleSaveArtifact = async (type: 'report' | 'recommendations' | 'epics') => {
     if (!synthesis) return;
     setIsSaving(true);
-
+    
     try {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
+      const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         toast.error('Vous devez être connecté');
         return;
@@ -267,7 +256,7 @@ export const InsightSynthesizer: React.FC<InsightSynthesizerProps> = ({ open, on
 
       let content;
       let title;
-
+      
       switch (type) {
         case 'report':
           title = 'Insight Synthesis Report';
@@ -275,7 +264,7 @@ export const InsightSynthesizer: React.FC<InsightSynthesizerProps> = ({ open, on
             globalSynthesis: synthesis.globalSynthesis,
             priorityThemes: synthesis.priorityThemes,
             importance: synthesis.importance,
-            expectedValue: synthesis.expectedValue,
+            expectedValue: synthesis.expectedValue
           };
           break;
         case 'recommendations':
@@ -292,11 +281,11 @@ export const InsightSynthesizer: React.FC<InsightSynthesizerProps> = ({ open, on
         user_id: user.id,
         title,
         artifact_type: type === 'epics' ? 'epic' : 'canvas',
-        content: content as any,
+        content,
         metadata: {
           source: 'insight-synthesizer',
-          generatedAt: new Date().toISOString(),
-        },
+          generatedAt: new Date().toISOString()
+        }
       });
 
       if (error) throw error;
@@ -321,44 +310,30 @@ export const InsightSynthesizer: React.FC<InsightSynthesizerProps> = ({ open, on
 
   const getImpactColor = (impact: string) => {
     switch (impact) {
-      case 'très fort':
-        return 'bg-red-500/20 text-red-700 dark:text-red-400 border-red-500/30';
-      case 'fort':
-        return 'bg-orange-500/20 text-orange-700 dark:text-orange-400 border-orange-500/30';
-      case 'moyen':
-        return 'bg-yellow-500/20 text-yellow-700 dark:text-yellow-400 border-yellow-500/30';
-      default:
-        return 'bg-green-500/20 text-green-700 dark:text-green-400 border-green-500/30';
+      case 'très fort': return 'bg-red-500/20 text-red-700 dark:text-red-400 border-red-500/30';
+      case 'fort': return 'bg-orange-500/20 text-orange-700 dark:text-orange-400 border-orange-500/30';
+      case 'moyen': return 'bg-yellow-500/20 text-yellow-700 dark:text-yellow-400 border-yellow-500/30';
+      default: return 'bg-green-500/20 text-green-700 dark:text-green-400 border-green-500/30';
     }
   };
 
   const getEffortColor = (effort: string) => {
     switch (effort) {
-      case 'très élevé':
-        return 'bg-purple-500/20 text-purple-700 dark:text-purple-400';
-      case 'élevé':
-        return 'bg-blue-500/20 text-blue-700 dark:text-blue-400';
-      case 'moyen':
-        return 'bg-cyan-500/20 text-cyan-700 dark:text-cyan-400';
-      default:
-        return 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-400';
+      case 'très élevé': return 'bg-purple-500/20 text-purple-700 dark:text-purple-400';
+      case 'élevé': return 'bg-blue-500/20 text-blue-700 dark:text-blue-400';
+      case 'moyen': return 'bg-cyan-500/20 text-cyan-700 dark:text-cyan-400';
+      default: return 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-400';
     }
   };
 
   const getCategoryColor = (category: string) => {
     switch (category) {
-      case 'friction':
-        return 'bg-red-500/20 text-red-700 dark:text-red-400';
-      case 'opportunité':
-        return 'bg-green-500/20 text-green-700 dark:text-green-400';
-      case 'dette_ux':
-        return 'bg-orange-500/20 text-orange-700 dark:text-orange-400';
-      case 'dette_tech':
-        return 'bg-purple-500/20 text-purple-700 dark:text-purple-400';
-      case 'accompagnement':
-        return 'bg-blue-500/20 text-blue-700 dark:text-blue-400';
-      default:
-        return 'bg-muted text-muted-foreground';
+      case 'friction': return 'bg-red-500/20 text-red-700 dark:text-red-400';
+      case 'opportunité': return 'bg-green-500/20 text-green-700 dark:text-green-400';
+      case 'dette_ux': return 'bg-orange-500/20 text-orange-700 dark:text-orange-400';
+      case 'dette_tech': return 'bg-purple-500/20 text-purple-700 dark:text-purple-400';
+      case 'accompagnement': return 'bg-blue-500/20 text-blue-700 dark:text-blue-400';
+      default: return 'bg-muted text-muted-foreground';
     }
   };
 
@@ -380,9 +355,7 @@ export const InsightSynthesizer: React.FC<InsightSynthesizerProps> = ({ open, on
               </p>
             </div>
           </div>
-          <Button variant="ghost" onClick={onClose}>
-            ✕
-          </Button>
+          <Button variant="ghost" onClick={onClose}>✕</Button>
         </div>
 
         {/* Content */}
@@ -424,7 +397,9 @@ export const InsightSynthesizer: React.FC<InsightSynthesizerProps> = ({ open, on
                         <Store className="w-5 h-5 text-blue-500" />
                         Avis App Stores
                       </CardTitle>
-                      <CardDescription>Commentaires Apple Store & Google Play</CardDescription>
+                      <CardDescription>
+                        Commentaires Apple Store & Google Play
+                      </CardDescription>
                     </CardHeader>
                     <CardContent>
                       <Textarea
@@ -449,7 +424,9 @@ Ou format JSON:
                         <Users className="w-5 h-5 text-green-500" />
                         Demandes Métiers
                       </CardTitle>
-                      <CardDescription>Feedback internes (PM, PO, Support, etc.)</CardDescription>
+                      <CardDescription>
+                        Feedback internes (PM, PO, Support, etc.)
+                      </CardDescription>
                     </CardHeader>
                     <CardContent>
                       <Textarea
@@ -474,7 +451,9 @@ Ou format JSON:
                         <AlertTriangle className="w-5 h-5 text-red-500" />
                         Incidents
                       </CardTitle>
-                      <CardDescription>Tickets avec sévérité et impact</CardDescription>
+                      <CardDescription>
+                        Tickets avec sévérité et impact
+                      </CardDescription>
                     </CardHeader>
                     <CardContent>
                       <Textarea
@@ -504,7 +483,7 @@ Ou format JSON:
                         </CardDescription>
                       </div>
                       <ContextSelector
-                        onContextSelected={handleContextSelected as any}
+                        onContextSelected={handleContextSelected}
                         selectedContextId={selectedProductContext?.id}
                       />
                     </div>
@@ -583,9 +562,7 @@ Ou format JSON:
                               <Store className="w-4 h-4 text-blue-500" />
                               <span className="font-medium">Retours Stores</span>
                             </div>
-                            <p className="text-sm text-muted-foreground">
-                              {synthesis.globalSynthesis.storeInsights}
-                            </p>
+                            <p className="text-sm text-muted-foreground">{synthesis.globalSynthesis.storeInsights}</p>
                           </div>
                         )}
                         {synthesis.globalSynthesis.businessInsights && (
@@ -594,9 +571,7 @@ Ou format JSON:
                               <Users className="w-4 h-4 text-green-500" />
                               <span className="font-medium">Demandes Métiers</span>
                             </div>
-                            <p className="text-sm text-muted-foreground">
-                              {synthesis.globalSynthesis.businessInsights}
-                            </p>
+                            <p className="text-sm text-muted-foreground">{synthesis.globalSynthesis.businessInsights}</p>
                           </div>
                         )}
                         {synthesis.globalSynthesis.incidentInsights && (
@@ -605,9 +580,7 @@ Ou format JSON:
                               <AlertTriangle className="w-4 h-4 text-red-500" />
                               <span className="font-medium">Incidents</span>
                             </div>
-                            <p className="text-sm text-muted-foreground">
-                              {synthesis.globalSynthesis.incidentInsights}
-                            </p>
+                            <p className="text-sm text-muted-foreground">{synthesis.globalSynthesis.incidentInsights}</p>
                           </div>
                         )}
                       </CardContent>
@@ -624,20 +597,14 @@ Ou format JSON:
                       <CardContent>
                         <div className="space-y-4">
                           {synthesis.priorityThemes.map((theme, idx) => (
-                            <div
-                              key={idx}
-                              className="flex items-start gap-4 p-4 bg-muted/50 rounded-lg"
-                            >
+                            <div key={idx} className="flex items-start gap-4 p-4 bg-muted/50 rounded-lg">
                               <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground font-bold">
                                 {theme.rank}
                               </div>
                               <div className="flex-1">
                                 <div className="flex items-center gap-2 mb-2">
                                   <span className="font-semibold">{theme.theme}</span>
-                                  <Badge
-                                    variant="outline"
-                                    className={getCategoryColor(theme.category)}
-                                  >
+                                  <Badge variant="outline" className={getCategoryColor(theme.category)}>
                                     {theme.category}
                                   </Badge>
                                 </div>
@@ -669,9 +636,7 @@ Ou format JSON:
                                 <div>
                                   <span>{item.point}</span>
                                   {item.metric && (
-                                    <Badge variant="outline" className="ml-2 text-xs">
-                                      {item.metric}
-                                    </Badge>
+                                    <Badge variant="outline" className="ml-2 text-xs">{item.metric}</Badge>
                                   )}
                                 </div>
                               </li>
@@ -789,12 +754,8 @@ Ou format JSON:
                                   <FileText className="w-4 h-4 text-primary" />
                                 </div>
                                 <div className="text-left">
-                                  <h4 className="font-semibold">
-                                    Epic {idx + 1}: {epic.title}
-                                  </h4>
-                                  <p className="text-sm text-muted-foreground line-clamp-1">
-                                    {epic.description}
-                                  </p>
+                                  <h4 className="font-semibold">Epic {idx + 1}: {epic.title}</h4>
+                                  <p className="text-sm text-muted-foreground line-clamp-1">{epic.description}</p>
                                 </div>
                               </div>
                               {expandedEpics.has(idx) ? (
@@ -803,16 +764,14 @@ Ou format JSON:
                                 <ChevronDown className="w-5 h-5" />
                               )}
                             </button>
-
+                            
                             {expandedEpics.has(idx) && (
                               <div className="px-4 pb-4 space-y-4">
                                 <Separator />
-
+                                
                                 <div>
                                   <h5 className="font-medium mb-2">Description</h5>
-                                  <p className="text-sm text-muted-foreground">
-                                    {epic.description}
-                                  </p>
+                                  <p className="text-sm text-muted-foreground">{epic.description}</p>
                                 </div>
 
                                 <div>
@@ -822,9 +781,7 @@ Ou format JSON:
                                       <div key={sIdx} className="p-3 bg-muted/50 rounded-lg">
                                         <p className="text-sm font-medium mb-2">{story.story}</p>
                                         <div className="space-y-1">
-                                          <span className="text-xs font-medium text-muted-foreground">
-                                            Critères d'acceptation:
-                                          </span>
+                                          <span className="text-xs font-medium text-muted-foreground">Critères d'acceptation:</span>
                                           <ul className="text-xs space-y-1">
                                             {story.acceptanceCriteria.map((ac, acIdx) => (
                                               <li key={acIdx} className="flex items-start gap-2">

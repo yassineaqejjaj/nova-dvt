@@ -4,14 +4,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import {
-  Loader2,
-  Save,
-  Sparkles,
+import { 
+  Loader2, 
+  Save, 
+  Sparkles, 
   AlertTriangle,
   TrendingUp,
   GitBranch,
-  Target,
+  Target
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -56,9 +56,7 @@ export const CriticalPathAnalyzer = () => {
 
   const loadArtifacts = async () => {
     try {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
+      const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         toast.error('Veuillez vous connecter');
         return;
@@ -73,7 +71,7 @@ export const CriticalPathAnalyzer = () => {
 
       if (error) throw error;
 
-      setArtifacts((data || []) as unknown as Artifact[]);
+      setArtifacts(data || []);
     } catch (error) {
       console.error('Error loading artifacts:', error);
       toast.error('Erreur lors du chargement des artefacts');
@@ -83,8 +81,8 @@ export const CriticalPathAnalyzer = () => {
   };
 
   const toggleArtifact = (id: string) => {
-    setSelectedArtifacts((prev) =>
-      prev.includes(id) ? prev.filter((a) => a !== id) : [...prev, id]
+    setSelectedArtifacts(prev =>
+      prev.includes(id) ? prev.filter(a => a !== id) : [...prev, id]
     );
   };
 
@@ -96,16 +94,16 @@ export const CriticalPathAnalyzer = () => {
 
     setIsAnalyzing(true);
     try {
-      const selectedData = artifacts.filter((a) => selectedArtifacts.includes(a.id));
-
+      const selectedData = artifacts.filter(a => selectedArtifacts.includes(a.id));
+      
       const { data, error } = await supabase.functions.invoke('analyze-critical-paths', {
         body: {
-          artifacts: selectedData.map((a) => ({
+          artifacts: selectedData.map(a => ({
             type: a.artifact_type,
             title: a.title,
-            content: a.content,
-          })),
-        },
+            content: a.content
+          }))
+        }
       });
 
       if (error) throw error;
@@ -114,7 +112,7 @@ export const CriticalPathAnalyzer = () => {
       toast.success('Analyse des chemins critiques terminée!');
     } catch (error: any) {
       console.error('Error analyzing critical paths:', error);
-      toast.error(error.message || "Erreur lors de l'analyse");
+      toast.error(error.message || 'Erreur lors de l\'analyse');
     } finally {
       setIsAnalyzing(false);
     }
@@ -128,21 +126,19 @@ export const CriticalPathAnalyzer = () => {
 
     setIsSaving(true);
     try {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
+      const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('User not authenticated');
 
       const { error } = await supabase.from('artifacts').insert({
         user_id: user.id,
         artifact_type: 'canvas' as const,
         title: `Analyse Chemins Critiques - ${new Date().toLocaleDateString('fr-FR')}`,
-        content: {
+        content: { 
           riskAnalysis,
-          selectedArtifacts: artifacts.filter((a) => selectedArtifacts.includes(a.id)),
-          generatedAt: new Date().toISOString(),
+          selectedArtifacts: artifacts.filter(a => selectedArtifacts.includes(a.id)),
+          generatedAt: new Date().toISOString()
         },
-        metadata: { type: 'critical-path-analysis' },
+        metadata: { type: 'critical-path-analysis' }
       } as any);
 
       if (error) throw error;
@@ -159,7 +155,7 @@ export const CriticalPathAnalyzer = () => {
     const colors = {
       high: 'bg-red-100 text-red-800 border-red-200',
       medium: 'bg-yellow-100 text-yellow-800 border-yellow-200',
-      low: 'bg-green-100 text-green-800 border-green-200',
+      low: 'bg-green-100 text-green-800 border-green-200'
     };
     return colors[risk as keyof typeof colors];
   };
@@ -198,7 +194,9 @@ export const CriticalPathAnalyzer = () => {
       <Card>
         <CardHeader>
           <CardTitle>Sélection des Artefacts</CardTitle>
-          <CardDescription>Sélectionnez les Epics et User Stories à analyser</CardDescription>
+          <CardDescription>
+            Sélectionnez les Epics et User Stories à analyser
+          </CardDescription>
         </CardHeader>
         <CardContent>
           {isLoading ? (
@@ -252,7 +250,10 @@ export const CriticalPathAnalyzer = () => {
             <p className="text-sm text-muted-foreground">
               {selectedArtifacts.length} artefact(s) sélectionné(s)
             </p>
-            <Button onClick={analyzeRisks} disabled={isAnalyzing || selectedArtifacts.length === 0}>
+            <Button
+              onClick={analyzeRisks}
+              disabled={isAnalyzing || selectedArtifacts.length === 0}
+            >
               {isAnalyzing ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -273,11 +274,7 @@ export const CriticalPathAnalyzer = () => {
         <>
           <div className="flex gap-2">
             <Button onClick={saveAsArtifact} disabled={isSaving} variant="outline">
-              {isSaving ? (
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              ) : (
-                <Save className="w-4 h-4 mr-2" />
-              )}
+              {isSaving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
               Sauvegarder l'Analyse
             </Button>
           </div>
@@ -297,19 +294,19 @@ export const CriticalPathAnalyzer = () => {
                 </div>
                 <div className="text-center p-4 bg-red-50 rounded-lg">
                   <p className="text-2xl font-bold text-red-600">
-                    {riskAnalysis.criticalPaths.filter((p) => p.riskLevel === 'high').length}
+                    {riskAnalysis.criticalPaths.filter(p => p.riskLevel === 'high').length}
                   </p>
                   <p className="text-sm text-muted-foreground">Risque Élevé</p>
                 </div>
                 <div className="text-center p-4 bg-yellow-50 rounded-lg">
                   <p className="text-2xl font-bold text-yellow-600">
-                    {riskAnalysis.criticalPaths.filter((p) => p.riskLevel === 'medium').length}
+                    {riskAnalysis.criticalPaths.filter(p => p.riskLevel === 'medium').length}
                   </p>
                   <p className="text-sm text-muted-foreground">Risque Moyen</p>
                 </div>
                 <div className="text-center p-4 bg-green-50 rounded-lg">
                   <p className="text-2xl font-bold text-green-600">
-                    {riskAnalysis.criticalPaths.filter((p) => p.riskLevel === 'low').length}
+                    {riskAnalysis.criticalPaths.filter(p => p.riskLevel === 'low').length}
                   </p>
                   <p className="text-sm text-muted-foreground">Risque Faible</p>
                 </div>
@@ -350,17 +347,18 @@ export const CriticalPathAnalyzer = () => {
                             <GitBranch className="w-4 h-4" />
                             {path.name}
                           </CardTitle>
-                          <CardDescription className="mt-1">{path.reasoning}</CardDescription>
+                          <CardDescription className="mt-1">
+                            {path.reasoning}
+                          </CardDescription>
                         </div>
                         <div className="flex flex-col gap-2 items-end">
                           <Badge className={getRiskColor(path.riskLevel)}>
-                            {path.riskLevel === 'high'
-                              ? 'Risque Élevé'
-                              : path.riskLevel === 'medium'
-                                ? 'Risque Moyen'
-                                : 'Risque Faible'}
+                            {path.riskLevel === 'high' ? 'Risque Élevé' : 
+                             path.riskLevel === 'medium' ? 'Risque Moyen' : 'Risque Faible'}
                           </Badge>
-                          <Badge variant="outline">Priorité: {path.testingPriority}/10</Badge>
+                          <Badge variant="outline">
+                            Priorité: {path.testingPriority}/10
+                          </Badge>
                         </div>
                       </div>
                     </CardHeader>

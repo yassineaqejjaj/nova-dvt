@@ -29,7 +29,7 @@ export function useInsights(userId: string | undefined) {
       const { data, error } = await supabase
         .from('insights')
         .select('*')
-        .eq('user_id', userId!)
+        .eq('user_id', userId)
         .eq('dismissed', false)
         .order('created_at', { ascending: false })
         .limit(5);
@@ -37,13 +37,13 @@ export function useInsights(userId: string | undefined) {
       if (error) throw error;
 
       setInsights(
-        data?.map((d) => ({
+        data?.map(d => ({
           id: d.id,
           insightType: d.insight_type,
           title: d.title,
           description: d.description,
           data: d.data,
-          dismissed: d.dismissed ?? false,
+          dismissed: d.dismissed,
           createdAt: d.created_at,
         })) || []
       );
@@ -62,7 +62,7 @@ export function useInsights(userId: string | undefined) {
         .eq('id', insightId);
 
       if (error) throw error;
-      setInsights((prev) => prev.filter((i) => i.id !== insightId));
+      setInsights(prev => prev.filter(i => i.id !== insightId));
     } catch (error) {
       console.error('Error dismissing insight:', error);
     }

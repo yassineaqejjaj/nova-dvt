@@ -43,30 +43,26 @@ const StepSource = ({ selectedEpic, onSelectEpic, onNext }: StepSourceProps) => 
   const loadExistingEpics = async () => {
     setIsLoading(true);
     try {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
+      const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
       const { data, error } = await supabase
         .from('artifacts')
-        .select(
-          `
+        .select(`
           id,
           title,
           content,
           created_at,
           squad_id,
           squads(name)
-        `
-        )
+        `)
         .eq('user_id', user.id)
         .eq('artifact_type', 'epic')
         .order('created_at', { ascending: false })
         .limit(20);
 
       if (error) throw error;
-      setExistingEpics((data || []) as unknown as ArtifactEpic[]);
+      setExistingEpics(data || []);
     } catch (error) {
       console.error('Error loading epics:', error);
     } finally {
@@ -117,15 +113,11 @@ const StepSource = ({ selectedEpic, onSelectEpic, onNext }: StepSourceProps) => 
         >
           <div className="flex items-center space-x-2">
             <RadioGroupItem value="existing" id="existing" />
-            <Label htmlFor="existing" className="cursor-pointer">
-              Epic existant
-            </Label>
+            <Label htmlFor="existing" className="cursor-pointer">Epic existant</Label>
           </div>
           <div className="flex items-center space-x-2">
             <RadioGroupItem value="new" id="new" />
-            <Label htmlFor="new" className="cursor-pointer">
-              Nouvel Epic
-            </Label>
+            <Label htmlFor="new" className="cursor-pointer">Nouvel Epic</Label>
           </div>
         </RadioGroup>
 
@@ -139,7 +131,11 @@ const StepSource = ({ selectedEpic, onSelectEpic, onNext }: StepSourceProps) => 
               <div className="text-center py-8 text-muted-foreground">
                 <FileText className="h-12 w-12 mx-auto mb-3 opacity-50" />
                 <p>Aucun Epic trouvé dans vos artefacts</p>
-                <Button variant="link" onClick={() => setSourceMode('new')} className="mt-2">
+                <Button
+                  variant="link"
+                  onClick={() => setSourceMode('new')}
+                  className="mt-2"
+                >
                   Créer un nouvel Epic
                 </Button>
               </div>
@@ -160,9 +156,7 @@ const StepSource = ({ selectedEpic, onSelectEpic, onNext }: StepSourceProps) => 
                         <div className="flex-1 min-w-0">
                           <h4 className="font-medium truncate">{epic.title}</h4>
                           <p className="text-sm text-muted-foreground line-clamp-2 mt-1">
-                            {(epic.content as any)?.description ||
-                              (epic.content as any)?.summary ||
-                              'Aucune description'}
+                            {(epic.content as any)?.description || (epic.content as any)?.summary || 'Aucune description'}
                           </p>
                         </div>
                         <div className="flex flex-col items-end gap-1 shrink-0">
