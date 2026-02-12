@@ -17,7 +17,8 @@ import {
   Wrench,
   Hammer,
   Target,
-  GitBranch
+  GitBranch,
+  Rocket
 } from 'lucide-react';
 import {
   Sidebar,
@@ -133,6 +134,12 @@ export const WorkSidebar: React.FC<WorkSidebarProps> = ({
       icon: Hammer,
       defaultExpanded: true,
       items: [
+        {
+          id: 'mission-activation' as TabType,
+          label: 'Activation Mission',
+          description: 'Onboarding guidé en mission',
+          icon: Rocket
+        },
         {
           id: 'instant-prd' as TabType,
           label: 'Créer un document produit',
