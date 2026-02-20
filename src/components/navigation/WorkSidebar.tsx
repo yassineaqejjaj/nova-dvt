@@ -18,7 +18,8 @@ import {
   Hammer,
   Target,
   GitBranch,
-  Rocket
+  Rocket,
+  Scan
 } from 'lucide-react';
 import {
   Sidebar,
@@ -139,6 +140,12 @@ export const WorkSidebar: React.FC<WorkSidebarProps> = ({
           label: 'Activation Mission',
           description: 'Onboarding guidé en mission',
           icon: Rocket
+        },
+        {
+          id: 'impact-analysis' as TabType,
+          label: 'Analyse d\'Impact',
+          description: 'Détecter les conséquences d\'un changement',
+          icon: Scan
         },
         {
           id: 'instant-prd' as TabType,

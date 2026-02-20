@@ -32,6 +32,7 @@ import { ReleaseNotesGenerator } from '@/components/ReleaseNotesGenerator';
 import { GitToSpecsGenerator } from '@/components/GitToSpecsGenerator';
 import { Toolbox } from '@/components/tools/Toolbox';
 import { MissionActivationWizard } from '@/components/mission-activation';
+import { ImpactAnalysis } from '@/components/impact-analysis';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -384,6 +385,9 @@ const Index = () => {
       
       case 'mission-activation':
         return <MissionActivationWizard />;
+      
+      case 'impact-analysis':
+        return <ImpactAnalysis />;
       
       default:
         return null;
