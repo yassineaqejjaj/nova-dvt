@@ -130,7 +130,7 @@ export interface ChatMessage {
   attachments?: File[];
 }
 
-export type TabType = 'dashboard' | 'agents' | 'squads' | 'chat' | 'workflows' | 'artifacts' | 'analytics' | 'admin' | 'gamification' | 'instant-prd' | 'document-roadmap' | 'reality-mode' | 'meeting-minutes' | 'raci-generator' | 'epic-to-stories' | 'product-context' | 'user-persona-builder' | 'estimation-tool' | 'release-notes-generator' | 'git-to-specs' | 'design-system' | 'smart-discovery' | 'toolbox' | 'mission-activation';
+export type TabType = 'dashboard' | 'agents' | 'squads' | 'chat' | 'workflows' | 'artifacts' | 'analytics' | 'admin' | 'gamification' | 'instant-prd' | 'document-roadmap' | 'reality-mode' | 'meeting-minutes' | 'raci-generator' | 'epic-to-stories' | 'product-context' | 'user-persona-builder' | 'estimation-tool' | 'release-notes-generator' | 'git-to-specs' | 'design-system' | 'smart-discovery' | 'toolbox' | 'mission-activation' | 'impact-analysis';
 
 export interface Artifact {
   id: string;

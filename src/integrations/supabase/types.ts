@@ -321,6 +321,92 @@ export type Database = {
         }
         Relationships: []
       }
+      artefact_links: {
+        Row: {
+          confidence_score: number | null
+          created_at: string
+          id: string
+          link_type: string
+          source_id: string
+          target_id: string
+          target_type: string
+          user_id: string
+        }
+        Insert: {
+          confidence_score?: number | null
+          created_at?: string
+          id?: string
+          link_type: string
+          source_id: string
+          target_id: string
+          target_type: string
+          user_id: string
+        }
+        Update: {
+          confidence_score?: number | null
+          created_at?: string
+          id?: string
+          link_type?: string
+          source_id?: string
+          target_id?: string
+          target_type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "artefact_links_source_id_fkey"
+            columns: ["source_id"]
+            isOneToOne: false
+            referencedRelation: "artifacts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      artefact_versions: {
+        Row: {
+          artefact_id: string
+          author_id: string
+          content: Json
+          created_at: string
+          id: string
+          previous_version_id: string | null
+          version_number: number
+        }
+        Insert: {
+          artefact_id: string
+          author_id: string
+          content: Json
+          created_at?: string
+          id?: string
+          previous_version_id?: string | null
+          version_number?: number
+        }
+        Update: {
+          artefact_id?: string
+          author_id?: string
+          content?: Json
+          created_at?: string
+          id?: string
+          previous_version_id?: string | null
+          version_number?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "artefact_versions_artefact_id_fkey"
+            columns: ["artefact_id"]
+            isOneToOne: false
+            referencedRelation: "artifacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "artefact_versions_previous_version_id_fkey"
+            columns: ["previous_version_id"]
+            isOneToOne: false
+            referencedRelation: "artefact_versions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       artifacts: {
         Row: {
           artifact_type: Database["public"]["Enums"]["artifact_type"]
@@ -381,6 +467,35 @@ export type Database = {
             columns: ["squad_id"]
             isOneToOne: false
             referencedRelation: "squads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      change_sets: {
+        Row: {
+          artefact_version_id: string
+          changes_json: Json
+          created_at: string
+          id: string
+        }
+        Insert: {
+          artefact_version_id: string
+          changes_json?: Json
+          created_at?: string
+          id?: string
+        }
+        Update: {
+          artefact_version_id?: string
+          changes_json?: Json
+          created_at?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "change_sets_artefact_version_id_fkey"
+            columns: ["artefact_version_id"]
+            isOneToOne: false
+            referencedRelation: "artefact_versions"
             referencedColumns: ["id"]
           },
         ]
@@ -734,6 +849,121 @@ export type Database = {
           tension_signature?: string
         }
         Relationships: []
+      }
+      impact_items: {
+        Row: {
+          created_at: string
+          id: string
+          impact_reason: string | null
+          impact_run_id: string
+          impact_score: number | null
+          item_name: string
+          item_type: string
+          metadata: Json | null
+          related_artefact_id: string | null
+          review_status: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          impact_reason?: string | null
+          impact_run_id: string
+          impact_score?: number | null
+          item_name: string
+          item_type: string
+          metadata?: Json | null
+          related_artefact_id?: string | null
+          review_status?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          impact_reason?: string | null
+          impact_run_id?: string
+          impact_score?: number | null
+          item_name?: string
+          item_type?: string
+          metadata?: Json | null
+          related_artefact_id?: string | null
+          review_status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "impact_items_impact_run_id_fkey"
+            columns: ["impact_run_id"]
+            isOneToOne: false
+            referencedRelation: "impact_runs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "impact_items_related_artefact_id_fkey"
+            columns: ["related_artefact_id"]
+            isOneToOne: false
+            referencedRelation: "artifacts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      impact_runs: {
+        Row: {
+          artefact_id: string
+          artefact_version_id: string | null
+          completed_at: string | null
+          created_at: string
+          id: string
+          impact_score: number | null
+          status: string
+          summary: Json | null
+          trigger_change_set_id: string | null
+          user_id: string
+        }
+        Insert: {
+          artefact_id: string
+          artefact_version_id?: string | null
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          impact_score?: number | null
+          status?: string
+          summary?: Json | null
+          trigger_change_set_id?: string | null
+          user_id: string
+        }
+        Update: {
+          artefact_id?: string
+          artefact_version_id?: string | null
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          impact_score?: number | null
+          status?: string
+          summary?: Json | null
+          trigger_change_set_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "impact_runs_artefact_id_fkey"
+            columns: ["artefact_id"]
+            isOneToOne: false
+            referencedRelation: "artifacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "impact_runs_artefact_version_id_fkey"
+            columns: ["artefact_version_id"]
+            isOneToOne: false
+            referencedRelation: "artefact_versions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "impact_runs_trigger_change_set_id_fkey"
+            columns: ["trigger_change_set_id"]
+            isOneToOne: false
+            referencedRelation: "change_sets"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       insights: {
         Row: {
