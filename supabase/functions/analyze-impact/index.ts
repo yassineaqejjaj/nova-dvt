@@ -133,20 +133,20 @@ Return ONLY the JSON array, no markdown.`;
       }),
     })).json();
 
-    // Step 4: Find linked artefacts and propagate impact
-    const linksRes = await fetch(
-      `${SUPABASE_URL}/rest/v1/artefact_links?source_id=eq.${artefactId}`,
-      { headers }
-    );
+    // Step 4: Find linked artefacts, code mappings, and tests
+    const [linksRes, artefactRes, codeMapRes, testIndexRes] = await Promise.all([
+      fetch(`${SUPABASE_URL}/rest/v1/artefact_links?source_id=eq.${artefactId}`, { headers }),
+      fetch(`${SUPABASE_URL}/rest/v1/artifacts?id=eq.${artefactId}`, { headers }),
+      fetch(`${SUPABASE_URL}/rest/v1/feature_code_map?feature_id=eq.${artefactId}&select=*`, { headers }),
+      fetch(`${SUPABASE_URL}/rest/v1/test_index?related_feature_id=eq.${artefactId}&select=*`, { headers }),
+    ]);
+
     const links = await linksRes.json();
+    const [artefact] = await artefactRes.json();
+    const codeMappings = await codeMapRes.json();
+    const testMappings = await testIndexRes.json();
 
     // Also find artefacts in same context
-    const artefactRes = await fetch(
-      `${SUPABASE_URL}/rest/v1/artifacts?id=eq.${artefactId}`,
-      { headers }
-    );
-    const [artefact] = await artefactRes.json();
-
     let relatedArtefacts: any[] = [];
     if (artefact?.product_context_id) {
       const relRes = await fetch(
@@ -154,6 +154,19 @@ Return ONLY the JSON array, no markdown.`;
         { headers }
       );
       relatedArtefacts = await relRes.json();
+
+      // Also fetch code and tests linked to related artefacts in same context
+      const relatedIds = relatedArtefacts.map((r: any) => r.id);
+      if (relatedIds.length > 0) {
+        const [moreCodeRes, moreTestRes] = await Promise.all([
+          fetch(`${SUPABASE_URL}/rest/v1/feature_code_map?feature_id=in.(${relatedIds.join(',')})&select=*`, { headers }),
+          fetch(`${SUPABASE_URL}/rest/v1/test_index?related_feature_id=in.(${relatedIds.join(',')})&select=*`, { headers }),
+        ]);
+        const moreCodes = await moreCodeRes.json();
+        const moreTests = await moreTestRes.json();
+        if (Array.isArray(moreCodes)) codeMappings.push(...moreCodes);
+        if (Array.isArray(moreTests)) testMappings.push(...moreTests);
+      }
     }
 
     // Step 5: Create impact run
@@ -181,6 +194,8 @@ Return ONLY the JSON array, no markdown.`;
           high_severity_count: changes.filter((c: any) => c.severity === "high").length,
           linked_artefacts: relatedArtefacts.length,
           manual_links: links.length,
+          code_files_impacted: codeMappings.length,
+          tests_impacted: testMappings.length,
         },
         status: "completed",
         user_id: userId,
@@ -188,10 +203,10 @@ Return ONLY the JSON array, no markdown.`;
       }),
     })).json();
 
-    // Step 6: Generate impact items from changes + linked artefacts
+    // Step 6: Generate impact items
     const impactItems: any[] = [];
 
-    // Impact items from changes on related artefacts
+    // 6a: Impact on related artefacts (documentation/backlog/specs)
     for (const change of changes) {
       const reviewMap: Record<string, string> = {
         business_rule_update: "Review Required",
@@ -205,18 +220,17 @@ Return ONLY the JSON array, no markdown.`;
         dependency_change: "Review Required",
       };
 
-      // Map change to related artefacts
-      for (const rel of relatedArtefacts) {
-        const typeMap: Record<string, string> = {
-          prd: "documentation",
-          story: "backlog",
-          epic: "backlog",
-          tech_spec: "spec",
-          canvas: "documentation",
-          impact_analysis: "documentation",
-          roadmap: "documentation",
-        };
+      const typeMap: Record<string, string> = {
+        prd: "documentation",
+        story: "backlog",
+        epic: "backlog",
+        tech_spec: "spec",
+        canvas: "documentation",
+        impact_analysis: "documentation",
+        roadmap: "documentation",
+      };
 
+      for (const rel of relatedArtefacts) {
         impactItems.push({
           impact_run_id: impactRun.id,
           item_name: rel.title,
@@ -228,9 +242,56 @@ Return ONLY the JSON array, no markdown.`;
           metadata: { change_type: change.change_type, entity: change.entity },
         });
       }
+
+      // 6b: Impact on code files (Phase 2)
+      for (const codeMap of codeMappings) {
+        const codeImpactScore = change.severity === "high" ? 5 : change.severity === "medium" ? 3 : 1;
+        const coupling = codeMap.confidence || 0.5;
+        const adjustedScore = Math.round(codeImpactScore * coupling * 10) / 10;
+
+        impactItems.push({
+          impact_run_id: impactRun.id,
+          item_name: codeMap.file_path,
+          item_type: "code",
+          impact_score: Math.min(adjustedScore, 5),
+          impact_reason: `Potential Logic Impact: ${change.description || change.entity}`,
+          review_status: change.severity === "high" ? "review_required" : "pending",
+          related_artefact_id: codeMap.feature_id,
+          metadata: {
+            change_type: change.change_type,
+            entity: change.entity,
+            file_path: codeMap.file_path,
+            coupling: coupling,
+            impact_type: "code_logic",
+          },
+        });
+      }
+
+      // 6c: Impact on tests (Phase 2)
+      for (const test of testMappings) {
+        const testImpactScore = change.severity === "high" ? 4 : change.severity === "medium" ? 2 : 1;
+
+        impactItems.push({
+          impact_run_id: impactRun.id,
+          item_name: `${test.test_name || test.test_file}`,
+          item_type: "test",
+          impact_score: testImpactScore,
+          impact_reason: `Revalidation Required: ${change.description || change.entity}`,
+          review_status: change.severity === "high" ? "review_required" : "pending",
+          related_artefact_id: test.related_feature_id,
+          metadata: {
+            change_type: change.change_type,
+            entity: change.entity,
+            test_file: test.test_file,
+            test_type: test.test_type,
+            related_file: test.related_file_path,
+            impact_type: "test_revalidation",
+          },
+        });
+      }
     }
 
-    // Manual link impacts
+    // 6d: Manual link impacts
     for (const link of links) {
       if (link.target_type === "artefact") {
         const targetRes = await fetch(
@@ -250,13 +311,33 @@ Return ONLY the JSON array, no markdown.`;
             metadata: { link_type: link.link_type, confidence: link.confidence_score },
           });
         }
+      } else if (link.target_type === "code") {
+        impactItems.push({
+          impact_run_id: impactRun.id,
+          item_name: link.target_id,
+          item_type: "code",
+          impact_score: 3,
+          impact_reason: `Code linked via "${link.link_type}" relationship`,
+          review_status: "review_required",
+          metadata: { link_type: link.link_type, impact_type: "code_link" },
+        });
+      } else if (link.target_type === "test") {
+        impactItems.push({
+          impact_run_id: impactRun.id,
+          item_name: link.target_id,
+          item_type: "test",
+          impact_score: 3,
+          impact_reason: `Test linked via "${link.link_type}" relationship`,
+          review_status: "review_required",
+          metadata: { link_type: link.link_type, impact_type: "test_link" },
+        });
       }
     }
 
-    // Deduplicate impact items by related_artefact_id (keep highest score)
+    // Deduplicate impact items by key (keep highest score)
     const deduped = new Map<string, any>();
     for (const item of impactItems) {
-      const key = item.related_artefact_id || item.item_name;
+      const key = `${item.item_type}:${item.related_artefact_id || item.item_name}`;
       if (!deduped.has(key) || deduped.get(key).impact_score < item.impact_score) {
         deduped.set(key, item);
       }
@@ -279,6 +360,8 @@ Return ONLY the JSON array, no markdown.`;
         changeSet,
         changes,
         impactedItems: finalItems.length,
+        codeImpacts: finalItems.filter(i => i.item_type === "code").length,
+        testImpacts: finalItems.filter(i => i.item_type === "test").length,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );

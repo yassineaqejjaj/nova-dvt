@@ -26,6 +26,8 @@ export interface ImpactRun {
     high_severity_count: number;
     linked_artefacts: number;
     manual_links: number;
+    code_files_impacted?: number;
+    tests_impacted?: number;
   };
   status: 'pending' | 'running' | 'completed' | 'failed';
   user_id: string;
@@ -55,4 +57,45 @@ export interface ArtefactLink {
   confidence_score: number;
   user_id: string;
   created_at: string;
+}
+
+export interface CodeIndexEntry {
+  id: string;
+  user_id: string;
+  product_context_id: string | null;
+  file_path: string;
+  symbols: string[];
+  description: string | null;
+  language: string | null;
+  last_commit: string | null;
+  metadata: Record<string, any>;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface FeatureCodeMap {
+  id: string;
+  user_id: string;
+  feature_id: string;
+  code_index_id: string | null;
+  file_path: string;
+  confidence: number;
+  link_source: string;
+  created_at: string;
+}
+
+export interface TestIndexEntry {
+  id: string;
+  user_id: string;
+  product_context_id: string | null;
+  test_file: string;
+  test_name: string | null;
+  test_type: string;
+  related_feature_id: string | null;
+  related_file_path: string | null;
+  tags: string[];
+  status: string;
+  metadata: Record<string, any>;
+  created_at: string;
+  updated_at: string;
 }
