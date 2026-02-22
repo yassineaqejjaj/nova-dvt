@@ -547,6 +547,56 @@ export type Database = {
           },
         ]
       }
+      code_index: {
+        Row: {
+          created_at: string
+          description: string | null
+          file_path: string
+          id: string
+          language: string | null
+          last_commit: string | null
+          metadata: Json | null
+          product_context_id: string | null
+          symbols: string[] | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          file_path: string
+          id?: string
+          language?: string | null
+          last_commit?: string | null
+          metadata?: Json | null
+          product_context_id?: string | null
+          symbols?: string[] | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          file_path?: string
+          id?: string
+          language?: string | null
+          last_commit?: string | null
+          metadata?: Json | null
+          product_context_id?: string | null
+          symbols?: string[] | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "code_index_product_context_id_fkey"
+            columns: ["product_context_id"]
+            isOneToOne: false
+            referencedRelation: "product_contexts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       coins_transactions: {
         Row: {
           amount: number
@@ -780,6 +830,54 @@ export type Database = {
             columns: ["decision_id"]
             isOneToOne: false
             referencedRelation: "decision_log"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      feature_code_map: {
+        Row: {
+          code_index_id: string | null
+          confidence: number | null
+          created_at: string
+          feature_id: string
+          file_path: string
+          id: string
+          link_source: string | null
+          user_id: string
+        }
+        Insert: {
+          code_index_id?: string | null
+          confidence?: number | null
+          created_at?: string
+          feature_id: string
+          file_path: string
+          id?: string
+          link_source?: string | null
+          user_id: string
+        }
+        Update: {
+          code_index_id?: string | null
+          confidence?: number | null
+          created_at?: string
+          feature_id?: string
+          file_path?: string
+          id?: string
+          link_source?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "feature_code_map_code_index_id_fkey"
+            columns: ["code_index_id"]
+            isOneToOne: false
+            referencedRelation: "code_index"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "feature_code_map_feature_id_fkey"
+            columns: ["feature_id"]
+            isOneToOne: false
+            referencedRelation: "artifacts"
             referencedColumns: ["id"]
           },
         ]
@@ -1555,6 +1653,69 @@ export type Database = {
             columns: ["workspace_id"]
             isOneToOne: false
             referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      test_index: {
+        Row: {
+          created_at: string
+          id: string
+          metadata: Json | null
+          product_context_id: string | null
+          related_feature_id: string | null
+          related_file_path: string | null
+          status: string | null
+          tags: string[] | null
+          test_file: string
+          test_name: string | null
+          test_type: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          product_context_id?: string | null
+          related_feature_id?: string | null
+          related_file_path?: string | null
+          status?: string | null
+          tags?: string[] | null
+          test_file: string
+          test_name?: string | null
+          test_type?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          product_context_id?: string | null
+          related_feature_id?: string | null
+          related_file_path?: string | null
+          status?: string | null
+          tags?: string[] | null
+          test_file?: string
+          test_name?: string | null
+          test_type?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "test_index_product_context_id_fkey"
+            columns: ["product_context_id"]
+            isOneToOne: false
+            referencedRelation: "product_contexts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "test_index_related_feature_id_fkey"
+            columns: ["related_feature_id"]
+            isOneToOne: false
+            referencedRelation: "artifacts"
             referencedColumns: ["id"]
           },
         ]
