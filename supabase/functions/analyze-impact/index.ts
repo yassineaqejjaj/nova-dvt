@@ -133,18 +133,20 @@ Return ONLY the JSON array, no markdown.`;
       }),
     })).json();
 
-    // Step 4: Find linked artefacts, code mappings, and tests
-    const [linksRes, artefactRes, codeMapRes, testIndexRes] = await Promise.all([
+    // Step 4: Find linked artefacts, code mappings, tests, and data mappings
+    const [linksRes, artefactRes, codeMapRes, testIndexRes, dataMapRes] = await Promise.all([
       fetch(`${SUPABASE_URL}/rest/v1/artefact_links?source_id=eq.${artefactId}`, { headers }),
       fetch(`${SUPABASE_URL}/rest/v1/artifacts?id=eq.${artefactId}`, { headers }),
       fetch(`${SUPABASE_URL}/rest/v1/feature_code_map?feature_id=eq.${artefactId}&select=*`, { headers }),
       fetch(`${SUPABASE_URL}/rest/v1/test_index?related_feature_id=eq.${artefactId}&select=*`, { headers }),
+      fetch(`${SUPABASE_URL}/rest/v1/feature_data_map?feature_id=eq.${artefactId}&select=*`, { headers }),
     ]);
 
     const links = await linksRes.json();
     const [artefact] = await artefactRes.json();
     const codeMappings = await codeMapRes.json();
     const testMappings = await testIndexRes.json();
+    const dataMappings = await dataMapRes.json();
 
     // Also find artefacts in same context
     let relatedArtefacts: any[] = [];
@@ -155,17 +157,20 @@ Return ONLY the JSON array, no markdown.`;
       );
       relatedArtefacts = await relRes.json();
 
-      // Also fetch code and tests linked to related artefacts in same context
+      // Also fetch code, tests, and data linked to related artefacts in same context
       const relatedIds = relatedArtefacts.map((r: any) => r.id);
       if (relatedIds.length > 0) {
-        const [moreCodeRes, moreTestRes] = await Promise.all([
+        const [moreCodeRes, moreTestRes, moreDataRes] = await Promise.all([
           fetch(`${SUPABASE_URL}/rest/v1/feature_code_map?feature_id=in.(${relatedIds.join(',')})&select=*`, { headers }),
           fetch(`${SUPABASE_URL}/rest/v1/test_index?related_feature_id=in.(${relatedIds.join(',')})&select=*`, { headers }),
+          fetch(`${SUPABASE_URL}/rest/v1/feature_data_map?feature_id=in.(${relatedIds.join(',')})&select=*`, { headers }),
         ]);
         const moreCodes = await moreCodeRes.json();
         const moreTests = await moreTestRes.json();
+        const moreData = await moreDataRes.json();
         if (Array.isArray(moreCodes)) codeMappings.push(...moreCodes);
         if (Array.isArray(moreTests)) testMappings.push(...moreTests);
+        if (Array.isArray(moreData)) dataMappings.push(...moreData);
       }
     }
 
@@ -196,6 +201,8 @@ Return ONLY the JSON array, no markdown.`;
           manual_links: links.length,
           code_files_impacted: codeMappings.length,
           tests_impacted: testMappings.length,
+          data_tables_impacted: dataMappings.length,
+          data_kpis_impacted: dataMappings.filter((d: any) => d.kpi_name).length,
         },
         status: "completed",
         user_id: userId,
@@ -206,30 +213,30 @@ Return ONLY the JSON array, no markdown.`;
     // Step 6: Generate impact items
     const impactItems: any[] = [];
 
-    // 6a: Impact on related artefacts (documentation/backlog/specs)
+    const reviewMap: Record<string, string> = {
+      business_rule_update: "Review Required",
+      data_field_added: "Schema Review",
+      data_field_modified: "Schema Review",
+      nfr_change: "Perf/Sec Review",
+      scope_change: "Review Required",
+      persona_change: "Review Required",
+      kpi_change: "Review Required",
+      timeline_change: "Review Required",
+      dependency_change: "Review Required",
+    };
+
+    const typeMap: Record<string, string> = {
+      prd: "documentation",
+      story: "backlog",
+      epic: "backlog",
+      tech_spec: "spec",
+      canvas: "documentation",
+      impact_analysis: "documentation",
+      roadmap: "documentation",
+    };
+
     for (const change of changes) {
-      const reviewMap: Record<string, string> = {
-        business_rule_update: "Review Required",
-        data_field_added: "Schema Review",
-        data_field_modified: "Schema Review",
-        nfr_change: "Perf/Sec Review",
-        scope_change: "Review Required",
-        persona_change: "Review Required",
-        kpi_change: "Review Required",
-        timeline_change: "Review Required",
-        dependency_change: "Review Required",
-      };
-
-      const typeMap: Record<string, string> = {
-        prd: "documentation",
-        story: "backlog",
-        epic: "backlog",
-        tech_spec: "spec",
-        canvas: "documentation",
-        impact_analysis: "documentation",
-        roadmap: "documentation",
-      };
-
+      // 6a: Impact on related artefacts
       for (const rel of relatedArtefacts) {
         impactItems.push({
           impact_run_id: impactRun.id,
@@ -243,11 +250,11 @@ Return ONLY the JSON array, no markdown.`;
         });
       }
 
-      // 6b: Impact on code files (Phase 2)
+      // 6b: Impact on code files
       for (const codeMap of codeMappings) {
-        const codeImpactScore = change.severity === "high" ? 5 : change.severity === "medium" ? 3 : 1;
         const coupling = codeMap.confidence || 0.5;
-        const adjustedScore = Math.round(codeImpactScore * coupling * 10) / 10;
+        const baseScore = change.severity === "high" ? 5 : change.severity === "medium" ? 3 : 1;
+        const adjustedScore = Math.round(baseScore * coupling * 10) / 10;
 
         impactItems.push({
           impact_run_id: impactRun.id,
@@ -258,40 +265,79 @@ Return ONLY the JSON array, no markdown.`;
           review_status: change.severity === "high" ? "review_required" : "pending",
           related_artefact_id: codeMap.feature_id,
           metadata: {
-            change_type: change.change_type,
-            entity: change.entity,
-            file_path: codeMap.file_path,
-            coupling: coupling,
-            impact_type: "code_logic",
+            change_type: change.change_type, entity: change.entity,
+            file_path: codeMap.file_path, coupling, impact_type: "code_logic",
           },
         });
       }
 
-      // 6c: Impact on tests (Phase 2)
+      // 6c: Impact on tests
       for (const test of testMappings) {
-        const testImpactScore = change.severity === "high" ? 4 : change.severity === "medium" ? 2 : 1;
-
+        const testScore = change.severity === "high" ? 4 : change.severity === "medium" ? 2 : 1;
         impactItems.push({
           impact_run_id: impactRun.id,
           item_name: `${test.test_name || test.test_file}`,
           item_type: "test",
-          impact_score: testImpactScore,
+          impact_score: testScore,
           impact_reason: `Revalidation Required: ${change.description || change.entity}`,
           review_status: change.severity === "high" ? "review_required" : "pending",
           related_artefact_id: test.related_feature_id,
           metadata: {
-            change_type: change.change_type,
-            entity: change.entity,
-            test_file: test.test_file,
-            test_type: test.test_type,
-            related_file: test.related_file_path,
-            impact_type: "test_revalidation",
+            change_type: change.change_type, entity: change.entity,
+            test_file: test.test_file, test_type: test.test_type,
+            related_file: test.related_file_path, impact_type: "test_revalidation",
           },
         });
       }
+
+      // 6d: Impact on data tables & KPIs (Phase 3)
+      for (const dataMap of dataMappings) {
+        const coupling = dataMap.confidence || 0.5;
+        const isDataChange = ["data_field_added", "data_field_modified"].includes(change.change_type);
+        const isKpiChange = change.change_type === "kpi_change";
+        const baseScore = change.severity === "high" ? 5 : change.severity === "medium" ? 3 : 1;
+
+        // Data table impact
+        impactItems.push({
+          impact_run_id: impactRun.id,
+          item_name: dataMap.table_name,
+          item_type: "data",
+          impact_score: Math.min(Math.round(baseScore * coupling * (isDataChange ? 1.5 : 1) * 10) / 10, 5),
+          impact_reason: isDataChange
+            ? `Schema Risk: ${change.description || change.entity}`
+            : `Analytics Risk: ${change.description || change.entity}`,
+          review_status: (isDataChange && change.severity !== "low") ? "review_required" : "pending",
+          related_artefact_id: dataMap.feature_id,
+          metadata: {
+            change_type: change.change_type, entity: change.entity,
+            table_name: dataMap.table_name, event_name: dataMap.event_name,
+            coupling, impact_type: isDataChange ? "schema_risk" : "analytics_risk",
+          },
+        });
+
+        // KPI impact (if KPI mapped)
+        if (dataMap.kpi_name) {
+          impactItems.push({
+            impact_run_id: impactRun.id,
+            item_name: dataMap.kpi_name,
+            item_type: "kpi",
+            impact_score: Math.min(Math.round(baseScore * (isKpiChange ? 2 : 1) * 10) / 10, 5),
+            impact_reason: isKpiChange
+              ? `KPI Drift Risk: ${change.description || change.entity}`
+              : `Potential KPI Impact: ${change.description || change.entity}`,
+            review_status: (isKpiChange || change.severity === "high") ? "review_required" : "pending",
+            related_artefact_id: dataMap.feature_id,
+            metadata: {
+              change_type: change.change_type, entity: change.entity,
+              kpi_name: dataMap.kpi_name, table_name: dataMap.table_name,
+              impact_type: "kpi_drift",
+            },
+          });
+        }
+      }
     }
 
-    // 6d: Manual link impacts
+    // 6e: Manual link impacts
     for (const link of links) {
       if (link.target_type === "artefact") {
         const targetRes = await fetch(
@@ -313,23 +359,24 @@ Return ONLY the JSON array, no markdown.`;
         }
       } else if (link.target_type === "code") {
         impactItems.push({
-          impact_run_id: impactRun.id,
-          item_name: link.target_id,
-          item_type: "code",
-          impact_score: 3,
-          impact_reason: `Code linked via "${link.link_type}" relationship`,
+          impact_run_id: impactRun.id, item_name: link.target_id, item_type: "code",
+          impact_score: 3, impact_reason: `Code linked via "${link.link_type}" relationship`,
           review_status: "review_required",
           metadata: { link_type: link.link_type, impact_type: "code_link" },
         });
       } else if (link.target_type === "test") {
         impactItems.push({
-          impact_run_id: impactRun.id,
-          item_name: link.target_id,
-          item_type: "test",
-          impact_score: 3,
-          impact_reason: `Test linked via "${link.link_type}" relationship`,
+          impact_run_id: impactRun.id, item_name: link.target_id, item_type: "test",
+          impact_score: 3, impact_reason: `Test linked via "${link.link_type}" relationship`,
           review_status: "review_required",
           metadata: { link_type: link.link_type, impact_type: "test_link" },
+        });
+      } else if (link.target_type === "kpi") {
+        impactItems.push({
+          impact_run_id: impactRun.id, item_name: link.target_id, item_type: "kpi",
+          impact_score: 3, impact_reason: `KPI linked via "${link.link_type}" relationship`,
+          review_status: "review_required",
+          metadata: { link_type: link.link_type, impact_type: "kpi_link" },
         });
       }
     }
@@ -362,6 +409,8 @@ Return ONLY the JSON array, no markdown.`;
         impactedItems: finalItems.length,
         codeImpacts: finalItems.filter(i => i.item_type === "code").length,
         testImpacts: finalItems.filter(i => i.item_type === "test").length,
+        dataImpacts: finalItems.filter(i => i.item_type === "data").length,
+        kpiImpacts: finalItems.filter(i => i.item_type === "kpi").length,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );

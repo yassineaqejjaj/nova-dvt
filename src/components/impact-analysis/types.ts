@@ -99,3 +99,30 @@ export interface TestIndexEntry {
   created_at: string;
   updated_at: string;
 }
+
+export interface DataIndexEntry {
+  id: string;
+  user_id: string;
+  product_context_id: string | null;
+  table_name: string;
+  columns: string[];
+  description: string | null;
+  source_type: string;
+  used_by_dashboards: string[];
+  metadata: Record<string, any>;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface FeatureDataMap {
+  id: string;
+  user_id: string;
+  feature_id: string;
+  data_index_id: string | null;
+  table_name: string;
+  event_name: string | null;
+  kpi_name: string | null;
+  confidence: number;
+  link_source: string;
+  created_at: string;
+}
