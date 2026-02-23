@@ -710,6 +710,56 @@ export type Database = {
         }
         Relationships: []
       }
+      data_index: {
+        Row: {
+          columns: string[] | null
+          created_at: string
+          description: string | null
+          id: string
+          metadata: Json | null
+          product_context_id: string | null
+          source_type: string | null
+          table_name: string
+          updated_at: string
+          used_by_dashboards: string[] | null
+          user_id: string
+        }
+        Insert: {
+          columns?: string[] | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          metadata?: Json | null
+          product_context_id?: string | null
+          source_type?: string | null
+          table_name: string
+          updated_at?: string
+          used_by_dashboards?: string[] | null
+          user_id: string
+        }
+        Update: {
+          columns?: string[] | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          metadata?: Json | null
+          product_context_id?: string | null
+          source_type?: string | null
+          table_name?: string
+          updated_at?: string
+          used_by_dashboards?: string[] | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "data_index_product_context_id_fkey"
+            columns: ["product_context_id"]
+            isOneToOne: false
+            referencedRelation: "product_contexts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       decision_log: {
         Row: {
           assumptions: Json | null
@@ -875,6 +925,60 @@ export type Database = {
           },
           {
             foreignKeyName: "feature_code_map_feature_id_fkey"
+            columns: ["feature_id"]
+            isOneToOne: false
+            referencedRelation: "artifacts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      feature_data_map: {
+        Row: {
+          confidence: number | null
+          created_at: string
+          data_index_id: string | null
+          event_name: string | null
+          feature_id: string
+          id: string
+          kpi_name: string | null
+          link_source: string | null
+          table_name: string
+          user_id: string
+        }
+        Insert: {
+          confidence?: number | null
+          created_at?: string
+          data_index_id?: string | null
+          event_name?: string | null
+          feature_id: string
+          id?: string
+          kpi_name?: string | null
+          link_source?: string | null
+          table_name: string
+          user_id: string
+        }
+        Update: {
+          confidence?: number | null
+          created_at?: string
+          data_index_id?: string | null
+          event_name?: string | null
+          feature_id?: string
+          id?: string
+          kpi_name?: string | null
+          link_source?: string | null
+          table_name?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "feature_data_map_data_index_id_fkey"
+            columns: ["data_index_id"]
+            isOneToOne: false
+            referencedRelation: "data_index"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "feature_data_map_feature_id_fkey"
             columns: ["feature_id"]
             isOneToOne: false
             referencedRelation: "artifacts"
