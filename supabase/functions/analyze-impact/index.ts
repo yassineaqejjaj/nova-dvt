@@ -11,7 +11,7 @@ serve(async (req) => {
   }
 
   try {
-    const { artefactId, newContent, previousContent, userId } = await req.json();
+    const { artefactId, newContent, previousContent, userId, generateLinkSuggestions } = await req.json();
 
     if (!artefactId || !newContent || !userId) {
       return new Response(
@@ -290,14 +290,13 @@ Return ONLY the JSON array, no markdown.`;
         });
       }
 
-      // 6d: Impact on data tables & KPIs (Phase 3)
+      // 6d: Impact on data tables & KPIs
       for (const dataMap of dataMappings) {
         const coupling = dataMap.confidence || 0.5;
         const isDataChange = ["data_field_added", "data_field_modified"].includes(change.change_type);
         const isKpiChange = change.change_type === "kpi_change";
         const baseScore = change.severity === "high" ? 5 : change.severity === "medium" ? 3 : 1;
 
-        // Data table impact
         impactItems.push({
           impact_run_id: impactRun.id,
           item_name: dataMap.table_name,
@@ -315,7 +314,6 @@ Return ONLY the JSON array, no markdown.`;
           },
         });
 
-        // KPI impact (if KPI mapped)
         if (dataMap.kpi_name) {
           impactItems.push({
             impact_run_id: impactRun.id,
@@ -400,6 +398,97 @@ Return ONLY the JSON array, no markdown.`;
       });
     }
 
+    // Step 7: Smart Auto-Linking (if requested)
+    let linkSuggestionsCount = 0;
+    if (generateLinkSuggestions) {
+      try {
+        // Fetch code_index and data_index for this user
+        const [codeIndexRes, dataIndexRes] = await Promise.all([
+          fetch(`${SUPABASE_URL}/rest/v1/code_index?user_id=eq.${userId}&select=id,file_path,description,symbols,language&limit=50`, { headers }),
+          fetch(`${SUPABASE_URL}/rest/v1/data_index?user_id=eq.${userId}&select=id,table_name,description,columns,used_by_dashboards&limit=50`, { headers }),
+        ]);
+
+        const codeIndex = await codeIndexRes.json();
+        const dataIndex = await dataIndexRes.json();
+
+        if ((Array.isArray(codeIndex) && codeIndex.length > 0) || (Array.isArray(dataIndex) && dataIndex.length > 0)) {
+          const linkPrompt = `You are a Product-Code Linker. Given a product artifact content and available code files and data tables, suggest links between them.
+
+ARTIFACT CONTENT (truncated):
+${newContentStr.slice(0, 4000)}
+
+AVAILABLE CODE FILES:
+${JSON.stringify((codeIndex || []).map((c: any) => ({ id: c.id, path: c.file_path, desc: c.description, symbols: c.symbols?.slice(0, 5) })), null, 2).slice(0, 3000)}
+
+AVAILABLE DATA TABLES:
+${JSON.stringify((dataIndex || []).map((d: any) => ({ id: d.id, table: d.table_name, desc: d.description, columns: d.columns?.slice(0, 10) })), null, 2).slice(0, 2000)}
+
+Return a JSON array of suggested links:
+[
+  {
+    "target_type": "code" | "data",
+    "target_id": "the id of the code file or data table",
+    "link_type": "implements" | "uses_data" | "measured_by" | "depends_on",
+    "confidence": 0.0 to 1.0,
+    "reasoning": "Brief explanation of why this link exists"
+  }
+]
+
+Only suggest links with confidence >= 0.6. Return ONLY the JSON array.`;
+
+          const linkLlmRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${LOVABLE_API_KEY}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              model: "google/gemini-2.5-flash",
+              messages: [
+                { role: "system", content: "You are a precise linking engine. Output only valid JSON." },
+                { role: "user", content: linkPrompt },
+              ],
+              temperature: 0.2,
+              max_tokens: 2000,
+            }),
+          });
+
+          if (linkLlmRes.ok) {
+            const linkLlmData = await linkLlmRes.json();
+            const linkRaw = linkLlmData.choices?.[0]?.message?.content?.trim() || "[]";
+            const linkJsonMatch = linkRaw.match(/\[[\s\S]*\]/);
+            const suggestions = JSON.parse(linkJsonMatch ? linkJsonMatch[0] : "[]");
+
+            if (Array.isArray(suggestions) && suggestions.length > 0) {
+              const suggestionRows = suggestions
+                .filter((s: any) => s.confidence >= 0.6)
+                .map((s: any) => ({
+                  artefact_id: artefactId,
+                  suggested_target_type: s.target_type,
+                  suggested_target_id: s.target_id,
+                  suggested_link_type: s.link_type || "depends_on",
+                  confidence: Math.min(s.confidence, 1.0),
+                  reasoning: s.reasoning || null,
+                  status: "pending",
+                  user_id: userId,
+                }));
+
+              if (suggestionRows.length > 0) {
+                await fetch(`${SUPABASE_URL}/rest/v1/link_suggestions`, {
+                  method: "POST",
+                  headers,
+                  body: JSON.stringify(suggestionRows),
+                });
+                linkSuggestionsCount = suggestionRows.length;
+              }
+            }
+          }
+        }
+      } catch (linkErr) {
+        console.error("Error generating link suggestions:", linkErr);
+      }
+    }
+
     return new Response(
       JSON.stringify({
         impactRun,
@@ -411,6 +500,7 @@ Return ONLY the JSON array, no markdown.`;
         testImpacts: finalItems.filter(i => i.item_type === "test").length,
         dataImpacts: finalItems.filter(i => i.item_type === "data").length,
         kpiImpacts: finalItems.filter(i => i.item_type === "kpi").length,
+        linkSuggestionsGenerated: linkSuggestionsCount,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );

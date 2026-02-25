@@ -40,11 +40,14 @@ export const ImpactNotificationBadge: React.FC<ImpactNotificationBadgeProps> = (
 
   const loadUnreviewed = async () => {
     if (!user?.id) return;
-    // Count impact items with pending review from recent runs
+    // Count impact items with pending review from recent runs (last 7 days)
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
     const { count: pendingCount } = await supabase
       .from('impact_items')
       .select('id', { count: 'exact', head: true })
       .eq('review_status', 'pending')
+      .gte('created_at', sevenDaysAgo.toISOString())
       .limit(100);
 
     setCount(pendingCount || 0);

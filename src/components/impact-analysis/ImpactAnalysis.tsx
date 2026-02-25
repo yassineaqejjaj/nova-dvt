@@ -49,6 +49,36 @@ export const ImpactAnalysis: React.FC = () => {
     if (user?.id) loadArtifacts();
   }, [user?.id]);
 
+  // Auto-trigger: listen for pending impact_queue items and call auto-impact-check
+  useEffect(() => {
+    if (!user?.id) return;
+    const channel = supabase
+      .channel('impact-auto-trigger')
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'impact_queue',
+        filter: `user_id=eq.${user.id}`,
+      }, async (payload) => {
+        const record = payload.new as any;
+        if (record?.status === 'pending' && record?.scheduled_at) {
+          const scheduledAt = new Date(record.scheduled_at).getTime();
+          const now = Date.now();
+          const delay = Math.max(0, scheduledAt - now);
+          setTimeout(async () => {
+            try {
+              await supabase.functions.invoke('auto-impact-check');
+            } catch (e) {
+              console.error('auto-impact-check trigger failed:', e);
+            }
+          }, delay);
+        }
+      })
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [user?.id]);
+
   useEffect(() => {
     if (selectedArtifact) {
       loadImpactRuns();
