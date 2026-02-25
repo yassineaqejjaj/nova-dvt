@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -18,7 +18,7 @@ import { LinkSuggestions } from './LinkSuggestions';
 import {
   AlertTriangle, FileText, Link2, Play, Loader2, BarChart3, Target,
   Plus, Trash2, ArrowRight, XCircle, Code2, TestTube2, FileCode,
-  Database, Briefcase, Wrench, Activity, GitCompare, Sparkles,
+  Database, Briefcase, Wrench, Activity, GitCompare, Sparkles, Upload,
 } from 'lucide-react';
 
 type ViewMode = 'executive' | 'technical' | 'data' | 'actions' | 'code-tests' | 'feed' | 'diff' | 'suggestions';
@@ -44,6 +44,8 @@ export const ImpactAnalysis: React.FC = () => {
   const [testForm, setTestForm] = useState({ testFile: '', testName: '', testType: 'unit', relatedFilePath: '' });
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState<ViewMode>('executive');
+  const [isUploadAnalyzing, setIsUploadAnalyzing] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (user?.id) loadArtifacts();
@@ -188,6 +190,63 @@ export const ImpactAnalysis: React.FC = () => {
     }
   };
 
+  const handleDocumentUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !selectedArtifact || !user?.id) return;
+
+    const allowedTypes = ['text/plain', 'text/markdown', 'text/csv', 'application/json', 'text/html'];
+    const allowedExtensions = ['.txt', '.md', '.csv', '.json', '.html', '.xml', '.yaml', '.yml'];
+    const ext = '.' + file.name.split('.').pop()?.toLowerCase();
+
+    if (!allowedTypes.includes(file.type) && !allowedExtensions.includes(ext)) {
+      toast.error('Format non supporté. Utilisez : TXT, MD, CSV, JSON, HTML, XML, YAML');
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Fichier trop volumineux (max 5 Mo)');
+      return;
+    }
+
+    setIsUploadAnalyzing(true);
+    setAnalyzeStep(`Lecture du document "${file.name}"…`);
+
+    try {
+      const text = await file.text();
+      if (!text.trim()) {
+        toast.error('Le document est vide');
+        return;
+      }
+
+      setAnalyzeStep('Analyse des impacts par IA…');
+
+      const { data: funcData, error } = await supabase.functions.invoke('analyze-document-impact', {
+        body: {
+          documentText: text.slice(0, 100000),
+          documentName: file.name,
+          artefactId: selectedArtifact,
+          userId: user.id,
+        },
+      });
+
+      if (error) throw error;
+      if (funcData?.error) throw new Error(funcData.error);
+
+      if (funcData?.changes?.length === 0) {
+        toast.info('Aucun impact détecté entre le document et l\'artefact sélectionné.');
+      } else {
+        toast.success(funcData.message || `${funcData.impactItemsCount} impact(s) détecté(s)`);
+        await loadImpactRuns();
+      }
+    } catch (err: any) {
+      console.error(err);
+      toast.error(err.message || "Erreur lors de l'analyse du document");
+    } finally {
+      setIsUploadAnalyzing(false);
+      setAnalyzeStep('');
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
   const updateItemStatus = async (itemId: string, status: string) => {
     await supabase.from('impact_items').update({ review_status: status }).eq('id', itemId);
     setImpactItems(prev => prev.map(i => i.id === itemId ? { ...i, review_status: status as ImpactItem['review_status'] } : i));
@@ -303,11 +362,26 @@ export const ImpactAnalysis: React.FC = () => {
             </SelectContent>
           </Select>
         </div>
-        <div className="flex gap-2 items-end">
-          <Button onClick={runImpactAnalysis} disabled={!selectedArtifact || isAnalyzing}>
+        <div className="flex gap-2 items-end flex-wrap">
+          <Button onClick={runImpactAnalysis} disabled={!selectedArtifact || isAnalyzing || isUploadAnalyzing}>
             {isAnalyzing ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Play className="w-4 h-4 mr-2" />}
             Lancer l'analyse
           </Button>
+          <Button
+            variant="outline"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={!selectedArtifact || isAnalyzing || isUploadAnalyzing}
+          >
+            {isUploadAnalyzing ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Upload className="w-4 h-4 mr-2" />}
+            Uploader un document
+          </Button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            className="hidden"
+            accept=".txt,.md,.csv,.json,.html,.xml,.yaml,.yml"
+            onChange={handleDocumentUpload}
+          />
           <Button variant="outline" onClick={() => setShowLinkDialog(true)} disabled={!selectedArtifact}>
             <Link2 className="w-4 h-4 mr-2" />
             Liens
@@ -316,13 +390,15 @@ export const ImpactAnalysis: React.FC = () => {
       </div>
 
       {/* Cognitive loader */}
-      {isAnalyzing && (
+      {(isAnalyzing || isUploadAnalyzing) && (
         <Card className="border-primary/20 bg-primary/5">
           <CardContent className="py-6">
             <div className="flex items-center gap-3">
               <Loader2 className="w-5 h-5 animate-spin text-primary" />
               <div>
-                <p className="font-medium text-primary">Nova analyse les impacts…</p>
+                <p className="font-medium text-primary">
+                  {isUploadAnalyzing ? 'Nova analyse le document…' : 'Nova analyse les impacts…'}
+                </p>
                 <p className="text-sm text-muted-foreground mt-1">{analyzeStep}</p>
               </div>
             </div>
