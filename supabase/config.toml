@@ -104,3 +104,6 @@ verify_jwt = false
 
 [functions.auto-impact-check]
 verify_jwt = false
+
+[functions.analyze-document-impact]
+verify_jwt = true
