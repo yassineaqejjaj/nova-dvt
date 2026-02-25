@@ -11,7 +11,7 @@ serve(async (req) => {
   }
 
   try {
-    const { artefactId, newContent, previousContent, userId, generateLinkSuggestions } = await req.json();
+    const { artefactId, newContent, previousContent, userId, generateLinkSuggestions, changeContext } = await req.json();
 
     if (!artefactId || !newContent || !userId) {
       return new Response(
@@ -64,8 +64,31 @@ serve(async (req) => {
       : "No previous version";
     const newContentStr = JSON.stringify(newContent, null, 2);
 
-    const classificationPrompt = `You are a Product Change Analyst. Compare two versions of a product document and classify ALL changes.
+    // Build change context section for the prompt
+    let changeContextSection = "";
+    if (changeContext) {
+      const natureLabels: Record<string, string> = {
+        new_requirement: "New requirement", modification: "Modification of existing feature",
+        removal: "Feature removal", pivot: "Strategic pivot", regulatory: "Regulatory compliance",
+        technical: "Technical evolution", feedback: "User feedback",
+      };
+      const priorityLabels: Record<string, string> = {
+        low: "Low", medium: "Medium", high: "High", critical: "Critical",
+      };
+      changeContextSection = `
+USER-PROVIDED CHANGE CONTEXT (use this to focus and prioritize your analysis):
+- Change nature: ${natureLabels[changeContext.changeNature] || changeContext.changeNature}
+- Description: ${changeContext.changeDescription}
+${changeContext.impactedAreas?.length > 0 ? `- Expected impact areas: ${changeContext.impactedAreas.join(', ')}` : ''}
+${changeContext.changeOrigin ? `- Change origin: ${changeContext.changeOrigin}` : ''}
+- Priority: ${priorityLabels[changeContext.priority] || changeContext.priority}
 
+IMPORTANT: Use this context to make your analysis MORE PRECISE. Focus especially on the areas the user mentioned and the nature of the change described. Weight impacts higher in the areas the user flagged.
+`;
+    }
+
+    const classificationPrompt = `You are a Product Change Analyst. Compare two versions of a product document and classify ALL changes.
+${changeContextSection}
 PREVIOUS VERSION:
 ${oldContentStr.slice(0, 8000)}
 

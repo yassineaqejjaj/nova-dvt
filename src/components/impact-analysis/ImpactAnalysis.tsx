@@ -20,6 +20,7 @@ import {
   Plus, Trash2, ArrowRight, XCircle, Code2, TestTube2, FileCode,
   Database, Briefcase, Wrench, Activity, GitCompare, Sparkles, Upload,
 } from 'lucide-react';
+import { ChangeContextDialog, ChangeContext } from './ChangeContextDialog';
 
 type ViewMode = 'executive' | 'technical' | 'data' | 'actions' | 'code-tests' | 'feed' | 'diff' | 'suggestions';
 
@@ -46,6 +47,9 @@ export const ImpactAnalysis: React.FC = () => {
   const [viewMode, setViewMode] = useState<ViewMode>('executive');
   const [isUploadAnalyzing, setIsUploadAnalyzing] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [showContextDialog, setShowContextDialog] = useState(false);
+  const [contextDialogMode, setContextDialogMode] = useState<'analysis' | 'document'>('analysis');
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
 
   useEffect(() => {
     if (user?.id) loadArtifacts();
@@ -148,8 +152,16 @@ export const ImpactAnalysis: React.FC = () => {
     setDataMaps((data || []) as unknown as FeatureDataMap[]);
   };
 
-  const runImpactAnalysis = async () => {
+  const openAnalysisDialog = () => {
     if (!selectedArtifact || !user?.id) return;
+    setContextDialogMode('analysis');
+    setPendingFile(null);
+    setShowContextDialog(true);
+  };
+
+  const runImpactAnalysis = async (changeContext?: ChangeContext) => {
+    if (!selectedArtifact || !user?.id) return;
+    setShowContextDialog(false);
     setIsAnalyzing(true);
     const steps = [
       'Récupération du contenu actuel…',
@@ -171,7 +183,12 @@ export const ImpactAnalysis: React.FC = () => {
       if (!fullArtifact) throw new Error('Artefact introuvable');
 
       const { data: funcData, error } = await supabase.functions.invoke('analyze-impact', {
-        body: { artefactId: selectedArtifact, newContent: fullArtifact.content, userId: user.id },
+        body: {
+          artefactId: selectedArtifact,
+          newContent: fullArtifact.content,
+          userId: user.id,
+          changeContext: changeContext || undefined,
+        },
       });
       if (error) throw error;
 
@@ -190,7 +207,7 @@ export const ImpactAnalysis: React.FC = () => {
     }
   };
 
-  const handleDocumentUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file || !selectedArtifact || !user?.id) return;
 
@@ -200,18 +217,28 @@ export const ImpactAnalysis: React.FC = () => {
 
     if (!allowedTypes.includes(file.type) && !allowedExtensions.includes(ext)) {
       toast.error('Format non supporté. Utilisez : TXT, MD, CSV, JSON, HTML, XML, YAML');
+      if (fileInputRef.current) fileInputRef.current.value = '';
       return;
     }
     if (file.size > 5 * 1024 * 1024) {
       toast.error('Fichier trop volumineux (max 5 Mo)');
+      if (fileInputRef.current) fileInputRef.current.value = '';
       return;
     }
 
+    setPendingFile(file);
+    setContextDialogMode('document');
+    setShowContextDialog(true);
+  };
+
+  const handleDocumentUpload = async (changeContext?: ChangeContext) => {
+    if (!pendingFile || !selectedArtifact || !user?.id) return;
+    setShowContextDialog(false);
     setIsUploadAnalyzing(true);
-    setAnalyzeStep(`Lecture du document "${file.name}"…`);
+    setAnalyzeStep(`Lecture du document "${pendingFile.name}"…`);
 
     try {
-      const text = await file.text();
+      const text = await pendingFile.text();
       if (!text.trim()) {
         toast.error('Le document est vide');
         return;
@@ -222,9 +249,10 @@ export const ImpactAnalysis: React.FC = () => {
       const { data: funcData, error } = await supabase.functions.invoke('analyze-document-impact', {
         body: {
           documentText: text.slice(0, 100000),
-          documentName: file.name,
+          documentName: pendingFile.name,
           artefactId: selectedArtifact,
           userId: user.id,
+          changeContext: changeContext || undefined,
         },
       });
 
@@ -243,7 +271,16 @@ export const ImpactAnalysis: React.FC = () => {
     } finally {
       setIsUploadAnalyzing(false);
       setAnalyzeStep('');
+      setPendingFile(null);
       if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
+  const handleContextSubmit = (ctx: ChangeContext) => {
+    if (contextDialogMode === 'analysis') {
+      runImpactAnalysis(ctx);
+    } else {
+      handleDocumentUpload(ctx);
     }
   };
 
@@ -363,7 +400,7 @@ export const ImpactAnalysis: React.FC = () => {
           </Select>
         </div>
         <div className="flex gap-2 items-end flex-wrap">
-          <Button onClick={runImpactAnalysis} disabled={!selectedArtifact || isAnalyzing || isUploadAnalyzing}>
+          <Button onClick={openAnalysisDialog} disabled={!selectedArtifact || isAnalyzing || isUploadAnalyzing}>
             {isAnalyzing ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Play className="w-4 h-4 mr-2" />}
             Lancer l'analyse
           </Button>
@@ -380,7 +417,7 @@ export const ImpactAnalysis: React.FC = () => {
             type="file"
             className="hidden"
             accept=".txt,.md,.csv,.json,.html,.xml,.yaml,.yml"
-            onChange={handleDocumentUpload}
+            onChange={handleFileSelect}
           />
           <Button variant="outline" onClick={() => setShowLinkDialog(true)} disabled={!selectedArtifact}>
             <Link2 className="w-4 h-4 mr-2" />
@@ -750,6 +787,18 @@ export const ImpactAnalysis: React.FC = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Change Context Dialog */}
+      <ChangeContextDialog
+        open={showContextDialog}
+        onOpenChange={(open) => {
+          setShowContextDialog(open);
+          if (!open) setPendingFile(null);
+        }}
+        onSubmit={handleContextSubmit}
+        artifactTitle={artifacts.find(a => a.id === selectedArtifact)?.title || ''}
+        mode={contextDialogMode}
+      />
     </div>
   );
 };

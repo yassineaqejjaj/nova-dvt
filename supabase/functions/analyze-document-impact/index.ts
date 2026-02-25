@@ -11,7 +11,7 @@ serve(async (req) => {
   }
 
   try {
-    const { documentText, documentName, artefactId, userId } = await req.json();
+    const { documentText, documentName, artefactId, userId, changeContext } = await req.json();
 
     if (!documentText || !artefactId || !userId) {
       return new Response(
@@ -58,9 +58,28 @@ serve(async (req) => {
     const artifactContentStr = JSON.stringify(artifact.content, null, 2).slice(0, 8000);
     const docTextTruncated = documentText.slice(0, 8000);
 
-    // Step 1: Use LLM to analyze impact of uploaded document on the artifact
-    const analysisPrompt = `You are a Product Impact Analyst. A user has uploaded a document that may contain changes, new requirements, or updates that impact an existing product artifact.
+    // Build change context section
+    let changeContextSection = "";
+    if (changeContext) {
+      const natureLabels: Record<string, string> = {
+        new_requirement: "New requirement", modification: "Modification of existing feature",
+        removal: "Feature removal", pivot: "Strategic pivot", regulatory: "Regulatory compliance",
+        technical: "Technical evolution", feedback: "User feedback",
+      };
+      changeContextSection = `
+USER-PROVIDED CHANGE CONTEXT (use this to focus your analysis):
+- Change nature: ${natureLabels[changeContext.changeNature] || changeContext.changeNature}
+- Description: ${changeContext.changeDescription}
+${changeContext.impactedAreas?.length > 0 ? `- Expected impact areas: ${changeContext.impactedAreas.join(', ')}` : ''}
+${changeContext.changeOrigin ? `- Change origin: ${changeContext.changeOrigin}` : ''}
+- Priority: ${changeContext.priority}
 
+IMPORTANT: Use this context to make your analysis MORE PRECISE. Focus especially on the areas the user mentioned.
+`;
+    }
+
+    const analysisPrompt = `You are a Product Impact Analyst. A user has uploaded a document that may contain changes, new requirements, or updates that impact an existing product artifact.
+${changeContextSection}
 EXISTING ARTIFACT ("${artifact.title}" - type: ${artifact.artifact_type}):
 ${artifactContentStr}
 
