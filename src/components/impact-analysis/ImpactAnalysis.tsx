@@ -12,13 +12,16 @@ import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import { ImpactRun, ImpactItem, ArtefactLink, FeatureCodeMap, TestIndexEntry, FeatureDataMap } from './types';
 import { ExecutiveView, TechnicalView, DataView, ActionLayer } from './views';
+import { ImpactFeed } from './ImpactFeed';
+import { ImpactDiffView } from './ImpactDiffView';
+import { LinkSuggestions } from './LinkSuggestions';
 import {
   AlertTriangle, FileText, Link2, Play, Loader2, BarChart3, Target,
   Plus, Trash2, ArrowRight, XCircle, Code2, TestTube2, FileCode,
-  Database, Briefcase, Wrench, Activity,
+  Database, Briefcase, Wrench, Activity, GitCompare, Sparkles,
 } from 'lucide-react';
 
-type ViewMode = 'executive' | 'technical' | 'data' | 'actions' | 'code-tests';
+type ViewMode = 'executive' | 'technical' | 'data' | 'actions' | 'code-tests' | 'feed' | 'diff' | 'suggestions';
 
 export const ImpactAnalysis: React.FC = () => {
   const { user } = useAuth();
@@ -230,10 +233,13 @@ export const ImpactAnalysis: React.FC = () => {
   }
 
   const viewButtons: { key: ViewMode; label: string; icon: React.ReactNode; count?: number }[] = [
+    { key: 'feed', label: 'Fil', icon: <Activity className="w-4 h-4" /> },
     { key: 'executive', label: 'Exécutif', icon: <Briefcase className="w-4 h-4" /> },
     { key: 'technical', label: 'Technique', icon: <Code2 className="w-4 h-4" /> },
     { key: 'data', label: 'Données', icon: <Database className="w-4 h-4" /> },
     { key: 'actions', label: 'Actions', icon: <Activity className="w-4 h-4" /> },
+    { key: 'diff', label: 'Diff', icon: <GitCompare className="w-4 h-4" /> },
+    { key: 'suggestions', label: 'Auto-liens', icon: <Sparkles className="w-4 h-4" /> },
     { key: 'code-tests', label: 'Liens', icon: <Wrench className="w-4 h-4" />, count: codeMaps.length + testEntries.length + dataMaps.length },
   ];
 
@@ -358,6 +364,18 @@ export const ImpactAnalysis: React.FC = () => {
       )}
 
       {/* Views */}
+      {selectedArtifact && viewMode === 'feed' && (
+        <ImpactFeed onNavigateToRun={(id) => { setSelectedArtifact(id); setViewMode('executive'); }} />
+      )}
+
+      {selectedArtifact && viewMode === 'diff' && (
+        <ImpactDiffView runs={impactRuns} artefactId={selectedArtifact} />
+      )}
+
+      {selectedArtifact && viewMode === 'suggestions' && (
+        <LinkSuggestions artefactId={selectedArtifact} onAccepted={() => { loadCodeMaps(); loadLinks(); loadDataMaps(); }} />
+      )}
+
       {selectedArtifact && viewMode === 'executive' && selectedRun && (
         <ExecutiveView run={selectedRun} items={impactItems} />
       )}

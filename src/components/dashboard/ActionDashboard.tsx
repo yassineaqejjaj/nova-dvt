@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
 import { UserProfile, Squad, TabType } from '@/types';
+import { ImpactFeed } from '@/components/impact-analysis/ImpactFeed';
 import { 
   Play, 
   MessageCircle, 
@@ -20,7 +21,8 @@ import {
   CheckCircle2,
   HelpCircle,
   Rocket,
-  ChevronRight
+  ChevronRight,
+  Scan
 } from 'lucide-react';
 
 interface ActionDashboardProps {
@@ -315,6 +317,20 @@ export const ActionDashboard: React.FC<ActionDashboardProps> = ({
               );
             })}
           </div>
+        </section>
+
+        {/* Impact Feed summary */}
+        <section className="space-y-2">
+          <div className="flex items-center justify-between">
+            <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+              Impacts récents
+            </h2>
+            <Button variant="ghost" size="sm" className="h-6 text-xs" onClick={() => onNavigate('impact-analysis' as TabType)}>
+              <Scan className="w-3 h-3 mr-1" />
+              Tout voir
+            </Button>
+          </div>
+          <ImpactFeed compact onNavigateToRun={() => onNavigate('impact-analysis' as TabType)} />
         </section>
 
         {/* 6. Quick actions - minimal weight */}

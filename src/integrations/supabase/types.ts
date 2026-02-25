@@ -1106,6 +1106,51 @@ export type Database = {
           },
         ]
       }
+      impact_queue: {
+        Row: {
+          artefact_id: string
+          created_at: string
+          id: string
+          impact_run_id: string | null
+          scheduled_at: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          artefact_id: string
+          created_at?: string
+          id?: string
+          impact_run_id?: string | null
+          scheduled_at?: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          artefact_id?: string
+          created_at?: string
+          id?: string
+          impact_run_id?: string | null
+          scheduled_at?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "impact_queue_artefact_id_fkey"
+            columns: ["artefact_id"]
+            isOneToOne: false
+            referencedRelation: "artifacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "impact_queue_impact_run_id_fkey"
+            columns: ["impact_run_id"]
+            isOneToOne: false
+            referencedRelation: "impact_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       impact_runs: {
         Row: {
           artefact_id: string
@@ -1255,6 +1300,53 @@ export type Database = {
           value?: Json
         }
         Relationships: []
+      }
+      link_suggestions: {
+        Row: {
+          artefact_id: string
+          confidence: number
+          created_at: string
+          id: string
+          reasoning: string | null
+          status: string
+          suggested_link_type: string
+          suggested_target_id: string
+          suggested_target_type: string
+          user_id: string
+        }
+        Insert: {
+          artefact_id: string
+          confidence?: number
+          created_at?: string
+          id?: string
+          reasoning?: string | null
+          status?: string
+          suggested_link_type?: string
+          suggested_target_id: string
+          suggested_target_type: string
+          user_id: string
+        }
+        Update: {
+          artefact_id?: string
+          confidence?: number
+          created_at?: string
+          id?: string
+          reasoning?: string | null
+          status?: string
+          suggested_link_type?: string
+          suggested_target_id?: string
+          suggested_target_type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "link_suggestions_artefact_id_fkey"
+            columns: ["artefact_id"]
+            isOneToOne: false
+            referencedRelation: "artifacts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       mystery_boxes: {
         Row: {
