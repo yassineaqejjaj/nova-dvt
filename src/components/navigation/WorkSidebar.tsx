@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { ImpactNotificationBadge } from '@/components/impact-analysis/ImpactNotificationBadge';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { TabType } from '@/types';
@@ -52,6 +53,7 @@ interface NavItem {
   disabled?: boolean;
   isRoute?: boolean;
   route?: string;
+  hasImpactBadge?: boolean;
 }
 
 interface NavSection {
@@ -145,7 +147,8 @@ export const WorkSidebar: React.FC<WorkSidebarProps> = ({
           id: 'impact-analysis' as TabType,
           label: 'Analyse d\'Impact',
           description: 'Détecter les conséquences d\'un changement',
-          icon: Scan
+          icon: Scan,
+          hasImpactBadge: true
         },
         {
           id: 'instant-prd' as TabType,
@@ -314,6 +317,9 @@ export const WorkSidebar: React.FC<WorkSidebarProps> = ({
                               <div className="flex-1 text-left min-w-0">
                                 <div className="flex items-center gap-2">
                                   <span className="text-sm font-medium truncate">{item.label}</span>
+                                  {item.hasImpactBadge && (
+                                    <ImpactNotificationBadge />
+                                  )}
                                   {item.badge && (
                                     <Badge 
                                       variant={item.badge === 'active' ? 'default' : 'secondary'} 
