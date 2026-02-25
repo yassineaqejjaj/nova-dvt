@@ -1,154 +1,102 @@
 
 
-# Phase 4 – Analyse d'Impact Automatique & Intelligence Continue
+# Diagnostic : ce qui reste pour un fonctionnement bout-en-bout
 
-## Constat actuel
-
-Après les Phases 1-3, le moteur d'impact est puissant mais **réactif** : l'utilisateur doit manuellement sélectionner un artefact et cliquer "Lancer l'analyse". La Phase 4 transforme ce système en un **moteur proactif et continu**.
+Après analyse complète du code, de la base de données et des edge functions, voici l'état actuel et les lacunes identifiées.
 
 ---
 
-## Vision Phase 4 : "Impact-as-a-Service"
+## Ce qui fonctionne déjà
 
-Trois piliers :
-
-```text
-┌──────────────────────────────────────────────────────┐
-│                    PHASE 4                           │
-│                                                      │
-│  1. AUTO-TRIGGER       2. IMPACT FEED       3. SMART │
-│     Sur chaque save       Fil d'alertes        LINKS │
-│     d'artefact            temps réel           Auto-  │
-│     → analyse auto        → notifications     mapping│
-│     → score diff          → historique         LLM    │
-│                           → tendances                │
-└──────────────────────────────────────────────────────┘
-```
-
----
-
-## Pilier 1 – Auto-Trigger on Save
-
-**Problème** : L'analyse doit être lancée manuellement.
-
-**Solution** : Intercepter chaque sauvegarde d'artefact et déclencher automatiquement l'analyse.
-
-### Implémentation
-
-- **Database trigger** : Un trigger PostgreSQL `AFTER UPDATE` sur la table `artifacts` détecte les changements de `content` et insère un enregistrement dans une nouvelle table `impact_queue` (artefact_id, user_id, status: pending, created_at).
-- **Polling ou Realtime** : Le frontend écoute `impact_queue` via Supabase Realtime. Quand un run se termine, une notification toast apparaît : "Nova a détecté 3 impacts sur votre PRD".
-- **Debounce** : Si l'artefact est modifié plusieurs fois en < 30 secondes, on ne déclenche qu'une seule analyse (regroupement via un champ `scheduled_at` décalé de 30s).
-- **Edge function `auto-impact-check`** : Appelée périodiquement ou par webhook, elle traite les entrées `impact_queue` en status `pending`, appelle `analyze-impact`, puis met à jour le status à `completed`.
-
-### Table `impact_queue`
-```text
-impact_queue
-├── id (uuid)
-├── artefact_id (uuid)
-├── user_id (uuid)
-├── status (pending | processing | completed | skipped)
-├── impact_run_id (uuid, nullable) → résultat
-├── scheduled_at (timestamptz)
-├── created_at (timestamptz)
-```
-
----
-
-## Pilier 2 – Impact Feed & Notifications
-
-**Problème** : Les résultats d'analyse sont isolés dans un onglet dédié, sans visibilité globale.
-
-**Solution** : Un fil d'alertes transversal et un système de notifications.
-
-### Composants UI
-
-1. **Impact Feed** (nouveau composant dans le Dashboard) :
-   - Liste chronologique des analyses récentes
-   - Chaque entrée : artefact modifié, score, nombre d'items impactés, date
-   - Code couleur par sévérité (rouge/jaune/vert)
-   - Clic → navigation vers le rapport détaillé
-
-2. **Badge de notification** dans la sidebar :
-   - Compteur d'impacts non-revus sur l'icône "Analyse d'Impact"
-   - Se met à jour en temps réel via Supabase Realtime
-
-3. **Impact Summary Card** sur le Dashboard principal :
-   - "3 analyses récentes, 12 items à revoir"
-   - Top 3 alertes haute sévérité
-   - Bouton "Voir tout"
-
-4. **Impact Trend** (mini-graphe) :
-   - Score d'impact moyen sur les 30 derniers jours
-   - Tendance hausse/baisse
-
----
-
-## Pilier 3 – Smart Auto-Linking (LLM)
-
-**Problème** : Les liens artefact↔code, artefact↔test, artefact↔data sont manuels.
-
-**Solution** : Utiliser le LLM pour suggérer automatiquement des liens lors de la création d'un artefact.
-
-### Logique
-
-- Quand un artefact est créé ou mis à jour significativement :
-  1. Extraire les entités clés du contenu (features, data fields, endpoints)
-  2. Comparer avec les entrées existantes de `code_index`, `test_index`, `data_index`
-  3. Proposer des liens avec un `confidence_score`
-  4. Afficher dans l'UI : "Nova suggère de lier cet artefact à 3 fichiers code" avec Accept/Reject
-- Les suggestions acceptées deviennent des entrées dans `feature_code_map`, `feature_data_map`, etc. avec `link_source = 'ai_suggested'`.
-
-### Table `link_suggestions`
-```text
-link_suggestions
-├── id (uuid)
-├── artefact_id (uuid)
-├── suggested_target_type (code | test | data | artefact)
-├── suggested_target_id (text)
-├── suggested_link_type (text)
-├── confidence (numeric)
-├── reasoning (text) → explication LLM
-├── status (pending | accepted | rejected)
-├── user_id (uuid)
-├── created_at (timestamptz)
-```
-
----
-
-## Bonus – Impact Diff View
-
-- Quand un artefact a plusieurs `impact_runs`, permettre de **comparer deux analyses** côte à côte :
-  - Nouveaux impacts apparus
-  - Impacts résolus
-  - Score delta
-- Utile pour voir si une modification a empiré ou amélioré la situation.
-
----
-
-## Résumé des fichiers à créer/modifier
-
-| Fichier | Action |
+| Composant | Statut |
 |---|---|
-| `supabase/migrations/phase4_*.sql` | Tables `impact_queue`, `link_suggestions` |
-| `supabase/functions/auto-impact-check/index.ts` | Edge function de traitement automatique |
-| `src/components/impact-analysis/ImpactFeed.tsx` | Fil d'alertes chronologique |
-| `src/components/impact-analysis/ImpactNotificationBadge.tsx` | Badge sidebar temps réel |
-| `src/components/impact-analysis/ImpactDiffView.tsx` | Comparaison entre runs |
-| `src/components/impact-analysis/LinkSuggestions.tsx` | UI suggestions auto-linking |
-| `src/components/impact-analysis/ImpactAnalysis.tsx` | Intégration feed + suggestions |
-| `src/components/dashboard/ActionDashboard.tsx` | Card résumé impact sur dashboard |
-| `src/components/navigation/WorkSidebar.tsx` | Badge notification |
-| `supabase/functions/analyze-impact/index.ts` | Appel auto-linking après analyse |
-| `supabase/config.toml` | Nouvelle edge function |
+| DB trigger `trg_enqueue_impact_on_artifact_update` sur `artifacts` | Actif |
+| Tables `impact_queue`, `link_suggestions`, `impact_runs`, `impact_items` | Créées, RLS OK |
+| Edge function `analyze-impact` (LLM classification, propagation code/tests/data) | Déployée |
+| Edge function `auto-impact-check` (traitement queue) | Déployée |
+| UI : vues Executive, Technical, Data, Actions, Feed, Diff, Suggestions, Liens | Implémentées |
+| ImpactNotificationBadge dans la sidebar | Présent |
+| ImpactFeed dans le dashboard | Présent |
 
 ---
 
-## Séquence d'implémentation recommandée
+## Ce qui ne fonctionne PAS encore (7 points)
 
-1. **Tables & migration** (impact_queue + link_suggestions)
-2. **Auto-trigger** (edge function + debounce)
-3. **Impact Feed** (composant + intégration dashboard)
-4. **Notification badge** (Realtime + sidebar)
-5. **Smart Auto-Linking** (LLM suggestions + UI accept/reject)
-6. **Impact Diff View** (comparaison entre runs)
+### 1. Realtime non activé sur les tables critiques
+**Impact** : Les composants `ImpactNotificationBadge` et `ImpactFeed` utilisent `supabase.channel().on('postgres_changes')` sur `impact_queue` et `impact_runs`, mais **ces tables ne sont pas ajoutées à la publication Supabase Realtime**. Aucune notification temps réel ne sera reçue.
+
+**Fix** : Migration SQL pour activer Realtime :
+```sql
+ALTER PUBLICATION supabase_realtime ADD TABLE impact_queue;
+ALTER PUBLICATION supabase_realtime ADD TABLE impact_runs;
+ALTER PUBLICATION supabase_realtime ADD TABLE impact_items;
+```
+
+### 2. Auto-impact-check n'est jamais appelée automatiquement
+Le trigger DB insère bien dans `impact_queue`, mais **personne n'appelle `auto-impact-check`**. L'edge function attend d'être invoquée manuellement ou par un cron, mais il n'y a :
+- Aucun cron/scheduler configuré
+- Aucun appel frontend après la queue insertion
+- Aucun webhook PostgreSQL
+
+**Fix** : Ajouter un appel frontend polling ou un cron. L'approche la plus simple : le frontend, quand il détecte un item `pending` en Realtime (après le fix n°1), appelle `auto-impact-check`. Alternative : appeler `auto-impact-check` depuis le DB trigger via `pg_net` (extension Supabase).
+
+### 3. Le ImpactNotificationBadge ne filtre pas par user_id côté query
+Le composant fait un `select('id', { count: 'exact' }).eq('review_status', 'pending')` sans filtre `user_id`. Grâce au RLS c'est filtré, mais le RLS sur `impact_items` utilise une sous-requête sur `impact_runs.user_id`, ce qui est correct. Cependant, le count risque de compter TOUS les pending items de l'utilisateur y compris des anciens runs — pas uniquement les non-revus récents. Ce n'est pas un bug bloquant mais c'est un problème UX.
+
+**Fix** : Ajouter un filtre sur les runs récents ou un champ `viewed` sur `impact_items`.
+
+### 4. LinkSuggestions : le `analyze-impact` ne génère pas de suggestions
+Le composant `LinkSuggestions` appelle `analyze-impact` avec `generateLinkSuggestions: true`, mais **l'edge function `analyze-impact` ignore complètement ce paramètre**. Elle ne lit ni `codeIndex`, ni `dataIndex`, et n'insère rien dans `link_suggestions`.
+
+**Fix** : Ajouter la logique de génération de suggestions dans `analyze-impact` (ou créer une edge function dédiée) : 
+1. Lire le paramètre `generateLinkSuggestions`
+2. Appeler le LLM pour extraire les entités et matcher avec `code_index`/`data_index`
+3. Insérer les suggestions dans `link_suggestions`
+
+### 5. ImpactFeed `onNavigateToRun` ne fonctionne pas correctement
+Le callback `onNavigateToRun` reçoit un `artefactId`, mais le parent le traite comme `setSelectedArtifact(id); setViewMode('executive')` — sauf que le `id` passé est bien l'artefact ID. C'est correct syntaxiquement, mais le `selectedArtifact` ne se met pas à jour dans le Select sans que l'effet cascade ne se déclenche bien. C'est un point à vérifier fonctionnellement.
+
+### 6. Dashboard `ActionDashboard` : la card Impact Feed est intégrée mais sans lien de navigation vers l'onglet Impact
+Le `ImpactFeed compact` est affiché dans le dashboard, mais le `onNavigateToRun` callback doit naviguer vers l'onglet `impact-analysis`. Il faut vérifier que le `onNavigate('impact-analysis')` est bien câblé.
+
+### 7. `auto-impact-check` utilise `SUPABASE_ANON_KEY` pour appeler `analyze-impact`
+L'edge function `auto-impact-check` appelle `analyze-impact` avec un `Bearer ${SUPABASE_ANON_KEY}`, mais `analyze-impact` a `verify_jwt = true`. L'anon key produit un JWT valide mais **sans `user_id` dans `auth.uid()`**, ce qui fait que les requêtes RLS échoueront silencieusement dans `analyze-impact` (les inserts avec `user_id` ne correspondront pas à `auth.uid()`). L'edge function `analyze-impact` utilise `SUPABASE_SERVICE_ROLE_KEY` pour ses propres requêtes, donc ça pourrait fonctionner — mais l'auth header du call initial échouera si le JWT n'est pas valide.
+
+**Fix** : Utiliser `SUPABASE_SERVICE_ROLE_KEY` comme Bearer dans l'appel à `analyze-impact` depuis `auto-impact-check`, ou passer `verify_jwt = false` pour `analyze-impact` et valider manuellement l'auth dans le code.
+
+---
+
+## Plan d'implémentation (par priorité)
+
+### Étape 1 — Activer Realtime (migration SQL)
+Ajouter `impact_queue`, `impact_runs`, `impact_items` à la publication Realtime.
+
+### Étape 2 — Orchestrer l'auto-trigger
+Option A (recommandée) : Le frontend écoute `impact_queue` en Realtime. Quand un item `pending` apparaît et que `scheduled_at` est passé, il appelle `auto-impact-check`.
+Option B : Utiliser `pg_net` pour appeler l'edge function directement depuis le trigger DB.
+
+### Étape 3 — Fixer l'auth de `auto-impact-check` → `analyze-impact`
+Utiliser le `SERVICE_ROLE_KEY` comme Bearer token pour l'appel inter-functions.
+
+### Étape 4 — Implémenter la génération de `link_suggestions` dans `analyze-impact`
+Ajouter la branche LLM qui extrait les entités et propose des liens.
+
+### Étape 5 — Améliorer le badge notification
+Filtrer par runs récents (7 derniers jours) pour éviter un compteur qui grossit indéfiniment.
+
+### Étape 6 — Câbler la navigation Dashboard → Impact Analysis
+S'assurer que le clic sur le Feed dans le dashboard navigue correctement vers le bon onglet et artefact.
+
+---
+
+## Résumé des fichiers à modifier
+
+| Fichier | Modification |
+|---|---|
+| `supabase/migrations/new_realtime.sql` | Activer Realtime sur 3 tables |
+| `supabase/functions/auto-impact-check/index.ts` | Fix auth token (SERVICE_ROLE_KEY) |
+| `supabase/functions/analyze-impact/index.ts` | Ajouter logique `link_suggestions` |
+| `src/components/impact-analysis/ImpactAnalysis.tsx` | Ajouter polling/auto-trigger via Realtime |
+| `src/components/impact-analysis/ImpactNotificationBadge.tsx` | Filtre temporel sur le count |
+| `src/components/dashboard/ActionDashboard.tsx` | Câbler navigation onNavigateToRun |
 
