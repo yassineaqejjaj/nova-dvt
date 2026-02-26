@@ -1601,7 +1601,7 @@ export const Workflows: React.FC = () => {
       )}
 
       {/* Collapsible Filters - more compact */}
-      <details className="group" open={selectedIntent === null}>
+      <details className="group">
         <summary className="flex items-center gap-2 cursor-pointer text-sm font-medium text-muted-foreground hover:text-foreground">
           <Filter className="w-4 h-4" />
           Filtres avancés
