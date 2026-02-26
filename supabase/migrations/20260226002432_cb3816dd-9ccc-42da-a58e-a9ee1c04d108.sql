@@ -1,0 +1,1 @@
+ALTER TYPE public.artifact_type ADD VALUE IF NOT EXISTS 'impact_report';
