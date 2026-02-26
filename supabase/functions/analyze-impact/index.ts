@@ -11,6 +11,28 @@ serve(async (req) => {
   }
 
   try {
+    // Authenticate: accept either a valid user JWT or the service role key
+    const authHeader = req.headers.get("Authorization");
+    const SUPABASE_SERVICE_ROLE_KEY_CHECK = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    const isServiceRole = authHeader === `Bearer ${SUPABASE_SERVICE_ROLE_KEY_CHECK}`;
+
+    if (!isServiceRole) {
+      // Validate as user JWT
+      const { createClient } = await import("https://esm.sh/@supabase/supabase-js@2.39.3");
+      const supabaseAuth = createClient(
+        Deno.env.get("SUPABASE_URL") ?? "",
+        Deno.env.get("SUPABASE_ANON_KEY") ?? "",
+        { global: { headers: { Authorization: authHeader ?? "" } } }
+      );
+      const { data, error } = await supabaseAuth.auth.getUser();
+      if (error || !data?.user) {
+        return new Response(
+          JSON.stringify({ error: "Unauthorized" }),
+          { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+    }
+
     const { artefactId, newContent, previousContent, userId, generateLinkSuggestions, changeContext } = await req.json();
 
     if (!artefactId || !newContent || !userId) {
