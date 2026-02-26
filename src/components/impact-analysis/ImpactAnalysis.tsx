@@ -11,7 +11,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import { ImpactRun, ImpactItem, ArtefactLink, FeatureCodeMap, TestIndexEntry, FeatureDataMap } from './types';
-import { ExecutiveView, TechnicalView, DataView, ActionLayer } from './views';
+import { ExecutiveView, TechnicalView, DataView, ActionLayer, ChangesOverview } from './views';
 import { ImpactFeed } from './ImpactFeed';
 import { ImpactDiffView } from './ImpactDiffView';
 import { LinkSuggestions } from './LinkSuggestions';
@@ -22,7 +22,7 @@ import {
 } from 'lucide-react';
 import { ChangeContextDialog, ChangeContext } from './ChangeContextDialog';
 
-type ViewMode = 'executive' | 'technical' | 'data' | 'actions' | 'code-tests' | 'feed' | 'diff' | 'suggestions';
+type ViewMode = 'executive' | 'changes' | 'technical' | 'data' | 'actions' | 'code-tests' | 'feed' | 'diff' | 'suggestions';
 
 export const ImpactAnalysis: React.FC = () => {
   const { user } = useAuth();
@@ -361,6 +361,7 @@ export const ImpactAnalysis: React.FC = () => {
   const viewButtons: { key: ViewMode; label: string; icon: React.ReactNode; count?: number }[] = [
     { key: 'feed', label: 'Fil', icon: <Activity className="w-4 h-4" /> },
     { key: 'executive', label: 'Exécutif', icon: <Briefcase className="w-4 h-4" /> },
+    { key: 'changes', label: 'Changements', icon: <FileText className="w-4 h-4" />, count: impactItems.length },
     { key: 'technical', label: 'Technique', icon: <Code2 className="w-4 h-4" /> },
     { key: 'data', label: 'Données', icon: <Database className="w-4 h-4" /> },
     { key: 'actions', label: 'Actions', icon: <Activity className="w-4 h-4" /> },
@@ -521,6 +522,10 @@ export const ImpactAnalysis: React.FC = () => {
 
       {selectedArtifact && viewMode === 'executive' && selectedRun && (
         <ExecutiveView run={selectedRun} items={impactItems} />
+      )}
+
+      {selectedArtifact && viewMode === 'changes' && selectedRun && (
+        <ChangesOverview run={selectedRun} items={impactItems} onUpdateStatus={updateItemStatus} />
       )}
 
       {selectedArtifact && viewMode === 'technical' && selectedRun && (
