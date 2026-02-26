@@ -346,36 +346,7 @@ export const WorkSidebar: React.FC<WorkSidebarProps> = ({
                 </SidebarGroupContent>
               )}
 
-              {/* Collapsed state - just icons */}
-              {!open && (
-                <SidebarGroupContent className="mt-1">
-                  <SidebarMenu>
-                    {section.items.map((item) => {
-                      const Icon = item.icon;
-                      const isActive = activeTab === item.id;
-
-                      return (
-                        <SidebarMenuItem key={item.id}>
-                          <SidebarMenuButton asChild>
-                            <Button
-                              variant="ghost"
-                              onClick={() => handleItemClick(item)}
-                              disabled={item.disabled}
-                              className={`w-full justify-center h-9 px-2 ${getNavClass(isActive, item.disabled)}`}
-                              title={item.label}
-                            >
-                              <Icon className="w-4 h-4" />
-                              {item.badge && (
-                                <span className="absolute top-1 right-1 w-1.5 h-1.5 bg-primary rounded-full" />
-                              )}
-                            </Button>
-                          </SidebarMenuButton>
-                        </SidebarMenuItem>
-                      );
-                    })}
-                  </SidebarMenu>
-                </SidebarGroupContent>
-              )}
+              {/* Collapsed state - only section icon */}
             </SidebarGroup>
           );
         })}
