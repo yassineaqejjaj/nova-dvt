@@ -151,22 +151,10 @@ export const WorkSidebar: React.FC<WorkSidebarProps> = ({
           hasImpactBadge: true
         },
         {
-          id: 'instant-prd' as TabType,
-          label: 'Créer un document produit',
-          description: 'Idée → document clair',
-          icon: FileText
-        },
-        {
           id: 'epic-to-stories' as TabType,
           label: 'Découper une feature',
           description: 'Feature → tâches',
           icon: Target
-        },
-        {
-          id: 'git-to-specs' as TabType,
-          label: 'Générer des specs',
-          description: 'Code → specs techniques',
-          icon: GitBranch
         },
         {
           id: 'toolbox' as TabType,
