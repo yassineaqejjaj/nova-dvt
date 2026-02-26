@@ -85,19 +85,91 @@ interface DetailedUserStory {
      setSections(prev => prev.map(s => s.id === id ? { ...s, status } : s));
    };
  
-   const parseAIResponse = (data: any): any => {
-     try {
-       let content = data?.response || data;
-       if (typeof content === 'object') content = JSON.stringify(content);
-       let jsonString = content.replace(/```json\s*/g, '').replace(/```\s*/g, '');
-       const jsonMatch = jsonString.match(/\{[\s\S]*\}/);
-       if (jsonMatch) jsonString = jsonMatch[0];
-       return JSON.parse(jsonString);
-     } catch (error) {
-       console.error('Parse error:', error);
-       throw new Error('Failed to parse AI response');
-     }
-   };
+    const repairTruncatedJSON = (json: string): string => {
+      // Try to fix truncated JSON by closing open brackets/braces
+      let fixed = json;
+      let openBraces = 0;
+      let openBrackets = 0;
+      let inString = false;
+      let escaped = false;
+
+      for (let i = 0; i < fixed.length; i++) {
+        const ch = fixed[i];
+        if (escaped) { escaped = false; continue; }
+        if (ch === '\\') { escaped = true; continue; }
+        if (ch === '"') { inString = !inString; continue; }
+        if (inString) continue;
+        if (ch === '{') openBraces++;
+        if (ch === '}') openBraces--;
+        if (ch === '[') openBrackets++;
+        if (ch === ']') openBrackets--;
+      }
+
+      // Remove trailing comma or incomplete value
+      fixed = fixed.replace(/,\s*$/, '');
+      // Remove incomplete string at end (unmatched quote)
+      if (inString) {
+        const lastQuote = fixed.lastIndexOf('"');
+        if (lastQuote > 0) {
+          // Remove from last quote to end, then remove trailing comma
+          fixed = fixed.substring(0, lastQuote) + '"';
+          fixed = fixed.replace(/,\s*"[^"]*"$/, '');
+          // Recount
+          openBraces = 0; openBrackets = 0; inString = false; escaped = false;
+          for (let i = 0; i < fixed.length; i++) {
+            const ch = fixed[i];
+            if (escaped) { escaped = false; continue; }
+            if (ch === '\\') { escaped = true; continue; }
+            if (ch === '"') { inString = !inString; continue; }
+            if (inString) continue;
+            if (ch === '{') openBraces++;
+            if (ch === '}') openBraces--;
+            if (ch === '[') openBrackets++;
+            if (ch === ']') openBrackets--;
+          }
+        }
+      }
+
+      // Remove trailing incomplete key-value pairs
+      fixed = fixed.replace(/,\s*"[^"]*"\s*:\s*$/, '');
+      fixed = fixed.replace(/,\s*$/, '');
+
+      // Close open brackets and braces
+      for (let i = 0; i < openBrackets; i++) fixed += ']';
+      for (let i = 0; i < openBraces; i++) fixed += '}';
+
+      return fixed;
+    };
+
+    const parseAIResponse = (data: any): any => {
+      try {
+        let content = data?.response || data;
+        if (typeof content === 'object') return content;
+        let jsonString = String(content).replace(/```json\s*/g, '').replace(/```\s*/g, '');
+        const jsonMatch = jsonString.match(/\{[\s\S]*\}/);
+        if (jsonMatch) jsonString = jsonMatch[0];
+        
+        // Try direct parse first
+        try {
+          return JSON.parse(jsonString);
+        } catch {
+          // Try repairing truncated JSON
+          console.warn('JSON parse failed, attempting repair...');
+          const repaired = repairTruncatedJSON(jsonString);
+          try {
+            const result = JSON.parse(repaired);
+            console.log('JSON repair succeeded');
+            return result;
+          } catch (e2) {
+            console.error('JSON repair also failed:', e2);
+            throw new Error('Failed to parse AI response');
+          }
+        }
+      } catch (error) {
+        console.error('Parse error:', error);
+        throw new Error('Failed to parse AI response');
+      }
+    };
  
    const safeText = (val: any): string => {
      if (val === null || val === undefined) return '';
@@ -298,49 +370,65 @@ Format JSON EXACT:
         updateSectionStatus('features', 'complete');
 
         // 9. User Stories (detailed with acceptance criteria)
-        let storiesResult: any = { userStories: [] };
-        if (config.includeUserStories) {
-          setCurrentSection('User Stories');
-          setProgress(progressPerSection * 8.5);
-          
-          const storiesPerFeature = config.detailLevel === 'detailed' ? 4 : 
-                                    config.detailLevel === 'standard' ? 3 : 2;
-          
-          const { data: sData } = await supabase.functions.invoke('chat-ai', {
-            body: { 
-              message: `Fonctionnalités (Epics): ${JSON.stringify(featuresResult.features)}
+         let storiesResult: any = { userStories: [] };
+         if (config.includeUserStories) {
+           setCurrentSection('User Stories');
+           setProgress(progressPerSection * 8.5);
+           
+           const storiesPerFeature = config.detailLevel === 'detailed' ? 4 : 
+                                     config.detailLevel === 'standard' ? 3 : 2;
+           
+           // Generate stories in batches of 3 epics to avoid truncation
+           const featuresList = featuresResult.features || [];
+           const batchSize = 3;
+           const allStories: any[] = [];
+           
+           for (let i = 0; i < featuresList.length; i += batchSize) {
+             const batch = featuresList.slice(i, i + batchSize);
+             const batchNames = batch.map((f: any) => f.name || f.id).join(', ');
+             setCurrentSection(`User Stories (${batchNames})`);
+             setProgress(progressPerSection * (8.5 + (i / featuresList.length) * 0.5));
+             
+             const { data: sData } = await supabase.functions.invoke('chat-ai', {
+               body: { 
+                 message: `Fonctionnalités: ${JSON.stringify(batch.map((f: any) => ({ id: f.id, name: f.name, description: f.description })))}
 
-Génère ${storiesPerFeature} user stories DÉTAILLÉES par fonctionnalité.
+Génère exactement ${storiesPerFeature} user stories par fonctionnalité.
 
-IMPORTANT: Retourne UNIQUEMENT un JSON valide.
+IMPORTANT: Retourne UNIQUEMENT un JSON valide, compact.
 
-Format JSON EXACT:
+Format JSON:
 {
   "userStories": [
     {
       "id": "US-001",
       "featureId": "EPIC-001",
-      "title": "Titre court de la story",
-      "asA": "type d'utilisateur",
-      "iWant": "action ou fonctionnalité souhaitée",
-      "soThat": "bénéfice ou valeur attendue",
-      "acceptanceCriteria": [
-        "GIVEN contexte initial WHEN action THEN résultat attendu",
-        "GIVEN autre contexte WHEN autre action THEN autre résultat",
-        "Le système doit valider que..."
-      ],
-      "priority": "high/medium/low",
-      "complexity": "XS/S/M/L/XL",
+      "title": "Titre court",
+      "asA": "type utilisateur",
+      "iWant": "action souhaitée",
+      "soThat": "bénéfice attendu",
+      "acceptanceCriteria": ["GIVEN... WHEN... THEN...", "Critère 2"],
+      "priority": "high",
+      "complexity": "M",
       "storyPoints": 3,
-      "technicalNotes": "Notes techniques importantes pour l'implémentation"
+      "technicalNotes": "Notes techniques"
     }
   ]
 }`, 
-              mode: 'simple' 
-            }
-          });
-          storiesResult = parseAIResponse(sData);
-        }
+                 mode: 'simple' 
+               }
+             });
+             
+             try {
+               const batchResult = parseAIResponse(sData);
+               allStories.push(...(batchResult.userStories || []));
+             } catch (e) {
+               console.warn(`Failed to parse stories batch ${i}, skipping`, e);
+             }
+           }
+           
+           storiesResult = { userStories: allStories };
+         }
  
        // 10. Prioritization
        setCurrentSection('Priorisation');
