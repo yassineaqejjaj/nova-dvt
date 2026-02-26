@@ -1569,38 +1569,7 @@ export const Workflows: React.FC = () => {
         </div>
       </div>
 
-      {/* Intent-based entry points - KEY IMPROVEMENT */}
-      <div className="space-y-2">
-        <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-          <Target className="w-4 h-4" />
-          Par où commencer ?
-        </div>
-        <IntentEntryCards
-          selectedIntent={selectedIntent}
-          onSelectIntent={(intent) => {
-            setSelectedIntent(intent);
-            // Reset other filters when intent is selected
-            if (intent) {
-              setSelectedCategory('all');
-              setSelectedTag('all');
-            }
-          }}
-        />
-      </div>
-
-      {/* Recommended workflows - show only when no intent selected */}
-      {!selectedIntent && (
-        <RecommendedWorkflows
-          workflows={recommendedWorkflows}
-          contextName={activeContext?.name || null}
-          onSelect={(workflowId) => {
-            const workflow = workflows.find(w => w.id === workflowId);
-            if (workflow) handleWorkflowSelect(workflow);
-          }}
-        />
-      )}
-
-      {/* Collapsible Filters - more compact */}
+      {/* Collapsible Filters - positioned right after context */}
       <details className="group">
         <summary className="flex items-center gap-2 cursor-pointer text-sm font-medium text-muted-foreground hover:text-foreground">
           <Filter className="w-4 h-4" />
@@ -1682,6 +1651,37 @@ export const Workflows: React.FC = () => {
           />
         </div>
       </details>
+
+      {/* Intent-based entry points - KEY IMPROVEMENT */}
+      <div className="space-y-2">
+        <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+          <Target className="w-4 h-4" />
+          Par où commencer ?
+        </div>
+        <IntentEntryCards
+          selectedIntent={selectedIntent}
+          onSelectIntent={(intent) => {
+            setSelectedIntent(intent);
+            // Reset other filters when intent is selected
+            if (intent) {
+              setSelectedCategory('all');
+              setSelectedTag('all');
+            }
+          }}
+        />
+      </div>
+
+      {/* Recommended workflows - show only when no intent selected */}
+      {!selectedIntent && (
+        <RecommendedWorkflows
+          workflows={recommendedWorkflows}
+          contextName={activeContext?.name || null}
+          onSelect={(workflowId) => {
+            const workflow = workflows.find(w => w.id === workflowId);
+            if (workflow) handleWorkflowSelect(workflow);
+          }}
+        />
+      )}
 
       {/* Workflows by Category - using new WorkflowCard */}
       {categories.filter(cat => filteredWorkflows.some(w => w.category === cat)).map(category => (
