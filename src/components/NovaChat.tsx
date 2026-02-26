@@ -818,9 +818,9 @@ Utilisez ce contexte pour guider l'utilisateur dans l'étape actuelle.
                             const boldFormatted = line.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
                             // Handle lists
                             if (line.trim().startsWith('- ') || line.trim().startsWith('* ')) {
-                              return <li key={idx} dangerouslySetInnerHTML={{ __html: boldFormatted.replace(/^[-*]\s/, '') }} />;
+                              return <li key={idx} dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(boldFormatted.replace(/^[-*]\s/, '')) }} />;
                             }
-                            return <p key={idx} dangerouslySetInnerHTML={{ __html: boldFormatted }} />;
+                            return <p key={idx} dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(boldFormatted) }} />;
                           })}
                         </div>
                         
