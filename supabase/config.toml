@@ -107,3 +107,6 @@ verify_jwt = false
 
 [functions.analyze-document-impact]
 verify_jwt = true
+
+[functions.generate-impact-report]
+verify_jwt = true

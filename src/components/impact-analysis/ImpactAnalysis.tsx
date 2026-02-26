@@ -18,9 +18,10 @@ import { LinkSuggestions } from './LinkSuggestions';
 import {
   AlertTriangle, FileText, Link2, Play, Loader2, BarChart3, Target,
   Plus, Trash2, ArrowRight, XCircle, Code2, TestTube2, FileCode,
-  Database, Briefcase, Wrench, Activity, GitCompare, Sparkles, Upload,
+  Database, Briefcase, Wrench, Activity, GitCompare, Sparkles, Upload, FileDown,
 } from 'lucide-react';
 import { ChangeContextDialog, ChangeContext } from './ChangeContextDialog';
+import { GenerateReportDialog } from './GenerateReportDialog';
 
 type ViewMode = 'executive' | 'changes' | 'technical' | 'data' | 'actions' | 'code-tests' | 'feed' | 'diff' | 'suggestions';
 
@@ -50,6 +51,7 @@ export const ImpactAnalysis: React.FC = () => {
   const [showContextDialog, setShowContextDialog] = useState(false);
   const [contextDialogMode, setContextDialogMode] = useState<'analysis' | 'document'>('analysis');
   const [pendingFile, setPendingFile] = useState<File | null>(null);
+  const [showReportDialog, setShowReportDialog] = useState(false);
 
   useEffect(() => {
     if (user?.id) loadArtifacts();
@@ -423,6 +425,14 @@ export const ImpactAnalysis: React.FC = () => {
           <Button variant="outline" onClick={() => setShowLinkDialog(true)} disabled={!selectedArtifact}>
             <Link2 className="w-4 h-4 mr-2" />
             Liens
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => setShowReportDialog(true)}
+            disabled={!selectedRun || impactItems.length === 0}
+          >
+            <FileDown className="w-4 h-4 mr-2" />
+            Rapport
           </Button>
         </div>
       </div>
@@ -804,6 +814,19 @@ export const ImpactAnalysis: React.FC = () => {
         artifactTitle={artifacts.find(a => a.id === selectedArtifact)?.title || ''}
         mode={contextDialogMode}
       />
+
+      {/* Generate Report Dialog */}
+      {selectedRun && (
+        <GenerateReportDialog
+          open={showReportDialog}
+          onOpenChange={setShowReportDialog}
+          run={selectedRun}
+          items={impactItems}
+          links={links}
+          artefactTitle={artifacts.find(a => a.id === selectedArtifact)?.title || ''}
+          artefactType={artifacts.find(a => a.id === selectedArtifact)?.artifact_type || ''}
+        />
+      )}
     </div>
   );
 };
