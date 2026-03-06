@@ -1325,6 +1325,21 @@ export const Workflows: React.FC = () => {
             </div>
           </div>
         )}
+        {showSprintIntelligence && (
+          <div className="fixed inset-0 z-50 bg-background">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="absolute top-4 right-4 z-50"
+              onClick={() => setShowSprintIntelligence(false)}
+            >
+              ✕ Fermer
+            </Button>
+            <div className="overflow-auto h-full">
+              <SprintIntelligence />
+            </div>
+          </div>
+        )}
         {showVisionDefiner && (
           <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm">
             <div className="fixed inset-4 z-50 overflow-auto bg-background rounded-lg border shadow-lg p-6">
