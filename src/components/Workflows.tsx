@@ -21,6 +21,7 @@ import { CodeGenerator } from './CodeGenerator';
 import { RoadmapPlanner } from './RoadmapPlanner';
 import { ProductLaunch } from './ProductLaunch';
 import { SprintPlanner } from './SprintPlanner';
+import { SprintIntelligence } from './sprint-intelligence';
 import { KPIGenerator } from './KPIGenerator';
 import { ProductContextManager } from './ProductContextManager';
 import { FeatureDiscoveryWorkflow } from './FeatureDiscoveryWorkflow';
@@ -83,7 +84,7 @@ interface Workflow {
     id: string;
     title: string;
     description: string;
-    tool?: 'canvas' | 'story' | 'impact' | 'research' | 'design' | 'code' | 'roadmap' | 'launch' | 'sprint' | 'kpi' | 'epic-stories' | 'test-generator' | 'ac-validator' | 'git-to-specs' | 'critical-path-analyzer' | 'vision' | 'research-objectives' | 'research-plan' | 'research-conduct' | 'research-synthesize' | 'requirements-scope' | 'requirements-collection' | 'requirements-prioritization' | 'requirements-documentation';
+    tool?: 'canvas' | 'story' | 'impact' | 'research' | 'design' | 'code' | 'roadmap' | 'launch' | 'sprint' | 'sprint-intelligence' | 'kpi' | 'epic-stories' | 'test-generator' | 'ac-validator' | 'git-to-specs' | 'critical-path-analyzer' | 'vision' | 'research-objectives' | 'research-plan' | 'research-conduct' | 'research-synthesize' | 'requirements-scope' | 'requirements-collection' | 'requirements-prioritization' | 'requirements-documentation';
     completed?: boolean;
   }>;
 }
@@ -335,6 +336,24 @@ const workflows: Workflow[] = [
         description: 'Allouer le travail selon la vélocité de l\'équipe',
         completed: false,
       },
+    ],
+  },
+  {
+    id: 'sprint-intelligence',
+    name: 'Sprint Intelligence – Capacity Planner',
+    description: 'Calculez la capacité réelle de votre sprint à partir de l\'équipe, absences, réunions et vélocité historique',
+    icon: <TrendingUp className="w-6 h-6" />,
+    category: 'Cadrage',
+    tags: ['Sprint', 'Capacité', 'Vélocité', 'Planification', 'Agile'],
+    frameworks: ['scrum', 'less', 'safe'],
+    difficulty: 'Beginner',
+    estimatedTime: '15-20 min',
+    steps: [
+      { id: 'sprint-setup', title: 'Configuration Sprint', description: 'Dates, jours ouvrés et jours fériés', tool: 'sprint-intelligence', completed: false },
+      { id: 'team', title: 'Composition Équipe', description: 'Membres, rôles et ratios de productivité', tool: 'sprint-intelligence', completed: false },
+      { id: 'absences', title: 'Absences', description: 'Congés, RTT, formations et indisponibilités', tool: 'sprint-intelligence', completed: false },
+      { id: 'meetings', title: 'Cérémonies & Réunions', description: 'Temps consommé par les réunions récurrentes', tool: 'sprint-intelligence', completed: false },
+      { id: 'result', title: 'Capacité & Vélocité', description: 'Synthèse, recommandations et historique', tool: 'sprint-intelligence', completed: false },
     ],
   },
   {
@@ -831,6 +850,7 @@ export const Workflows: React.FC = () => {
   const [showRoadmapPlanner, setShowRoadmapPlanner] = useState(false);
   const [showProductLaunch, setShowProductLaunch] = useState(false);
   const [showSprintPlanner, setShowSprintPlanner] = useState(false);
+  const [showSprintIntelligence, setShowSprintIntelligence] = useState(false);
   const [showKPIGenerator, setShowKPIGenerator] = useState(false);
   const [showContextManager, setShowContextManager] = useState(false);
   const [showFeatureDiscovery, setShowFeatureDiscovery] = useState(false);
@@ -1011,6 +1031,9 @@ export const Workflows: React.FC = () => {
           break;
         case 'sprint':
           setShowSprintPlanner(true);
+          break;
+        case 'sprint-intelligence':
+          setShowSprintIntelligence(true);
           break;
       case 'kpi':
         setShowKPIGenerator(true);
@@ -1317,6 +1340,21 @@ export const Workflows: React.FC = () => {
                 ✕
               </Button>
               <SprintPlanner />
+            </div>
+          </div>
+        )}
+        {showSprintIntelligence && (
+          <div className="fixed inset-0 z-50 bg-background">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="absolute top-4 right-4 z-50"
+              onClick={() => setShowSprintIntelligence(false)}
+            >
+              ✕ Fermer
+            </Button>
+            <div className="overflow-auto h-full">
+              <SprintIntelligence />
             </div>
           </div>
         )}
