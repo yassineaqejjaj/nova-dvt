@@ -1014,6 +1014,9 @@ export const Workflows: React.FC = () => {
         case 'sprint':
           setShowSprintPlanner(true);
           break;
+        case 'sprint-intelligence':
+          setShowSprintIntelligence(true);
+          break;
       case 'kpi':
         setShowKPIGenerator(true);
         break;
