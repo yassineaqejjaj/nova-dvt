@@ -832,6 +832,7 @@ export const Workflows: React.FC = () => {
   const [showRoadmapPlanner, setShowRoadmapPlanner] = useState(false);
   const [showProductLaunch, setShowProductLaunch] = useState(false);
   const [showSprintPlanner, setShowSprintPlanner] = useState(false);
+  const [showSprintIntelligence, setShowSprintIntelligence] = useState(false);
   const [showKPIGenerator, setShowKPIGenerator] = useState(false);
   const [showContextManager, setShowContextManager] = useState(false);
   const [showFeatureDiscovery, setShowFeatureDiscovery] = useState(false);
