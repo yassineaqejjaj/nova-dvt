@@ -21,6 +21,7 @@ import { CodeGenerator } from './CodeGenerator';
 import { RoadmapPlanner } from './RoadmapPlanner';
 import { ProductLaunch } from './ProductLaunch';
 import { SprintPlanner } from './SprintPlanner';
+import { SprintIntelligence } from './sprint-intelligence';
 import { KPIGenerator } from './KPIGenerator';
 import { ProductContextManager } from './ProductContextManager';
 import { FeatureDiscoveryWorkflow } from './FeatureDiscoveryWorkflow';
