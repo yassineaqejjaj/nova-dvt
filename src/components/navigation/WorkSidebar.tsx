@@ -205,7 +205,7 @@ export const WorkSidebar: React.FC<WorkSidebarProps> = ({
     },
     {
       id: 'config',
-      title: 'Configuration',
+      title: 'Collaborer',
       icon: Shield,
       items: [
         {
