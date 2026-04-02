@@ -219,27 +219,7 @@ const Index = () => {
   }
 
   if (!user) {
-    return (
-      <>
-        <div className="min-h-screen bg-background flex items-center justify-center">
-          <div className="text-center space-y-6 max-w-md mx-auto p-6">
-            <div className="bg-white rounded-lg p-4 shadow-sm mx-auto w-fit">
-              <img src="/lovable-uploads/420dfc65-a110-4707-9eb4-3ffc08d33dd3.png" alt="Squad Mate" className="w-16 h-16 object-contain" />
-            </div>
-            <div>
-              <h1 className="text-3xl font-bold gradient-text mb-2">Welcome to Squad Mate</h1>
-              <p className="text-muted-foreground mb-6">
-                Assemble custom squads of specialized AI agents for your projects
-              </p>
-            </div>
-            <Button onClick={() => setShowAuth(true)} size="lg">
-              Get Started
-            </Button>
-          </div>
-        </div>
-        <AuthDialog open={showAuth} onClose={() => setShowAuth(false)} />
-      </>
-    );
+    return <Landing />;
   }
 
   const renderTabContent = () => {
