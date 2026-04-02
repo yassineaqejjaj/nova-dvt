@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import Landing from '@/pages/Landing';
 import { WorkSidebar } from '@/components/navigation/WorkSidebar';
 import { ActionDashboard } from '@/components/dashboard/ActionDashboard';
 import { AgentGallery } from '@/components/AgentGallery';
