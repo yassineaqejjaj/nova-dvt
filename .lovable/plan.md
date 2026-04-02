@@ -1,28 +1,40 @@
 
 
-# Plan : Documentation de la fonctionnalité Analyse d'Impact
+# Plan: Landing Page Nova
 
 ## Objectif
-Créer un fichier `docs/impact-analysis.md` contenant la documentation complète de la fonctionnalité, couvrant l'architecture, le flux de données, les composants UI, les tables DB, les edge functions, et le guide d'utilisation.
+Créer une landing page publique qui s'affiche quand l'utilisateur n'est pas connecté, avec deux boutons (Sign in / Log in) qui ouvrent le dialogue d'authentification existant.
 
-## Contenu du document
+## Approche
+Au lieu de montrer directement le `AuthDialog` quand `user` est null, afficher une landing page dédiée avec le branding Nova.
 
-Le fichier documentera :
+## Modifications
 
-1. **Vue d'ensemble** : Objectif, philosophie ("Impact-as-a-Service"), et positionnement dans Nova
-2. **Architecture technique** : Diagramme ASCII du flux complet (Artifact Save → Trigger → Queue → Realtime → Edge Function → LLM → Impact Items → UI)
-3. **Schéma de données** : Les 10 tables impliquées (`impact_queue`, `impact_runs`, `impact_items`, `link_suggestions`, `artefact_versions`, `change_sets`, `artefact_links`, `code_index`/`feature_code_map`, `test_index`, `data_index`/`feature_data_map`)
-4. **Edge Functions** : `analyze-impact` (classification LLM, propagation, auto-linking) et `auto-impact-check` (traitement de la queue)
-5. **Composants UI** : Les 8 vues (Feed, Executive, Technical, Data, Actions, Diff, Auto-liens, Liens) + NotificationBadge
-6. **Flux automatique** : Trigger DB → debounce 30s → Realtime → frontend orchestration → edge function
-7. **Smart Auto-Linking** : Extraction d'entités LLM, matching code/data index, validation humaine
-8. **Types de changements détectés** : 9 catégories (business_rule_update, data_field_added, etc.)
-9. **Scoring** : Logique de calcul des scores (sévérité × couplage × multiplicateurs)
-10. **Livrables exportables** : Checklist, Plan de test, Rapport complet (Markdown)
+### 1. Créer `src/pages/Landing.tsx`
+Page marketing Nova avec :
+- Header avec logo Devoteam/Nova
+- Hero section : titre accrocheur, description de la valeur Nova
+- Deux boutons CTA : **Sign in** (connexion) et **Sign up** (inscription) qui ouvrent le `AuthDialog` avec l'onglet correspondant
+- Section features rapide (3-4 points clés de Nova)
+- Footer léger
+- Design cohérent avec le thème Nova (couleurs primary, fond sombre)
 
-## Fichier à créer
-- `docs/impact-analysis.md`
+### 2. Modifier `src/components/AuthDialog.tsx`
+- Ajouter une prop `defaultTab` pour pouvoir pré-sélectionner l'onglet signin ou signup depuis la landing page
 
-## Aucun changement fonctionnel
-Documentation pure, aucune modification de code.
+### 3. Modifier `src/pages/Index.tsx`
+- Quand `!user && !loading` : afficher `<Landing />` au lieu de montrer le `AuthDialog` directement
+- Supprimer le `useEffect` qui fait `setShowAuth(true)` quand pas d'utilisateur
+- Passer les callbacks d'auth à la landing page
+
+### 4. Mettre à jour `src/App.tsx`
+- Ajouter route `/landing` optionnelle ou gérer le tout dans Index.tsx (approche inline préférée pour simplicité)
+
+## Design Landing
+- Fond avec gradient subtil (noir/bleu foncé Nova)
+- Logo Devoteam en haut
+- Titre : "Nova — L'environnement de travail augmenté par l'IA"
+- Sous-titre expliquant la valeur PM
+- Cards features : Sprint Intelligence, Impact Analysis, Discovery, etc.
+- Boutons Sign in (outline) et Sign up (primary) bien visibles
 
