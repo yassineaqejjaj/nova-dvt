@@ -12,11 +12,16 @@ import { Loader2, Mail, Lock, User, Briefcase } from 'lucide-react';
 interface AuthDialogProps {
   open: boolean;
   onClose: () => void;
+  defaultTab?: 'signin' | 'signup';
 }
 
-export const AuthDialog: React.FC<AuthDialogProps> = ({ open, onClose }) => {
+export const AuthDialog: React.FC<AuthDialogProps> = ({ open, onClose, defaultTab }) => {
   const [isLoading, setIsLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState<'signin' | 'signup'>('signin');
+  const [activeTab, setActiveTab] = useState<'signin' | 'signup'>(defaultTab || 'signin');
+
+  React.useEffect(() => {
+    if (defaultTab) setActiveTab(defaultTab);
+  }, [defaultTab]);
   
   const [signInData, setSignInData] = useState({
     email: '',
