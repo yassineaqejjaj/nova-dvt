@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import Landing from '@/pages/Landing';
 import { WorkSidebar } from '@/components/navigation/WorkSidebar';
 import { ActionDashboard } from '@/components/dashboard/ActionDashboard';
@@ -51,6 +52,7 @@ import { toast } from 'sonner';
 
 const Index = () => {
   const { user, userProfile, squads, loading, needsOnboarding, refreshUserData, addXP, completeOnboarding } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState<TabType>('dashboard');
   const [currentSquad, setCurrentSquad] = useState<Squad | null>(null);
   const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null);
@@ -220,7 +222,20 @@ const Index = () => {
   }
 
   if (!user) {
-    return <Landing />;
+    const authParam = searchParams.get('auth');
+    return (
+      <>
+        <Landing />
+        <AuthDialog
+          open={authParam === 'login'}
+          onClose={() => {
+            searchParams.delete('auth');
+            setSearchParams(searchParams, { replace: true });
+          }}
+          defaultTab="signin"
+        />
+      </>
+    );
   }
 
   const renderTabContent = () => {
