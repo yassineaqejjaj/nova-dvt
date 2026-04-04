@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { AuthDialog } from '@/components/AuthDialog';
 import { motion, useInView } from 'framer-motion';
 import heroBg from '@/assets/hero-bg.jpg';
 import productMockup from '@/assets/product-mockup.jpg';
 
-/* ─── tiny helpers ─── */
-const Section: React.FC<{
+/* ─── shared helpers (exported for sub-pages) ─── */
+export const Section: React.FC<{
   children: React.ReactNode;
   bg?: string;
   className?: string;
@@ -18,7 +19,7 @@ const Section: React.FC<{
   </section>
 );
 
-const Reveal: React.FC<{ children: React.ReactNode; className?: string; delay?: number }> = ({
+export const Reveal: React.FC<{ children: React.ReactNode; className?: string; delay?: number }> = ({
   children,
   className = '',
   delay = 0,
@@ -38,7 +39,7 @@ const Reveal: React.FC<{ children: React.ReactNode; className?: string; delay?: 
   );
 };
 
-const Label: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+export const Label: React.FC<{ children: React.ReactNode }> = ({ children }) => (
   <span
     className="uppercase tracking-[0.15em] inline-block mb-4"
     style={{ fontSize: 13, fontWeight: 700, color: '#F8485E' }}
@@ -47,7 +48,7 @@ const Label: React.FC<{ children: React.ReactNode }> = ({ children }) => (
   </span>
 );
 
-const PrimaryBtn: React.FC<React.ButtonHTMLAttributes<HTMLButtonElement>> = ({ children, ...props }) => (
+export const PrimaryBtn: React.FC<React.ButtonHTMLAttributes<HTMLButtonElement>> = ({ children, ...props }) => (
   <button
     {...props}
     className="inline-flex items-center justify-center gap-2 px-8 py-3 text-white font-semibold text-sm transition-all hover:brightness-110"
@@ -57,7 +58,7 @@ const PrimaryBtn: React.FC<React.ButtonHTMLAttributes<HTMLButtonElement>> = ({ c
   </button>
 );
 
-const SecondaryBtn: React.FC<React.ButtonHTMLAttributes<HTMLButtonElement>> = ({ children, ...props }) => (
+export const SecondaryBtn: React.FC<React.ButtonHTMLAttributes<HTMLButtonElement>> = ({ children, ...props }) => (
   <button
     {...props}
     className="inline-flex items-center justify-center gap-2 px-8 py-3 font-semibold text-sm border border-white text-white transition-all hover:bg-white/10"
@@ -67,23 +68,122 @@ const SecondaryBtn: React.FC<React.ButtonHTMLAttributes<HTMLButtonElement>> = ({
   </button>
 );
 
-const TertiaryLink: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <span className="inline-flex items-center gap-1 font-bold text-sm cursor-pointer hover:gap-2 transition-all" style={{ color: '#F8485E' }}>
+export const SecondaryBtnDark: React.FC<React.ButtonHTMLAttributes<HTMLButtonElement>> = ({ children, ...props }) => (
+  <button
+    {...props}
+    className="inline-flex items-center justify-center gap-2 px-8 py-3 font-semibold text-sm border transition-all hover:bg-[#141413]/5"
+    style={{ borderRadius: 50, borderColor: '#3C3C3A', color: '#3C3C3A' }}
+  >
+    {children}
+  </button>
+);
+
+export const TertiaryLink: React.FC<{ children: React.ReactNode; onClick?: () => void }> = ({ children, onClick }) => (
+  <span onClick={onClick} className="inline-flex items-center gap-1 font-bold text-sm cursor-pointer hover:gap-2 transition-all" style={{ color: '#F8485E' }}>
     → {children}
   </span>
 );
 
-/* ─── LANDING ─── */
-const Landing: React.FC = () => {
-  const [showAuth, setShowAuth] = useState(false);
-  const [authTab, setAuthTab] = useState<'signin' | 'signup'>('signin');
+export const LandingHeader: React.FC<{ onDemo: () => void }> = ({ onDemo }) => {
   const [scrolled, setScrolled] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 60);
     window.addEventListener('scroll', onScroll);
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
+
+  return (
+    <header
+      className="fixed top-0 left-0 right-0 z-50 transition-all duration-300"
+      style={{
+        background: scrolled ? 'rgba(20,20,19,0.95)' : 'transparent',
+        backdropFilter: scrolled ? 'blur(12px)' : 'none',
+      }}
+    >
+      <div className="mx-auto flex items-center justify-between" style={{ maxWidth: 1200, padding: '0 60px', height: 72 }}>
+        <span
+          onClick={() => navigate('/')}
+          className="text-white font-bold cursor-pointer hover:opacity-80 transition-opacity"
+          style={{ fontSize: 18, fontWeight: 700, letterSpacing: '0.02em' }}
+        >
+          AI Factory
+        </span>
+        <nav className="hidden md:flex items-center gap-8">
+          {[
+            { label: 'Vision', path: '/vision' },
+            { label: 'Product', path: '/product' },
+            { label: 'Use Cases', path: '/use-cases' },
+            { label: 'Security', path: '/#security' },
+          ].map((item) => (
+            <button
+              key={item.label}
+              onClick={() => {
+                if (item.path.startsWith('/#')) {
+                  navigate('/');
+                  setTimeout(() => document.getElementById(item.path.slice(2))?.scrollIntoView({ behavior: 'smooth' }), 100);
+                } else {
+                  navigate(item.path);
+                }
+              }}
+              className="text-white/70 hover:text-white text-sm font-medium transition-colors"
+            >
+              {item.label}
+            </button>
+          ))}
+          <PrimaryBtn onClick={onDemo}>Book a demo</PrimaryBtn>
+        </nav>
+      </div>
+    </header>
+  );
+};
+
+export const LandingFooter: React.FC = () => {
+  const navigate = useNavigate();
+  return (
+    <footer style={{ background: '#141413', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+      <div className="mx-auto" style={{ maxWidth: 1200, padding: '60px 60px 40px' }}>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-10 mb-16">
+          {[
+            { title: 'Nova', links: [{ label: 'Overview', path: '/' }, { label: 'Features', path: '/product' }] },
+            { title: 'Product', links: [{ label: 'Agents', path: '/product' }, { label: 'Workflows', path: '/product' }, { label: 'Artefacts', path: '/product' }] },
+            { title: 'AI Factory', links: [{ label: 'Vision', path: '/vision' }, { label: 'Use Cases', path: '/use-cases' }] },
+            { title: 'Devoteam', links: [{ label: 'About', path: '/' }, { label: 'Contact', path: '/demo' }] },
+          ].map((col) => (
+            <div key={col.title}>
+              <h5 className="text-white font-bold text-sm mb-4">{col.title}</h5>
+              <ul className="space-y-2">
+                {col.links.map((link) => (
+                  <li key={link.label}>
+                    <span
+                      onClick={() => navigate(link.path)}
+                      className="text-white/40 text-sm hover:text-white/70 transition-colors cursor-pointer"
+                    >
+                      {link.label}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+        <div className="flex items-center justify-between border-t border-white/10 pt-8">
+          <span className="text-white/40 font-bold text-sm">AI Factory</span>
+          <p className="text-white/30 text-xs">
+            © {new Date().getFullYear()} Nova by Devoteam. All rights reserved.
+          </p>
+        </div>
+      </div>
+    </footer>
+  );
+};
+
+/* ─── LANDING ─── */
+const Landing: React.FC = () => {
+  const [showAuth, setShowAuth] = useState(false);
+  const [authTab, setAuthTab] = useState<'signin' | 'signup'>('signin');
+  const navigate = useNavigate();
 
   const openAuth = (tab: 'signin' | 'signup') => {
     setAuthTab(tab);
@@ -96,50 +196,15 @@ const Landing: React.FC = () => {
 
   return (
     <div style={{ fontFamily: 'Montserrat, sans-serif', color: '#3C3C3A' }}>
-      {/* ───────── 1. HEADER ───────── */}
-      <header
-        className="fixed top-0 left-0 right-0 z-50 transition-all duration-300"
-        style={{
-          background: scrolled ? 'rgba(20,20,19,0.95)' : 'transparent',
-          backdropFilter: scrolled ? 'blur(12px)' : 'none',
-        }}
-      >
-        <div className="mx-auto flex items-center justify-between" style={{ maxWidth: 1200, padding: '0 60px', height: 72 }}>
-          <img
-            src="/lovable-uploads/devoteam-logo.png"
-            alt="Devoteam"
-            className="h-7 object-contain brightness-0 invert"
-          />
-          <nav className="hidden md:flex items-center gap-8">
-            {['Vision', 'Product', 'Use Cases', 'Security'].map((item) => (
-              <button
-                key={item}
-                onClick={() => scrollTo(item.toLowerCase().replace(' ', '-'))}
-                className="text-white/70 hover:text-white text-sm font-medium transition-colors"
-              >
-                {item}
-              </button>
-            ))}
-            <PrimaryBtn onClick={() => openAuth('signup')}>Request a demo</PrimaryBtn>
-          </nav>
-        </div>
-      </header>
+      <LandingHeader onDemo={() => navigate('/demo')} />
 
-      {/* ───────── 2. HERO ───────── */}
+      {/* ───────── HERO ───────── */}
       <section
-        id="vision"
         className="relative min-h-screen flex items-end overflow-hidden"
         style={{ background: '#141413' }}
       >
-        <img
-          src={heroBg}
-          alt=""
-          className="absolute inset-0 w-full h-full object-cover"
-          width={1920}
-          height={1080}
-        />
+        <img src={heroBg} alt="" className="absolute inset-0 w-full h-full object-cover" width={1920} height={1080} />
         <div className="absolute inset-0" style={{ background: 'rgba(0,0,0,0.6)' }} />
-
         <div className="relative z-10 mx-auto w-full" style={{ maxWidth: 1200, padding: '0 60px 80px' }}>
           <motion.div
             initial={{ opacity: 0, y: 50 }}
@@ -149,19 +214,17 @@ const Landing: React.FC = () => {
           >
             <Label>Devoteam AI Factory</Label>
             <h1 className="text-white mb-6" style={{ fontSize: 43, fontWeight: 700, lineHeight: '54px' }}>
-              Nova is not just an assistant.
-              <br />
+              Nova is not just an assistant.<br />
               It is the operating system for augmented teams.
             </h1>
             <p className="text-white/70 mb-10" style={{ fontSize: 16, lineHeight: 1.6, maxWidth: 520 }}>
               Product, Design, Engineering and AI agents working in one system.
             </p>
             <div className="flex flex-wrap gap-4 mb-16">
-              <PrimaryBtn onClick={() => scrollTo('product')}>Discover Nova</PrimaryBtn>
-              <SecondaryBtn onClick={() => openAuth('signin')}>Watch the demo</SecondaryBtn>
+              <PrimaryBtn onClick={() => navigate('/vision')}>Discover Nova</PrimaryBtn>
+              <SecondaryBtn onClick={() => navigate('/demo')}>Book a demo</SecondaryBtn>
             </div>
           </motion.div>
-
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -175,13 +238,11 @@ const Landing: React.FC = () => {
         </div>
       </section>
 
-      {/* ───────── 3. MANIFEST ───────── */}
+      {/* ───────── MANIFEST ───────── */}
       <Section bg="bg-white">
         <Reveal className="text-center max-w-3xl mx-auto">
           <h2 style={{ fontSize: 43, fontWeight: 700, lineHeight: '54px', color: '#141413' }} className="mb-6">
-            Teams do not need more tools.
-            <br />
-            They need more coherence.
+            Teams do not need more tools.<br />They need more coherence.
           </h2>
           <p style={{ fontSize: 16, lineHeight: 1.6, color: '#3C3C3A' }}>
             Nova connects context, workflows and AI into one experience.
@@ -189,75 +250,47 @@ const Landing: React.FC = () => {
         </Reveal>
       </Section>
 
-      {/* ───────── 4. VALUE BLOCKS ───────── */}
+      {/* ───────── VALUE BLOCKS ───────── */}
       <Section bg="" className="bg-[#FAF9F5]">
         <div className="grid md:grid-cols-3 gap-12">
           {[
-            {
-              label: 'CONTEXT',
-              title: 'Context becomes active',
-              text: 'Nova understands projects, history, documents and decisions.',
-            },
-            {
-              label: 'AGENTS',
-              title: 'AI becomes structured',
-              text: 'Product, Design, Dev and QA roles activated dynamically.',
-            },
-            {
-              label: 'FLOW',
-              title: 'Work becomes continuous',
-              text: 'From idea to delivery without losing context.',
-            },
+            { label: 'CONTEXT', title: 'Context becomes active', text: 'Nova understands projects, history, documents and decisions.' },
+            { label: 'AGENTS', title: 'AI becomes structured', text: 'Product, Design, Dev and QA roles activated dynamically.' },
+            { label: 'FLOW', title: 'Work becomes continuous', text: 'From idea to delivery without losing context.' },
           ].map((block, i) => (
             <Reveal key={block.label} delay={i * 0.15}>
               <Label>{block.label}</Label>
-              <h3 className="mb-4" style={{ fontSize: 22, fontWeight: 700, lineHeight: '32px', color: '#141413' }}>
-                {block.title}
-              </h3>
-              <p className="mb-6" style={{ fontSize: 16, lineHeight: 1.6, color: '#3C3C3A' }}>
-                {block.text}
-              </p>
-              <TertiaryLink>See how it works</TertiaryLink>
+              <h3 className="mb-4" style={{ fontSize: 22, fontWeight: 700, lineHeight: '32px', color: '#141413' }}>{block.title}</h3>
+              <p className="mb-6" style={{ fontSize: 16, lineHeight: 1.6, color: '#3C3C3A' }}>{block.text}</p>
+              <TertiaryLink onClick={() => navigate('/product')}>See how it works</TertiaryLink>
             </Reveal>
           ))}
         </div>
       </Section>
 
-      {/* ───────── 5. PRODUCT IMMERSIVE ───────── */}
+      {/* ───────── PRODUCT IMMERSIVE ───────── */}
       <section id="product" style={{ background: '#3C3C3A' }}>
         <div className="mx-auto grid md:grid-cols-2 gap-12 items-center" style={{ maxWidth: 1200, padding: '100px 60px' }}>
           <Reveal>
             <h2 className="text-white mb-6" style={{ fontSize: 43, fontWeight: 700, lineHeight: '54px' }}>
-              One system.
-              <br />
-              Multiple forms of intelligence.
+              One system.<br />Multiple forms of intelligence.
             </h2>
             <p className="text-white/60 mb-8" style={{ fontSize: 16, lineHeight: 1.6 }}>
               Nova combines context, workflows, artefacts and agents in one workspace.
             </p>
-            <PrimaryBtn onClick={() => openAuth('signup')}>Try Nova</PrimaryBtn>
+            <PrimaryBtn onClick={() => navigate('/product')}>Explore the product</PrimaryBtn>
           </Reveal>
           <Reveal delay={0.2}>
-            <img
-              src={productMockup}
-              alt="Nova workspace"
-              className="w-full shadow-2xl"
-              loading="lazy"
-              width={1200}
-              height={800}
-              style={{ borderRadius: 0 }}
-            />
+            <img src={productMockup} alt="Nova workspace" className="w-full shadow-2xl" loading="lazy" width={1200} height={800} style={{ borderRadius: 0 }} />
           </Reveal>
         </div>
       </section>
 
-      {/* ───────── 6. USE CASES ───────── */}
-      <Section bg="bg-white" id="use-cases">
+      {/* ───────── USE CASES ───────── */}
+      <Section bg="bg-white" id="use-cases-preview">
         <Reveal className="mb-16">
           <Label>USE CASES</Label>
-          <h2 style={{ fontSize: 43, fontWeight: 700, lineHeight: '54px', color: '#141413' }}>
-            Built for how teams actually work
-          </h2>
+          <h2 style={{ fontSize: 43, fontWeight: 700, lineHeight: '54px', color: '#141413' }}>Built for how teams actually work</h2>
         </Reveal>
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {[
@@ -267,12 +300,10 @@ const Landing: React.FC = () => {
             { label: 'MEETINGS', title: 'Meeting to action', desc: 'Turn any meeting into structured decisions and artefacts.' },
           ].map((card, i) => (
             <Reveal key={card.label} delay={i * 0.1}>
-              <div className="bg-white p-6 shadow-sm hover:shadow-md transition-shadow" style={{ borderRadius: 0 }}>
+              <div className="bg-white p-6 shadow-sm hover:shadow-md transition-shadow cursor-pointer" style={{ borderRadius: 0 }} onClick={() => navigate('/use-cases')}>
                 <div className="w-full mb-4" style={{ aspectRatio: '4/3', background: '#F4F4F4' }} />
                 <Label>{card.label}</Label>
-                <h4 className="mb-2" style={{ fontSize: 18, fontWeight: 700, lineHeight: '26px', color: '#141413' }}>
-                  {card.title}
-                </h4>
+                <h4 className="mb-2" style={{ fontSize: 18, fontWeight: 700, lineHeight: '26px', color: '#141413' }}>{card.title}</h4>
                 <p style={{ fontSize: 16, lineHeight: 1.6, color: '#3C3C3A' }}>{card.desc}</p>
               </div>
             </Reveal>
@@ -280,7 +311,7 @@ const Landing: React.FC = () => {
         </div>
       </Section>
 
-      {/* ───────── 7. METRICS ───────── */}
+      {/* ───────── METRICS ───────── */}
       <section style={{ background: '#141413' }}>
         <div className="mx-auto text-center" style={{ maxWidth: 1200, padding: '100px 60px' }}>
           <div className="grid md:grid-cols-3 gap-12">
@@ -290,9 +321,7 @@ const Landing: React.FC = () => {
               { value: '92%', label: 'coherence' },
             ].map((m, i) => (
               <Reveal key={m.label} delay={i * 0.15}>
-                <div className="text-white" style={{ fontSize: 72, fontWeight: 700, lineHeight: 1 }}>
-                  {m.value}
-                </div>
+                <div className="text-white" style={{ fontSize: 72, fontWeight: 700, lineHeight: 1 }}>{m.value}</div>
                 <p className="text-white/50 mt-4 text-sm font-medium uppercase tracking-widest">{m.label}</p>
               </Reveal>
             ))}
@@ -300,7 +329,7 @@ const Landing: React.FC = () => {
         </div>
       </section>
 
-      {/* ───────── 8. DIFFERENTIATION ───────── */}
+      {/* ───────── DIFFERENTIATION ───────── */}
       <Section bg="" className="bg-[#F4F4F4]">
         <div className="grid md:grid-cols-3 gap-12">
           {[
@@ -309,30 +338,20 @@ const Landing: React.FC = () => {
             { from: 'Not a tool', to: 'becomes your system' },
           ].map((d, i) => (
             <Reveal key={d.from} delay={i * 0.15}>
-              <h3 className="mb-2" style={{ fontSize: 22, fontWeight: 700, lineHeight: '32px', color: '#141413' }}>
-                {d.from}
-              </h3>
-              <p style={{ fontSize: 16, lineHeight: 1.6, color: '#3C3C3A' }}>
-                → {d.to}
-              </p>
+              <h3 className="mb-2" style={{ fontSize: 22, fontWeight: 700, lineHeight: '32px', color: '#141413' }}>{d.from}</h3>
+              <p style={{ fontSize: 16, lineHeight: 1.6, color: '#3C3C3A' }}>→ {d.to}</p>
             </Reveal>
           ))}
         </div>
       </Section>
 
-      {/* ───────── 9. GOVERNANCE ───────── */}
+      {/* ───────── GOVERNANCE ───────── */}
       <Section bg="bg-white" id="security">
         <Reveal className="max-w-2xl">
           <Label>GOVERNANCE</Label>
-          <h2 className="mb-10" style={{ fontSize: 43, fontWeight: 700, lineHeight: '54px', color: '#141413' }}>
-            Built with governance in mind
-          </h2>
+          <h2 className="mb-10" style={{ fontSize: 43, fontWeight: 700, lineHeight: '54px', color: '#141413' }}>Built with governance in mind</h2>
           <ul className="space-y-6">
-            {[
-              'Human validation at every critical step',
-              'Traceable artefacts linked to context and decisions',
-              'Controlled context with granular access',
-            ].map((item) => (
+            {['Human validation at every critical step', 'Traceable artefacts linked to context and decisions', 'Controlled context with granular access'].map((item) => (
               <li key={item} className="flex items-start gap-4">
                 <span className="mt-1 w-2 h-2 shrink-0" style={{ background: '#F8485E' }} />
                 <span style={{ fontSize: 16, lineHeight: 1.6 }}>{item}</span>
@@ -342,61 +361,20 @@ const Landing: React.FC = () => {
         </Reveal>
       </Section>
 
-      {/* ───────── 10. FINAL CTA ───────── */}
+      {/* ───────── FINAL CTA ───────── */}
       <section style={{ background: '#141413' }}>
         <div className="mx-auto text-center" style={{ maxWidth: 1200, padding: '120px 60px' }}>
           <Reveal>
             <h2 className="text-white mb-6" style={{ fontSize: 43, fontWeight: 700, lineHeight: '54px' }}>
-              From AI-aware teams
-              <br />
-              to AI-native organizations.
+              From AI-aware teams<br />to AI-native organizations.
             </h2>
-            <p className="text-white/50 mb-10" style={{ fontSize: 16, lineHeight: 1.6 }}>
-              Nova is the layer in between.
-            </p>
-            <PrimaryBtn onClick={() => openAuth('signup')}>Start with Nova</PrimaryBtn>
+            <p className="text-white/50 mb-10" style={{ fontSize: 16, lineHeight: 1.6 }}>Nova is the layer in between.</p>
+            <PrimaryBtn onClick={() => navigate('/demo')}>Book a demo</PrimaryBtn>
           </Reveal>
         </div>
       </section>
 
-      {/* ───────── 11. FOOTER ───────── */}
-      <footer style={{ background: '#141413', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
-        <div className="mx-auto" style={{ maxWidth: 1200, padding: '60px 60px 40px' }}>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-10 mb-16">
-            {[
-              { title: 'Nova', links: ['Overview', 'Features', 'Pricing'] },
-              { title: 'Product', links: ['Agents', 'Workflows', 'Artefacts'] },
-              { title: 'AI Factory', links: ['Vision', 'Research', 'Partners'] },
-              { title: 'Devoteam', links: ['About', 'Careers', 'Contact'] },
-            ].map((col) => (
-              <div key={col.title}>
-                <h5 className="text-white font-bold text-sm mb-4">{col.title}</h5>
-                <ul className="space-y-2">
-                  {col.links.map((link) => (
-                    <li key={link}>
-                      <span className="text-white/40 text-sm hover:text-white/70 transition-colors cursor-pointer">
-                        {link}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
-          </div>
-          <div className="flex items-center justify-between border-t border-white/10 pt-8">
-            <img
-              src="/lovable-uploads/devoteam-logo.png"
-              alt="Devoteam"
-              className="h-5 object-contain brightness-0 invert opacity-40"
-            />
-            <p className="text-white/30 text-xs">
-              © {new Date().getFullYear()} Nova by Devoteam. All rights reserved.
-            </p>
-          </div>
-        </div>
-      </footer>
-
-      {/* ── Auth Dialog ── */}
+      <LandingFooter />
       <AuthDialog open={showAuth} onClose={() => setShowAuth(false)} defaultTab={authTab} />
     </div>
   );

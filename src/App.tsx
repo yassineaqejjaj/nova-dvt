@@ -13,6 +13,10 @@ import TestCaseGeneratorPage from "./pages/TestCaseGenerator";
 import CriticalPathAnalyzerPage from "./pages/CriticalPathAnalyzer";
 import { UserResearch } from "./pages/UserResearch";
 import SmartDiscovery from "./pages/SmartDiscovery";
+import Vision from "./pages/Vision";
+import Product from "./pages/Product";
+import UseCases from "./pages/UseCases";
+import Demo from "./pages/Demo";
 
 const queryClient = new QueryClient();
 
@@ -25,6 +29,10 @@ const App = () => (
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<Index />} />
+            <Route path="/vision" element={<Vision />} />
+            <Route path="/product" element={<Product />} />
+            <Route path="/use-cases" element={<UseCases />} />
+            <Route path="/demo" element={<Demo />} />
             <Route path="/admin" element={<Admin />} />
             <Route path="/instant-prd" element={<InstantPRD />} />
             <Route path="/test-generator" element={<TestCaseGeneratorPage />} />
