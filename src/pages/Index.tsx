@@ -15,8 +15,7 @@ import { AuthDialog } from '@/components/AuthDialog';
 import { GamificationDashboard } from '@/components/gamification/GamificationDashboard';
 import { SquadManager } from '@/components/SquadManager';
 import { UserProfile } from '@/components/UserProfile';
-import { OnboardingModal } from '@/components/OnboardingModal';
-import { InteractiveTutorial } from '@/components/InteractiveTutorial';
+import { OnboardingFlow } from '@/components/OnboardingFlow';
 import { MagicBar } from '@/components/MagicBar';
 import { ShareableMomentCard } from '@/components/ShareableMomentCard';
 import { useSessionMemory } from '@/hooks/useSessionMemory';
@@ -612,25 +611,34 @@ const Index = () => {
           />
       )}
 
-      {/* Onboarding Modal */}
+      {/* Onboarding Flow */}
       {needsOnboarding && user && (
-        <OnboardingModal
+        <OnboardingFlow
           open={needsOnboarding}
           userId={user.id}
-          onComplete={() => {
+          onComplete={(navigateTo) => {
             completeOnboarding();
             refreshUserData();
-            setShowTutorial(true);
+            if (navigateTo) {
+              setActiveTab(navigateTo as TabType);
+            }
           }}
         />
       )}
 
-      {/* Interactive Tutorial */}
-      <InteractiveTutorial
-        open={showTutorial}
-        onClose={() => setShowTutorial(false)}
-        onNavigate={(tab) => setActiveTab(tab as TabType)}
-      />
+      {/* Interactive Tutorial (re-trigger) */}
+      {showTutorial && (
+        <OnboardingFlow
+          open={showTutorial}
+          userId={user?.id || ''}
+          onComplete={(navigateTo) => {
+            setShowTutorial(false);
+            if (navigateTo) {
+              setActiveTab(navigateTo as TabType);
+            }
+          }}
+        />
+      )}
 
       {/* Magic Bar - AI Command Palette */}
       <MagicBar onNavigate={handleTabChange} onAction={handleMagicBarAction} />
