@@ -13,7 +13,7 @@ const agents = [
 const traits = ['its own objective', 'its own reasoning style', 'access to the same shared context'];
 
 const collab = [
-  'build on each other's outputs',
+  "build on each other's outputs",
   'challenge inconsistencies',
   'refine results step by step',
 ];
