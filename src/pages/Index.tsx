@@ -52,6 +52,7 @@ import { toast } from 'sonner';
 
 const Index = () => {
   const { user, userProfile, squads, loading, needsOnboarding, refreshUserData, addXP, completeOnboarding } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState<TabType>('dashboard');
   const [currentSquad, setCurrentSquad] = useState<Squad | null>(null);
   const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null);
