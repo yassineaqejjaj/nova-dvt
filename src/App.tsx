@@ -17,6 +17,9 @@ import Vision from "./pages/Vision";
 import Product from "./pages/Product";
 import UseCases from "./pages/UseCases";
 import Demo from "./pages/Demo";
+import Agents from "./pages/Agents";
+import WorkflowsPage from "./pages/Workflows";
+import Artefacts from "./pages/Artefacts";
 
 const queryClient = new QueryClient();
 
@@ -33,6 +36,9 @@ const App = () => (
             <Route path="/product" element={<Product />} />
             <Route path="/use-cases" element={<UseCases />} />
             <Route path="/demo" element={<Demo />} />
+            <Route path="/agents" element={<Agents />} />
+            <Route path="/workflows" element={<WorkflowsPage />} />
+            <Route path="/artefacts" element={<Artefacts />} />
             <Route path="/admin" element={<Admin />} />
             <Route path="/instant-prd" element={<InstantPRD />} />
             <Route path="/test-generator" element={<TestCaseGeneratorPage />} />
