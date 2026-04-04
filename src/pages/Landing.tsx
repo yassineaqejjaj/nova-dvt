@@ -132,6 +132,12 @@ export const LandingHeader: React.FC<{ onDemo: () => void }> = ({ onDemo }) => {
               {item.label}
             </button>
           ))}
+          <button
+            onClick={() => navigate('/?auth=login')}
+            className="text-white/70 hover:text-white text-sm font-medium transition-colors"
+          >
+            Log in
+          </button>
           <PrimaryBtn onClick={onDemo}>Book a demo</PrimaryBtn>
         </nav>
       </div>
