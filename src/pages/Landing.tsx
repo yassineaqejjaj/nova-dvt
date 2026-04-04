@@ -1,181 +1,404 @@
-import React, { useState } from 'react';
-import { Button } from '@/components/ui/button';
+import React, { useState, useEffect, useRef } from 'react';
 import { AuthDialog } from '@/components/AuthDialog';
-import { Sparkles, Brain, Target, BarChart3, Zap, Shield, Users, ArrowRight } from 'lucide-react';
+import { motion, useInView } from 'framer-motion';
+import heroBg from '@/assets/hero-bg.jpg';
+import productMockup from '@/assets/product-mockup.jpg';
 
+/* ─── tiny helpers ─── */
+const Section: React.FC<{
+  children: React.ReactNode;
+  bg?: string;
+  className?: string;
+  id?: string;
+}> = ({ children, bg = 'bg-white', className = '', id }) => (
+  <section id={id} className={`${bg} ${className}`} style={{ fontFamily: 'Montserrat, sans-serif' }}>
+    <div className="mx-auto w-full" style={{ maxWidth: 1200, padding: '100px 60px' }}>
+      {children}
+    </div>
+  </section>
+);
+
+const Reveal: React.FC<{ children: React.ReactNode; className?: string; delay?: number }> = ({
+  children,
+  className = '',
+  delay = 0,
+}) => {
+  const ref = useRef(null);
+  const inView = useInView(ref, { once: true, margin: '-80px' });
+  return (
+    <motion.div
+      ref={ref}
+      initial={{ opacity: 0, y: 40 }}
+      animate={inView ? { opacity: 1, y: 0 } : {}}
+      transition={{ duration: 0.7, delay, ease: [0.22, 1, 0.36, 1] }}
+      className={className}
+    >
+      {children}
+    </motion.div>
+  );
+};
+
+const Label: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+  <span
+    className="uppercase tracking-[0.15em] inline-block mb-4"
+    style={{ fontSize: 13, fontWeight: 700, color: '#F8485E' }}
+  >
+    {children}
+  </span>
+);
+
+const PrimaryBtn: React.FC<React.ButtonHTMLAttributes<HTMLButtonElement>> = ({ children, ...props }) => (
+  <button
+    {...props}
+    className="inline-flex items-center justify-center gap-2 px-8 py-3 text-white font-semibold text-sm transition-all hover:brightness-110"
+    style={{ background: '#F8485E', borderRadius: 50 }}
+  >
+    {children}
+  </button>
+);
+
+const SecondaryBtn: React.FC<React.ButtonHTMLAttributes<HTMLButtonElement>> = ({ children, ...props }) => (
+  <button
+    {...props}
+    className="inline-flex items-center justify-center gap-2 px-8 py-3 font-semibold text-sm border border-white text-white transition-all hover:bg-white/10"
+    style={{ borderRadius: 50 }}
+  >
+    {children}
+  </button>
+);
+
+const TertiaryLink: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+  <span className="inline-flex items-center gap-1 font-bold text-sm cursor-pointer hover:gap-2 transition-all" style={{ color: '#F8485E' }}>
+    → {children}
+  </span>
+);
+
+/* ─── LANDING ─── */
 const Landing: React.FC = () => {
   const [showAuth, setShowAuth] = useState(false);
   const [authTab, setAuthTab] = useState<'signin' | 'signup'>('signin');
+  const [scrolled, setScrolled] = useState(false);
 
-  const openSignIn = () => {
-    setAuthTab('signin');
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 60);
+    window.addEventListener('scroll', onScroll);
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
+  const openAuth = (tab: 'signin' | 'signup') => {
+    setAuthTab(tab);
     setShowAuth(true);
   };
 
-  const openSignUp = () => {
-    setAuthTab('signup');
-    setShowAuth(true);
+  const scrollTo = (id: string) => {
+    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
   };
-
-  const features = [
-    {
-      icon: Brain,
-      title: 'Sprint Intelligence',
-      description: 'Calculez la capacité réelle de votre équipe et planifiez des sprints réalistes.',
-    },
-    {
-      icon: Target,
-      title: 'Impact Analysis',
-      description: 'Mesurez l\'impact de chaque changement sur votre produit en temps réel.',
-    },
-    {
-      icon: Sparkles,
-      title: 'Smart Discovery',
-      description: 'Passez d\'une idée à des user stories prêtes pour le développement.',
-    },
-    {
-      icon: BarChart3,
-      title: 'Instant PRD',
-      description: 'Générez des documents produit structurés en quelques minutes.',
-    },
-    {
-      icon: Users,
-      title: 'Squads IA',
-      description: 'Assemblez des équipes d\'agents IA spécialisés pour vos projets.',
-    },
-    {
-      icon: Shield,
-      title: 'Reality Mode',
-      description: 'Challengez vos décisions avec des agents aux perspectives variées.',
-    },
-  ];
 
   return (
-    <>
-      <div className="min-h-screen bg-background text-foreground">
-        {/* Header */}
-        <header className="border-b border-border/40 backdrop-blur-sm sticky top-0 z-50 bg-background/80">
-          <div className="container mx-auto px-6 h-16 flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <div className="bg-white rounded-lg p-2 shadow-sm">
-                <img
-                  src="/lovable-uploads/420dfc65-a110-4707-9eb4-3ffc08d33dd3.png"
-                  alt="Nova"
-                  className="w-8 h-8 object-contain"
-                />
-              </div>
-              <div>
-                <span className="text-lg font-bold gradient-text">Nova</span>
-                <span className="text-xs text-muted-foreground ml-2">by Devoteam</span>
-              </div>
-            </div>
-            <div className="flex items-center space-x-3">
-              <Button variant="ghost" onClick={openSignIn}>
-                Sign in
-              </Button>
-              <Button onClick={openSignUp}>
-                Sign up
-                <ArrowRight className="w-4 h-4 ml-1" />
-              </Button>
-            </div>
-          </div>
-        </header>
+    <div style={{ fontFamily: 'Montserrat, sans-serif', color: '#3C3C3A' }}>
+      {/* ───────── 1. HEADER ───────── */}
+      <header
+        className="fixed top-0 left-0 right-0 z-50 transition-all duration-300"
+        style={{
+          background: scrolled ? 'rgba(20,20,19,0.95)' : 'transparent',
+          backdropFilter: scrolled ? 'blur(12px)' : 'none',
+        }}
+      >
+        <div className="mx-auto flex items-center justify-between" style={{ maxWidth: 1200, padding: '0 60px', height: 72 }}>
+          <img
+            src="/lovable-uploads/devoteam-logo.png"
+            alt="Devoteam"
+            className="h-7 object-contain brightness-0 invert"
+          />
+          <nav className="hidden md:flex items-center gap-8">
+            {['Vision', 'Product', 'Use Cases', 'Security'].map((item) => (
+              <button
+                key={item}
+                onClick={() => scrollTo(item.toLowerCase().replace(' ', '-'))}
+                className="text-white/70 hover:text-white text-sm font-medium transition-colors"
+              >
+                {item}
+              </button>
+            ))}
+            <PrimaryBtn onClick={() => openAuth('signup')}>Request a demo</PrimaryBtn>
+          </nav>
+        </div>
+      </header>
 
-        {/* Hero */}
-        <section className="relative overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5" />
-          <div className="container mx-auto px-6 py-24 md:py-32 relative z-10">
-            <div className="max-w-3xl mx-auto text-center space-y-8">
-              <div className="inline-flex items-center gap-2 rounded-full border border-border bg-muted/50 px-4 py-1.5 text-sm text-muted-foreground">
-                <Zap className="w-3.5 h-3.5 text-primary" />
-                L'IA au service des Product Managers
-              </div>
-              <h1 className="text-4xl md:text-6xl font-bold tracking-tight leading-tight">
-                Nova — L'environnement de travail{' '}
-                <span className="gradient-text">augmenté par l'IA</span>
-              </h1>
-              <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-                Planifiez vos sprints, analysez l'impact de vos décisions et générez vos artefacts produit
-                avec des agents IA spécialisés. Pensez moins à l'outil, concentrez-vous sur votre produit.
+      {/* ───────── 2. HERO ───────── */}
+      <section
+        id="vision"
+        className="relative min-h-screen flex items-end overflow-hidden"
+        style={{ background: '#141413' }}
+      >
+        <img
+          src={heroBg}
+          alt=""
+          className="absolute inset-0 w-full h-full object-cover"
+          width={1920}
+          height={1080}
+        />
+        <div className="absolute inset-0" style={{ background: 'rgba(0,0,0,0.6)' }} />
+
+        <div className="relative z-10 mx-auto w-full" style={{ maxWidth: 1200, padding: '0 60px 80px' }}>
+          <motion.div
+            initial={{ opacity: 0, y: 50 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 1, ease: [0.22, 1, 0.36, 1] }}
+            className="max-w-2xl"
+          >
+            <Label>Devoteam AI Factory</Label>
+            <h1 className="text-white mb-6" style={{ fontSize: 43, fontWeight: 700, lineHeight: '54px' }}>
+              Nova is not just an assistant.
+              <br />
+              It is the operating system for augmented teams.
+            </h1>
+            <p className="text-white/70 mb-10" style={{ fontSize: 16, lineHeight: 1.6, maxWidth: 520 }}>
+              Product, Design, Engineering and AI agents working in one system.
+            </p>
+            <div className="flex flex-wrap gap-4 mb-16">
+              <PrimaryBtn onClick={() => scrollTo('product')}>Discover Nova</PrimaryBtn>
+              <SecondaryBtn onClick={() => openAuth('signin')}>Watch the demo</SecondaryBtn>
+            </div>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.6, duration: 0.8 }}
+            className="flex gap-10 border-t border-white/10 pt-8"
+          >
+            {['Context-aware', 'Agent-driven', 'Built for delivery'].map((f) => (
+              <span key={f} className="text-white/50 text-sm font-medium tracking-wide">{f}</span>
+            ))}
+          </motion.div>
+        </div>
+      </section>
+
+      {/* ───────── 3. MANIFEST ───────── */}
+      <Section bg="bg-white">
+        <Reveal className="text-center max-w-3xl mx-auto">
+          <h2 style={{ fontSize: 43, fontWeight: 700, lineHeight: '54px', color: '#141413' }} className="mb-6">
+            Teams do not need more tools.
+            <br />
+            They need more coherence.
+          </h2>
+          <p style={{ fontSize: 16, lineHeight: 1.6, color: '#3C3C3A' }}>
+            Nova connects context, workflows and AI into one experience.
+          </p>
+        </Reveal>
+      </Section>
+
+      {/* ───────── 4. VALUE BLOCKS ───────── */}
+      <Section bg="" className="bg-[#FAF9F5]">
+        <div className="grid md:grid-cols-3 gap-12">
+          {[
+            {
+              label: 'CONTEXT',
+              title: 'Context becomes active',
+              text: 'Nova understands projects, history, documents and decisions.',
+            },
+            {
+              label: 'AGENTS',
+              title: 'AI becomes structured',
+              text: 'Product, Design, Dev and QA roles activated dynamically.',
+            },
+            {
+              label: 'FLOW',
+              title: 'Work becomes continuous',
+              text: 'From idea to delivery without losing context.',
+            },
+          ].map((block, i) => (
+            <Reveal key={block.label} delay={i * 0.15}>
+              <Label>{block.label}</Label>
+              <h3 className="mb-4" style={{ fontSize: 22, fontWeight: 700, lineHeight: '32px', color: '#141413' }}>
+                {block.title}
+              </h3>
+              <p className="mb-6" style={{ fontSize: 16, lineHeight: 1.6, color: '#3C3C3A' }}>
+                {block.text}
               </p>
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
-                <Button size="lg" onClick={openSignUp} className="text-base px-8">
-                  Commencer gratuitement
-                  <ArrowRight className="w-4 h-4 ml-2" />
-                </Button>
-                <Button size="lg" variant="outline" onClick={openSignIn} className="text-base px-8">
-                  Se connecter
-                </Button>
-              </div>
-            </div>
-          </div>
-        </section>
+              <TertiaryLink>See how it works</TertiaryLink>
+            </Reveal>
+          ))}
+        </div>
+      </Section>
 
-        {/* Features */}
-        <section className="border-t border-border/40 bg-muted/20">
-          <div className="container mx-auto px-6 py-20 md:py-28">
-            <div className="text-center mb-16 space-y-4">
-              <h2 className="text-3xl md:text-4xl font-bold">
-                Tout ce dont un PM a besoin, au même endroit
-              </h2>
-              <p className="text-muted-foreground text-lg max-w-xl mx-auto">
-                Des outils structurants intégrés dans vos workflows quotidiens.
-              </p>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
-              {features.map((feature) => (
-                <div
-                  key={feature.title}
-                  className="group rounded-xl border border-border bg-card p-6 space-y-3 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5 transition-all duration-300"
-                >
-                  <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
-                    <feature.icon className="w-5 h-5 text-primary" />
-                  </div>
-                  <h3 className="text-lg font-semibold">{feature.title}</h3>
-                  <p className="text-sm text-muted-foreground leading-relaxed">
-                    {feature.description}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* CTA */}
-        <section className="border-t border-border/40">
-          <div className="container mx-auto px-6 py-20 text-center space-y-6">
-            <h2 className="text-2xl md:text-3xl font-bold">
-              Prêt à augmenter votre productivité ?
+      {/* ───────── 5. PRODUCT IMMERSIVE ───────── */}
+      <section id="product" style={{ background: '#3C3C3A' }}>
+        <div className="mx-auto grid md:grid-cols-2 gap-12 items-center" style={{ maxWidth: 1200, padding: '100px 60px' }}>
+          <Reveal>
+            <h2 className="text-white mb-6" style={{ fontSize: 43, fontWeight: 700, lineHeight: '54px' }}>
+              One system.
+              <br />
+              Multiple forms of intelligence.
             </h2>
-            <p className="text-muted-foreground max-w-md mx-auto">
-              Rejoignez Nova et transformez votre façon de piloter vos produits.
+            <p className="text-white/60 mb-8" style={{ fontSize: 16, lineHeight: 1.6 }}>
+              Nova combines context, workflows, artefacts and agents in one workspace.
             </p>
-            <Button size="lg" onClick={openSignUp} className="text-base px-8">
-              Créer un compte
-              <ArrowRight className="w-4 h-4 ml-2" />
-            </Button>
-          </div>
-        </section>
+            <PrimaryBtn onClick={() => openAuth('signup')}>Try Nova</PrimaryBtn>
+          </Reveal>
+          <Reveal delay={0.2}>
+            <img
+              src={productMockup}
+              alt="Nova workspace"
+              className="w-full shadow-2xl"
+              loading="lazy"
+              width={1200}
+              height={800}
+              style={{ borderRadius: 0 }}
+            />
+          </Reveal>
+        </div>
+      </section>
 
-        {/* Footer */}
-        <footer className="border-t border-border/40 bg-muted/10">
-          <div className="container mx-auto px-6 py-8 flex flex-col sm:flex-row items-center justify-between gap-4">
-            <div className="flex items-center space-x-3">
-              <img
-                src="/lovable-uploads/devoteam-logo.png"
-                alt="Devoteam"
-                className="h-6 object-contain opacity-60"
-              />
-            </div>
-            <p className="text-xs text-muted-foreground">
-              © {new Date().getFullYear()} Nova by Devoteam. Tous droits réservés.
+      {/* ───────── 6. USE CASES ───────── */}
+      <Section bg="bg-white" id="use-cases">
+        <Reveal className="mb-16">
+          <Label>USE CASES</Label>
+          <h2 style={{ fontSize: 43, fontWeight: 700, lineHeight: '54px', color: '#141413' }}>
+            Built for how teams actually work
+          </h2>
+        </Reveal>
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          {[
+            { label: 'ONBOARDING', title: 'Mission onboarding', desc: 'Get a new team member up to speed in minutes, not weeks.' },
+            { label: 'DISCOVERY', title: 'Feature discovery', desc: 'From user need to validated feature with full traceability.' },
+            { label: 'SPRINT', title: 'Sprint planning', desc: 'Real capacity data, not optimistic guesses.' },
+            { label: 'MEETINGS', title: 'Meeting to action', desc: 'Turn any meeting into structured decisions and artefacts.' },
+          ].map((card, i) => (
+            <Reveal key={card.label} delay={i * 0.1}>
+              <div className="bg-white p-6 shadow-sm hover:shadow-md transition-shadow" style={{ borderRadius: 0 }}>
+                <div className="w-full mb-4" style={{ aspectRatio: '4/3', background: '#F4F4F4' }} />
+                <Label>{card.label}</Label>
+                <h4 className="mb-2" style={{ fontSize: 18, fontWeight: 700, lineHeight: '26px', color: '#141413' }}>
+                  {card.title}
+                </h4>
+                <p style={{ fontSize: 16, lineHeight: 1.6, color: '#3C3C3A' }}>{card.desc}</p>
+              </div>
+            </Reveal>
+          ))}
+        </div>
+      </Section>
+
+      {/* ───────── 7. METRICS ───────── */}
+      <section style={{ background: '#141413' }}>
+        <div className="mx-auto text-center" style={{ maxWidth: 1200, padding: '100px 60px' }}>
+          <div className="grid md:grid-cols-3 gap-12">
+            {[
+              { value: '+40%', label: 'productivity' },
+              { value: '-70%', label: 'redundancy' },
+              { value: '92%', label: 'coherence' },
+            ].map((m, i) => (
+              <Reveal key={m.label} delay={i * 0.15}>
+                <div className="text-white" style={{ fontSize: 72, fontWeight: 700, lineHeight: 1 }}>
+                  {m.value}
+                </div>
+                <p className="text-white/50 mt-4 text-sm font-medium uppercase tracking-widest">{m.label}</p>
+              </Reveal>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ───────── 8. DIFFERENTIATION ───────── */}
+      <Section bg="" className="bg-[#F4F4F4]">
+        <div className="grid md:grid-cols-3 gap-12">
+          {[
+            { from: 'Not a chatbot', to: 'builds outputs' },
+            { from: 'Not a copilot', to: 'collaborates' },
+            { from: 'Not a tool', to: 'becomes your system' },
+          ].map((d, i) => (
+            <Reveal key={d.from} delay={i * 0.15}>
+              <h3 className="mb-2" style={{ fontSize: 22, fontWeight: 700, lineHeight: '32px', color: '#141413' }}>
+                {d.from}
+              </h3>
+              <p style={{ fontSize: 16, lineHeight: 1.6, color: '#3C3C3A' }}>
+                → {d.to}
+              </p>
+            </Reveal>
+          ))}
+        </div>
+      </Section>
+
+      {/* ───────── 9. GOVERNANCE ───────── */}
+      <Section bg="bg-white" id="security">
+        <Reveal className="max-w-2xl">
+          <Label>GOVERNANCE</Label>
+          <h2 className="mb-10" style={{ fontSize: 43, fontWeight: 700, lineHeight: '54px', color: '#141413' }}>
+            Built with governance in mind
+          </h2>
+          <ul className="space-y-6">
+            {[
+              'Human validation at every critical step',
+              'Traceable artefacts linked to context and decisions',
+              'Controlled context with granular access',
+            ].map((item) => (
+              <li key={item} className="flex items-start gap-4">
+                <span className="mt-1 w-2 h-2 shrink-0" style={{ background: '#F8485E' }} />
+                <span style={{ fontSize: 16, lineHeight: 1.6 }}>{item}</span>
+              </li>
+            ))}
+          </ul>
+        </Reveal>
+      </Section>
+
+      {/* ───────── 10. FINAL CTA ───────── */}
+      <section style={{ background: '#141413' }}>
+        <div className="mx-auto text-center" style={{ maxWidth: 1200, padding: '120px 60px' }}>
+          <Reveal>
+            <h2 className="text-white mb-6" style={{ fontSize: 43, fontWeight: 700, lineHeight: '54px' }}>
+              From AI-aware teams
+              <br />
+              to AI-native organizations.
+            </h2>
+            <p className="text-white/50 mb-10" style={{ fontSize: 16, lineHeight: 1.6 }}>
+              Nova is the layer in between.
+            </p>
+            <PrimaryBtn onClick={() => openAuth('signup')}>Start with Nova</PrimaryBtn>
+          </Reveal>
+        </div>
+      </section>
+
+      {/* ───────── 11. FOOTER ───────── */}
+      <footer style={{ background: '#141413', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+        <div className="mx-auto" style={{ maxWidth: 1200, padding: '60px 60px 40px' }}>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-10 mb-16">
+            {[
+              { title: 'Nova', links: ['Overview', 'Features', 'Pricing'] },
+              { title: 'Product', links: ['Agents', 'Workflows', 'Artefacts'] },
+              { title: 'AI Factory', links: ['Vision', 'Research', 'Partners'] },
+              { title: 'Devoteam', links: ['About', 'Careers', 'Contact'] },
+            ].map((col) => (
+              <div key={col.title}>
+                <h5 className="text-white font-bold text-sm mb-4">{col.title}</h5>
+                <ul className="space-y-2">
+                  {col.links.map((link) => (
+                    <li key={link}>
+                      <span className="text-white/40 text-sm hover:text-white/70 transition-colors cursor-pointer">
+                        {link}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+          <div className="flex items-center justify-between border-t border-white/10 pt-8">
+            <img
+              src="/lovable-uploads/devoteam-logo.png"
+              alt="Devoteam"
+              className="h-5 object-contain brightness-0 invert opacity-40"
+            />
+            <p className="text-white/30 text-xs">
+              © {new Date().getFullYear()} Nova by Devoteam. All rights reserved.
             </p>
           </div>
-        </footer>
-      </div>
+        </div>
+      </footer>
 
+      {/* ── Auth Dialog ── */}
       <AuthDialog open={showAuth} onClose={() => setShowAuth(false)} defaultTab={authTab} />
-    </>
+    </div>
   );
 };
 
