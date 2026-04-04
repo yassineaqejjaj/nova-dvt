@@ -222,7 +222,22 @@ const Index = () => {
   }
 
   if (!user) {
-    return <Landing />;
+    const authParam = searchParams.get('auth');
+    return (
+      <>
+        <Landing />
+        <AuthDialog
+          open={authParam === 'login'}
+          onOpenChange={(open) => {
+            if (!open) {
+              searchParams.delete('auth');
+              setSearchParams(searchParams, { replace: true });
+            }
+          }}
+          defaultTab="signin"
+        />
+      </>
+    );
   }
 
   const renderTabContent = () => {
