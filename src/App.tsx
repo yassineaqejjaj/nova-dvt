@@ -17,6 +17,9 @@ import Vision from "./pages/Vision";
 import Product from "./pages/Product";
 import UseCases from "./pages/UseCases";
 import Demo from "./pages/Demo";
+import Agents from "./pages/Agents";
+import WorkflowsPage from "./pages/Workflows";
+import Artefacts from "./pages/Artefacts";
 
 const queryClient = new QueryClient();
 
