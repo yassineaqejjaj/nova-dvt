@@ -228,11 +228,9 @@ const Index = () => {
         <Landing />
         <AuthDialog
           open={authParam === 'login'}
-          onOpenChange={(open) => {
-            if (!open) {
-              searchParams.delete('auth');
-              setSearchParams(searchParams, { replace: true });
-            }
+          onClose={() => {
+            searchParams.delete('auth');
+            setSearchParams(searchParams, { replace: true });
           }}
           defaultTab="signin"
         />
