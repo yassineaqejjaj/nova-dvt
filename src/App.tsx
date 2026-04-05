@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import Index from "./pages/Index";
+import DemoMode from "./pages/DemoMode";
 import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
 import { InstantPRD } from "./components/InstantPRD";
