@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AuthDialog } from '@/components/AuthDialog';
 import { motion, useInView } from 'framer-motion';
+import { Rocket, Search, CalendarClock, MessageSquareText } from 'lucide-react';
 import heroBg from '@/assets/hero-bg.jpg';
 import productMockup from '@/assets/product-mockup.jpg';
 
@@ -300,14 +301,16 @@ const Landing: React.FC = () => {
         </Reveal>
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {[
-            { label: 'ONBOARDING', title: 'Mission onboarding', desc: 'Get a new team member up to speed in minutes, not weeks.' },
-            { label: 'DISCOVERY', title: 'Feature discovery', desc: 'From user need to validated feature with full traceability.' },
-            { label: 'SPRINT', title: 'Sprint planning', desc: 'Real capacity data, not optimistic guesses.' },
-            { label: 'MEETINGS', title: 'Meeting to action', desc: 'Turn any meeting into structured decisions and artefacts.' },
+            { label: 'ONBOARDING', title: 'Mission onboarding', desc: 'Get a new team member up to speed in minutes, not weeks.', icon: Rocket },
+            { label: 'DISCOVERY', title: 'Feature discovery', desc: 'From user need to validated feature with full traceability.', icon: Search },
+            { label: 'SPRINT', title: 'Sprint planning', desc: 'Real capacity data, not optimistic guesses.', icon: CalendarClock },
+            { label: 'MEETINGS', title: 'Meeting to action', desc: 'Turn any meeting into structured decisions and artefacts.', icon: MessageSquareText },
           ].map((card, i) => (
             <Reveal key={card.label} delay={i * 0.1}>
               <div className="bg-white p-6 shadow-sm hover:shadow-md transition-shadow cursor-pointer" style={{ borderRadius: 0 }} onClick={() => navigate('/use-cases')}>
-                <div className="w-full mb-4" style={{ aspectRatio: '4/3', background: '#F4F4F4' }} />
+                <div className="w-full mb-6 flex items-center justify-center" style={{ aspectRatio: '4/3', background: '#FAF9F5' }}>
+                  <card.icon size={48} strokeWidth={1.5} color="#F8485E" />
+                </div>
                 <Label>{card.label}</Label>
                 <h4 className="mb-2" style={{ fontSize: 18, fontWeight: 700, lineHeight: '26px', color: '#141413' }}>{card.title}</h4>
                 <p style={{ fontSize: 16, lineHeight: 1.6, color: '#3C3C3A' }}>{card.desc}</p>
