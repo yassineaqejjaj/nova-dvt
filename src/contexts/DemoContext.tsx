@@ -70,7 +70,8 @@ export const DemoProvider: React.FC<{ children: React.ReactNode }> = ({ children
     streak: 5,
     avatar_url: '',
     unlockedAgents: agents.map(a => a.id),
-    badges: [{ id: 'demo', name: 'Explorer', description: 'Demo mode', icon: '🧭', earnedAt: new Date().toISOString() }],
+    coins: 0,
+    badges: [{ id: 'demo', name: 'Explorer', description: 'Demo mode', icon: '🧭', unlockedAt: new Date() }],
   };
 
   const demoSquad: Squad = {
@@ -78,7 +79,7 @@ export const DemoProvider: React.FC<{ children: React.ReactNode }> = ({ children
     name: squadName,
     purpose: 'Guided demo squad',
     agents: squadAgents,
-    isActive: true,
+    createdAt: new Date(),
   };
 
   const guidedSteps: GuidedStep[] = [
