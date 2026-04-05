@@ -227,7 +227,7 @@ const Landing: React.FC = () => {
               Product, Design, Engineering and AI agents working in one system.
             </p>
             <div className="flex flex-wrap gap-4 mb-16">
-              <PrimaryBtn onClick={() => navigate('/vision')}>Discover Nova</PrimaryBtn>
+              <PrimaryBtn onClick={() => navigate('/discover')}>Discover Nova</PrimaryBtn>
               <SecondaryBtn onClick={() => navigate('/demo')}>Book a demo</SecondaryBtn>
             </div>
           </motion.div>
