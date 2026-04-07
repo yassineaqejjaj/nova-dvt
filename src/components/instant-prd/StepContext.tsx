@@ -8,7 +8,8 @@
  import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
  import { supabase } from '@/integrations/supabase/client';
  import { ProductContextSummary, Artifact } from './types';
- 
+ import { useMaybeDemo } from '@/contexts/DemoContext';
+
  interface StepContextProps {
    selectedContext: ProductContextSummary | null;
    selectedArtifacts: string[];
@@ -16,7 +17,7 @@
    onSelectArtifacts: (ids: string[]) => void;
    onNext: () => void;
  }
- 
+
  const StepContext = ({
    selectedContext,
    selectedArtifacts,
@@ -24,40 +25,56 @@
    onSelectArtifacts,
    onNext,
  }: StepContextProps) => {
+   const demo = useMaybeDemo();
    const [contexts, setContexts] = useState<ProductContextSummary[]>([]);
    const [artifacts, setArtifacts] = useState<Artifact[]>([]);
    const [isLoading, setIsLoading] = useState(true);
    const [isLoadingArtifacts, setIsLoadingArtifacts] = useState(false);
    const [isArtifactsOpen, setIsArtifactsOpen] = useState(false);
    const [showDetails, setShowDetails] = useState(false);
- 
+
    useEffect(() => {
-     loadContexts();
-   }, []);
- 
+     if (demo?.isDemo && demo.demoProductContext) {
+       const demoCtx: ProductContextSummary = {
+         id: 'demo-context',
+         name: demo.demoProductContext.name,
+         vision: demo.demoProductContext.vision,
+         objectives: demo.demoProductContext.objective ? [demo.demoProductContext.objective] : [],
+         target_audience: demo.demoProductContext.audience,
+       };
+       setContexts([demoCtx]);
+       if (!selectedContext) {
+         onSelectContext(demoCtx);
+       }
+       setIsLoading(false);
+     } else {
+       loadContexts();
+     }
+   }, [demo?.isDemo, demo?.demoProductContext]);
+
    useEffect(() => {
-     if (selectedContext?.id) {
+     if (selectedContext?.id && !demo?.isDemo) {
        loadArtifacts(selectedContext.id);
      } else {
        setArtifacts([]);
        onSelectArtifacts([]);
      }
    }, [selectedContext?.id]);
- 
+
    const loadContexts = async () => {
      try {
        const { data: { user } } = await supabase.auth.getUser();
        if (!user) return;
- 
+
        const { data, error } = await supabase
          .from('product_contexts')
          .select('id, name, vision, objectives, target_audience, constraints')
          .eq('user_id', user.id)
          .eq('is_deleted', false)
          .order('is_active', { ascending: false });
- 
+
        if (error) throw error;
- 
+
        const mapped = (data || []).map(ctx => ({
          id: ctx.id,
          name: ctx.name,
@@ -67,7 +84,7 @@
          constraints: ctx.constraints || undefined,
        }));
        setContexts(mapped);
- 
+
        // Auto-select first (active) context
        if (mapped.length > 0 && !selectedContext) {
          onSelectContext(mapped[0]);
