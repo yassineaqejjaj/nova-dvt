@@ -186,31 +186,37 @@ interface DetailedUserStory {
      return [safeText(arr)];
    };
  
-   const generatePRD = async () => {
-     const startTime = Date.now();
- 
-     try {
-       const contextInfo = context
-         ? `Contexte: ${context.name}\nVision: ${context.vision || ''}\nObjectifs: ${(context.objectives || []).join(', ')}\nAudience: ${context.target_audience || ''}`
-         : '';
- 
-       const selectedArtifactsData = artifacts.filter(a => selectedArtifactIds.includes(a.id));
-       const artifactsInfo = selectedArtifactsData.length > 0
-         ? `\n\nArtefacts:\n${selectedArtifactsData.map(a => `- ${a.title}: ${JSON.stringify(a.content).slice(0, 500)}`).join('\n')}`
-         : '';
- 
-       // Generate each section
-       const progressPerSection = 100 / 16;
- 
-       // 1. Introduction
-       setCurrentSection('Introduction');
-       updateSectionStatus('introduction', 'generating');
-       setProgress(progressPerSection);
-       const { data: introData } = await supabase.functions.invoke('chat-ai', {
-         body: { message: `Idée: "${idea}"\n\nGénère une introduction (JSON): { "introduction": "texte" }`, mode: 'simple' }
-       });
-       const introResult = parseAIResponse(introData);
-       updateSectionStatus('introduction', 'complete');
+    const generatePRD = async () => {
+      const startTime = Date.now();
+
+      const callAI = async (message: string, maxTokens = 4000) => {
+        const { data, error } = await supabase.functions.invoke('chat-ai', {
+          body: { message, mode: 'simple', json_mode: true, max_tokens: maxTokens }
+        });
+        if (error) throw new Error(`Edge function error: ${error.message}`);
+        return parseAIResponse(data);
+      };
+
+      const safeCallAI = async (message: string, fallback: any, maxTokens = 4000) => {
+        try {
+          return await callAI(message, maxTokens);
+        } catch (e) {
+          console.warn('Section generation failed, using fallback:', e);
+          return fallback;
+        }
+      };
+
+      try {
+        const contextInfo = context
+          ? `Contexte: ${context.name}\nVision: ${context.vision || ''}\nObjectifs: ${(context.objectives || []).join(', ')}\nAudience: ${context.target_audience || ''}`
+          : '';
+
+        const selectedArtifactsData = artifacts.filter(a => selectedArtifactIds.includes(a.id));
+        const artifactsInfo = selectedArtifactsData.length > 0
+          ? `\n\nArtefacts:\n${selectedArtifactsData.map(a => `- ${a.title}: ${JSON.stringify(a.content).slice(0, 500)}`).join('\n')}`
+          : '';
+
+        const progressPerSection = 100 / 16;
  
        // 2. Context
        setCurrentSection('Contexte & Objectifs');
