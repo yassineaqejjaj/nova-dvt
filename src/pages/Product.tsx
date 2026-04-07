@@ -1,10 +1,12 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Section, Reveal, Label, PrimaryBtn, TertiaryLink, LandingHeader, LandingFooter } from './Landing';
+import { useLanguage } from '@/contexts/LanguageContext';
 import productMockup from '@/assets/product-mockup.jpg';
 
 const Product: React.FC = () => {
   const navigate = useNavigate();
+  const { t } = useLanguage();
 
   return (
     <div style={{ fontFamily: 'Montserrat, sans-serif', color: '#3C3C3A' }}>
@@ -14,14 +16,14 @@ const Product: React.FC = () => {
       <section style={{ background: '#141413', paddingTop: 72 }}>
         <div className="mx-auto" style={{ maxWidth: 1200, padding: '100px 60px 80px' }}>
           <Reveal>
-            <Label>Product</Label>
+            <Label>{t('product.hero.label')}</Label>
             <h1 className="text-white mb-6" style={{ fontSize: 43, fontWeight: 700, lineHeight: '54px', maxWidth: 700 }}>
-              Nova: Not Only a Virtual Assistant
+              {t('product.hero.h1')}
             </h1>
             <p className="text-white/60 mb-4" style={{ fontSize: 16, lineHeight: 1.6, maxWidth: 560 }}>
-              Nova is a Work OS powered by AI agents.<br />
-              It doesn't just answer questions.<br />
-              It structures how work gets done.
+              {t('product.hero.p1')}<br />
+              {t('product.hero.p2')}<br />
+              {t('product.hero.p3')}
             </p>
           </Reveal>
         </div>
@@ -30,33 +32,33 @@ const Product: React.FC = () => {
       {/* ─── How it works ─── */}
       <Section bg="bg-white">
         <Reveal className="mb-16">
-          <Label>HOW IT WORKS</Label>
+          <Label>{t('product.how.label')}</Label>
           <h2 style={{ fontSize: 43, fontWeight: 700, lineHeight: '54px', color: '#141413' }}>
-            Built on three core layers
+            {t('product.how.h2')}
           </h2>
         </Reveal>
         <div className="grid md:grid-cols-3 gap-12">
           {[
             {
               num: '1',
-              label: 'CONTEXT',
-              title: 'Everything starts with context',
-              bullets: ['Mission context', 'Product context', 'Documents, decisions, history'],
-              footer: 'Nova keeps a dynamic memory of your work so nothing gets lost.',
+              label: t('product.how.1.label'),
+              title: t('product.how.1.title'),
+              bullets: [t('product.how.1.b1'), t('product.how.1.b2'), t('product.how.1.b3')],
+              footer: t('product.how.1.footer'),
             },
             {
               num: '2',
-              label: 'AGENTS',
-              title: 'Each role can be augmented',
-              bullets: ['Product Manager agent', 'Designer agent', 'Developer agent', 'QA / Data / Strategy agents'],
-              footer: "They don't work in isolation. They collaborate, challenge each other, and improve outputs.",
+              label: t('product.how.2.label'),
+              title: t('product.how.2.title'),
+              bullets: [t('product.how.2.b1'), t('product.how.2.b2'), t('product.how.2.b3'), t('product.how.2.b4')],
+              footer: t('product.how.2.footer'),
             },
             {
               num: '3',
-              label: 'WORKFLOWS',
-              title: 'Structured execution',
-              bullets: ['Discovery', 'Product definition', 'Delivery', 'QA and iteration'],
-              footer: 'Each workflow produces real artefacts: PRDs, user stories, roadmaps, technical specs.',
+              label: t('product.how.3.label'),
+              title: t('product.how.3.title'),
+              bullets: [t('product.how.3.b1'), t('product.how.3.b2'), t('product.how.3.b3'), t('product.how.3.b4')],
+              footer: t('product.how.3.footer'),
             },
           ].map((layer, i) => (
             <Reveal key={layer.num} delay={i * 0.15}>
@@ -85,17 +87,12 @@ const Product: React.FC = () => {
       <section style={{ background: '#3C3C3A' }}>
         <div className="mx-auto grid md:grid-cols-2 gap-16 items-center" style={{ maxWidth: 1200, padding: '100px 60px' }}>
           <Reveal>
-            <Label>WHAT MAKES NOVA DIFFERENT</Label>
+            <Label>{t('product.diff.label')}</Label>
             <h2 className="text-white mb-6" style={{ fontSize: 43, fontWeight: 700, lineHeight: '54px' }}>
-              Most AI tools are assistants.<br />Nova is a system.
+              {t('product.diff.h2.1')}<br />{t('product.diff.h2.2')}
             </h2>
             <ul className="space-y-4">
-              {[
-                'Multi-agent coordination (not a single model)',
-                'Persistent context across time',
-                'Traceable reasoning and decisions',
-                'Built for real product teams',
-              ].map((item) => (
+              {[t('product.diff.b1'), t('product.diff.b2'), t('product.diff.b3'), t('product.diff.b4')].map((item) => (
                 <li key={item} className="flex items-start gap-4 text-white/80">
                   <span className="mt-2 w-2 h-2 shrink-0" style={{ background: '#F8485E' }} />
                   <span style={{ fontSize: 16, lineHeight: 1.6 }}>{item}</span>
@@ -112,18 +109,13 @@ const Product: React.FC = () => {
       {/* ─── What you get ─── */}
       <Section bg="" className="bg-[#FAF9F5]">
         <Reveal className="mb-16">
-          <Label>WHAT YOU GET</Label>
+          <Label>{t('product.get.label')}</Label>
           <h2 style={{ fontSize: 43, fontWeight: 700, lineHeight: '54px', color: '#141413' }}>
-            Nova turns scattered work into structured execution.
+            {t('product.get.h2')}
           </h2>
         </Reveal>
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-8">
-          {[
-            'Faster onboarding on any project',
-            'Structured and consistent deliverables',
-            'Reduced cognitive load',
-            'Higher quality decisions',
-          ].map((item, i) => (
+          {[t('product.get.1'), t('product.get.2'), t('product.get.3'), t('product.get.4')].map((item, i) => (
             <Reveal key={item} delay={i * 0.1}>
               <div className="p-6" style={{ background: '#FFFFFF', borderRadius: 0 }}>
                 <span className="inline-block w-8 h-8 text-center leading-8 font-bold text-white mb-4" style={{ background: '#F8485E', fontSize: 14 }}>
@@ -141,9 +133,9 @@ const Product: React.FC = () => {
         <div className="mx-auto text-center" style={{ maxWidth: 1200, padding: '120px 60px' }}>
           <Reveal>
             <h2 className="text-white mb-6" style={{ fontSize: 43, fontWeight: 700, lineHeight: '54px' }}>
-              Ready to see Nova in action?
+              {t('product.cta.h2')}
             </h2>
-            <PrimaryBtn onClick={() => navigate('/demo')}>Book a demo</PrimaryBtn>
+            <PrimaryBtn onClick={() => navigate('/demo')}>{t('nav.demo')}</PrimaryBtn>
           </Reveal>
         </div>
       </section>
