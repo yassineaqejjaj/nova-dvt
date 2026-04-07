@@ -113,7 +113,23 @@ serve(async (req) => {
       const defaultSystemPrompt = 'Tu es un assistant IA spécialisé en gestion de produit et spécifications techniques. Tu DOIS ABSOLUMENT répondre UNIQUEMENT en français. Fournis des réponses claires, structurées et actionnables.';
       const finalSystemPrompt = systemPrompt || defaultSystemPrompt;
       
-      const { stream } = body;
+      const { stream, max_tokens: clientMaxTokens, json_mode } = body;
+      const resolvedMaxTokens = clientMaxTokens || 8000;
+      
+      const fetchBody: any = {
+        model: 'google/gemini-2.5-flash',
+        messages: [
+          { role: 'system', content: finalSystemPrompt },
+          { role: 'user', content: message }
+        ],
+        max_tokens: resolvedMaxTokens,
+        temperature: 0.7,
+        stream: stream || false,
+      };
+      
+      if (json_mode) {
+        fetchBody.response_format = { type: 'json_object' };
+      }
       
       const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
         method: 'POST',
@@ -121,16 +137,7 @@ serve(async (req) => {
           'Authorization': `Bearer ${lovableApiKey}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          model: 'google/gemini-2.5-flash',
-          messages: [
-            { role: 'system', content: finalSystemPrompt },
-            { role: 'user', content: message }
-          ],
-          max_tokens: 4000,
-          temperature: 0.7,
-          stream: stream || false,
-        }),
+        body: JSON.stringify(fetchBody),
       });
 
       if (!response.ok) {

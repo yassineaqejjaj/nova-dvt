@@ -186,329 +186,181 @@ interface DetailedUserStory {
      return [safeText(arr)];
    };
  
-   const generatePRD = async () => {
-     const startTime = Date.now();
+    const generatePRD = async () => {
+      const startTime = Date.now();
+
+      const callAI = async (message: string, maxTokens = 4000) => {
+        const { data, error } = await supabase.functions.invoke('chat-ai', {
+          body: { message, mode: 'simple', json_mode: true, max_tokens: maxTokens }
+        });
+        if (error) throw new Error(`Edge function error: ${error.message}`);
+        return parseAIResponse(data);
+      };
+
+      const safeCallAI = async (message: string, fallback: any, maxTokens = 4000) => {
+        try {
+          return await callAI(message, maxTokens);
+        } catch (e) {
+          console.warn('Section generation failed, using fallback:', e);
+          return fallback;
+        }
+      };
+
+      try {
+        const contextInfo = context
+          ? `Contexte: ${context.name}\nVision: ${context.vision || ''}\nObjectifs: ${(context.objectives || []).join(', ')}\nAudience: ${context.target_audience || ''}`
+          : '';
+
+        const selectedArtifactsData = artifacts.filter(a => selectedArtifactIds.includes(a.id));
+        const artifactsInfo = selectedArtifactsData.length > 0
+          ? `\n\nArtefacts:\n${selectedArtifactsData.map(a => `- ${a.title}: ${JSON.stringify(a.content).slice(0, 500)}`).join('\n')}`
+          : '';
+
+        const progressPerSection = 100 / 16;
  
-     try {
-       const contextInfo = context
-         ? `Contexte: ${context.name}\nVision: ${context.vision || ''}\nObjectifs: ${(context.objectives || []).join(', ')}\nAudience: ${context.target_audience || ''}`
-         : '';
+        // 1. Introduction
+        setCurrentSection('Introduction');
+        updateSectionStatus('introduction', 'generating');
+        setProgress(progressPerSection);
+        const introResult = await safeCallAI(`Idée: "${idea}"\n\nGénère une introduction (JSON): { "introduction": "texte" }`, { introduction: '' });
+        updateSectionStatus('introduction', 'complete');
+
+        // 2. Context
+        setCurrentSection('Contexte & Objectifs');
+        updateSectionStatus('context', 'generating');
+        setProgress(progressPerSection * 2);
+        const ctxResult = await safeCallAI(`Idée: "${idea}"\n${contextInfo}${artifactsInfo}\n\nGénère contexte et objectifs (JSON): { "context": "texte" }`, { context: '' });
+        updateSectionStatus('context', 'complete');
+
+        // 3. Problem
+        setCurrentSection('Problème');
+        updateSectionStatus('problem', 'generating');
+        setProgress(progressPerSection * 3);
+        const problemResult = await safeCallAI(`Idée: "${idea}"\n\nGénère le problème (JSON): { "problem": "texte" }`, { problem: '' });
+        updateSectionStatus('problem', 'complete');
+
+        // 4. Vision
+        setCurrentSection('Vision');
+        updateSectionStatus('vision', 'generating');
+        setProgress(progressPerSection * 4);
+        const visionResult = await safeCallAI(`Idée: "${idea}"\n\nGénère la vision (JSON): { "vision": "texte" }`, { vision: '' });
+        updateSectionStatus('vision', 'complete');
+
+        // 5. Constraints
+        setCurrentSection('Contraintes');
+        updateSectionStatus('constraints', 'generating');
+        setProgress(progressPerSection * 5);
+        const constraintsResult = await safeCallAI(`Idée: "${idea}"\n\nGénère 4 contraintes (JSON): { "constraints": ["..."] }`, { constraints: [] });
+        updateSectionStatus('constraints', 'complete');
  
-       const selectedArtifactsData = artifacts.filter(a => selectedArtifactIds.includes(a.id));
-       const artifactsInfo = selectedArtifactsData.length > 0
-         ? `\n\nArtefacts:\n${selectedArtifactsData.map(a => `- ${a.title}: ${JSON.stringify(a.content).slice(0, 500)}`).join('\n')}`
-         : '';
- 
-       // Generate each section
-       const progressPerSection = 100 / 16;
- 
-       // 1. Introduction
-       setCurrentSection('Introduction');
-       updateSectionStatus('introduction', 'generating');
-       setProgress(progressPerSection);
-       const { data: introData } = await supabase.functions.invoke('chat-ai', {
-         body: { message: `Idée: "${idea}"\n\nGénère une introduction (JSON): { "introduction": "texte" }`, mode: 'simple' }
-       });
-       const introResult = parseAIResponse(introData);
-       updateSectionStatus('introduction', 'complete');
- 
-       // 2. Context
-       setCurrentSection('Contexte & Objectifs');
-       updateSectionStatus('context', 'generating');
-       setProgress(progressPerSection * 2);
-       const { data: ctxData } = await supabase.functions.invoke('chat-ai', {
-         body: { message: `Idée: "${idea}"\n${contextInfo}${artifactsInfo}\n\nGénère contexte et objectifs (JSON): { "context": "texte" }`, mode: 'simple' }
-       });
-       const ctxResult = parseAIResponse(ctxData);
-       updateSectionStatus('context', 'complete');
- 
-       // 3. Problem
-       setCurrentSection('Problème');
-       updateSectionStatus('problem', 'generating');
-       setProgress(progressPerSection * 3);
-       const { data: problemData } = await supabase.functions.invoke('chat-ai', {
-         body: { message: `Idée: "${idea}"\n\nGénère le problème (JSON): { "problem": "texte" }`, mode: 'simple' }
-       });
-       const problemResult = parseAIResponse(problemData);
-       updateSectionStatus('problem', 'complete');
- 
-       // 4. Vision
-       setCurrentSection('Vision');
-       updateSectionStatus('vision', 'generating');
-       setProgress(progressPerSection * 4);
-       const { data: visionData } = await supabase.functions.invoke('chat-ai', {
-         body: { message: `Idée: "${idea}"\n\nGénère la vision (JSON): { "vision": "texte" }`, mode: 'simple' }
-       });
-       const visionResult = parseAIResponse(visionData);
-       updateSectionStatus('vision', 'complete');
- 
-       // 5. Constraints
-       setCurrentSection('Contraintes');
-       updateSectionStatus('constraints', 'generating');
-       setProgress(progressPerSection * 5);
-       const { data: constraintsData } = await supabase.functions.invoke('chat-ai', {
-         body: { message: `Idée: "${idea}"\n\nGénère 4 contraintes (JSON): { "constraints": ["..."] }`, mode: 'simple' }
-       });
-       const constraintsResult = parseAIResponse(constraintsData);
-       updateSectionStatus('constraints', 'complete');
- 
-        // 6. Personas (optional but detailed)
+        // 6. Personas
         let personasResult: any = { personas: [] };
         if (config.includePersonas) {
           setCurrentSection('Personas');
           updateSectionStatus('personas', 'generating');
           setProgress(progressPerSection * 6);
-          
-          const personaDetailLevel = config.detailLevel === 'detailed' ? 'très détaillés avec biographie complète' : 
-                                     config.detailLevel === 'standard' ? 'détaillés' : 'concis';
+          const personaDetailLevel = config.detailLevel === 'detailed' ? 'très détaillés avec biographie complète' : config.detailLevel === 'standard' ? 'détaillés' : 'concis';
           const personaCount = config.detailLevel === 'detailed' ? 4 : 3;
-          
-          const { data: pData } = await supabase.functions.invoke('chat-ai', {
-            body: { 
-              message: `Idée produit: "${idea}"
-${contextInfo}
-
-Génère ${personaCount} personas utilisateurs ${personaDetailLevel} pour ce produit.
-
-IMPORTANT: Retourne UNIQUEMENT un JSON valide, sans texte avant ou après.
-
-Format JSON EXACT attendu:
-{
-  "personas": [
-    {
-      "name": "Prénom Nom",
-      "role": "Titre professionnel détaillé",
-      "age": 35,
-      "bio": "Biographie détaillée de 2-3 phrases décrivant le contexte personnel et professionnel",
-      "goals": ["Objectif principal 1", "Objectif principal 2", "Objectif principal 3", "Objectif secondaire"],
-      "painPoints": ["Frustration majeure 1", "Frustration majeure 2", "Obstacle quotidien", "Besoin non satisfait"],
-      "motivations": ["Ce qui le/la motive au quotidien", "Aspiration professionnelle"],
-      "behaviors": ["Habitude d'utilisation tech", "Préférence de communication"],
-      "quote": "Une citation typique de ce persona"
-    }
-  ]
-}`, 
-              mode: 'simple' 
-            }
-          });
-          personasResult = parseAIResponse(pData);
+          personasResult = await safeCallAI(`Idée produit: "${idea}"\n${contextInfo}\n\nGénère ${personaCount} personas utilisateurs ${personaDetailLevel}.\n\nFormat JSON: { "personas": [{ "name": "Prénom Nom", "role": "Titre", "age": 35, "bio": "Bio", "goals": ["..."], "painPoints": ["..."], "motivations": ["..."], "behaviors": ["..."], "quote": "Citation" }] }`, { personas: [] }, 6000);
         }
         updateSectionStatus('personas', 'complete');
 
-        // 7. Journey Map (optional but detailed)
+        // 7. Journey Map
         let journeyResult: any = { userJourneyMap: [] };
         if (config.includeJourneyMap) {
           setCurrentSection('User Journey Map');
           updateSectionStatus('userJourneyMap', 'generating');
           setProgress(progressPerSection * 7);
-          
           const stageCount = config.detailLevel === 'detailed' ? 7 : 5;
-          
-          const { data: jData } = await supabase.functions.invoke('chat-ai', {
-            body: { 
-              message: `Idée produit: "${idea}"
-${contextInfo}
-
-Génère une User Journey Map complète en ${stageCount} étapes pour le parcours utilisateur principal.
-
-IMPORTANT: Retourne UNIQUEMENT un JSON valide.
-
-Format JSON EXACT:
-{
-  "userJourneyMap": [
-    {
-      "stage": "Nom de l'étape (ex: Découverte, Inscription, Premier usage...)",
-      "actions": ["Action utilisateur 1", "Action utilisateur 2", "Action utilisateur 3"],
-      "thoughts": ["Pensée/question de l'utilisateur", "Attente à ce moment"],
-      "emotions": "positive/neutre/negative",
-      "painPoints": ["Point de friction potentiel", "Obstacle possible"],
-      "opportunities": ["Opportunité d'amélioration", "Quick win possible"]
-    }
-  ]
-}`, 
-              mode: 'simple' 
-            }
-          });
-          journeyResult = parseAIResponse(jData);
+          journeyResult = await safeCallAI(`Idée produit: "${idea}"\n${contextInfo}\n\nGénère une User Journey Map en ${stageCount} étapes.\n\nFormat JSON: { "userJourneyMap": [{ "stage": "Nom", "actions": ["..."], "thoughts": ["..."], "emotions": "positive/neutre/negative", "painPoints": ["..."], "opportunities": ["..."] }] }`, { userJourneyMap: [] }, 6000);
         }
         updateSectionStatus('userJourneyMap', 'complete');
 
-        // 8. Features (Epics) with detailed structure
+        // 8. Features (Epics)
         setCurrentSection('Fonctionnalités (Epics)');
         updateSectionStatus('features', 'generating');
         setProgress(progressPerSection * 8);
-        
-        const featureCount = config.detailLevel === 'detailed' ? '8-10' : 
-                            config.detailLevel === 'standard' ? '6-8' : '5-6';
-        
-        const { data: featuresData } = await supabase.functions.invoke('chat-ai', {
-          body: { 
-            message: `Idée produit: "${idea}"
-${contextInfo}
-
-Génère ${featureCount} fonctionnalités majeures (Epics) pour ce produit.
-
-IMPORTANT: Retourne UNIQUEMENT un JSON valide.
-
-Format JSON EXACT:
-{
-  "features": [
-    {
-      "id": "EPIC-001",
-      "name": "Nom de la fonctionnalité",
-      "description": "Description détaillée de la fonctionnalité en 2-3 phrases, expliquant la valeur apportée",
-      "businessValue": "Valeur métier: pourquoi cette fonctionnalité est importante",
-      "scope": "Périmètre: ce qui est inclus et ce qui ne l'est pas",
-      "dependencies": ["Dépendance technique ou fonctionnelle si applicable"]
-    }
-  ]
-}`, 
-            mode: 'simple' 
-          }
-        });
-        const featuresResult = parseAIResponse(featuresData) || {};
+        const featureCount = config.detailLevel === 'detailed' ? '8-10' : config.detailLevel === 'standard' ? '6-8' : '5-6';
+        const featuresResult = await safeCallAI(`Idée produit: "${idea}"\n${contextInfo}\n\nGénère ${featureCount} fonctionnalités majeures (Epics).\n\nFormat JSON: { "features": [{ "id": "EPIC-001", "name": "Nom", "description": "Description", "businessValue": "Valeur", "scope": "Périmètre", "dependencies": ["..."] }] }`, { features: [] }, 6000);
         updateSectionStatus('features', 'complete');
 
-        // 9. User Stories (detailed with acceptance criteria)
-         let storiesResult: any = { userStories: [] };
-         if (config.includeUserStories) {
-           setCurrentSection('User Stories');
-           setProgress(progressPerSection * 8.5);
-           
-           const storiesPerFeature = config.detailLevel === 'detailed' ? 4 : 
-                                     config.detailLevel === 'standard' ? 3 : 2;
-           
-           // Generate stories in batches of 3 epics to avoid truncation
-           const featuresList = Array.isArray(featuresResult?.features) ? featuresResult.features : [];
-           const batchSize = 3;
-           const allStories: any[] = [];
-           
-           for (let i = 0; i < featuresList.length; i += batchSize) {
-             const batch = featuresList.slice(i, i + batchSize);
-             const batchNames = batch.map((f: any) => f.name || f.id).join(', ');
-             setCurrentSection(`User Stories (${batchNames})`);
-             setProgress(progressPerSection * (8.5 + (i / featuresList.length) * 0.5));
-             
-             const { data: sData } = await supabase.functions.invoke('chat-ai', {
-               body: { 
-                 message: `Fonctionnalités: ${JSON.stringify(batch.map((f: any) => ({ id: f.id, name: f.name, description: f.description })))}
+        // 9. User Stories
+        let storiesResult: any = { userStories: [] };
+        if (config.includeUserStories) {
+          const featuresList = Array.isArray(featuresResult?.features) ? featuresResult.features : [];
+          const storiesPerFeature = config.detailLevel === 'detailed' ? 4 : config.detailLevel === 'standard' ? 3 : 2;
+          const batchSize = 3;
+          const allStories: any[] = [];
+          for (let i = 0; i < featuresList.length; i += batchSize) {
+            const batch = featuresList.slice(i, i + batchSize);
+            const batchNames = batch.map((f: any) => f.name || f.id).join(', ');
+            setCurrentSection(`User Stories (${batchNames})`);
+            setProgress(progressPerSection * (8.5 + (i / Math.max(featuresList.length, 1)) * 0.5));
+            try {
+              const batchResult = await callAI(`Fonctionnalités: ${JSON.stringify(batch.map((f: any) => ({ id: f.id, name: f.name, description: f.description })))}\n\nGénère exactement ${storiesPerFeature} user stories par fonctionnalité.\n\nFormat JSON: { "userStories": [{ "id": "US-001", "featureId": "EPIC-001", "title": "Titre", "asA": "utilisateur", "iWant": "action", "soThat": "bénéfice", "acceptanceCriteria": ["GIVEN... WHEN... THEN..."], "priority": "high", "complexity": "M", "storyPoints": 3, "technicalNotes": "Notes" }] }`, 6000);
+              allStories.push(...(batchResult.userStories || []));
+            } catch (e) {
+              console.warn(`Failed to parse stories batch ${i}, skipping`, e);
+            }
+          }
+          storiesResult = { userStories: allStories };
+        }
 
-Génère exactement ${storiesPerFeature} user stories par fonctionnalité.
+        // 10. Prioritization
+        setCurrentSection('Priorisation');
+        updateSectionStatus('prioritization', 'generating');
+        setProgress(progressPerSection * 9);
+        const prioResult = await safeCallAI(`Fonctionnalités: ${(featuresResult.features || []).map((f: any) => f.name || f.title).join(', ')}\n\nGénère une priorisation MoSCoW. Retourne UNIQUEMENT les NOMS des fonctionnalités.\n\nFormat JSON: { "prioritization": { "mvp": ["..."], "must": ["..."], "should": ["..."], "could": ["..."], "wont": [] } }`, { prioritization: { mvp: [], must: [], should: [], could: [], wont: [] } });
+        updateSectionStatus('prioritization', 'complete');
 
-IMPORTANT: Retourne UNIQUEMENT un JSON valide, compact.
+        // 11. Acceptance
+        setCurrentSection('Critères d\'acceptation');
+        updateSectionStatus('acceptance', 'generating');
+        setProgress(progressPerSection * 10);
+        const accResult = await safeCallAI(`Idée: "${idea}"\n\nGénère 5 critères d'acceptation (JSON): { "acceptance": ["..."] }`, { acceptance: [] });
+        updateSectionStatus('acceptance', 'complete');
 
-Format JSON:
-{
-  "userStories": [
-    {
-      "id": "US-001",
-      "featureId": "EPIC-001",
-      "title": "Titre court",
-      "asA": "type utilisateur",
-      "iWant": "action souhaitée",
-      "soThat": "bénéfice attendu",
-      "acceptanceCriteria": ["GIVEN... WHEN... THEN...", "Critère 2"],
-      "priority": "high",
-      "complexity": "M",
-      "storyPoints": 3,
-      "technicalNotes": "Notes techniques"
-    }
-  ]
-}`, 
-                 mode: 'simple' 
-               }
-             });
-             
-             try {
-               const batchResult = parseAIResponse(sData);
-               allStories.push(...(batchResult.userStories || []));
-             } catch (e) {
-               console.warn(`Failed to parse stories batch ${i}, skipping`, e);
-             }
-           }
-           
-           storiesResult = { userStories: allStories };
-         }
- 
-       // 10. Prioritization
-       setCurrentSection('Priorisation');
-       updateSectionStatus('prioritization', 'generating');
-       setProgress(progressPerSection * 9);
-       const { data: prioData } = await supabase.functions.invoke('chat-ai', {
-          body: { message: `Fonctionnalités: ${(featuresResult.features || []).map((f: any) => f.name || f.title).join(', ')}\n\nGénère une priorisation MoSCoW. Retourne UNIQUEMENT les NOMS des fonctionnalités (pas d'objets, juste des strings).\n\nFormat JSON: { "prioritization": { "mvp": ["Nom feature 1"], "must": ["Nom feature 2"], "should": ["Nom feature 3"], "could": ["Nom feature 4"], "wont": [] } }`, mode: 'simple' }
-       });
-       const prioResult = parseAIResponse(prioData);
-       updateSectionStatus('prioritization', 'complete');
- 
-       // 11. Acceptance
-       setCurrentSection('Critères d\'acceptation');
-       updateSectionStatus('acceptance', 'generating');
-       setProgress(progressPerSection * 10);
-       const { data: accData } = await supabase.functions.invoke('chat-ai', {
-         body: { message: `Idée: "${idea}"\n\nGénère 5 critères d'acceptation (JSON): { "acceptance": ["..."] }`, mode: 'simple' }
-       });
-       const accResult = parseAIResponse(accData);
-       updateSectionStatus('acceptance', 'complete');
- 
-       // 12. Wireframes
-       setCurrentSection('Design & UX');
-       updateSectionStatus('wireframes', 'generating');
-       setProgress(progressPerSection * 11);
-       const { data: wfData } = await supabase.functions.invoke('chat-ai', {
-         body: { message: `Idée: "${idea}"\n\nGénère 3 recommandations UX (JSON): { "wireframes": ["..."] }`, mode: 'simple' }
-       });
-       const wfResult = parseAIResponse(wfData);
-       updateSectionStatus('wireframes', 'complete');
- 
-       // 13. Architecture
-       setCurrentSection('Architecture');
-       updateSectionStatus('architecture', 'generating');
-       setProgress(progressPerSection * 12);
-       const { data: archData } = await supabase.functions.invoke('chat-ai', {
-         body: { message: `Idée: "${idea}"\n\nGénère architecture technique (JSON): { "architecture": { "frontend": "", "backend": "", "database": "" } }`, mode: 'simple' }
-       });
-       const archResult = parseAIResponse(archData);
-       updateSectionStatus('architecture', 'complete');
- 
-       // 14. Risks
-       setCurrentSection('Risques');
-       updateSectionStatus('risks', 'generating');
-       setProgress(progressPerSection * 13);
-       const { data: riskData } = await supabase.functions.invoke('chat-ai', {
-         body: { message: `Idée: "${idea}"\n\nGénère 4 risques (JSON): { "risks": [{ "risk": "", "mitigation": "" }] }`, mode: 'simple' }
-       });
-       const riskResult = parseAIResponse(riskData);
-       updateSectionStatus('risks', 'complete');
- 
-       // 15. KPIs
-       setCurrentSection('KPIs');
-       updateSectionStatus('kpis', 'generating');
-       setProgress(progressPerSection * 14);
-       const { data: kpiData } = await supabase.functions.invoke('chat-ai', {
-         body: { message: `Idée: "${idea}"\n\nGénère 4 KPIs (JSON): { "kpis": ["..."] }`, mode: 'simple' }
-       });
-       const kpiResult = parseAIResponse(kpiData);
-       updateSectionStatus('kpis', 'complete');
- 
-       // 16. Roadmap
-       setCurrentSection('Roadmap');
-       updateSectionStatus('roadmap', 'generating');
-       setProgress(progressPerSection * 15);
-       const { data: rmData } = await supabase.functions.invoke('chat-ai', {
-         body: { message: `Idée: "${idea}"\n\nGénère roadmap 3 phases (JSON): { "roadmap": [{ "phase": "", "timeline": "", "deliverables": [] }] }`, mode: 'simple' }
-       });
-       const rmResult = parseAIResponse(rmData);
-       updateSectionStatus('roadmap', 'complete');
- 
-       // 17. Appendix
-       setCurrentSection('Annexes');
-       updateSectionStatus('appendix', 'generating');
-       setProgress(99);
-       const { data: apxData } = await supabase.functions.invoke('chat-ai', {
-         body: { message: `Idée: "${idea}"\n\nGénère 3 références (JSON): { "appendix": ["..."] }`, mode: 'simple' }
-       });
-       const apxResult = parseAIResponse(apxData);
-       updateSectionStatus('appendix', 'complete');
+        // 12. Wireframes
+        setCurrentSection('Design & UX');
+        updateSectionStatus('wireframes', 'generating');
+        setProgress(progressPerSection * 11);
+        const wfResult = await safeCallAI(`Idée: "${idea}"\n\nGénère 3 recommandations UX (JSON): { "wireframes": ["..."] }`, { wireframes: [] });
+        updateSectionStatus('wireframes', 'complete');
+
+        // 13. Architecture
+        setCurrentSection('Architecture');
+        updateSectionStatus('architecture', 'generating');
+        setProgress(progressPerSection * 12);
+        const archResult = await safeCallAI(`Idée: "${idea}"\n\nGénère architecture technique (JSON): { "architecture": { "frontend": "", "backend": "", "database": "" } }`, { architecture: {} });
+        updateSectionStatus('architecture', 'complete');
+
+        // 14. Risks
+        setCurrentSection('Risques');
+        updateSectionStatus('risks', 'generating');
+        setProgress(progressPerSection * 13);
+        const riskResult = await safeCallAI(`Idée: "${idea}"\n\nGénère 4 risques (JSON): { "risks": [{ "risk": "", "mitigation": "" }] }`, { risks: [] });
+        updateSectionStatus('risks', 'complete');
+
+        // 15. KPIs
+        setCurrentSection('KPIs');
+        updateSectionStatus('kpis', 'generating');
+        setProgress(progressPerSection * 14);
+        const kpiResult = await safeCallAI(`Idée: "${idea}"\n\nGénère 4 KPIs (JSON): { "kpis": ["..."] }`, { kpis: [] });
+        updateSectionStatus('kpis', 'complete');
+
+        // 16. Roadmap
+        setCurrentSection('Roadmap');
+        updateSectionStatus('roadmap', 'generating');
+        setProgress(progressPerSection * 15);
+        const rmResult = await safeCallAI(`Idée: "${idea}"\n\nGénère roadmap 3 phases (JSON): { "roadmap": [{ "phase": "", "timeline": "", "deliverables": [] }] }`, { roadmap: [] });
+        updateSectionStatus('roadmap', 'complete');
+
+        // 17. Appendix
+        setCurrentSection('Annexes');
+        updateSectionStatus('appendix', 'generating');
+        setProgress(99);
+        const apxResult = await safeCallAI(`Idée: "${idea}"\n\nGénère 3 références (JSON): { "appendix": ["..."] }`, { appendix: [] });
+        updateSectionStatus('appendix', 'complete');
  
        setProgress(100);
  
