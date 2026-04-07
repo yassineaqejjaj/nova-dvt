@@ -11,6 +11,7 @@ import { SquadManager } from '@/components/SquadManager';
 import { InstantPRD } from '@/components/InstantPRD';
 import { Toolbox } from '@/components/tools/Toolbox';
 import EpicToUserStories from '@/components/EpicToUserStories';
+import DemoContextCreator from '@/components/demo/DemoContextCreator';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -22,7 +23,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 const DemoContent: React.FC = () => {
   const navigate = useNavigate();
   const demo = useDemo();
-  const [activeTab, setActiveTab] = useState<TabType>('dashboard');
+  const [activeTab, setActiveTab] = useState<TabType>('product-context');
   const [showGuide, setShowGuide] = useState(true);
   const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null);
 
@@ -55,6 +56,37 @@ const DemoContent: React.FC = () => {
 
   const renderContent = () => {
     switch (activeTab) {
+      case 'product-context':
+        return demo.hasContext ? (
+          <div className="max-w-2xl mx-auto py-12 px-4 text-center">
+            <div className="w-14 h-14 mx-auto mb-4 flex items-center justify-center" style={{ background: '#10b98110' }}>
+              <CheckCircle2 className="w-7 h-7 text-green-600" />
+            </div>
+            <h2 className="text-xl font-bold mb-2" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+              Contexte : {demo.demoProductContext?.name}
+            </h2>
+            <p className="text-muted-foreground text-sm mb-2">{demo.demoProductContext?.vision}</p>
+            <p className="text-xs text-muted-foreground mb-6">
+              🎯 {demo.demoProductContext?.audience} · 📊 {demo.demoProductContext?.objective}
+            </p>
+            <p className="text-sm font-medium mb-4" style={{ color: '#F8485E' }}>
+              Ce contexte alimente désormais tous les agents et workflows de la démo.
+            </p>
+            <Button
+              onClick={() => handleTabChange('toolbox')}
+              className="text-white font-semibold"
+              style={{ background: '#F8485E', borderRadius: 50 }}
+            >
+              Continuer le tour →
+            </Button>
+          </div>
+        ) : (
+          <DemoContextCreator onContextCreated={(ctx) => {
+            demo.setDemoProductContext(ctx);
+            demo.setCurrentStep(1);
+            toast.success(`Contexte "${ctx.name}" créé !`);
+          }} />
+        );
       case 'dashboard':
         return (
           <ActionDashboard
