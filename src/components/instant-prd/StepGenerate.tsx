@@ -366,7 +366,7 @@ Format JSON EXACT:
             mode: 'simple' 
           }
         });
-        const featuresResult = parseAIResponse(featuresData);
+        const featuresResult = parseAIResponse(featuresData) || {};
         updateSectionStatus('features', 'complete');
 
         // 9. User Stories (detailed with acceptance criteria)
@@ -379,7 +379,7 @@ Format JSON EXACT:
                                      config.detailLevel === 'standard' ? 3 : 2;
            
            // Generate stories in batches of 3 epics to avoid truncation
-           const featuresList = featuresResult.features || [];
+           const featuresList = Array.isArray(featuresResult?.features) ? featuresResult.features : [];
            const batchSize = 3;
            const allStories: any[] = [];
            
