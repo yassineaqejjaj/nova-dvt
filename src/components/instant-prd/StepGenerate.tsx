@@ -218,45 +218,40 @@ interface DetailedUserStory {
 
         const progressPerSection = 100 / 16;
  
-       // 2. Context
-       setCurrentSection('Contexte & Objectifs');
-       updateSectionStatus('context', 'generating');
-       setProgress(progressPerSection * 2);
-       const { data: ctxData } = await supabase.functions.invoke('chat-ai', {
-         body: { message: `Idée: "${idea}"\n${contextInfo}${artifactsInfo}\n\nGénère contexte et objectifs (JSON): { "context": "texte" }`, mode: 'simple' }
-       });
-       const ctxResult = parseAIResponse(ctxData);
-       updateSectionStatus('context', 'complete');
- 
-       // 3. Problem
-       setCurrentSection('Problème');
-       updateSectionStatus('problem', 'generating');
-       setProgress(progressPerSection * 3);
-       const { data: problemData } = await supabase.functions.invoke('chat-ai', {
-         body: { message: `Idée: "${idea}"\n\nGénère le problème (JSON): { "problem": "texte" }`, mode: 'simple' }
-       });
-       const problemResult = parseAIResponse(problemData);
-       updateSectionStatus('problem', 'complete');
- 
-       // 4. Vision
-       setCurrentSection('Vision');
-       updateSectionStatus('vision', 'generating');
-       setProgress(progressPerSection * 4);
-       const { data: visionData } = await supabase.functions.invoke('chat-ai', {
-         body: { message: `Idée: "${idea}"\n\nGénère la vision (JSON): { "vision": "texte" }`, mode: 'simple' }
-       });
-       const visionResult = parseAIResponse(visionData);
-       updateSectionStatus('vision', 'complete');
- 
-       // 5. Constraints
-       setCurrentSection('Contraintes');
-       updateSectionStatus('constraints', 'generating');
-       setProgress(progressPerSection * 5);
-       const { data: constraintsData } = await supabase.functions.invoke('chat-ai', {
-         body: { message: `Idée: "${idea}"\n\nGénère 4 contraintes (JSON): { "constraints": ["..."] }`, mode: 'simple' }
-       });
-       const constraintsResult = parseAIResponse(constraintsData);
-       updateSectionStatus('constraints', 'complete');
+        // 1. Introduction
+        setCurrentSection('Introduction');
+        updateSectionStatus('introduction', 'generating');
+        setProgress(progressPerSection);
+        const introResult = await safeCallAI(`Idée: "${idea}"\n\nGénère une introduction (JSON): { "introduction": "texte" }`, { introduction: '' });
+        updateSectionStatus('introduction', 'complete');
+
+        // 2. Context
+        setCurrentSection('Contexte & Objectifs');
+        updateSectionStatus('context', 'generating');
+        setProgress(progressPerSection * 2);
+        const ctxResult = await safeCallAI(`Idée: "${idea}"\n${contextInfo}${artifactsInfo}\n\nGénère contexte et objectifs (JSON): { "context": "texte" }`, { context: '' });
+        updateSectionStatus('context', 'complete');
+
+        // 3. Problem
+        setCurrentSection('Problème');
+        updateSectionStatus('problem', 'generating');
+        setProgress(progressPerSection * 3);
+        const problemResult = await safeCallAI(`Idée: "${idea}"\n\nGénère le problème (JSON): { "problem": "texte" }`, { problem: '' });
+        updateSectionStatus('problem', 'complete');
+
+        // 4. Vision
+        setCurrentSection('Vision');
+        updateSectionStatus('vision', 'generating');
+        setProgress(progressPerSection * 4);
+        const visionResult = await safeCallAI(`Idée: "${idea}"\n\nGénère la vision (JSON): { "vision": "texte" }`, { vision: '' });
+        updateSectionStatus('vision', 'complete');
+
+        // 5. Constraints
+        setCurrentSection('Contraintes');
+        updateSectionStatus('constraints', 'generating');
+        setProgress(progressPerSection * 5);
+        const constraintsResult = await safeCallAI(`Idée: "${idea}"\n\nGénère 4 contraintes (JSON): { "constraints": ["..."] }`, { constraints: [] });
+        updateSectionStatus('constraints', 'complete');
  
         // 6. Personas (optional but detailed)
         let personasResult: any = { personas: [] };
