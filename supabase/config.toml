@@ -10,7 +10,7 @@ verify_jwt = true
 verify_jwt = true
 
 [functions.chat-ai]
-verify_jwt = true
+verify_jwt = false
 
 [functions.canvas-generator]
 verify_jwt = true
