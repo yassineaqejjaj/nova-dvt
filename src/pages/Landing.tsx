@@ -221,27 +221,27 @@ const Landing: React.FC = () => {
       <LandingHeader onDemo={() => navigate('/demo')} />
 
       {/* ───────── HERO ───────── */}
-      <section className="relative min-h-screen flex items-end overflow-hidden" style={{ background: '#141413' }}>
+      <section className="relative min-h-screen flex items-center overflow-hidden" style={{ background: '#141413' }}>
         <img src={heroBg} alt="" className="absolute inset-0 w-full h-full object-cover" width={1920} height={1080} />
-        <div className="absolute inset-0" style={{ background: 'rgba(0,0,0,0.6)' }} />
-        <div className="relative z-10 mx-auto w-full" style={{ maxWidth: 1200, padding: '0 60px 80px' }}>
-          <motion.div initial={{ opacity: 0, y: 50 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 1, ease: [0.22, 1, 0.36, 1] }} className="max-w-2xl">
+        <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, rgba(0,0,0,0.45) 0%, rgba(0,0,0,0.7) 100%)' }} />
+        <div className="relative z-10 mx-auto w-full" style={{ maxWidth: 1200, padding: '0 60px' }}>
+          <motion.div initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 1, ease: [0.22, 1, 0.36, 1] }} className="text-center max-w-3xl mx-auto">
             <Label>{t('landing.hero.label')}</Label>
-            <h1 className="text-white mb-6" style={{ fontSize: 43, fontWeight: 700, lineHeight: '54px' }}>
+            <h1 className="text-white mb-6" style={{ fontSize: 48, fontWeight: 700, lineHeight: '58px' }}>
               {t('landing.hero.h1.1')}<br />
               {t('landing.hero.h1.2')}
             </h1>
-            <p className="text-white/70 mb-10" style={{ fontSize: 16, lineHeight: 1.6, maxWidth: 520 }}>
+            <p className="text-white/60 mb-10 mx-auto" style={{ fontSize: 17, lineHeight: 1.7, maxWidth: 560 }}>
               {t('landing.hero.desc')}
             </p>
-            <div className="flex flex-wrap gap-4 mb-16">
+            <div className="flex flex-wrap justify-center gap-4 mb-20">
               <PrimaryBtn onClick={() => navigate('/discover')}>{t('landing.hero.cta1')}</PrimaryBtn>
               <SecondaryBtn onClick={() => navigate('/demo')}>{t('nav.demo')}</SecondaryBtn>
             </div>
           </motion.div>
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.6, duration: 0.8 }} className="flex gap-10 border-t border-white/10 pt-8">
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.6, duration: 0.8 }} className="flex justify-center gap-12 border-t border-white/10 pt-8">
             {[t('landing.hero.tag1'), t('landing.hero.tag2'), t('landing.hero.tag3')].map((f) => (
-              <span key={f} className="text-white/50 text-sm font-medium tracking-wide">{f}</span>
+              <span key={f} className="text-white/40 text-xs font-semibold uppercase tracking-[0.2em]">{f}</span>
             ))}
           </motion.div>
         </div>
