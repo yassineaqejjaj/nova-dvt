@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { AuthDialog } from '@/components/AuthDialog';
 import { motion, useInView } from 'framer-motion';
 import { Rocket, Search, CalendarClock, MessageSquareText } from 'lucide-react';
+import { useLanguage, Lang } from '@/contexts/LanguageContext';
 import heroBg from '@/assets/hero-bg.jpg';
 import productMockup from '@/assets/product-mockup.jpg';
 
@@ -85,9 +86,24 @@ export const TertiaryLink: React.FC<{ children: React.ReactNode; onClick?: () =>
   </span>
 );
 
+/* ─── Language Switcher ─── */
+const LanguageSwitcher: React.FC<{ variant?: 'light' | 'dark' }> = ({ variant = 'light' }) => {
+  const { lang, setLang } = useLanguage();
+  const base = variant === 'light' ? 'text-white/70' : 'text-[#3C3C3A]/70';
+  const active = variant === 'light' ? 'text-white font-bold' : 'text-[#3C3C3A] font-bold';
+  return (
+    <div className="flex items-center gap-1 text-sm">
+      <button onClick={() => setLang('fr')} className={`px-1.5 py-0.5 transition-colors ${lang === 'fr' ? active : base} hover:opacity-80`}>FR</button>
+      <span className={base}>/</span>
+      <button onClick={() => setLang('en')} className={`px-1.5 py-0.5 transition-colors ${lang === 'en' ? active : base} hover:opacity-80`}>EN</button>
+    </div>
+  );
+};
+
 export const LandingHeader: React.FC<{ onDemo: () => void }> = ({ onDemo }) => {
   const [scrolled, setScrolled] = useState(false);
   const navigate = useNavigate();
+  const { t } = useLanguage();
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 60);
@@ -113,10 +129,10 @@ export const LandingHeader: React.FC<{ onDemo: () => void }> = ({ onDemo }) => {
         </span>
         <nav className="hidden md:flex items-center gap-8">
           {[
-            { label: 'Vision', path: '/vision' },
-            { label: 'Product', path: '/product' },
-            { label: 'Use Cases', path: '/use-cases' },
-            { label: 'Security', path: '/#security' },
+            { label: t('nav.vision'), path: '/vision' },
+            { label: t('nav.product'), path: '/product' },
+            { label: t('nav.useCases'), path: '/use-cases' },
+            { label: t('nav.security'), path: '/#security' },
           ].map((item) => (
             <button
               key={item.label}
@@ -137,9 +153,10 @@ export const LandingHeader: React.FC<{ onDemo: () => void }> = ({ onDemo }) => {
             onClick={() => navigate('/?auth=login')}
             className="text-white/70 hover:text-white text-sm font-medium transition-colors"
           >
-            Log in
+            {t('nav.login')}
           </button>
-          <PrimaryBtn onClick={onDemo}>Book a demo</PrimaryBtn>
+          <LanguageSwitcher variant="light" />
+          <PrimaryBtn onClick={onDemo}>{t('nav.demo')}</PrimaryBtn>
         </nav>
       </div>
     </header>
@@ -148,15 +165,16 @@ export const LandingHeader: React.FC<{ onDemo: () => void }> = ({ onDemo }) => {
 
 export const LandingFooter: React.FC = () => {
   const navigate = useNavigate();
+  const { t } = useLanguage();
   return (
     <footer style={{ background: '#141413', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
       <div className="mx-auto" style={{ maxWidth: 1200, padding: '60px 60px 40px' }}>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-10 mb-16">
           {[
-            { title: 'Nova', links: [{ label: 'Overview', path: '/' }, { label: 'Features', path: '/product' }] },
-            { title: 'Product', links: [{ label: 'Agents', path: '/product' }, { label: 'Workflows', path: '/product' }, { label: 'Artefacts', path: '/product' }] },
-            { title: 'AI Factory', links: [{ label: 'Vision', path: '/vision' }, { label: 'Use Cases', path: '/use-cases' }] },
-            { title: 'Devoteam', links: [{ label: 'About', path: '/' }, { label: 'Contact', path: '/demo' }] },
+            { title: 'Nova', links: [{ label: t('footer.overview'), path: '/' }, { label: t('footer.features'), path: '/product' }] },
+            { title: t('nav.product'), links: [{ label: t('footer.agents'), path: '/product' }, { label: t('footer.workflows'), path: '/product' }, { label: t('footer.artefacts'), path: '/product' }] },
+            { title: 'AI Factory', links: [{ label: t('footer.vision'), path: '/vision' }, { label: t('footer.useCases'), path: '/use-cases' }] },
+            { title: 'Devoteam', links: [{ label: t('footer.about'), path: '/' }, { label: t('footer.contact'), path: '/demo' }] },
           ].map((col) => (
             <div key={col.title}>
               <h5 className="text-white font-bold text-sm mb-4">{col.title}</h5>
@@ -191,14 +209,11 @@ const Landing: React.FC = () => {
   const [showAuth, setShowAuth] = useState(false);
   const [authTab, setAuthTab] = useState<'signin' | 'signup'>('signin');
   const navigate = useNavigate();
+  const { t } = useLanguage();
 
   const openAuth = (tab: 'signin' | 'signup') => {
     setAuthTab(tab);
     setShowAuth(true);
-  };
-
-  const scrollTo = (id: string) => {
-    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
   };
 
   return (
@@ -206,39 +221,26 @@ const Landing: React.FC = () => {
       <LandingHeader onDemo={() => navigate('/demo')} />
 
       {/* ───────── HERO ───────── */}
-      <section
-        className="relative min-h-screen flex items-end overflow-hidden"
-        style={{ background: '#141413' }}
-      >
+      <section className="relative min-h-screen flex items-end overflow-hidden" style={{ background: '#141413' }}>
         <img src={heroBg} alt="" className="absolute inset-0 w-full h-full object-cover" width={1920} height={1080} />
         <div className="absolute inset-0" style={{ background: 'rgba(0,0,0,0.6)' }} />
         <div className="relative z-10 mx-auto w-full" style={{ maxWidth: 1200, padding: '0 60px 80px' }}>
-          <motion.div
-            initial={{ opacity: 0, y: 50 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 1, ease: [0.22, 1, 0.36, 1] }}
-            className="max-w-2xl"
-          >
-            <Label>Devoteam AI Factory</Label>
+          <motion.div initial={{ opacity: 0, y: 50 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 1, ease: [0.22, 1, 0.36, 1] }} className="max-w-2xl">
+            <Label>{t('landing.hero.label')}</Label>
             <h1 className="text-white mb-6" style={{ fontSize: 43, fontWeight: 700, lineHeight: '54px' }}>
-              Nova is not just an assistant.<br />
-              It is the operating system for augmented teams.
+              {t('landing.hero.h1.1')}<br />
+              {t('landing.hero.h1.2')}
             </h1>
             <p className="text-white/70 mb-10" style={{ fontSize: 16, lineHeight: 1.6, maxWidth: 520 }}>
-              Product, Design, Engineering and AI agents working in one system.
+              {t('landing.hero.desc')}
             </p>
             <div className="flex flex-wrap gap-4 mb-16">
-              <PrimaryBtn onClick={() => navigate('/discover')}>Discover Nova</PrimaryBtn>
-              <SecondaryBtn onClick={() => navigate('/demo')}>Book a demo</SecondaryBtn>
+              <PrimaryBtn onClick={() => navigate('/discover')}>{t('landing.hero.cta1')}</PrimaryBtn>
+              <SecondaryBtn onClick={() => navigate('/demo')}>{t('nav.demo')}</SecondaryBtn>
             </div>
           </motion.div>
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.6, duration: 0.8 }}
-            className="flex gap-10 border-t border-white/10 pt-8"
-          >
-            {['Context-aware', 'Agent-driven', 'Built for delivery'].map((f) => (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.6, duration: 0.8 }} className="flex gap-10 border-t border-white/10 pt-8">
+            {[t('landing.hero.tag1'), t('landing.hero.tag2'), t('landing.hero.tag3')].map((f) => (
               <span key={f} className="text-white/50 text-sm font-medium tracking-wide">{f}</span>
             ))}
           </motion.div>
@@ -249,11 +251,9 @@ const Landing: React.FC = () => {
       <Section bg="bg-white">
         <Reveal className="text-center max-w-3xl mx-auto">
           <h2 style={{ fontSize: 43, fontWeight: 700, lineHeight: '54px', color: '#141413' }} className="mb-6">
-            Teams do not need more tools.<br />They need more coherence.
+            {t('landing.manifest.h2.1')}<br />{t('landing.manifest.h2.2')}
           </h2>
-          <p style={{ fontSize: 16, lineHeight: 1.6, color: '#3C3C3A' }}>
-            Nova connects context, workflows and AI into one experience.
-          </p>
+          <p style={{ fontSize: 16, lineHeight: 1.6, color: '#3C3C3A' }}>{t('landing.manifest.desc')}</p>
         </Reveal>
       </Section>
 
@@ -261,15 +261,15 @@ const Landing: React.FC = () => {
       <Section bg="" className="bg-[#FAF9F5]">
         <div className="grid md:grid-cols-3 gap-12">
           {[
-            { label: 'CONTEXT', title: 'Context becomes active', text: 'Nova understands projects, history, documents and decisions.' },
-            { label: 'AGENTS', title: 'AI becomes structured', text: 'Product, Design, Dev and QA roles activated dynamically.' },
-            { label: 'FLOW', title: 'Work becomes continuous', text: 'From idea to delivery without losing context.' },
+            { label: t('landing.value.context.label'), title: t('landing.value.context.title'), text: t('landing.value.context.text') },
+            { label: t('landing.value.agents.label'), title: t('landing.value.agents.title'), text: t('landing.value.agents.text') },
+            { label: t('landing.value.flow.label'), title: t('landing.value.flow.title'), text: t('landing.value.flow.text') },
           ].map((block, i) => (
             <Reveal key={block.label} delay={i * 0.15}>
               <Label>{block.label}</Label>
               <h3 className="mb-4" style={{ fontSize: 22, fontWeight: 700, lineHeight: '32px', color: '#141413' }}>{block.title}</h3>
               <p className="mb-6" style={{ fontSize: 16, lineHeight: 1.6, color: '#3C3C3A' }}>{block.text}</p>
-              <TertiaryLink onClick={() => navigate('/product')}>See how it works</TertiaryLink>
+              <TertiaryLink onClick={() => navigate('/product')}>{t('landing.value.cta')}</TertiaryLink>
             </Reveal>
           ))}
         </div>
@@ -280,12 +280,10 @@ const Landing: React.FC = () => {
         <div className="mx-auto grid md:grid-cols-2 gap-12 items-center" style={{ maxWidth: 1200, padding: '100px 60px' }}>
           <Reveal>
             <h2 className="text-white mb-6" style={{ fontSize: 43, fontWeight: 700, lineHeight: '54px' }}>
-              One system.<br />Multiple forms of intelligence.
+              {t('landing.product.h2.1')}<br />{t('landing.product.h2.2')}
             </h2>
-            <p className="text-white/60 mb-8" style={{ fontSize: 16, lineHeight: 1.6 }}>
-              Nova combines context, workflows, artefacts and agents in one workspace.
-            </p>
-            <PrimaryBtn onClick={() => navigate('/product')}>Explore the product</PrimaryBtn>
+            <p className="text-white/60 mb-8" style={{ fontSize: 16, lineHeight: 1.6 }}>{t('landing.product.desc')}</p>
+            <PrimaryBtn onClick={() => navigate('/product')}>{t('landing.product.cta')}</PrimaryBtn>
           </Reveal>
           <Reveal delay={0.2}>
             <img src={productMockup} alt="Nova workspace" className="w-full shadow-2xl" loading="lazy" width={1200} height={800} style={{ borderRadius: 0 }} />
@@ -296,24 +294,24 @@ const Landing: React.FC = () => {
       {/* ───────── USE CASES ───────── */}
       <Section bg="bg-white" id="use-cases-preview">
         <Reveal className="mb-16">
-          <Label>USE CASES</Label>
-          <h2 style={{ fontSize: 43, fontWeight: 700, lineHeight: '54px', color: '#141413' }}>Built for how teams actually work</h2>
+          <Label>{t('landing.useCases.label')}</Label>
+          <h2 style={{ fontSize: 43, fontWeight: 700, lineHeight: '54px', color: '#141413' }}>{t('landing.useCases.h2')}</h2>
         </Reveal>
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {[
-            { label: 'ONBOARDING', title: 'Mission onboarding', desc: 'Get a new team member up to speed in minutes, not weeks.', icon: Rocket },
-            { label: 'DISCOVERY', title: 'Feature discovery', desc: 'From user need to validated feature with full traceability.', icon: Search },
-            { label: 'SPRINT', title: 'Sprint planning', desc: 'Real capacity data, not optimistic guesses.', icon: CalendarClock },
-            { label: 'MEETINGS', title: 'Meeting to action', desc: 'Turn any meeting into structured decisions and artefacts.', icon: MessageSquareText },
+            { labelKey: 'landing.useCases.onboarding.label', titleKey: 'landing.useCases.onboarding.title', descKey: 'landing.useCases.onboarding.desc', icon: Rocket },
+            { labelKey: 'landing.useCases.discovery.label', titleKey: 'landing.useCases.discovery.title', descKey: 'landing.useCases.discovery.desc', icon: Search },
+            { labelKey: 'landing.useCases.sprint.label', titleKey: 'landing.useCases.sprint.title', descKey: 'landing.useCases.sprint.desc', icon: CalendarClock },
+            { labelKey: 'landing.useCases.meetings.label', titleKey: 'landing.useCases.meetings.title', descKey: 'landing.useCases.meetings.desc', icon: MessageSquareText },
           ].map((card, i) => (
-            <Reveal key={card.label} delay={i * 0.1}>
+            <Reveal key={card.labelKey} delay={i * 0.1}>
               <div className="bg-white p-6 shadow-sm hover:shadow-md transition-shadow cursor-pointer" style={{ borderRadius: 0 }} onClick={() => navigate('/use-cases')}>
                 <div className="w-full mb-6 flex items-center justify-center" style={{ aspectRatio: '4/3', background: '#FAF9F5' }}>
                   <card.icon size={48} strokeWidth={1.5} color="#F8485E" />
                 </div>
-                <Label>{card.label}</Label>
-                <h4 className="mb-2" style={{ fontSize: 18, fontWeight: 700, lineHeight: '26px', color: '#141413' }}>{card.title}</h4>
-                <p style={{ fontSize: 16, lineHeight: 1.6, color: '#3C3C3A' }}>{card.desc}</p>
+                <Label>{t(card.labelKey)}</Label>
+                <h4 className="mb-2" style={{ fontSize: 18, fontWeight: 700, lineHeight: '26px', color: '#141413' }}>{t(card.titleKey)}</h4>
+                <p style={{ fontSize: 16, lineHeight: 1.6, color: '#3C3C3A' }}>{t(card.descKey)}</p>
               </div>
             </Reveal>
           ))}
@@ -325,9 +323,9 @@ const Landing: React.FC = () => {
         <div className="mx-auto text-center" style={{ maxWidth: 1200, padding: '100px 60px' }}>
           <div className="grid md:grid-cols-3 gap-12">
             {[
-              { value: '+40%', label: 'productivity' },
-              { value: '-70%', label: 'redundancy' },
-              { value: '92%', label: 'coherence' },
+              { value: '+40%', label: t('landing.metrics.productivity') },
+              { value: '-70%', label: t('landing.metrics.redundancy') },
+              { value: '92%', label: t('landing.metrics.coherence') },
             ].map((m, i) => (
               <Reveal key={m.label} delay={i * 0.15}>
                 <div className="text-white" style={{ fontSize: 72, fontWeight: 700, lineHeight: 1 }}>{m.value}</div>
@@ -342,9 +340,9 @@ const Landing: React.FC = () => {
       <Section bg="" className="bg-[#F4F4F4]">
         <div className="grid md:grid-cols-3 gap-12">
           {[
-            { from: 'Not a chatbot', to: 'builds outputs' },
-            { from: 'Not a copilot', to: 'collaborates' },
-            { from: 'Not a tool', to: 'becomes your system' },
+            { from: t('landing.diff.1.from'), to: t('landing.diff.1.to') },
+            { from: t('landing.diff.2.from'), to: t('landing.diff.2.to') },
+            { from: t('landing.diff.3.from'), to: t('landing.diff.3.to') },
           ].map((d, i) => (
             <Reveal key={d.from} delay={i * 0.15}>
               <h3 className="mb-2" style={{ fontSize: 22, fontWeight: 700, lineHeight: '32px', color: '#141413' }}>{d.from}</h3>
@@ -357,10 +355,10 @@ const Landing: React.FC = () => {
       {/* ───────── GOVERNANCE ───────── */}
       <Section bg="bg-white" id="security">
         <Reveal className="max-w-2xl">
-          <Label>GOVERNANCE</Label>
-          <h2 className="mb-10" style={{ fontSize: 43, fontWeight: 700, lineHeight: '54px', color: '#141413' }}>Built with governance in mind</h2>
+          <Label>{t('landing.gov.label')}</Label>
+          <h2 className="mb-10" style={{ fontSize: 43, fontWeight: 700, lineHeight: '54px', color: '#141413' }}>{t('landing.gov.h2')}</h2>
           <ul className="space-y-6">
-            {['Human validation at every critical step', 'Traceable artefacts linked to context and decisions', 'Controlled context with granular access'].map((item) => (
+            {[t('landing.gov.1'), t('landing.gov.2'), t('landing.gov.3')].map((item) => (
               <li key={item} className="flex items-start gap-4">
                 <span className="mt-1 w-2 h-2 shrink-0" style={{ background: '#F8485E' }} />
                 <span style={{ fontSize: 16, lineHeight: 1.6 }}>{item}</span>
@@ -375,10 +373,10 @@ const Landing: React.FC = () => {
         <div className="mx-auto text-center" style={{ maxWidth: 1200, padding: '120px 60px' }}>
           <Reveal>
             <h2 className="text-white mb-6" style={{ fontSize: 43, fontWeight: 700, lineHeight: '54px' }}>
-              From AI-aware teams<br />to AI-native organizations.
+              {t('landing.cta.h2.1')}<br />{t('landing.cta.h2.2')}
             </h2>
-            <p className="text-white/50 mb-10" style={{ fontSize: 16, lineHeight: 1.6 }}>Nova is the layer in between.</p>
-            <PrimaryBtn onClick={() => navigate('/demo')}>Book a demo</PrimaryBtn>
+            <p className="text-white/50 mb-10" style={{ fontSize: 16, lineHeight: 1.6 }}>{t('landing.cta.desc')}</p>
+            <PrimaryBtn onClick={() => navigate('/demo')}>{t('nav.demo')}</PrimaryBtn>
           </Reveal>
         </div>
       </section>
