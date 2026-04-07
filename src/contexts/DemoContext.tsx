@@ -70,6 +70,7 @@ export const DemoProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [squadName, setSquadName] = useState('Discovery Squad');
   const [currentStep, setCurrentStep] = useState(0);
   const [completedSteps, setCompletedSteps] = useState<Set<string>>(new Set());
+  const [demoProductContext, setDemoProductContext] = useState<DemoProductContext | null>(null);
 
   const demoProfile: UserProfileType = {
     id: 'demo-user',
